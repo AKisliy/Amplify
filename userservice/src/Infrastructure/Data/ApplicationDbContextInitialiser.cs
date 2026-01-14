@@ -5,6 +5,8 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using Microsoft.AspNetCore.Hosting;
+using Microsoft.Extensions.Hosting;
 
 namespace UserService.Infrastructure.Data;
 
@@ -16,8 +18,11 @@ public static class InitialiserExtensions
 
         var initialiser = scope.ServiceProvider.GetRequiredService<ApplicationDbContextInitialiser>();
 
-        await initialiser.InitialiseAsync();
-        await initialiser.SeedAsync();
+        if (app.Environment.IsDevelopment())
+        {
+            await initialiser.InitialiseAsync();
+            await initialiser.SeedAsync();
+        }
     }
 }
 
