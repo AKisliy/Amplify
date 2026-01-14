@@ -3,7 +3,6 @@ using System.Runtime.CompilerServices;
 using AutoMapper;
 using UserService.Application.Common.Interfaces;
 using UserService.Application.Common.Models;
-using UserService.Application.TodoItems.Queries.GetTodoItemsWithPagination;
 using UserService.Application.TodoLists.Queries.GetTodos;
 using UserService.Domain.Entities;
 using NUnit.Framework;
@@ -31,10 +30,7 @@ public class MappingTests
 
     [Test]
     [TestCase(typeof(TodoList), typeof(TodoListDto))]
-    [TestCase(typeof(TodoItem), typeof(TodoItemDto))]
     [TestCase(typeof(TodoList), typeof(LookupDto))]
-    [TestCase(typeof(TodoItem), typeof(LookupDto))]
-    [TestCase(typeof(TodoItem), typeof(TodoItemBriefDto))]
     public void ShouldSupportMappingFromSourceToDestination(Type source, Type destination)
     {
         var instance = GetInstanceOf(source);

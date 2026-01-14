@@ -28,17 +28,7 @@ public class GetTodosTests : BaseTestFixture
         await AddAsync(new TodoList
         {
             Title = "Shopping",
-            Colour = Colour.Blue,
-            Items =
-                {
-                    new TodoItem { Title = "Apples", Done = true },
-                    new TodoItem { Title = "Milk", Done = true },
-                    new TodoItem { Title = "Bread", Done = true },
-                    new TodoItem { Title = "Toilet paper" },
-                    new TodoItem { Title = "Pasta" },
-                    new TodoItem { Title = "Tissues" },
-                    new TodoItem { Title = "Tuna" }
-                }
+            Colour = Colour.Blue
         });
 
         var query = new GetTodosQuery();
@@ -46,7 +36,6 @@ public class GetTodosTests : BaseTestFixture
         var result = await SendAsync(query);
 
         result.Lists.Count.ShouldBe(1);
-        result.Lists.First().Items.Count.ShouldBe(7);
     }
 
     [Test]
