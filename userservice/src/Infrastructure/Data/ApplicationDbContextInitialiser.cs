@@ -26,32 +26,23 @@ public static class InitialiserExtensions
     }
 }
 
-public class ApplicationDbContextInitialiser
+public class ApplicationDbContextInitialiser(
+    ILogger<ApplicationDbContextInitialiser> logger,
+    ApplicationDbContext context,
+    UserManager<ApplicationUser> userManager,
+    RoleManager<IdentityRole<Guid>> roleManager)
 {
-    private readonly ILogger<ApplicationDbContextInitialiser> _logger;
-    private readonly ApplicationDbContext _context;
-    private readonly UserManager<ApplicationUser> _userManager;
-    private readonly RoleManager<IdentityRole<Guid>> _roleManager;
-
-    public ApplicationDbContextInitialiser(ILogger<ApplicationDbContextInitialiser> logger, ApplicationDbContext context, UserManager<ApplicationUser> userManager, RoleManager<IdentityRole<Guid>> roleManager)
-    {
-        _logger = logger;
-        _context = context;
-        _userManager = userManager;
-        _roleManager = roleManager;
-    }
-
     public async Task InitialiseAsync()
     {
         try
         {
             // See https://jasontaylor.dev/ef-core-database-initialisation-strategies
-            await _context.Database.EnsureDeletedAsync();
-            await _context.Database.EnsureCreatedAsync();
+            await context.Database.EnsureDeletedAsync();
+            await context.Database.EnsureCreatedAsync();
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "An error occurred while initialising the database.");
+            logger.LogError(ex, "An error occurred while initialising the database.");
             throw;
         }
     }
@@ -64,7 +55,7 @@ public class ApplicationDbContextInitialiser
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "An error occurred while seeding the database.");
+            logger.LogError(ex, "An error occurred while seeding the database.");
             throw;
         }
     }
@@ -74,33 +65,33 @@ public class ApplicationDbContextInitialiser
         // Default roles
         var administratorRole = new IdentityRole<Guid>(Roles.Administrator);
 
-        if (_roleManager.Roles.All(r => r.Name != administratorRole.Name))
+        if (roleManager.Roles.All(r => r.Name != administratorRole.Name))
         {
-            await _roleManager.CreateAsync(administratorRole);
+            await roleManager.CreateAsync(administratorRole);
         }
 
         // Default users
         var administrator = new ApplicationUser { UserName = "administrator@localhost", Email = "administrator@localhost" };
 
-        if (_userManager.Users.All(u => u.UserName != administrator.UserName))
+        if (userManager.Users.All(u => u.UserName != administrator.UserName))
         {
-            await _userManager.CreateAsync(administrator, "Administrator1!");
+            await userManager.CreateAsync(administrator, "Administrator1!");
             if (!string.IsNullOrWhiteSpace(administratorRole.Name))
             {
-                await _userManager.AddToRolesAsync(administrator, new[] { administratorRole.Name });
+                await userManager.AddToRolesAsync(administrator, new[] { administratorRole.Name });
             }
         }
 
         // Default data
         // Seed, if necessary
-        if (!_context.TodoLists.Any())
+        if (!context.TodoLists.Any())
         {
-            _context.TodoLists.Add(new TodoList
+            context.TodoLists.Add(new TodoList
             {
                 Title = "Todo List"
             });
 
-            await _context.SaveChangesAsync();
+            await context.SaveChangesAsync();
         }
     }
 }
