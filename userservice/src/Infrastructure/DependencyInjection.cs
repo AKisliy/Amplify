@@ -13,6 +13,7 @@ using UserService.Infrastructure;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using System.Security.Cryptography;
+using Microsoft.IdentityModel.Logging;
 
 namespace Microsoft.Extensions.DependencyInjection;
 
@@ -64,6 +65,9 @@ public static class DependencyInjection
             PrivateKeyPem = ""
         };
 
+        IdentityModelEventSource.ShowPII = true;
+        IdentityModelEventSource.LogCompleteSecurityArtifact = true;
+
         configuration.GetSection(JwtOptions.SectionName).Bind(jwtOptions);
 
         if (string.IsNullOrEmpty(jwtOptions.PrivateKeyPem))
@@ -73,6 +77,11 @@ public static class DependencyInjection
 
         var rsa = RSA.Create();
         rsa.ImportFromPem(jwtOptions.PrivateKeyPem);
+
+        var validationKey = new RsaSecurityKey(rsa)
+        {
+            KeyId = "auth-key-1"
+        };
 
         builder.Services.AddAuthentication(options =>
             {
@@ -91,19 +100,18 @@ public static class DependencyInjection
 
                     ValidIssuer = jwtOptions.Issuer,
                     ValidAudience = jwtOptions.Audience,
-                    IssuerSigningKey = new RsaSecurityKey(rsa),
+                    IssuerSigningKey = validationKey,
                     ValidAlgorithms = [SecurityAlgorithms.RsaSha256]
                 };
             });
 
         builder.Services.AddAuthorizationBuilder();
 
-        builder.Services
-            .AddIdentityCore<ApplicationUser>(options => options.SignIn.RequireConfirmedAccount = true)
+        builder.Services.AddIdentityCore<ApplicationUser>(options => options.SignIn.RequireConfirmedAccount = true)
             .AddRoles<IdentityRole<Guid>>()
             .AddEntityFrameworkStores<ApplicationDbContext>()
-            .AddApiEndpoints()
-            .AddSignInManager<ApplicationSignInManager>();
+            .AddSignInManager<ApplicationSignInManager>()
+            .AddDefaultTokenProviders();
 
         builder.Services.AddSingleton(TimeProvider.System);
         builder.Services.AddTransient<IIdentityService, IdentityService>();

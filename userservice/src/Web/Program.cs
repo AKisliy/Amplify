@@ -1,5 +1,4 @@
 using UserService.Infrastructure.Data;
-using UserService.Infrastructure.Identity;
 
 var builder = WebApplication.CreateBuilder(args);
 
