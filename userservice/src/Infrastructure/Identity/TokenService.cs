@@ -2,17 +2,35 @@ namespace UserService.Infrastructure.Identity;
 
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
-using System.Text;
+using System.Security.Cryptography;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using UserService.Application.Common.Interfaces;
 using UserService.Infrastructure.Options;
 
-public class TokenService(
-    IOptions<JwtOptions> jwtOptions,
-    UserManager<ApplicationUser> userManager) : ITokenService
+public class TokenService : ITokenService, IDisposable
 {
+    private readonly RSA _rsaKey;
+    private readonly JwtOptions _options;
+    private readonly UserManager<ApplicationUser> _userManager;
+
+    public TokenService(IOptions<JwtOptions> options, UserManager<ApplicationUser> userManager)
+    {
+        _options = options.Value;
+        _userManager = userManager;
+        _rsaKey = RSA.Create();
+
+        try
+        {
+            _rsaKey.ImportFromPem(_options.PrivateKeyPem);
+        }
+        catch (Exception ex)
+        {
+            throw new InvalidOperationException("Could not load RSA Private Key from configuration. Check 'Jwt:PrivateKeyPem'.", ex);
+        }
+    }
+
     public Task<string> GenerateAccessTokenAsync(Guid userId, string email, IList<string> roles)
     {
         var claims = new List<Claim>
@@ -21,15 +39,15 @@ public class TokenService(
             new(ClaimTypes.Email, email),
             new(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
         };
+        claims.AddRange(roles.Select(r => new Claim(ClaimTypes.Role, r)));
 
-        claims.AddRange(roles.Select(role => new Claim(ClaimTypes.Role, role)));
+        var key = new RsaSecurityKey(_rsaKey);
 
-        var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtOptions.Value.Key!));
-        var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
+        var creds = new SigningCredentials(key, SecurityAlgorithms.RsaSha256);
 
         var token = new JwtSecurityToken(
-            issuer: jwtOptions.Value.Issuer,
-            audience: jwtOptions.Value.Audience,
+            issuer: _options.Issuer,
+            audience: _options.Audience,
             claims: claims,
             expires: DateTime.UtcNow.AddMinutes(15),
             signingCredentials: creds
@@ -40,7 +58,7 @@ public class TokenService(
 
     public async Task<string> GenerateRefreshTokenAsync(Guid userId)
     {
-        var user = await userManager.FindByIdAsync(userId.ToString());
+        var user = await _userManager.FindByIdAsync(userId.ToString());
         if (user == null) throw new Exception("User not found");
 
         var randomNumber = new byte[32];
@@ -48,7 +66,12 @@ public class TokenService(
         rng.GetBytes(randomNumber);
         var refreshToken = Convert.ToBase64String(randomNumber);
 
-        await userManager.SetAuthenticationTokenAsync(user, "Default", "RefreshToken", refreshToken);
+        // TODO: Change to use options
+        var expiryTime = DateTime.UtcNow.AddDays(30);
+
+        var tokenValueToStore = $"{refreshToken};{expiryTime.Ticks}";
+
+        await _userManager.SetAuthenticationTokenAsync(user, "Default", "RefreshToken", tokenValueToStore);
 
         return refreshToken;
     }
@@ -57,13 +80,11 @@ public class TokenService(
     {
         var tokenValidationParameters = new TokenValidationParameters
         {
-            ValidateAudience = true,
-            ValidateIssuer = true,
-            ValidateIssuerSigningKey = true,
-            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtOptions.Value.Key!)),
-            ValidIssuer = jwtOptions.Value.Issuer,
-            ValidAudience = jwtOptions.Value.Audience,
-            ValidateLifetime = false
+            ValidateAudience = false,
+            ValidateIssuer = false,
+            ValidateLifetime = false,
+            IssuerSigningKey = new RsaSecurityKey(_rsaKey),
+            ValidateIssuerSigningKey = true
         };
 
         var tokenHandler = new JwtSecurityTokenHandler();
@@ -81,5 +102,27 @@ public class TokenService(
         {
             return Task.FromResult<ClaimsPrincipal?>(null);
         }
+    }
+
+    public JsonWebKeySet GetJwks()
+    {
+        var parameters = _rsaKey.ExportParameters(includePrivateParameters: false);
+
+        var jwk = new JsonWebKey
+        {
+            Kty = JsonWebAlgorithmsKeyTypes.RSA,
+            Use = "sig",
+            Kid = "auth-key-1",
+            N = Base64UrlEncoder.Encode(parameters.Modulus),
+            E = Base64UrlEncoder.Encode(parameters.Exponent),
+            Alg = SecurityAlgorithms.RsaSha256
+        };
+
+        return new JsonWebKeySet { Keys = { jwk } };
+    }
+
+    public void Dispose()
+    {
+        _rsaKey.Dispose();
     }
 }

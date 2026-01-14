@@ -19,4 +19,6 @@ public interface IIdentityService
     Task ConfirmUserEmail(Guid userId, string code);
 
     Task<(Guid UserId, string Email, IList<string> Roles)> AuthenticateAsync(string email, string password);
+
+    Task<(Result Result, Guid UserId, string Email, IList<string> Roles)> ValidateRefreshTokenAsync(Guid userId, string refreshToken);
 }

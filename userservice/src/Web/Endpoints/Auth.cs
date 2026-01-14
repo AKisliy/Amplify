@@ -1,6 +1,8 @@
 using UserService.Application.Auth.ConfirmEmail;
 using UserService.Application.Auth.Login;
+using UserService.Application.Auth.Refresh;
 using UserService.Application.Auth.Register;
+using UserService.Application.Common.Interfaces;
 
 namespace UserService.Web.Endpoints;
 
@@ -27,5 +29,16 @@ public class Auth : EndpointGroupBase
             var result = await sender.Send(command);
             return Results.Ok(result);
         });
+
+        groupBuilder.MapPost("refresh", async (ISender sender, RefreshTokenCommand command) =>
+        {
+            var result = await sender.Send(command);
+            return Results.Ok(result);
+        });
+
+        groupBuilder.MapGet(".well-known/jwks.json", (ITokenService tokenService) =>
+        {
+            return Results.Ok(tokenService.GetJwks());
+        }).AllowAnonymous();
     }
 }
