@@ -69,13 +69,6 @@ public class IdentityService(
         return result.ToApplicationResult();
     }
 
-    public async Task<string> GenerateEmailConfirmationTokenAsync(Guid userId)
-    {
-        var user = await userManager.FindByIdAsync(userId.ToString()) ?? throw new Exception("User not found");
-
-        return await userManager.GenerateEmailConfirmationTokenAsync(user);
-    }
-
     public async Task ConfirmUserEmail(Guid userId, string code)
     {
         var user = await userManager.FindByIdAsync(userId.ToString());
@@ -98,47 +91,6 @@ public class IdentityService(
         return (user.Id, user.Email!, roles);
     }
 
-    public async Task<(Result Result, Guid UserId, string Email, IList<string> Roles)> ValidateRefreshTokenAsync(Guid userId, string refreshToken)
-    {
-        var user = await userManager.FindByIdAsync(userId.ToString());
-
-        if (user == null)
-        {
-            return (Result.Failure(["User not found"]), Guid.Empty, string.Empty, new List<string>());
-        }
-
-        var storedValue = await userManager.GetAuthenticationTokenAsync(user, "Default", "RefreshToken");
-
-        if (string.IsNullOrEmpty(storedValue))
-        {
-            return (Result.Failure(["Invalid refresh token"]), Guid.Empty, string.Empty, new List<string>());
-        }
-
-        var parts = storedValue.Split(';');
-        if (parts.Length != 2)
-        {
-            return (Result.Failure(["Corrupted token data"]), Guid.Empty, string.Empty, new List<string>());
-        }
-
-        var storedToken = parts[0];
-        var expiryTicks = long.Parse(parts[1]);
-        var expiryDate = new DateTime(expiryTicks, DateTimeKind.Utc);
-
-        if (storedToken != refreshToken)
-        {
-            return (Result.Failure(["Invalid refresh token"]), Guid.Empty, string.Empty, new List<string>());
-        }
-
-        if (expiryDate < DateTime.UtcNow)
-        {
-            await userManager.RemoveAuthenticationTokenAsync(user, "Default", "RefreshToken");
-            return (Result.Failure(["Refresh token expired"]), Guid.Empty, string.Empty, new List<string>());
-        }
-
-        var roles = await userManager.GetRolesAsync(user);
-        return (Result.Success(), user.Id, user.Email!, roles);
-    }
-
     public async Task ResetPasswordAsync(string email, string code, string newPassword)
     {
         var user = await userManager.FindByEmailAsync(email);
@@ -147,17 +99,5 @@ public class IdentityService(
         var result = await userManager.ResetPasswordAsync(user, code, newPassword);
 
         if (!result.Succeeded) throw new ValidationException();
-    }
-
-    public async Task<string?> GeneratePasswordResetTokenAsync(string email)
-    {
-        var user = await userManager.FindByEmailAsync(email);
-
-        if (user == null || !await userManager.IsEmailConfirmedAsync(user))
-        {
-            return null;
-        }
-
-        return await userManager.GeneratePasswordResetTokenAsync(user);
     }
 }

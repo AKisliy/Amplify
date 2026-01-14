@@ -14,15 +14,9 @@ public interface IIdentityService
 
     Task<Result> DeleteUserAsync(Guid userId);
 
-    Task<string> GenerateEmailConfirmationTokenAsync(Guid userId);
-
     Task ConfirmUserEmail(Guid userId, string code);
 
     Task<(Guid UserId, string Email, IList<string> Roles)> AuthenticateAsync(string email, string password);
 
-    Task<(Result Result, Guid UserId, string Email, IList<string> Roles)> ValidateRefreshTokenAsync(Guid userId, string refreshToken);
-
     Task ResetPasswordAsync(string email, string code, string newPassword);
-
-    Task<string?> GeneratePasswordResetTokenAsync(string email);
 }

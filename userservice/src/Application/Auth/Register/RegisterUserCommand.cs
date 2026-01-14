@@ -7,9 +7,9 @@ namespace UserService.Application.Auth.Register;
 public record RegisterUserCommand(string Email, string Password) : IRequest<Guid>;
 
 public class RegisterUserCommandHandler(
+    ITokenService tokenService,
     IIdentityService identityService,
-    IEmailService emailService)
-    : IRequestHandler<RegisterUserCommand, Guid>
+    IEmailService emailService) : IRequestHandler<RegisterUserCommand, Guid>
 {
     public async Task<Guid> Handle(RegisterUserCommand request, CancellationToken cancellationToken)
     {
@@ -21,7 +21,7 @@ public class RegisterUserCommandHandler(
             throw new Exception();
         }
 
-        var rawToken = await identityService.GenerateEmailConfirmationTokenAsync(userId);
+        var rawToken = await tokenService.GenerateEmailConfirmationTokenAsync(userId);
 
         var encodedToken = WebEncoders.Base64UrlEncode(Encoding.UTF8.GetBytes(rawToken));
 

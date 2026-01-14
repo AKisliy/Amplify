@@ -6,10 +6,7 @@ namespace UserService.Application.Auth.Refresh;
 
 public record RefreshTokenCommand(string AccessToken, string RefreshToken) : IRequest<LoginResponse>;
 
-public class RefreshTokenCommandHandler(
-    ITokenService tokenService,
-    IIdentityService identityService)
-    : IRequestHandler<RefreshTokenCommand, LoginResponse>
+public class RefreshTokenCommandHandler(ITokenService tokenService) : IRequestHandler<RefreshTokenCommand, LoginResponse>
 {
     public async Task<LoginResponse> Handle(RefreshTokenCommand request, CancellationToken cancellationToken)
     {
@@ -23,7 +20,7 @@ public class RefreshTokenCommandHandler(
             throw new UnauthorizedAccessException("Invalid access token claims");
         }
 
-        var (result, _, email, roles) = await identityService.ValidateRefreshTokenAsync(userId, request.RefreshToken);
+        var (result, _, email, roles) = await tokenService.ValidateRefreshTokenAsync(userId, request.RefreshToken);
 
         if (!result.Succeeded)
         {

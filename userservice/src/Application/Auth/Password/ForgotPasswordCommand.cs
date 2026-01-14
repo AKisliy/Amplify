@@ -8,12 +8,12 @@ namespace UserService.Application.Auth.Password;
 public record ForgotPasswordCommand(string Email) : IRequest;
 
 public class ForgotPasswordCommandHandler(
-    IIdentityService identityService,
+    ITokenService tokenService,
     IEmailService emailService) : IRequestHandler<ForgotPasswordCommand>
 {
     public async Task Handle(ForgotPasswordCommand request, CancellationToken cancellationToken)
     {
-        var code = await identityService.GeneratePasswordResetTokenAsync(request.Email);
+        var code = await tokenService.GeneratePasswordResetTokenAsync(request.Email);
 
         if (string.IsNullOrEmpty(code))
         {
