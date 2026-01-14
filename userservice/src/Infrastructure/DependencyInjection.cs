@@ -14,6 +14,7 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using System.Security.Cryptography;
 using Microsoft.IdentityModel.Logging;
+using Resend;
 
 namespace Microsoft.Extensions.DependencyInjection;
 
@@ -46,12 +47,12 @@ public static class DependencyInjection
         builder.Services.AddTransient<IEmailService, ResendEmailSender>();
 
         builder.AddAuth();
+        builder.AddMailSender();
         builder.Services.AddInfrastructureOptions();
     }
 
     private static void AddInfrastructureOptions(this IServiceCollection services)
     {
-        services.AddOptions<MailOptions>().BindConfiguration(nameof(MailOptions));
         services.AddOptions<JwtOptions>().BindConfiguration(JwtOptions.SectionName);
     }
 
@@ -118,5 +119,16 @@ public static class DependencyInjection
 
         builder.Services.AddAuthorization(options =>
             options.AddPolicy(Policies.CanPurge, policy => policy.RequireRole(Roles.Administrator)));
+    }
+
+    private static void AddMailSender(this IHostApplicationBuilder builder)
+    {
+        var apiToken = builder.Configuration.GetValue<string>("MailOptions:ApiKey");
+
+        Guard.Against.NullOrEmpty(apiToken, message: "Email sender api token isn't set");
+
+        builder.Services.AddHttpClient<ResendClient>();
+        builder.Services.Configure<ResendClientOptions>(o => o.ApiToken = apiToken);
+        builder.Services.AddTransient<IResend, ResendClient>();
     }
 }
