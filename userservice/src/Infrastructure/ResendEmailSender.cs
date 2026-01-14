@@ -1,20 +1,20 @@
 using UserService.Infrastructure.Identity;
 using UserService.Infrastructure.Options;
-using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Resend;
+using UserService.Application.Common.Interfaces;
 
 namespace UserService.Infrastructure;
 
 public class ResendEmailSender(
     IOptions<MailOptions> options,
-    ILogger<ResendEmailSender> logger) : IEmailSender<ApplicationUser>
+    ILogger<ResendEmailSender> logger) : IEmailService
 {
     private const string BrandColor = "#323232";
     private const string AppName = "Amplify";
 
-    public async Task SendConfirmationLinkAsync(ApplicationUser user, string email, string confirmationLink)
+    public async Task SendConfirmationLinkAsync(string email, string confirmationLink)
     {
         logger.LogInformation("Sending confirmation link");
         var content = $@"

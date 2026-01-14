@@ -13,4 +13,10 @@ public interface IIdentityService
     Task<(Result Result, Guid UserId)> CreateUserAsync(string userName, string password);
 
     Task<Result> DeleteUserAsync(Guid userId);
+
+    Task<string> GenerateEmailConfirmationTokenAsync(Guid userId);
+
+    Task ConfirmUserEmail(Guid userId, string code);
+
+    Task<(Guid UserId, string Email, IList<string> Roles)> AuthenticateAsync(string email, string password);
 }

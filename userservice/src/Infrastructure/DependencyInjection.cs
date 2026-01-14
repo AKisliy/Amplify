@@ -9,8 +9,10 @@ using Microsoft.EntityFrameworkCore.Diagnostics;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Hosting;
 using UserService.Infrastructure.Options;
-using Microsoft.AspNetCore.Identity.UI.Services;
 using UserService.Infrastructure;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.IdentityModel.Tokens;
+using System.Text;
 
 namespace Microsoft.Extensions.DependencyInjection;
 
@@ -20,6 +22,8 @@ public static class DependencyInjection
     {
         var connectionString = builder.Configuration.GetConnectionString("UserServiceDb");
         Guard.Against.Null(connectionString, message: "Connection string 'UserServiceDb' not found.");
+
+        builder.Services.AddTransient<ITokenService, TokenService>();
 
         builder.Services.AddScoped<ISaveChangesInterceptor, AuditableEntityInterceptor>();
         builder.Services.AddScoped<ISaveChangesInterceptor, DispatchDomainEventsInterceptor>();
@@ -37,7 +41,27 @@ public static class DependencyInjection
 
         builder.Services.AddScoped<ApplicationDbContextInitialiser>();
 
-        builder.Services.AddAuthentication().AddBearerToken(IdentityConstants.BearerScheme);
+        builder.Services.AddAuthentication(options =>
+            {
+                options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+                options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+            })
+            .AddJwtBearer(options =>
+            {
+                options.SaveToken = true;
+                options.TokenValidationParameters = new TokenValidationParameters
+                {
+                    ValidateIssuer = true,
+                    ValidateAudience = true,
+                    ValidateLifetime = true,
+                    ValidateIssuerSigningKey = true,
+
+                    ValidIssuer = builder.Configuration["Jwt:Issuer"],
+                    ValidAudience = builder.Configuration["Jwt:Audience"],
+                    IssuerSigningKey = new SymmetricSecurityKey(
+                        Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"]!))
+                };
+            });
 
         builder.Services.AddAuthorizationBuilder();
 
@@ -54,7 +78,7 @@ public static class DependencyInjection
         builder.Services.AddAuthorization(options =>
             options.AddPolicy(Policies.CanPurge, policy => policy.RequireRole(Roles.Administrator)));
 
-        builder.Services.AddTransient<IEmailSender<ApplicationUser>, ResendEmailSender>();
+        builder.Services.AddTransient<IEmailService, ResendEmailSender>();
 
         builder.Services.AddInfrastructureOptions();
 
@@ -63,5 +87,6 @@ public static class DependencyInjection
     private static void AddInfrastructureOptions(this IServiceCollection services)
     {
         services.AddOptions<MailOptions>().BindConfiguration(nameof(MailOptions));
+        services.AddOptions<JwtOptions>().BindConfiguration(JwtOptions.SectionName);
     }
 }
