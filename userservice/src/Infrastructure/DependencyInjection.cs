@@ -42,14 +42,37 @@ public static class DependencyInjection
 
         builder.Services.AddScoped<ApplicationDbContextInitialiser>();
 
-        var privateKeyPem = builder.Configuration["Jwt:PrivateKeyPem"];
-        if (string.IsNullOrEmpty(privateKeyPem))
+        builder.Services.AddTransient<IEmailService, ResendEmailSender>();
+
+        builder.AddAuth();
+        builder.Services.AddInfrastructureOptions();
+    }
+
+    private static void AddInfrastructureOptions(this IServiceCollection services)
+    {
+        services.AddOptions<MailOptions>().BindConfiguration(nameof(MailOptions));
+        services.AddOptions<JwtOptions>().BindConfiguration(JwtOptions.SectionName);
+    }
+
+    private static void AddAuth(this IHostApplicationBuilder builder)
+    {
+        var configuration = builder.Configuration;
+        var jwtOptions = new JwtOptions()
+        {
+            Issuer = "",
+            Audience = "",
+            PrivateKeyPem = ""
+        };
+
+        configuration.GetSection(JwtOptions.SectionName).Bind(jwtOptions);
+
+        if (string.IsNullOrEmpty(jwtOptions.PrivateKeyPem))
         {
             throw new InvalidOperationException("Jwt:PrivateKeyPem is missing in configuration.");
         }
 
         var rsa = RSA.Create();
-        rsa.ImportFromPem(privateKeyPem);
+        rsa.ImportFromPem(jwtOptions.PrivateKeyPem);
 
         builder.Services.AddAuthentication(options =>
             {
@@ -66,8 +89,8 @@ public static class DependencyInjection
                     ValidateLifetime = true,
                     ValidateIssuerSigningKey = true,
 
-                    ValidIssuer = builder.Configuration["Jwt:Issuer"],
-                    ValidAudience = builder.Configuration["Jwt:Audience"],
+                    ValidIssuer = jwtOptions.Issuer,
+                    ValidAudience = jwtOptions.Audience,
                     IssuerSigningKey = new RsaSecurityKey(rsa),
                     ValidAlgorithms = [SecurityAlgorithms.RsaSha256]
                 };
@@ -87,16 +110,5 @@ public static class DependencyInjection
 
         builder.Services.AddAuthorization(options =>
             options.AddPolicy(Policies.CanPurge, policy => policy.RequireRole(Roles.Administrator)));
-
-        builder.Services.AddTransient<IEmailService, ResendEmailSender>();
-
-        builder.Services.AddInfrastructureOptions();
-
-    }
-
-    private static void AddInfrastructureOptions(this IServiceCollection services)
-    {
-        services.AddOptions<MailOptions>().BindConfiguration(nameof(MailOptions));
-        services.AddOptions<JwtOptions>().BindConfiguration(JwtOptions.SectionName);
     }
 }
