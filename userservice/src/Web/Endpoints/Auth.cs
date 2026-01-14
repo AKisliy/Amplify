@@ -1,5 +1,6 @@
 using UserService.Application.Auth.ConfirmEmail;
 using UserService.Application.Auth.Login;
+using UserService.Application.Auth.Password;
 using UserService.Application.Auth.Refresh;
 using UserService.Application.Auth.Register;
 using UserService.Application.Common.Interfaces;
@@ -36,9 +37,18 @@ public class Auth : EndpointGroupBase
             return Results.Ok(result);
         });
 
-        groupBuilder.MapGet(".well-known/jwks.json", (ITokenService tokenService) =>
+        groupBuilder.MapPost("forgotPassword", async (ISender sender, ForgotPasswordCommand command) =>
         {
-            return Results.Ok(tokenService.GetJwks());
-        }).AllowAnonymous();
+            await sender.Send(command);
+            return Results.Ok();
+        });
+
+        groupBuilder.MapPost("resetPassword", async (ISender sender, ResetPasswordCommand command) =>
+        {
+            await sender.Send(command);
+            return Results.Ok();
+        });
+
+        groupBuilder.MapGet(".well-known/jwks.json", (ITokenService tokenService) => Results.Ok(tokenService.GetJwks())).AllowAnonymous();
     }
 }
