@@ -1,4 +1,3 @@
-using UserService.Infrastructure.Identity;
 using UserService.Infrastructure.Options;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
@@ -39,26 +38,7 @@ public class ResendEmailSender(
         await SendEmail(email, "Подтверждение регистрации", GenerateHtmlTemplate(content));
     }
 
-    public async Task SendPasswordResetCodeAsync(ApplicationUser user, string email, string resetCode)
-    {
-        var content = $@"
-            <h1 style=""font-size: 24px; font-weight: bold; color: #1f2937; margin: 0 0 20px;"">Код сброса пароля</h1>
-            <p style=""font-size: 16px; line-height: 24px; color: #4b5563; margin: 0 0 20px;"">
-                Вы запросили сброс пароля. Используйте код ниже для продолжения.
-            </p>
-            <div style=""background-color: #f3f4f6; border-radius: 8px; padding: 20px; text-align: center; margin-bottom: 20px;"">
-                <span style=""font-size: 32px; font-weight: bold; letter-spacing: 5px; color: #1f2937; font-family: monospace;"">
-                    {resetCode}
-                </span>
-            </div>
-            <p style=""font-size: 14px; color: #6b7280;"">
-                Если вы не запрашивали сброс пароля, просто проигнорируйте это письмо.
-            </p>";
-
-        await SendEmail(email, "Ваш код для сброса пароля", GenerateHtmlTemplate(content));
-    }
-
-    public async Task SendPasswordResetLinkAsync(ApplicationUser user, string email, string resetLink)
+    public async Task SendPasswordResetLinkAsync(string email, string resetLink)
     {
         var content = $@"
             <h1 style=""font-size: 24px; font-weight: bold; color: #1f2937; margin: 0 0 20px;"">Сброс пароля</h1>

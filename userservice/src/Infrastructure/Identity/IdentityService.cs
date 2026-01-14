@@ -2,6 +2,7 @@ using UserService.Application.Common.Interfaces;
 using UserService.Application.Common.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
+using UserService.Application.Common.Exceptions;
 
 namespace UserService.Infrastructure.Identity;
 
@@ -136,5 +137,27 @@ public class IdentityService(
 
         var roles = await userManager.GetRolesAsync(user);
         return (Result.Success(), user.Id, user.Email!, roles);
+    }
+
+    public async Task ResetPasswordAsync(string email, string code, string newPassword)
+    {
+        var user = await userManager.FindByEmailAsync(email);
+        if (user == null) return;
+
+        var result = await userManager.ResetPasswordAsync(user, code, newPassword);
+
+        if (!result.Succeeded) throw new ValidationException();
+    }
+
+    public async Task<string?> GeneratePasswordResetTokenAsync(string email)
+    {
+        var user = await userManager.FindByEmailAsync(email);
+
+        if (user == null || !await userManager.IsEmailConfirmedAsync(user))
+        {
+            return null;
+        }
+
+        return await userManager.GeneratePasswordResetTokenAsync(user);
     }
 }

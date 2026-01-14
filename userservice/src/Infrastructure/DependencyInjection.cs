@@ -12,7 +12,7 @@ using UserService.Infrastructure.Options;
 using UserService.Infrastructure;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
-using System.Text;
+using System.Security.Cryptography;
 
 namespace Microsoft.Extensions.DependencyInjection;
 
@@ -23,7 +23,8 @@ public static class DependencyInjection
         var connectionString = builder.Configuration.GetConnectionString("UserServiceDb");
         Guard.Against.Null(connectionString, message: "Connection string 'UserServiceDb' not found.");
 
-        builder.Services.AddTransient<ITokenService, TokenService>();
+        builder.Services.AddScoped<ITokenService, TokenService>();
+        builder.Services.AddSingleton<IJwtTokenGenerator, JwtTokenGenerator>();
 
         builder.Services.AddScoped<ISaveChangesInterceptor, AuditableEntityInterceptor>();
         builder.Services.AddScoped<ISaveChangesInterceptor, DispatchDomainEventsInterceptor>();
@@ -40,6 +41,15 @@ public static class DependencyInjection
         builder.Services.AddScoped<IApplicationDbContext>(provider => provider.GetRequiredService<ApplicationDbContext>());
 
         builder.Services.AddScoped<ApplicationDbContextInitialiser>();
+
+        var privateKeyPem = builder.Configuration["Jwt:PrivateKeyPem"];
+        if (string.IsNullOrEmpty(privateKeyPem))
+        {
+            throw new InvalidOperationException("Jwt:PrivateKeyPem is missing in configuration.");
+        }
+
+        var rsa = RSA.Create();
+        rsa.ImportFromPem(privateKeyPem);
 
         builder.Services.AddAuthentication(options =>
             {
@@ -58,8 +68,8 @@ public static class DependencyInjection
 
                     ValidIssuer = builder.Configuration["Jwt:Issuer"],
                     ValidAudience = builder.Configuration["Jwt:Audience"],
-                    IssuerSigningKey = new SymmetricSecurityKey(
-                        Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"]!))
+                    IssuerSigningKey = new RsaSecurityKey(rsa),
+                    ValidAlgorithms = [SecurityAlgorithms.RsaSha256]
                 };
             });
 
