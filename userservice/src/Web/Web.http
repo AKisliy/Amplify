@@ -1,0 +1,82 @@
+﻿# For more info on HTTP files go to https://aka.ms/vs/httpfile
+@Web_HostAddress = https://localhost:5001
+
+@Email=administrator@localhost
+@Password=Administrator1!
+@BearerToken=<YourToken>
+
+# POST Users Register
+POST {{Web_HostAddress}}/api/Users/Register
+Content-Type: application/json
+
+{
+  "email": "{{Email}}",
+  "password": "{{Password}}"
+}
+
+###
+
+# POST Users Login
+POST {{Web_HostAddress}}/api/Users/Login
+Content-Type: application/json
+
+{
+  "email": "{{Email}}",
+  "password": "{{Password}}"
+}
+
+###
+
+# POST Users Refresh
+POST {{Web_HostAddress}}/api/Users/Refresh
+Authorization: Bearer {{BearerToken}}
+Content-Type: application/json
+
+{
+  "refreshToken": ""
+}
+
+###
+
+# GET WeatherForecast
+GET {{Web_HostAddress}}/api/WeatherForecasts
+Authorization: Bearer {{BearerToken}}
+
+###
+
+# GET TodoLists
+GET {{Web_HostAddress}}/api/TodoLists
+Authorization: Bearer {{BearerToken}}
+
+###
+
+# POST TodoLists
+POST {{Web_HostAddress}}/api/TodoLists
+Authorization: Bearer {{BearerToken}}
+Content-Type: application/json
+
+// CreateTodoListCommand
+{
+  "Title": "Backlog"
+}
+
+###
+
+# PUT TodoLists
+PUT {{Web_HostAddress}}/api/TodoLists/1
+Authorization: Bearer {{BearerToken}}
+Content-Type: application/json
+
+// UpdateTodoListCommand
+{
+  "Id": 1,
+  "Title": "Product Backlog"
+}
+
+###
+
+# DELETE TodoLists
+DELETE {{Web_HostAddress}}/api/TodoLists/1
+Authorization: Bearer {{BearerToken}}
+
+###
