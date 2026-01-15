@@ -75,10 +75,14 @@ public class ApplicationDbContextInitialiser(
 
         if (userManager.Users.All(u => u.UserName != administrator.UserName))
         {
-            await userManager.CreateAsync(administrator, "Administrator1!");
+            var creationResult = await userManager.CreateAsync(administrator, "Administrator1!");
+
+            var confirmEmailToken = await userManager.GenerateEmailConfirmationTokenAsync(administrator);
+            await userManager.ConfirmEmailAsync(administrator, confirmEmailToken);
+
             if (!string.IsNullOrWhiteSpace(administratorRole.Name))
             {
-                await userManager.AddToRolesAsync(administrator, new[] { administratorRole.Name });
+                await userManager.AddToRolesAsync(administrator, [administratorRole.Name]);
             }
         }
 
