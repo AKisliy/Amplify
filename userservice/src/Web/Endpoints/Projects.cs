@@ -1,15 +1,19 @@
 using Microsoft.AspNetCore.Http.HttpResults;
 using UserService.Application.Projects.Commands.CreateProject;
 using UserService.Application.Projects.Commands.DeleteProject;
+using UserService.Application.Projects.Commands.UpdateProject;
 
 namespace UserService.Web.Endpoints;
 
 public class Projects : EndpointGroupBase
 {
+    public override string? GroupName => "projects";
+
     public override void Map(RouteGroupBuilder groupBuilder)
     {
         groupBuilder.MapPost(CreateProject).RequireAuthorization();
         groupBuilder.MapDelete(DeleteProject, "{id}").RequireAuthorization();
+        groupBuilder.MapPut(UpdateProject, "{id}").RequireAuthorization();
     }
 
     public async Task<Created<Guid>> CreateProject(ISender sender, CreateProjectCommand command)
@@ -21,6 +25,15 @@ public class Projects : EndpointGroupBase
     public async Task<NoContent> DeleteProject(ISender sender, Guid id)
     {
         await sender.Send(new DeleteProjectCommand(id));
+
+        return TypedResults.NoContent();
+    }
+
+    public async Task<Results<NoContent, BadRequest>> UpdateProject(ISender sender, Guid id, UpdateProjectCommand command)
+    {
+        if (id != command.Id) return TypedResults.BadRequest();
+
+        await sender.Send(command);
 
         return TypedResults.NoContent();
     }

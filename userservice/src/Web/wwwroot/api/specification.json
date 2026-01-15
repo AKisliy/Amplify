@@ -179,10 +179,10 @@
         }
       }
     },
-    "/api/Projects": {
+    "/api/projects": {
       "post": {
         "tags": [
-          "Projects"
+          "projects"
         ],
         "operationId": "CreateProject",
         "requestBody": {
@@ -217,10 +217,10 @@
         ]
       }
     },
-    "/api/Projects/{id}": {
+    "/api/projects/{id}": {
       "delete": {
         "tags": [
-          "Projects"
+          "projects"
         ],
         "operationId": "DeleteProject",
         "parameters": [
@@ -237,6 +237,49 @@
         ],
         "responses": {
           "204": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "JWT": []
+          }
+        ]
+      },
+      "put": {
+        "tags": [
+          "projects"
+        ],
+        "operationId": "UpdateProject",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "guid"
+            },
+            "x-position": 1
+          }
+        ],
+        "requestBody": {
+          "x-name": "command",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateProjectCommand"
+              }
+            }
+          },
+          "required": true,
+          "x-position": 2
+        },
+        "responses": {
+          "204": {
+            "description": ""
+          },
+          "400": {
             "description": ""
           }
         },
@@ -476,6 +519,27 @@
         "type": "object",
         "additionalProperties": false,
         "properties": {
+          "name": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string",
+            "nullable": true
+          },
+          "photo": {
+            "type": "string",
+            "nullable": true
+          }
+        }
+      },
+      "UpdateProjectCommand": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "guid"
+          },
           "name": {
             "type": "string"
           },
