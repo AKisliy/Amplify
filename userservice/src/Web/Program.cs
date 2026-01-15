@@ -1,3 +1,5 @@
+using Microsoft.AspNetCore.Cors.Infrastructure;
+using Microsoft.Extensions.Options;
 using UserService.Infrastructure.Data;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -7,13 +9,6 @@ builder.AddKeyVaultIfConfigured();
 builder.AddApplicationServices();
 builder.AddInfrastructureServices();
 builder.AddWebServices();
-
-builder.Services.AddCors(options => options.AddPolicy(
-    "AllowSpecificOrigin",
-    builder => builder.WithOrigins("https://localhost:5001")
-        .AllowAnyHeader()
-        .AllowAnyMethod()
-        .AllowCredentials()));
 
 var app = builder.Build();
 
@@ -38,8 +33,9 @@ app.UseSwaggerUi(settings =>
     settings.DocumentPath = "/api/specification.json";
 });
 
-// TODO: get rid of hardcoded string
-app.UseCors("AllowSpecificOrigin");
+
+var corsOptions = app.Services.GetRequiredService<IOptions<CorsOptions>>();
+app.UseCors(corsOptions.Value.DefaultPolicyName);
 
 
 app.UseExceptionHandler(options => { });

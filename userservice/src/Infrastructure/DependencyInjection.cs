@@ -55,6 +55,7 @@ public static class DependencyInjection
     {
         services.AddOptions<JwtOptions>().BindConfiguration(JwtOptions.SectionName);
         services.AddOptions<MyCookiesOptions>().BindConfiguration(MyCookiesOptions.SectionName);
+        services.AddOptions<CorsOptions>().BindConfiguration(CorsOptions.SectionName);
     }
 
     private static void AddAuth(this IHostApplicationBuilder builder)
@@ -140,6 +141,27 @@ public static class DependencyInjection
 
         builder.Services.AddAuthorization(options =>
             options.AddPolicy(Policies.CanPurge, policy => policy.RequireRole(Roles.Administrator)));
+
+        builder.AddCorsUsage();
+    }
+
+    private static void AddCorsUsage(this IHostApplicationBuilder builder)
+    {
+        var corsOptions = new CorsOptions()
+        {
+            DefaultPolicyName = ""
+        };
+
+        builder.Configuration.GetSection(CorsOptions.SectionName).Bind(corsOptions);
+
+        Guard.Against.NullOrEmpty(corsOptions.DefaultPolicyName, message: "Cors policy name is not set");
+
+        builder.Services.AddCors(options => options.AddPolicy(
+            corsOptions.DefaultPolicyName,
+            builder => builder.WithOrigins([.. corsOptions.AllowedOrigins])
+                .AllowAnyHeader()
+                .AllowAnyMethod()
+                .AllowCredentials()));
     }
 
     private static void AddMailSender(this IHostApplicationBuilder builder)
