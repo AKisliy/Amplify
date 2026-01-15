@@ -1,6 +1,7 @@
 ﻿using System.Reflection;
 using UserService.Application.Common.Behaviours;
 using Microsoft.Extensions.Hosting;
+using UserService.Application.Common.Options;
 
 namespace Microsoft.Extensions.DependencyInjection;
 
@@ -12,7 +13,8 @@ public static class DependencyInjection
 
         builder.Services.AddValidatorsFromAssembly(Assembly.GetExecutingAssembly());
 
-        builder.Services.AddMediatR(cfg => {
+        builder.Services.AddMediatR(cfg =>
+        {
             cfg.RegisterServicesFromAssembly(Assembly.GetExecutingAssembly());
             cfg.AddOpenRequestPreProcessor(typeof(LoggingBehaviour<>));
             cfg.AddOpenBehavior(typeof(UnhandledExceptionBehaviour<,>));
@@ -20,5 +22,12 @@ public static class DependencyInjection
             cfg.AddOpenBehavior(typeof(ValidationBehaviour<,>));
             cfg.AddOpenBehavior(typeof(PerformanceBehaviour<,>));
         });
+
+        builder.Services.AddApplicationOptions();
+    }
+
+    private static void AddApplicationOptions(this IServiceCollection services)
+    {
+        services.AddOptions<FrontendOptions>().BindConfiguration(FrontendOptions.SectionName);
     }
 }

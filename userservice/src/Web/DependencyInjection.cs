@@ -3,7 +3,6 @@ using UserService.Application.Common.Interfaces;
 using UserService.Infrastructure.Data;
 using UserService.Web.Services;
 using Microsoft.AspNetCore.Mvc;
-
 using NSwag;
 using NSwag.Generation.Processors.Security;
 

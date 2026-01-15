@@ -1,3 +1,4 @@
+using Flurl;
 using Microsoft.Extensions.Options;
 using UserService.Application.Auth.ConfirmEmail;
 using UserService.Application.Auth.Login;
@@ -5,6 +6,7 @@ using UserService.Application.Auth.Password;
 using UserService.Application.Auth.Refresh;
 using UserService.Application.Auth.Register;
 using UserService.Application.Common.Interfaces;
+using UserService.Application.Common.Options;
 using UserService.Infrastructure.Options;
 
 namespace UserService.Web.Endpoints;
@@ -19,12 +21,18 @@ public class Auth : EndpointGroupBase
             return Results.Ok();
         });
 
-        groupBuilder.MapGet("confirmEmail", async (ISender sender, [AsParameters] ConfirmEmailCommand command) =>
+        groupBuilder.MapGet("confirmEmail", async (
+            ISender sender,
+            IOptions<FrontendOptions> frontendOptions,
+            [AsParameters] ConfirmEmailCommand command) =>
         {
             await sender.Send(command);
-            // Лучше делать редирект на страницу "Успех" на фронте
-            // return Results.Redirect("https://myapp.com/email-confirmed"); 
-            return Results.Ok("Email confirmed successfully");
+
+            var baseFrontendUrl = frontendOptions.Value.Url;
+            var emailConfirmedPath = frontendOptions.Value.EmailConfirmedPath;
+            var redirectUrl = Url.Combine(baseFrontendUrl, emailConfirmedPath);
+
+            return Results.Redirect(redirectUrl);
         });
 
         groupBuilder.MapPost(LoginUser, "login");
