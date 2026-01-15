@@ -71,7 +71,7 @@
         "tags": [
           "Auth"
         ],
-        "operationId": "PostApiAuthLogin",
+        "operationId": "LoginUser",
         "requestBody": {
           "x-name": "command",
           "content": {
@@ -96,7 +96,7 @@
         "tags": [
           "Auth"
         ],
-        "operationId": "PostApiAuthRefresh",
+        "operationId": "RefreshToken",
         "requestBody": {
           "x-name": "command",
           "content": {

@@ -8,6 +8,13 @@ builder.AddApplicationServices();
 builder.AddInfrastructureServices();
 builder.AddWebServices();
 
+builder.Services.AddCors(options => options.AddPolicy(
+    "AllowSpecificOrigin",
+    builder => builder.WithOrigins("https://localhost:5001")
+        .AllowAnyHeader()
+        .AllowAnyMethod()
+        .AllowCredentials()));
+
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
@@ -30,6 +37,9 @@ app.UseSwaggerUi(settings =>
     settings.Path = "/api";
     settings.DocumentPath = "/api/specification.json";
 });
+
+// TODO: get rid of hardcoded string
+app.UseCors("AllowSpecificOrigin");
 
 
 app.UseExceptionHandler(options => { });
