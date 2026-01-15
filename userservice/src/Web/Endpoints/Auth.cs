@@ -27,12 +27,7 @@ public class Auth : EndpointGroupBase
             [AsParameters] ConfirmEmailCommand command) =>
         {
             await sender.Send(command);
-
-            var baseFrontendUrl = frontendOptions.Value.Url;
-            var emailConfirmedPath = frontendOptions.Value.EmailConfirmedPath;
-            var redirectUrl = Url.Combine(baseFrontendUrl, emailConfirmedPath);
-
-            return Results.Redirect(redirectUrl);
+            return Results.Ok();
         });
 
         groupBuilder.MapPost(LoginUser, "login");
