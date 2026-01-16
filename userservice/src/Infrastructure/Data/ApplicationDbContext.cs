@@ -5,7 +5,6 @@ using UserService.Infrastructure.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Identity;
-using Microsoft.EntityFrameworkCore.Metadata;
 using UserService.Infrastructure.Extensions;
 
 namespace UserService.Infrastructure.Data;
@@ -16,6 +15,7 @@ public class ApplicationDbContext
     public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options) : base(options) { }
 
     public DbSet<Project> Projects => Set<Project>();
+    public DbSet<Ambassador> Ambassadors => Set<Ambassador>();
 
     protected override void OnModelCreating(ModelBuilder builder)
     {
