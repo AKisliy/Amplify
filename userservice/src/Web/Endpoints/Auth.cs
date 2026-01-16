@@ -1,4 +1,3 @@
-using Flurl;
 using Microsoft.Extensions.Options;
 using UserService.Application.Auth.ConfirmEmail;
 using UserService.Application.Auth.Login;

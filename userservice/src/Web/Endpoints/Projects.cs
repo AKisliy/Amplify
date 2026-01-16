@@ -10,7 +10,7 @@ namespace UserService.Web.Endpoints;
 
 public class Projects : EndpointGroupBase
 {
-    public override string? GroupName => "project";
+    public override string? GroupName => "projects";
 
     public override void Map(RouteGroupBuilder groupBuilder)
     {
@@ -25,7 +25,7 @@ public class Projects : EndpointGroupBase
     public async Task<Created<Guid>> CreateProject(ISender sender, CreateProjectCommand command)
     {
         var id = await sender.Send(command);
-        return TypedResults.Created($"/{nameof(Projects)}/{id}", id);
+        return TypedResults.Created($"/{GroupName}/{id}", id);
     }
 
     public async Task<NoContent> DeleteProject(ISender sender, Guid id)

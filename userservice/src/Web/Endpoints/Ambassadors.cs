@@ -4,7 +4,7 @@ using UserService.Application.Ambassadors.Commands.CreateAmbassador;
 
 namespace UserService.Web.Endpoints;
 
-public class Ambassador : EndpointGroupBase
+public class Ambassadors : EndpointGroupBase
 {
     public override string? GroupName => "ambassador";
 

@@ -44,10 +44,10 @@
         ]
       }
     },
-    "/api/Auth/register": {
+    "/api/auth/register": {
       "post": {
         "tags": [
-          "Auth"
+          "auth"
         ],
         "operationId": "PostApiAuthRegister",
         "requestBody": {
@@ -69,10 +69,10 @@
         }
       }
     },
-    "/api/Auth/confirmEmail": {
+    "/api/auth/confirmEmail": {
       "get": {
         "tags": [
-          "Auth"
+          "auth"
         ],
         "operationId": "GetApiAuthConfirmEmail",
         "parameters": [
@@ -104,10 +104,10 @@
         }
       }
     },
-    "/api/Auth/login": {
+    "/api/auth/login": {
       "post": {
         "tags": [
-          "Auth"
+          "auth"
         ],
         "operationId": "LoginUser",
         "requestBody": {
@@ -129,10 +129,10 @@
         }
       }
     },
-    "/api/Auth/refresh": {
+    "/api/auth/refresh": {
       "post": {
         "tags": [
-          "Auth"
+          "auth"
         ],
         "operationId": "RefreshToken",
         "requestBody": {
@@ -154,10 +154,10 @@
         }
       }
     },
-    "/api/Auth/forgotPassword": {
+    "/api/auth/forgotPassword": {
       "post": {
         "tags": [
-          "Auth"
+          "auth"
         ],
         "operationId": "PostApiAuthForgotPassword",
         "requestBody": {
@@ -179,10 +179,10 @@
         }
       }
     },
-    "/api/Auth/resetPassword": {
+    "/api/auth/resetPassword": {
       "post": {
         "tags": [
-          "Auth"
+          "auth"
         ],
         "operationId": "PostApiAuthResetPassword",
         "requestBody": {
@@ -204,10 +204,10 @@
         }
       }
     },
-    "/api/Auth/.well-known/jwks.json": {
+    "/api/auth/.well-known/jwks.json": {
       "get": {
         "tags": [
-          "Auth"
+          "auth"
         ],
         "operationId": "GetApiAuth.wellKnownJwks.json",
         "responses": {
