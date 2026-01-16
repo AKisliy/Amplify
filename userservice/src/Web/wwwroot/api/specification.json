@@ -217,10 +217,10 @@
         }
       }
     },
-    "/api/project": {
+    "/api/projects": {
       "post": {
         "tags": [
-          "project"
+          "projects"
         ],
         "operationId": "CreateProject",
         "requestBody": {
@@ -256,7 +256,7 @@
       },
       "get": {
         "tags": [
-          "project"
+          "projects"
         ],
         "operationId": "GetUserProjects",
         "responses": {
@@ -281,10 +281,10 @@
         ]
       }
     },
-    "/api/project/{id}": {
+    "/api/projects/{id}": {
       "delete": {
         "tags": [
-          "project"
+          "projects"
         ],
         "operationId": "DeleteProject",
         "parameters": [
@@ -312,7 +312,7 @@
       },
       "put": {
         "tags": [
-          "project"
+          "projects"
         ],
         "operationId": "UpdateProject",
         "parameters": [
@@ -355,7 +355,7 @@
       },
       "get": {
         "tags": [
-          "project"
+          "projects"
         ],
         "operationId": "GetProject",
         "parameters": [
