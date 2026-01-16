@@ -1,6 +1,7 @@
 
 using UserService.Application.Common.Interfaces;
 using UserService.Domain.Entities;
+using UserService.Domain.Events.Projects;
 
 namespace UserService.Application.Projects.Commands.CreateProject;
 
@@ -21,6 +22,8 @@ public class CreateProjectCommandHandler(
             Photo = request.Photo,
             UserId = userId
         };
+
+        project.AddDomainEvent(new ProjectCreatedEvent(project));
 
         dbContext.Projects.Add(project);
 

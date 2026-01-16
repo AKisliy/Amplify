@@ -3,6 +3,7 @@ using UserService.Application.Projects.Commands.CreateProject;
 using UserService.Application.Projects.Commands.DeleteProject;
 using UserService.Application.Projects.Commands.UpdateProject;
 using UserService.Application.Projects.GetUserProjects.Queries;
+using UserService.Application.Projects.Queries.GetProject;
 using UserService.Application.Projects.Queries.GetUserProjects;
 
 namespace UserService.Web.Endpoints;
@@ -18,6 +19,7 @@ public class Projects : EndpointGroupBase
         groupBuilder.MapPut(UpdateProject, "{id}").RequireAuthorization();
 
         groupBuilder.MapGet(GetUserProjects).RequireAuthorization();
+        groupBuilder.MapGet(GetProject, "{id}").RequireAuthorization();
     }
 
     public async Task<Created<Guid>> CreateProject(ISender sender, CreateProjectCommand command)
@@ -47,5 +49,12 @@ public class Projects : EndpointGroupBase
         var result = await sender.Send(new GetUserProjectsQuery());
 
         return TypedResults.Ok(result);
+    }
+
+    public async Task<Ok<ProjectDto>> GetProject(ISender sender, Guid id)
+    {
+        var project = await sender.Send(new GetProjectQuery(id));
+
+        return TypedResults.Ok(project);
     }
 }
