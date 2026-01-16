@@ -6,7 +6,7 @@ namespace UserService.Web.Endpoints;
 
 public class Ambassadors : EndpointGroupBase
 {
-    public override string? GroupName => "ambassador";
+    public override string? GroupName => "ambassadors";
 
     public override void Map(RouteGroupBuilder groupBuilder)
     {

@@ -6,10 +6,10 @@
     "version": "1.0.0"
   },
   "paths": {
-    "/api/ambassador": {
+    "/api/ambassadors": {
       "post": {
         "tags": [
-          "ambassador"
+          "ambassadors"
         ],
         "operationId": "CreateAmbassador",
         "requestBody": {

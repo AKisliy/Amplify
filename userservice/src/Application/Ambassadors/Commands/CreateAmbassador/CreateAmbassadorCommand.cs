@@ -1,3 +1,4 @@
+using System.Data.Common;
 using UserService.Application.Common.Interfaces;
 using UserService.Domain.Entities;
 
@@ -9,14 +10,14 @@ public record CreateAmbassadorCommand(
     string? BehavioralPatterns,
     Guid ProjectId) : IRequest<Guid>;
 
-public class CreateAmbassadorCommandHandler(IApplicationDbContext dbContext,
-    IUser user) : IRequestHandler<CreateAmbassadorCommand, Guid>
+public class CreateAmbassadorCommandHandler(IApplicationDbContext dbContext, IUser user)
+    : IRequestHandler<CreateAmbassadorCommand, Guid>
 {
     public async Task<Guid> Handle(CreateAmbassadorCommand request, CancellationToken cancellationToken)
     {
-        var project = await dbContext.Projects.FindAsync(new object[] { request.ProjectId }, cancellationToken);
+        var project = await dbContext.Projects.FindAsync(request.ProjectId, cancellationToken);
 
-        Guard.Against.NotFound(request.ProjectId, project);
+        Guard.Against.NotFound(request.ProjectId, project, "Project");
 
         if (project.UserId != user.Id)
         {
