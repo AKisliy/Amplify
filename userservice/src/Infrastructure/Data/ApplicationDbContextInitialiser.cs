@@ -1,5 +1,4 @@
 ﻿using UserService.Domain.Constants;
-using UserService.Domain.Entities;
 using UserService.Infrastructure.Identity;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Identity;
