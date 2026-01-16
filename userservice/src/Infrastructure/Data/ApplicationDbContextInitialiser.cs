@@ -87,6 +87,16 @@ public class ApplicationDbContextInitialiser(
 
         // Default data
         // Seed, if necessary
-        // TODO: Add sample project for admin
+        if (!context.Projects.Any())
+        {
+            context.Projects.Add(new Domain.Entities.Project
+            {
+                Name = "Default Project",
+                Description = "This is your default project.",
+                UserId = administrator.Id
+            });
+
+            await context.SaveChangesAsync();
+        }
     }
 }

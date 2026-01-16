@@ -25,7 +25,7 @@ public class Projects : EndpointGroupBase
     public async Task<Created<Guid>> CreateProject(ISender sender, CreateProjectCommand command)
     {
         var id = await sender.Send(command);
-        return TypedResults.Created($"/{nameof(Projects)}/{id}", id);
+        return TypedResults.Created($"/{GroupName}/{id}", id);
     }
 
     public async Task<NoContent> DeleteProject(ISender sender, Guid id)

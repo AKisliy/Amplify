@@ -6,10 +6,156 @@
     "version": "1.0.0"
   },
   "paths": {
-    "/api/Auth/register": {
+    "/api/ambassadors": {
       "post": {
         "tags": [
-          "Auth"
+          "ambassadors"
+        ],
+        "operationId": "CreateAmbassador",
+        "requestBody": {
+          "x-name": "command",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateAmbassadorCommand"
+              }
+            }
+          },
+          "required": true,
+          "x-position": 1
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "string",
+                  "format": "guid"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "JWT": []
+          }
+        ]
+      }
+    },
+    "/api/ambassadors/{id}": {
+      "put": {
+        "tags": [
+          "ambassadors"
+        ],
+        "operationId": "UpdateAmbassador",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "guid"
+            },
+            "x-position": 1
+          }
+        ],
+        "requestBody": {
+          "x-name": "command",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateAmbassadorCommand"
+              }
+            }
+          },
+          "required": true,
+          "x-position": 2
+        },
+        "responses": {
+          "204": {
+            "description": ""
+          },
+          "400": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "JWT": []
+          }
+        ]
+      },
+      "delete": {
+        "tags": [
+          "ambassadors"
+        ],
+        "operationId": "DeleteAmbassador",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "guid"
+            },
+            "x-position": 1
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "JWT": []
+          }
+        ]
+      },
+      "get": {
+        "tags": [
+          "ambassadors"
+        ],
+        "operationId": "GetAmbassador",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "guid"
+            },
+            "x-position": 1
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AmbassadorDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "JWT": []
+          }
+        ]
+      }
+    },
+    "/api/auth/register": {
+      "post": {
+        "tags": [
+          "auth"
         ],
         "operationId": "PostApiAuthRegister",
         "requestBody": {
@@ -31,10 +177,10 @@
         }
       }
     },
-    "/api/Auth/confirmEmail": {
+    "/api/auth/confirmEmail": {
       "get": {
         "tags": [
-          "Auth"
+          "auth"
         ],
         "operationId": "GetApiAuthConfirmEmail",
         "parameters": [
@@ -66,10 +212,10 @@
         }
       }
     },
-    "/api/Auth/login": {
+    "/api/auth/login": {
       "post": {
         "tags": [
-          "Auth"
+          "auth"
         ],
         "operationId": "LoginUser",
         "requestBody": {
@@ -91,10 +237,10 @@
         }
       }
     },
-    "/api/Auth/refresh": {
+    "/api/auth/refresh": {
       "post": {
         "tags": [
-          "Auth"
+          "auth"
         ],
         "operationId": "RefreshToken",
         "requestBody": {
@@ -116,10 +262,10 @@
         }
       }
     },
-    "/api/Auth/forgotPassword": {
+    "/api/auth/forgotPassword": {
       "post": {
         "tags": [
-          "Auth"
+          "auth"
         ],
         "operationId": "PostApiAuthForgotPassword",
         "requestBody": {
@@ -141,10 +287,10 @@
         }
       }
     },
-    "/api/Auth/resetPassword": {
+    "/api/auth/resetPassword": {
       "post": {
         "tags": [
-          "Auth"
+          "auth"
         ],
         "operationId": "PostApiAuthResetPassword",
         "requestBody": {
@@ -166,10 +312,10 @@
         }
       }
     },
-    "/api/Auth/.well-known/jwks.json": {
+    "/api/auth/.well-known/jwks.json": {
       "get": {
         "tags": [
-          "Auth"
+          "auth"
         ],
         "operationId": "GetApiAuth.wellKnownJwks.json",
         "responses": {
@@ -354,6 +500,69 @@
   },
   "components": {
     "schemas": {
+      "CreateAmbassadorCommand": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "biography": {
+            "type": "string",
+            "nullable": true
+          },
+          "behavioralPatterns": {
+            "type": "string",
+            "nullable": true
+          },
+          "projectId": {
+            "type": "string",
+            "format": "guid"
+          }
+        }
+      },
+      "UpdateAmbassadorCommand": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "guid"
+          },
+          "name": {
+            "type": "string"
+          },
+          "biography": {
+            "type": "string",
+            "nullable": true
+          },
+          "behavioralPatterns": {
+            "type": "string",
+            "nullable": true
+          }
+        }
+      },
+      "AmbassadorDto": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "guid"
+          },
+          "name": {
+            "type": "string"
+          },
+          "biography": {
+            "type": "string",
+            "nullable": true
+          },
+          "behavioralPatterns": {
+            "type": "string",
+            "nullable": true
+          }
+        }
+      },
       "RegisterUserCommand": {
         "type": "object",
         "additionalProperties": false,
