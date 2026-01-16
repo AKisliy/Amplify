@@ -87,6 +87,34 @@
             "JWT": []
           }
         ]
+      },
+      "delete": {
+        "tags": [
+          "ambassadors"
+        ],
+        "operationId": "DeleteAmbassador",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "guid"
+            },
+            "x-position": 1
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "JWT": []
+          }
+        ]
       }
     },
     "/api/auth/register": {
