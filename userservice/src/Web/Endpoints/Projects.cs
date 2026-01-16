@@ -10,7 +10,7 @@ namespace UserService.Web.Endpoints;
 
 public class Projects : EndpointGroupBase
 {
-    public override string? GroupName => "projects";
+    public override string? GroupName => "project";
 
     public override void Map(RouteGroupBuilder groupBuilder)
     {
