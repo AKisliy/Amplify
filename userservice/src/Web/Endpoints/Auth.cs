@@ -13,6 +13,8 @@ namespace UserService.Web.Endpoints;
 
 public class Auth : EndpointGroupBase
 {
+    public override string? GroupName => "auth";
+
     public override void Map(RouteGroupBuilder groupBuilder)
     {
         groupBuilder.MapPost("register", async (ISender sender, RegisterUserCommand command) =>
