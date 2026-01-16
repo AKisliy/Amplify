@@ -215,6 +215,32 @@
             "JWT": []
           }
         ]
+      },
+      "get": {
+        "tags": [
+          "projects"
+        ],
+        "operationId": "GetUserProjects",
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ProjectDto"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "JWT": []
+          }
+        ]
       }
     },
     "/api/projects/{id}": {
@@ -533,6 +559,27 @@
         }
       },
       "UpdateProjectCommand": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "guid"
+          },
+          "name": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string",
+            "nullable": true
+          },
+          "photo": {
+            "type": "string",
+            "nullable": true
+          }
+        }
+      },
+      "ProjectDto": {
         "type": "object",
         "additionalProperties": false,
         "properties": {

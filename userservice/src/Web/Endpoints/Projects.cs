@@ -2,6 +2,8 @@ using Microsoft.AspNetCore.Http.HttpResults;
 using UserService.Application.Projects.Commands.CreateProject;
 using UserService.Application.Projects.Commands.DeleteProject;
 using UserService.Application.Projects.Commands.UpdateProject;
+using UserService.Application.Projects.GetUserProjects.Queries;
+using UserService.Application.Projects.Queries.GetUserProjects;
 
 namespace UserService.Web.Endpoints;
 
@@ -14,6 +16,8 @@ public class Projects : EndpointGroupBase
         groupBuilder.MapPost(CreateProject).RequireAuthorization();
         groupBuilder.MapDelete(DeleteProject, "{id}").RequireAuthorization();
         groupBuilder.MapPut(UpdateProject, "{id}").RequireAuthorization();
+
+        groupBuilder.MapGet(GetUserProjects).RequireAuthorization();
     }
 
     public async Task<Created<Guid>> CreateProject(ISender sender, CreateProjectCommand command)
@@ -36,5 +40,12 @@ public class Projects : EndpointGroupBase
         await sender.Send(command);
 
         return TypedResults.NoContent();
+    }
+
+    public async Task<Ok<IReadOnlyCollection<ProjectDto>>> GetUserProjects(ISender sender)
+    {
+        var result = await sender.Send(new GetUserProjectsQuery());
+
+        return TypedResults.Ok(result);
     }
 }
