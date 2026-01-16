@@ -179,41 +179,18 @@
         }
       }
     },
-    "/api/TodoLists": {
-      "get": {
-        "tags": [
-          "TodoLists"
-        ],
-        "operationId": "GetTodoLists",
-        "responses": {
-          "200": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/TodosVm"
-                }
-              }
-            }
-          }
-        },
-        "security": [
-          {
-            "JWT": []
-          }
-        ]
-      },
+    "/api/projects": {
       "post": {
         "tags": [
-          "TodoLists"
+          "projects"
         ],
-        "operationId": "CreateTodoList",
+        "operationId": "CreateProject",
         "requestBody": {
           "x-name": "command",
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/CreateTodoListCommand"
+                "$ref": "#/components/schemas/CreateProjectCommand"
               }
             }
           },
@@ -238,14 +215,68 @@
             "JWT": []
           }
         ]
+      },
+      "get": {
+        "tags": [
+          "projects"
+        ],
+        "operationId": "GetUserProjects",
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ProjectDto"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "JWT": []
+          }
+        ]
       }
     },
-    "/api/TodoLists/{id}": {
+    "/api/projects/{id}": {
+      "delete": {
+        "tags": [
+          "projects"
+        ],
+        "operationId": "DeleteProject",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "guid"
+            },
+            "x-position": 1
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "JWT": []
+          }
+        ]
+      },
       "put": {
         "tags": [
-          "TodoLists"
+          "projects"
         ],
-        "operationId": "UpdateTodoList",
+        "operationId": "UpdateProject",
         "parameters": [
           {
             "name": "id",
@@ -263,7 +294,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/UpdateTodoListCommand"
+                "$ref": "#/components/schemas/UpdateProjectCommand"
               }
             }
           },
@@ -284,11 +315,11 @@
           }
         ]
       },
-      "delete": {
+      "get": {
         "tags": [
-          "TodoLists"
+          "projects"
         ],
-        "operationId": "DeleteTodoList",
+        "operationId": "GetProject",
         "parameters": [
           {
             "name": "id",
@@ -302,33 +333,12 @@
           }
         ],
         "responses": {
-          "204": {
-            "description": ""
-          }
-        },
-        "security": [
-          {
-            "JWT": []
-          }
-        ]
-      }
-    },
-    "/api/WeatherForecasts": {
-      "get": {
-        "tags": [
-          "WeatherForecasts"
-        ],
-        "operationId": "GetWeatherForecasts",
-        "responses": {
           "200": {
             "description": "",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/WeatherForecast"
-                  }
+                  "$ref": "#/components/schemas/ProjectDto"
                 }
               }
             }
@@ -404,67 +414,24 @@
           }
         }
       },
-      "TodosVm": {
+      "CreateProjectCommand": {
         "type": "object",
         "additionalProperties": false,
         "properties": {
-          "priorityLevels": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/LookupDto"
-            }
+          "name": {
+            "type": "string"
           },
-          "lists": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/TodoListDto"
-            }
-          }
-        }
-      },
-      "LookupDto": {
-        "type": "object",
-        "additionalProperties": false,
-        "properties": {
-          "id": {
-            "type": "integer",
-            "format": "int32"
+          "description": {
+            "type": "string",
+            "nullable": true
           },
-          "title": {
+          "photo": {
             "type": "string",
             "nullable": true
           }
         }
       },
-      "TodoListDto": {
-        "type": "object",
-        "additionalProperties": false,
-        "properties": {
-          "id": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "title": {
-            "type": "string",
-            "nullable": true
-          },
-          "colour": {
-            "type": "string",
-            "nullable": true
-          }
-        }
-      },
-      "CreateTodoListCommand": {
-        "type": "object",
-        "additionalProperties": false,
-        "properties": {
-          "title": {
-            "type": "string",
-            "nullable": true
-          }
-        }
-      },
-      "UpdateTodoListCommand": {
+      "UpdateProjectCommand": {
         "type": "object",
         "additionalProperties": false,
         "properties": {
@@ -472,30 +439,37 @@
             "type": "string",
             "format": "guid"
           },
-          "title": {
+          "name": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string",
+            "nullable": true
+          },
+          "photo": {
             "type": "string",
             "nullable": true
           }
         }
       },
-      "WeatherForecast": {
+      "ProjectDto": {
         "type": "object",
         "additionalProperties": false,
         "properties": {
-          "date": {
+          "id": {
             "type": "string",
-            "format": "date-time"
+            "format": "guid"
           },
-          "temperatureC": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "temperatureF": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "summary": {
+          "name": {
             "type": "string"
+          },
+          "description": {
+            "type": "string",
+            "nullable": true
+          },
+          "photo": {
+            "type": "string",
+            "nullable": true
           }
         }
       }

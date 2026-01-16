@@ -15,8 +15,6 @@ public class ApplicationDbContext
 {
     public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options) : base(options) { }
 
-    public DbSet<TodoList> TodoLists => Set<TodoList>();
-
     public DbSet<Project> Projects => Set<Project>();
 
     protected override void OnModelCreating(ModelBuilder builder)

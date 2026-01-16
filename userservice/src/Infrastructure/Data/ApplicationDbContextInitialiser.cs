@@ -1,5 +1,4 @@
 ﻿using UserService.Domain.Constants;
-using UserService.Domain.Entities;
 using UserService.Infrastructure.Identity;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Identity;
@@ -75,23 +74,19 @@ public class ApplicationDbContextInitialiser(
 
         if (userManager.Users.All(u => u.UserName != administrator.UserName))
         {
-            await userManager.CreateAsync(administrator, "Administrator1!");
+            var creationResult = await userManager.CreateAsync(administrator, "Administrator1!");
+
+            var confirmEmailToken = await userManager.GenerateEmailConfirmationTokenAsync(administrator);
+            await userManager.ConfirmEmailAsync(administrator, confirmEmailToken);
+
             if (!string.IsNullOrWhiteSpace(administratorRole.Name))
             {
-                await userManager.AddToRolesAsync(administrator, new[] { administratorRole.Name });
+                await userManager.AddToRolesAsync(administrator, [administratorRole.Name]);
             }
         }
 
         // Default data
         // Seed, if necessary
-        if (!context.TodoLists.Any())
-        {
-            context.TodoLists.Add(new TodoList
-            {
-                Title = "Todo List"
-            });
-
-            await context.SaveChangesAsync();
-        }
+        // TODO: Add sample project for admin
     }
 }
