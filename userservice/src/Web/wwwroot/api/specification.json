@@ -115,6 +115,41 @@
             "JWT": []
           }
         ]
+      },
+      "get": {
+        "tags": [
+          "ambassadors"
+        ],
+        "operationId": "GetAmbassador",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "guid"
+            },
+            "x-position": 1
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AmbassadorDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "JWT": []
+          }
+        ]
       }
     },
     "/api/auth/register": {
@@ -487,6 +522,27 @@
         }
       },
       "UpdateAmbassadorCommand": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "guid"
+          },
+          "name": {
+            "type": "string"
+          },
+          "biography": {
+            "type": "string",
+            "nullable": true
+          },
+          "behavioralPatterns": {
+            "type": "string",
+            "nullable": true
+          }
+        }
+      },
+      "AmbassadorDto": {
         "type": "object",
         "additionalProperties": false,
         "properties": {
