@@ -88,14 +88,6 @@ public class ApplicationDbContextInitialiser(
 
         // Default data
         // Seed, if necessary
-        if (!context.TodoLists.Any())
-        {
-            context.TodoLists.Add(new TodoList
-            {
-                Title = "Todo List"
-            });
-
-            await context.SaveChangesAsync();
-        }
+        // TODO: Add sample project for admin
     }
 }
