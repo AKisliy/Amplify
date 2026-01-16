@@ -44,6 +44,51 @@
         ]
       }
     },
+    "/api/ambassadors/{id}": {
+      "put": {
+        "tags": [
+          "ambassadors"
+        ],
+        "operationId": "UpdateAmbassador",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "guid"
+            },
+            "x-position": 1
+          }
+        ],
+        "requestBody": {
+          "x-name": "command",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateAmbassadorCommand"
+              }
+            }
+          },
+          "required": true,
+          "x-position": 2
+        },
+        "responses": {
+          "204": {
+            "description": ""
+          },
+          "400": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "JWT": []
+          }
+        ]
+      }
+    },
     "/api/auth/register": {
       "post": {
         "tags": [
@@ -410,6 +455,27 @@
           "projectId": {
             "type": "string",
             "format": "guid"
+          }
+        }
+      },
+      "UpdateAmbassadorCommand": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "guid"
+          },
+          "name": {
+            "type": "string"
+          },
+          "biography": {
+            "type": "string",
+            "nullable": true
+          },
+          "behavioralPatterns": {
+            "type": "string",
+            "nullable": true
           }
         }
       },
