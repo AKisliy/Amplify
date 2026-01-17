@@ -52,6 +52,31 @@
         }
       }
     },
+    "/api/media/{mediaId}": {
+      "get": {
+        "tags": [
+          "media"
+        ],
+        "operationId": "GetApiMedia",
+        "parameters": [
+          {
+            "name": "mediaId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "guid"
+            },
+            "x-position": 1
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        }
+      }
+    },
     "/api/upload/photos/from-file": {
       "post": {
         "tags": [

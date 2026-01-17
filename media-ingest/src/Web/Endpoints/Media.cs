@@ -1,4 +1,5 @@
 using MediaIngest.Application.Media.Commands.Upload;
+using MediaIngest.Application.Media.Queries.GetMedia;
 using MediaIngest.Domain.Enums;
 using Microsoft.AspNetCore.Http.HttpResults;
 
@@ -11,6 +12,8 @@ public class Media : EndpointGroupBase
     public override void Map(RouteGroupBuilder groupBuilder)
     {
         groupBuilder.MapPost(UploadFromLink);
+
+        groupBuilder.MapGet("/{mediaId:guid}", GetMediaById);
     }
 
     public async Task<Created<UploadFileDto>> UploadFromLink(ISender sender, string link, MediaType mediaType)
@@ -18,5 +21,11 @@ public class Media : EndpointGroupBase
         var uploadedDto = await sender.Send(new UploadFromLinkCommand(link, mediaType));
 
         return TypedResults.Created($"/media/{uploadedDto.UploadId}", uploadedDto);
+    }
+
+    public async Task<RedirectHttpResult> GetMediaById(ISender sender, Guid mediaId)
+    {
+        var mediaDto = await sender.Send(new GetMediaQuery(mediaId));
+        return TypedResults.Redirect(mediaDto.MediaPath);
     }
 }

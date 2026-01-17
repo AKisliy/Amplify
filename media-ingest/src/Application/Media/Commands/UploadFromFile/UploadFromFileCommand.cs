@@ -6,32 +6,27 @@ namespace MediaIngest.Application.Media.Commands.UploadFromFile;
 public record UploadFromFileCommand(Stream FileStream, string FileName, string ContentType)
     : IRequest<UploadFileDto>;
 
-public class UploadFromFileCommandHandler : IRequestHandler<UploadFromFileCommand, UploadFileDto>
+public class UploadFromFileCommandHandler(IFileStorage fileStorage, IApplicationDbContext dbContext)
+    : IRequestHandler<UploadFromFileCommand, UploadFileDto>
 {
-    private readonly IFileStorage _fileStorage;
-    private readonly IApplicationDbContext _dbContext;
-
-    public UploadFromFileCommandHandler(IFileStorage fileStorage, IApplicationDbContext dbContext)
-    {
-        _fileStorage = fileStorage;
-        _dbContext = dbContext;
-    }
 
     public async Task<UploadFileDto> Handle(UploadFromFileCommand request, CancellationToken cancellationToken)
     {
-        var fileKey = await _fileStorage.SaveFileAsync(request.FileStream, request.FileName, cancellationToken);
+        var fileKey = await fileStorage.SaveFileAsync(request.FileStream, request.FileName, cancellationToken);
 
         var mediaFile = new MediaFile
         {
-            FileKey = fileKey
+            FileKey = fileKey,
+            OriginalFileName = request.FileName,
+            ContentType = request.ContentType,
+            FileSize = request.FileStream.Length
         };
 
-        _dbContext.MediaFiles.Add(mediaFile);
+        dbContext.MediaFiles.Add(mediaFile);
 
-        await _dbContext.SaveChangesAsync(cancellationToken);
+        await dbContext.SaveChangesAsync(cancellationToken);
 
-        var publicUrl = await _fileStorage.GetPublicUrlAsync(fileKey, TimeSpan.FromHours(1), cancellationToken);
-
+        var publicUrl = await fileStorage.GetPublicUrlAsync(mediaFile, TimeSpan.FromHours(1), cancellationToken);
         return new UploadFileDto
         {
             MediaId = mediaFile.Id,

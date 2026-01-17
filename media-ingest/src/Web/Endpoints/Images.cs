@@ -4,9 +4,9 @@ using Microsoft.AspNetCore.Http.HttpResults;
 
 namespace MediaIngest.Web.Endpoints;
 
-public class Photos : EndpointGroupBase
+public class Images : EndpointGroupBase
 {
-    public override string? GroupName => "upload/photos";
+    public override string? GroupName => "images";
 
     public override void Map(RouteGroupBuilder groupBuilder)
     {

@@ -1,4 +1,5 @@
 using MediaIngest.Application.Common.Interfaces;
+using MediaIngest.Domain.Entities;
 using MediaIngest.Infrastructure.Configuration;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
@@ -24,14 +25,19 @@ public class S3Storage(
         await minio.RemoveObjectAsync(removeObjectArgs, cancellationToken);
     }
 
-    public async Task<string> GetPublicUrlAsync(string fileKey, TimeSpan validFor, CancellationToken cancellationToken = default)
+    public async Task<string> GetPublicUrlAsync(MediaFile mediaFile, TimeSpan validFor, CancellationToken cancellationToken = default)
     {
-        var presignedGetObjectArgs = new PresignedGetObjectArgs()
+        var args = new PresignedGetObjectArgs()
             .WithBucket(_options.BucketName)
-            .WithObject(fileKey)
-            .WithExpiry((int)validFor.TotalSeconds);
+            .WithObject(mediaFile.FileKey)
+            .WithExpiry(1000)
+            .WithHeaders(new Dictionary<string, string>
+            {
+                { "Content-Disposition", $"inline; filename=\"{mediaFile.OriginalFileName}\"" },
+                { "Content-Type", mediaFile.ContentType }
+            });
 
-        return await minio.PresignedGetObjectAsync(presignedGetObjectArgs);
+        return await minio.PresignedGetObjectAsync(args);
     }
 
     public async Task<Stream> OpenFileAsync(string fileKey, CancellationToken cancellationToken = default)
