@@ -249,10 +249,9 @@ namespace UserService.Infrastructure.Data.Migrations
                         .HasColumnType("integer")
                         .HasColumnName("image_type");
 
-                    b.Property<string>("ImageUrl")
-                        .IsRequired()
-                        .HasColumnType("text")
-                        .HasColumnName("image_url");
+                    b.Property<Guid>("MediaId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("media_id");
 
                     b.HasKey("Id")
                         .HasName("pk_ambassador_images");
@@ -295,8 +294,8 @@ namespace UserService.Infrastructure.Data.Migrations
                         .HasColumnType("text")
                         .HasColumnName("name");
 
-                    b.Property<string>("Photo")
-                        .HasColumnType("text")
+                    b.Property<Guid?>("Photo")
+                        .HasColumnType("uuid")
                         .HasColumnName("photo");
 
                     b.Property<Guid>("UserId")
@@ -464,12 +463,12 @@ namespace UserService.Infrastructure.Data.Migrations
 
             modelBuilder.Entity("UserService.Domain.Entities.AmbassadorImage", b =>
                 {
-                    b.HasOne("UserService.Domain.Entities.Project", null)
+                    b.HasOne("UserService.Domain.Entities.Ambassador", null)
                         .WithMany()
                         .HasForeignKey("AmbassadorId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired()
-                        .HasConstraintName("fk_ambassador_images_projects_ambassador_id");
+                        .HasConstraintName("fk_ambassador_images_ambassadors_ambassador_id");
                 });
 
             modelBuilder.Entity("UserService.Domain.Entities.Project", b =>

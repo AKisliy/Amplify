@@ -21,10 +21,9 @@ public class GetAmbassadorImagesQueryHandler
         // TODO: Add authorization check to ensure the user has access to the ambassador's images
         var images = await _context.AmbassadorImages
             .Where(ai => ai.AmbassadorId == request.AmbassadorId)
-            .ProjectTo<AmbassadorImageDto>(_mapper.ConfigurationProvider)
             .ToListAsync(cancellationToken);
 
-        return images;
+        return _mapper.Map<IReadOnlyCollection<AmbassadorImageDto>>(images);
     }
 }
 

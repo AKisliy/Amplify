@@ -8,7 +8,7 @@ public class AmbassadorImageConfiguration : IEntityTypeConfiguration<AmbassadorI
 {
     public void Configure(EntityTypeBuilder<AmbassadorImage> builder)
     {
-        builder.HasOne<Project>()
+        builder.HasOne<Ambassador>()
             .WithMany()
             .HasForeignKey(ai => ai.AmbassadorId)
             .IsRequired()

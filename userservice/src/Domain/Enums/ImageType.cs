@@ -2,6 +2,7 @@ namespace UserService.Domain.Enums;
 
 public enum ImageType
 {
-    FullBody,
-    Portrait
+    Other = 0,
+    FullBody = 1,
+    Portrait = 2
 }

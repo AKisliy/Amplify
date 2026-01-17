@@ -70,7 +70,8 @@ public class ApplicationDbContextInitialiser(
         }
 
         // Default users
-        var administrator = new ApplicationUser { UserName = "administrator@localhost", Email = "administrator@localhost" };
+        var adminId = new Guid("03852b28-2cfb-490a-8ba7-df7b6b888920");
+        var administrator = new ApplicationUser { Id = adminId, UserName = "administrator@localhost", Email = "administrator@localhost" };
 
         if (userManager.Users.All(u => u.UserName != administrator.UserName))
         {
@@ -83,6 +84,10 @@ public class ApplicationDbContextInitialiser(
             {
                 await userManager.AddToRolesAsync(administrator, [administratorRole.Name]);
             }
+
+            logger.LogInformation(
+                "Created default administrator user with username '{UserName}' and password 'Administrator1!'.",
+                administrator.UserName);
         }
 
         // Default data

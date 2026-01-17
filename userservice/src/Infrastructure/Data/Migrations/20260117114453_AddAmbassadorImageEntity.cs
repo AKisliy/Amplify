@@ -11,12 +11,21 @@ namespace UserService.Infrastructure.Data.Migrations
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
+            migrationBuilder.AlterColumn<Guid>(
+                name: "photo",
+                table: "projects",
+                type: "uuid",
+                nullable: true,
+                oldClrType: typeof(string),
+                oldType: "text",
+                oldNullable: true);
+
             migrationBuilder.CreateTable(
                 name: "ambassador_images",
                 columns: table => new
                 {
                     id = table.Column<Guid>(type: "uuid", nullable: false),
-                    image_url = table.Column<string>(type: "text", nullable: false),
+                    media_id = table.Column<Guid>(type: "uuid", nullable: false),
                     image_type = table.Column<int>(type: "integer", nullable: false),
                     ambassador_id = table.Column<Guid>(type: "uuid", nullable: false)
                 },
@@ -24,9 +33,9 @@ namespace UserService.Infrastructure.Data.Migrations
                 {
                     table.PrimaryKey("pk_ambassador_images", x => x.id);
                     table.ForeignKey(
-                        name: "fk_ambassador_images_projects_ambassador_id",
+                        name: "fk_ambassador_images_ambassadors_ambassador_id",
                         column: x => x.ambassador_id,
-                        principalTable: "projects",
+                        principalTable: "ambassadors",
                         principalColumn: "id",
                         onDelete: ReferentialAction.Cascade);
                 });
@@ -42,6 +51,15 @@ namespace UserService.Infrastructure.Data.Migrations
         {
             migrationBuilder.DropTable(
                 name: "ambassador_images");
+
+            migrationBuilder.AlterColumn<string>(
+                name: "photo",
+                table: "projects",
+                type: "text",
+                nullable: true,
+                oldClrType: typeof(Guid),
+                oldType: "uuid",
+                oldNullable: true);
         }
     }
 }
