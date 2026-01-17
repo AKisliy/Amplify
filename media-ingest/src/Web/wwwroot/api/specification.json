@@ -6,6 +6,48 @@
     "version": "1.0.0"
   },
   "paths": {
+    "/api/images/from-file": {
+      "post": {
+        "tags": [
+          "images"
+        ],
+        "operationId": "PostApiImagesFromFile",
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "file": {
+                    "type": "string",
+                    "format": "binary",
+                    "nullable": true
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {}
+            }
+          },
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UploadFileDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/media": {
       "post": {
         "tags": [
@@ -44,7 +86,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/UploadFileDto"
+                  "$ref": "#/components/schemas/UploadFileDto2"
                 }
               }
             }
@@ -75,30 +117,25 @@
             "description": ""
           }
         }
-      }
-    },
-    "/api/upload/photos/from-file": {
-      "post": {
+      },
+      "delete": {
         "tags": [
-          "upload/photos"
+          "media"
         ],
-        "operationId": "PostApiUploadPhotosFromFile",
-        "requestBody": {
-          "content": {
-            "multipart/form-data": {
-              "schema": {
-                "type": "object",
-                "properties": {
-                  "file": {
-                    "type": "string",
-                    "format": "binary",
-                    "nullable": true
-                  }
-                }
-              }
-            }
+        "description": "ONLY for internal use. Don't call from client apps.",
+        "operationId": "DeleteApiMedia",
+        "parameters": [
+          {
+            "name": "mediaId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "guid"
+            },
+            "x-position": 1
           }
-        },
+        ],
         "responses": {
           "200": {
             "description": "OK",
@@ -106,15 +143,8 @@
               "application/json": {}
             }
           },
-          "201": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/UploadFileDto2"
-                }
-              }
-            }
+          "204": {
+            "description": ""
           }
         }
       }
@@ -123,6 +153,19 @@
   "components": {
     "schemas": {
       "UploadFileDto": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "mediaId": {
+            "type": "string",
+            "format": "guid"
+          },
+          "mediaPath": {
+            "type": "string"
+          }
+        }
+      },
+      "UploadFileDto2": {
         "type": "object",
         "additionalProperties": false,
         "properties": {
@@ -145,19 +188,6 @@
           1,
           2
         ]
-      },
-      "UploadFileDto2": {
-        "type": "object",
-        "additionalProperties": false,
-        "properties": {
-          "mediaId": {
-            "type": "string",
-            "format": "guid"
-          },
-          "mediaPath": {
-            "type": "string"
-          }
-        }
       }
     }
   }
