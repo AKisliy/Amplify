@@ -1,3 +1,5 @@
+using MediaIngest.Domain.Entities;
+
 namespace MediaIngest.Application.Common.Interfaces;
 
 public interface IFileStorage
@@ -9,4 +11,6 @@ public interface IFileStorage
     Task<string> SaveFileAsync(byte[] fileContent, string fileName, CancellationToken cancellationToken = default);
 
     Task DeleteFileAsync(string path, CancellationToken cancellationToken = default);
+
+    Task<string> GetPublicUrlAsync(MediaFile mediaFile, TimeSpan validFor, CancellationToken cancellationToken = default);
 }

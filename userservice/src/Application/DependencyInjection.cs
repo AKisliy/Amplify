@@ -29,5 +29,6 @@ public static class DependencyInjection
     private static void AddApplicationOptions(this IServiceCollection services)
     {
         services.AddOptions<FrontendOptions>().BindConfiguration(FrontendOptions.SectionName);
+        services.AddOptions<ExternalUrlsOptions>().BindConfiguration(ExternalUrlsOptions.SectionName);
     }
 }

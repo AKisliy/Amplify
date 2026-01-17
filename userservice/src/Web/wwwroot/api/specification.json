@@ -152,6 +152,140 @@
         ]
       }
     },
+    "/api/ambassadors/{id}/images": {
+      "get": {
+        "tags": [
+          "ambassadors"
+        ],
+        "operationId": "GetAmbassadorImages",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "guid"
+            },
+            "x-position": 1
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/AmbassadorImageDto"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "JWT": []
+          }
+        ]
+      },
+      "post": {
+        "tags": [
+          "ambassadors"
+        ],
+        "operationId": "AddAmbassadorImage",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "guid"
+            },
+            "x-position": 1
+          }
+        ],
+        "requestBody": {
+          "x-name": "command",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AddAmbassadorImageCommand"
+              }
+            }
+          },
+          "required": true,
+          "x-position": 2
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "string",
+                  "format": "guid"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "JWT": []
+          }
+        ]
+      }
+    },
+    "/api/ambassadors/{id}/images/{imageId}": {
+      "delete": {
+        "tags": [
+          "ambassadors"
+        ],
+        "operationId": "DeleteAmbassadorImage",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "guid"
+            },
+            "x-position": 1
+          },
+          {
+            "name": "imageId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "guid"
+            },
+            "x-position": 2
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": ""
+          },
+          "404": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "JWT": []
+          }
+        ]
+      }
+    },
     "/api/auth/register": {
       "post": {
         "tags": [
@@ -551,6 +685,50 @@
           }
         }
       },
+      "AmbassadorImageDto": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "imageUrl": {
+            "type": "string",
+            "nullable": true
+          },
+          "imageType": {
+            "$ref": "#/components/schemas/ImageType"
+          }
+        }
+      },
+      "ImageType": {
+        "type": "integer",
+        "description": "",
+        "x-enumNames": [
+          "Other",
+          "FullBody",
+          "Portrait"
+        ],
+        "enum": [
+          0,
+          1,
+          2
+        ]
+      },
+      "AddAmbassadorImageCommand": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "ambassadorId": {
+            "type": "string",
+            "format": "guid"
+          },
+          "mediaId": {
+            "type": "string",
+            "format": "guid"
+          },
+          "imageType": {
+            "$ref": "#/components/schemas/ImageType"
+          }
+        }
+      },
       "RegisterUserCommand": {
         "type": "object",
         "additionalProperties": false,
@@ -612,6 +790,7 @@
           },
           "photo": {
             "type": "string",
+            "format": "guid",
             "nullable": true
           }
         }
@@ -633,6 +812,7 @@
           },
           "photo": {
             "type": "string",
+            "format": "guid",
             "nullable": true
           }
         }

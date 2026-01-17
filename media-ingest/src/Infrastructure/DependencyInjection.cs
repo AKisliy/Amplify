@@ -66,6 +66,8 @@ public static class DependencyInjection
             options.AddInterceptors(sp.GetServices<ISaveChangesInterceptor>());
             options.UseNpgsql(dbOptions.Default);
         });
+
+        services.AddScoped<ApplicationDbContextInitialiser>();
     }
 
     private static void AddInfrastructureOptions(this IServiceCollection services)
