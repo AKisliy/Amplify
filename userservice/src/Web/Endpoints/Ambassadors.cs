@@ -55,4 +55,12 @@ public class Ambassadors : EndpointGroupBase
         var result = await sender.Send(query);
         return TypedResults.Ok(result);
     }
+
+    // public async Task<Results<NoContent, NotFound>> DeleteAmbassadorImage(ISender sender, Guid ambassadorId, Guid imageId)
+    // {
+    //     var command = new DeleteAmbassadorImageCommand(ambassadorId, imageId);
+    //     var result = await sender.Send(command);
+
+    //     return result.IsSuccess ? TypedResults.NoContent() : TypedResults.NotFound();
+    // }
 }

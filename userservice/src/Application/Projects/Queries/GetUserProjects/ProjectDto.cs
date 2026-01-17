@@ -1,3 +1,4 @@
+using UserService.Application.Common.Mappings;
 using UserService.Domain.Entities;
 
 namespace UserService.Application.Projects.Queries.GetUserProjects;
@@ -16,7 +17,10 @@ public class ProjectDto
     {
         public Mapping()
         {
-            CreateMap<Project, ProjectDto>();
+            CreateMap<Project, ProjectDto>()
+                .ForMember(
+                    dest => dest.Photo,
+                    opt => opt.MapFrom<ImageUrlResolver, Guid?>(src => src.Photo));
         }
     }
 }

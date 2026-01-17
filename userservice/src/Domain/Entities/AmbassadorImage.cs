@@ -2,7 +2,7 @@ namespace UserService.Domain.Entities;
 
 public class AmbassadorImage : BaseEntity
 {
-    public string ImageUrl { get; set; } = string.Empty;
+    public Guid MediaId { get; set; }
 
     public ImageType ImageType { get; set; }
 

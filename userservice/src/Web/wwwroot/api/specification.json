@@ -676,6 +676,7 @@
           },
           "photo": {
             "type": "string",
+            "format": "guid",
             "nullable": true
           }
         }
@@ -697,6 +698,7 @@
           },
           "photo": {
             "type": "string",
+            "format": "guid",
             "nullable": true
           }
         }
