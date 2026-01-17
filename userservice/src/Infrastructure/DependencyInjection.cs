@@ -17,6 +17,7 @@ using Microsoft.IdentityModel.Logging;
 using Resend;
 using UserService.Application.Common.Interfaces.Clients;
 using UserService.Infrastructure.Clients;
+using Microsoft.Extensions.Options;
 
 namespace Microsoft.Extensions.DependencyInjection;
 
@@ -182,6 +183,13 @@ public static class DependencyInjection
 
     private static void AddInternalClients(this IHostApplicationBuilder builder)
     {
-        builder.Services.AddTransient<IMediaServiceClient, MediaServiceClient>();
+        builder.Services.AddScoped<IMediaServiceClient, MediaServiceClient>();
+
+        builder.Services.AddHttpClient<IMediaServiceClient, MediaServiceClient>((sp, client) =>
+        {
+            var internalUrlsOptions = sp.GetRequiredService<IOptions<InternalUrlsOptions>>().Value;
+
+            client.BaseAddress = new Uri(internalUrlsOptions.MediaServiceInternalBaseUrl);
+        });
     }
 }
