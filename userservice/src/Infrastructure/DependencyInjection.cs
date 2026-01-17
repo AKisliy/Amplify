@@ -15,6 +15,8 @@ using Microsoft.IdentityModel.Tokens;
 using System.Security.Cryptography;
 using Microsoft.IdentityModel.Logging;
 using Resend;
+using UserService.Application.Common.Interfaces.Clients;
+using UserService.Infrastructure.Clients;
 
 namespace Microsoft.Extensions.DependencyInjection;
 
@@ -48,7 +50,9 @@ public static class DependencyInjection
 
         builder.AddAuth();
         builder.AddMailSender();
+
         builder.Services.AddInfrastructureOptions();
+        builder.AddInternalClients();
     }
 
     private static void AddInfrastructureOptions(this IServiceCollection services)
@@ -56,6 +60,7 @@ public static class DependencyInjection
         services.AddOptions<JwtOptions>().BindConfiguration(JwtOptions.SectionName);
         services.AddOptions<MyCookiesOptions>().BindConfiguration(MyCookiesOptions.SectionName);
         services.AddOptions<CorsOptions>().BindConfiguration(CorsOptions.SectionName);
+        services.AddOptions<InternalUrlsOptions>().BindConfiguration(InternalUrlsOptions.SectionName);
     }
 
     private static void AddAuth(this IHostApplicationBuilder builder)
@@ -173,5 +178,10 @@ public static class DependencyInjection
         builder.Services.AddHttpClient<ResendClient>();
         builder.Services.Configure<ResendClientOptions>(o => o.ApiToken = apiToken);
         builder.Services.AddTransient<IResend, ResendClient>();
+    }
+
+    private static void AddInternalClients(this IHostApplicationBuilder builder)
+    {
+        builder.Services.AddTransient<IMediaServiceClient, MediaServiceClient>();
     }
 }

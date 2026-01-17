@@ -4,6 +4,8 @@ using UserService.Domain.Enums;
 
 namespace UserService.Application.AmbassadorImages.Queries.GetAmbassadorImages;
 
+// TODO: add MediaId property
+// Почему MediaID? Потому что он нужен фронтенду для загрузки изображения из медиасервиса
 public class AmbassadorImageDto
 {
     public required string? ImageUrl { get; set; }
