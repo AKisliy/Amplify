@@ -23,6 +23,8 @@ public static class DependencyInjection
 
         builder.Services.AddEndpointsApiExplorer();
 
+        builder.Services.AddOpenApiDocument((configure, sp) => configure.Title = "MediaIngest API");
+
         builder.Services.AddOpenApi();
     }
 

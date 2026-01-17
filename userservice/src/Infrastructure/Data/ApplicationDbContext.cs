@@ -9,13 +9,12 @@ using UserService.Infrastructure.Extensions;
 
 namespace UserService.Infrastructure.Data;
 
-public class ApplicationDbContext
-    : IdentityDbContext<ApplicationUser, IdentityRole<Guid>, Guid>, IApplicationDbContext
+public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options)
+    : IdentityDbContext<ApplicationUser, IdentityRole<Guid>, Guid>(options), IApplicationDbContext
 {
-    public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options) : base(options) { }
-
     public DbSet<Project> Projects => Set<Project>();
     public DbSet<Ambassador> Ambassadors => Set<Ambassador>();
+    public DbSet<AmbassadorImage> AmbassadorImages => Set<AmbassadorImage>();
 
     protected override void OnModelCreating(ModelBuilder builder)
     {

@@ -1,5 +1,4 @@
 using MediaIngest.Infrastructure.Data;
-using Scalar.AspNetCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -13,8 +12,7 @@ var app = builder.Build();
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
-    app.MapOpenApi();
-    app.MapScalarApiReference();
+    await app.InitialiseDatabaseAsync();
 }
 else
 {
@@ -23,6 +21,13 @@ else
 
 app.UseHealthChecks("/health");
 app.UseHttpsRedirection();
+app.UseStaticFiles();
+
+app.UseSwaggerUi(settings =>
+{
+    settings.Path = "/api";
+    settings.DocumentPath = "/api/specification.json";
+});
 
 
 app.UseExceptionHandler(options => { });

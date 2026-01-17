@@ -1,4 +1,3 @@
-using System.Data.Common;
 using UserService.Application.Common.Interfaces;
 using UserService.Domain.Entities;
 

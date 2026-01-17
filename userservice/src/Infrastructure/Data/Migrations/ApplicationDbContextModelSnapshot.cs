@@ -234,6 +234,34 @@ namespace UserService.Infrastructure.Data.Migrations
                     b.ToTable("ambassadors", (string)null);
                 });
 
+            modelBuilder.Entity("UserService.Domain.Entities.AmbassadorImage", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<Guid>("AmbassadorId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("ambassador_id");
+
+                    b.Property<int>("ImageType")
+                        .HasColumnType("integer")
+                        .HasColumnName("image_type");
+
+                    b.Property<Guid>("MediaId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("media_id");
+
+                    b.HasKey("Id")
+                        .HasName("pk_ambassador_images");
+
+                    b.HasIndex("AmbassadorId")
+                        .HasDatabaseName("ix_ambassador_images_ambassador_id");
+
+                    b.ToTable("ambassador_images", (string)null);
+                });
+
             modelBuilder.Entity("UserService.Domain.Entities.Project", b =>
                 {
                     b.Property<Guid>("Id")
@@ -266,8 +294,8 @@ namespace UserService.Infrastructure.Data.Migrations
                         .HasColumnType("text")
                         .HasColumnName("name");
 
-                    b.Property<string>("Photo")
-                        .HasColumnType("text")
+                    b.Property<Guid?>("Photo")
+                        .HasColumnType("uuid")
                         .HasColumnName("photo");
 
                     b.Property<Guid>("UserId")
@@ -431,6 +459,16 @@ namespace UserService.Infrastructure.Data.Migrations
                         .HasConstraintName("fk_ambassadors_projects_project_id");
 
                     b.Navigation("Project");
+                });
+
+            modelBuilder.Entity("UserService.Domain.Entities.AmbassadorImage", b =>
+                {
+                    b.HasOne("UserService.Domain.Entities.Ambassador", null)
+                        .WithMany()
+                        .HasForeignKey("AmbassadorId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_ambassador_images_ambassadors_ambassador_id");
                 });
 
             modelBuilder.Entity("UserService.Domain.Entities.Project", b =>

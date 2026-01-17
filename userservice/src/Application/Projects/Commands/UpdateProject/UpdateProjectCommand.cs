@@ -6,7 +6,7 @@ public record UpdateProjectCommand(
     Guid Id,
     string Name,
     string? Description,
-    string? Photo) : IRequest;
+    Guid? Photo) : IRequest;
 
 public class UpdateProjectCommandHandler(
     IApplicationDbContext dbContext,

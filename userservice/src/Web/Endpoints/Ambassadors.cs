@@ -1,4 +1,7 @@
 using Microsoft.AspNetCore.Http.HttpResults;
+using UserService.Application.AmbassadorImages.Commands.AddAmbassadorImage;
+using UserService.Application.AmbassadorImages.Commands.DeleteAmbassadorImage;
+using UserService.Application.AmbassadorImages.Queries.GetAmbassadorImages;
 using UserService.Application.Ambassadors.Commands.CreateAmbassador;
 using UserService.Application.Ambassadors.Commands.DeleteAmbassador;
 using UserService.Application.Ambassadors.Commands.UpdateAmbassador;
@@ -16,6 +19,10 @@ public class Ambassadors : EndpointGroupBase
         groupBuilder.MapPut(UpdateAmbassador, "{id}").RequireAuthorization();
         groupBuilder.MapDelete(DeleteAmbassador, "{id}").RequireAuthorization();
         groupBuilder.MapGet(GetAmbassador, "{id}").RequireAuthorization();
+
+        groupBuilder.MapGet(GetAmbassadorImages, "{id}/images").RequireAuthorization();
+        groupBuilder.MapDelete(DeleteAmbassadorImage, "{id}/images/{imageId}").RequireAuthorization();
+        groupBuilder.MapPost(AddAmbassadorImage, "{id}/images").RequireAuthorization();
     }
 
     public async Task<Created<Guid>> CreateAmbassador(ISender sender, CreateAmbassadorCommand command)
@@ -45,5 +52,30 @@ public class Ambassadors : EndpointGroupBase
         var result = await sender.Send(new GetAmbassadorQuery(id));
 
         return TypedResults.Ok(result);
+    }
+
+    public async Task<Ok<IReadOnlyCollection<AmbassadorImageDto>>> GetAmbassadorImages(ISender sender, Guid id)
+    {
+        var query = new GetAmbassadorImagesQuery(id);
+        var result = await sender.Send(query);
+        return TypedResults.Ok(result);
+    }
+
+    public async Task<Results<NoContent, NotFound>> DeleteAmbassadorImage(ISender sender, Guid id, Guid imageId)
+    {
+        var command = new DeleteAmbassadorImageCommand(id, imageId);
+        var result = await sender.Send(command);
+
+        return result.Succeeded ? TypedResults.NoContent() : TypedResults.NotFound();
+    }
+
+    public async Task<Results<Created<Guid>, BadRequest>> AddAmbassadorImage(
+        ISender sender,
+        Guid id,
+        AddAmbassadorImageCommand command)
+    {
+        var result = await sender.Send(command);
+
+        return TypedResults.Created($"/{GroupName}/{id}/images/{result}", result);
     }
 }

@@ -5,7 +5,7 @@ using UserService.Domain.Events.Projects;
 
 namespace UserService.Application.Projects.Commands.CreateProject;
 
-public record CreateProjectCommand(string Name, string? Description, string? Photo) : IRequest<Guid>;
+public record CreateProjectCommand(string Name, string? Description, Guid? Photo) : IRequest<Guid>;
 
 public class CreateProjectCommandHandler(
     IApplicationDbContext dbContext,
