@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Http.HttpResults;
+using UserService.Application.AmbassadorImages.Queries.GetAmbassadorImages;
 using UserService.Application.Ambassadors.Commands.CreateAmbassador;
 using UserService.Application.Ambassadors.Commands.DeleteAmbassador;
 using UserService.Application.Ambassadors.Commands.UpdateAmbassador;
@@ -16,6 +17,7 @@ public class Ambassadors : EndpointGroupBase
         groupBuilder.MapPut(UpdateAmbassador, "{id}").RequireAuthorization();
         groupBuilder.MapDelete(DeleteAmbassador, "{id}").RequireAuthorization();
         groupBuilder.MapGet(GetAmbassador, "{id}").RequireAuthorization();
+        groupBuilder.MapGet(GetAmbassadorImages, "{id}/images").RequireAuthorization();
     }
 
     public async Task<Created<Guid>> CreateAmbassador(ISender sender, CreateAmbassadorCommand command)
@@ -44,6 +46,13 @@ public class Ambassadors : EndpointGroupBase
     {
         var result = await sender.Send(new GetAmbassadorQuery(id));
 
+        return TypedResults.Ok(result);
+    }
+
+    public async Task<Ok<IReadOnlyCollection<AmbassadorImageDto>>> GetAmbassadorImages(ISender sender, Guid id)
+    {
+        var query = new GetAmbassadorImagesQuery(id);
+        var result = await sender.Send(query);
         return TypedResults.Ok(result);
     }
 }

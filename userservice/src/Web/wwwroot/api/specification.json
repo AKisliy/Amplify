@@ -152,6 +152,46 @@
         ]
       }
     },
+    "/api/ambassadors/{id}/images": {
+      "get": {
+        "tags": [
+          "ambassadors"
+        ],
+        "operationId": "GetAmbassadorImages",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "guid"
+            },
+            "x-position": 1
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/AmbassadorImageDto"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "JWT": []
+          }
+        ]
+      }
+    },
     "/api/auth/register": {
       "post": {
         "tags": [
@@ -550,6 +590,30 @@
             "nullable": true
           }
         }
+      },
+      "AmbassadorImageDto": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "imageUrl": {
+            "type": "string"
+          },
+          "imageType": {
+            "$ref": "#/components/schemas/ImageType"
+          }
+        }
+      },
+      "ImageType": {
+        "type": "integer",
+        "description": "",
+        "x-enumNames": [
+          "FullBody",
+          "Portrait"
+        ],
+        "enum": [
+          0,
+          1
+        ]
       },
       "RegisterUserCommand": {
         "type": "object",
