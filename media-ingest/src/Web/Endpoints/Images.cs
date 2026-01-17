@@ -10,7 +10,7 @@ public class Images : EndpointGroupBase
 
     public override void Map(RouteGroupBuilder groupBuilder)
     {
-        groupBuilder.MapPost("/from-file", UploadFromFile);
+        groupBuilder.MapPost("/upload/from-file", UploadFromFile);
     }
 
     public async Task<Created<UploadFileDto>> UploadFromFile(ISender sender, IFormFile file)

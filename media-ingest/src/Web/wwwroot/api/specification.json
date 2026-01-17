@@ -6,12 +6,12 @@
     "version": "1.0.0"
   },
   "paths": {
-    "/api/images/from-file": {
+    "/api/images/upload/from-file": {
       "post": {
         "tags": [
           "images"
         ],
-        "operationId": "PostApiImagesFromFile",
+        "operationId": "PostApiImagesUploadFromFile",
         "requestBody": {
           "content": {
             "multipart/form-data": {
