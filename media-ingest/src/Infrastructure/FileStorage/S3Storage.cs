@@ -11,8 +11,7 @@ namespace MediaIngest.Infrastructure.FileStorage;
 public class S3Storage(
     IMinioClient minio,
     IOptions<S3Options> options,
-    ILogger<S3Storage> logger
-) : IFileStorage
+    ILogger<S3Storage> logger) : IFileStorage
 {
     private readonly S3Options _options = options.Value;
 
@@ -23,6 +22,16 @@ public class S3Storage(
             .WithObject(fileKey);
 
         await minio.RemoveObjectAsync(removeObjectArgs, cancellationToken);
+    }
+
+    public async Task<string> GetPublicUrlAsync(string fileKey, TimeSpan validFor, CancellationToken cancellationToken = default)
+    {
+        var presignedGetObjectArgs = new PresignedGetObjectArgs()
+            .WithBucket(_options.BucketName)
+            .WithObject(fileKey)
+            .WithExpiry((int)validFor.TotalSeconds);
+
+        return await minio.PresignedGetObjectAsync(presignedGetObjectArgs);
     }
 
     public async Task<Stream> OpenFileAsync(string fileKey, CancellationToken cancellationToken = default)

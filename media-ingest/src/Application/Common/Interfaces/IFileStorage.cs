@@ -9,4 +9,6 @@ public interface IFileStorage
     Task<string> SaveFileAsync(byte[] fileContent, string fileName, CancellationToken cancellationToken = default);
 
     Task DeleteFileAsync(string path, CancellationToken cancellationToken = default);
+
+    Task<string> GetPublicUrlAsync(string fileKey, TimeSpan validFor, CancellationToken cancellationToken = default);
 }
