@@ -177,7 +177,7 @@
         }
       }
     },
-    "/api/auth/confirmEmail": {
+    "/api/auth/confirm-email": {
       "get": {
         "tags": [
           "auth"
@@ -243,18 +243,6 @@
           "auth"
         ],
         "operationId": "RefreshToken",
-        "requestBody": {
-          "x-name": "command",
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/RefreshTokenCommand"
-              }
-            }
-          },
-          "required": true,
-          "x-position": 1
-        },
         "responses": {
           "200": {
             "description": ""
@@ -262,7 +250,7 @@
         }
       }
     },
-    "/api/auth/forgotPassword": {
+    "/api/auth/forgot-password": {
       "post": {
         "tags": [
           "auth"
@@ -287,7 +275,7 @@
         }
       }
     },
-    "/api/auth/resetPassword": {
+    "/api/auth/reset-password": {
       "post": {
         "tags": [
           "auth"
@@ -583,18 +571,6 @@
             "type": "string"
           },
           "password": {
-            "type": "string"
-          }
-        }
-      },
-      "RefreshTokenCommand": {
-        "type": "object",
-        "additionalProperties": false,
-        "properties": {
-          "accessToken": {
-            "type": "string"
-          },
-          "refreshToken": {
             "type": "string"
           }
         }
