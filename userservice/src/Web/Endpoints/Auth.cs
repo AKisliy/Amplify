@@ -80,7 +80,7 @@ public class Auth : EndpointGroupBase
 
         AppendTokenCookies(context, cookieOptions.Value, result.AccessToken, result.RefreshToken);
 
-        return Results.Ok(result);
+        return Results.Ok();
     }
 
     private static void AppendTokenCookies(
