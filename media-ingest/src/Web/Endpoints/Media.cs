@@ -1,3 +1,4 @@
+using MediaIngest.Application.Media.Commands.DeleteMedia;
 using MediaIngest.Application.Media.Commands.Upload;
 using MediaIngest.Application.Media.Queries.GetMedia;
 using MediaIngest.Domain.Enums;
@@ -14,6 +15,9 @@ public class Media : EndpointGroupBase
         groupBuilder.MapPost(UploadFromLink);
 
         groupBuilder.MapGet("/{mediaId:guid}", GetMediaById);
+
+        groupBuilder.MapDelete("/{mediaId:guid}", DeleteMediaById)
+            .WithDescription("ONLY for internal use. Don't call from client apps.");
     }
 
     public async Task<Created<UploadFileDto>> UploadFromLink(ISender sender, string link, MediaType mediaType)
@@ -27,5 +31,11 @@ public class Media : EndpointGroupBase
     {
         var mediaDto = await sender.Send(new GetMediaQuery(mediaId));
         return TypedResults.Redirect(mediaDto.MediaPath);
+    }
+
+    public async Task<NoContent> DeleteMediaById(ISender sender, Guid mediaId)
+    {
+        await sender.Send(new DeleteMediaCommand(mediaId));
+        return TypedResults.NoContent();
     }
 }
