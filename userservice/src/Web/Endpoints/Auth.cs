@@ -22,7 +22,7 @@ public class Auth : EndpointGroupBase
             return Results.Ok();
         });
 
-        groupBuilder.MapGet("confirmEmail", async (
+        groupBuilder.MapGet("confirm-email", async (
             ISender sender,
             IOptions<FrontendOptions> frontendOptions,
             [AsParameters] ConfirmEmailCommand command) =>
@@ -35,13 +35,13 @@ public class Auth : EndpointGroupBase
 
         groupBuilder.MapPost(RefreshToken, "refresh");
 
-        groupBuilder.MapPost("forgotPassword", async (ISender sender, ForgotPasswordCommand command) =>
+        groupBuilder.MapPost("forgot-password", async (ISender sender, ForgotPasswordCommand command) =>
         {
             await sender.Send(command);
             return Results.Ok();
         });
 
-        groupBuilder.MapPost("resetPassword", async (ISender sender, ResetPasswordCommand command) =>
+        groupBuilder.MapPost("reset-password", async (ISender sender, ResetPasswordCommand command) =>
         {
             await sender.Send(command);
             return Results.Ok();
@@ -66,9 +66,16 @@ public class Auth : EndpointGroupBase
     private static async Task<IResult> RefreshToken(
         ISender sender,
         IOptions<MyCookiesOptions> cookieOptions,
-        RefreshTokenCommand command,
         HttpContext context)
     {
+        if (!context.Request.Cookies.TryGetValue(cookieOptions.Value.RefreshTokenCookieName, out var incomingRefreshToken) ||
+            !context.Request.Cookies.TryGetValue(cookieOptions.Value.AccessTokenCookieName, out var incomingAccessToken) ||
+            string.IsNullOrEmpty(incomingRefreshToken) || string.IsNullOrEmpty(incomingAccessToken))
+        {
+            return Results.Unauthorized();
+        }
+
+        var command = new RefreshTokenCommand(incomingAccessToken, incomingRefreshToken);
         var result = await sender.Send(command);
 
         AppendTokenCookies(context, cookieOptions.Value, result.AccessToken, result.RefreshToken);
