@@ -11,8 +11,9 @@ public class DeleteAmbassadorImageCommandHandler(IApplicationDbContext dbContext
 {
     public async Task<Result> Handle(DeleteAmbassadorImageCommand request, CancellationToken cancellationToken)
     {
+        // TODO: Consider MediaId usage
         var entity = await dbContext.AmbassadorImages
-            .Where(ai => ai.AmbassadorId == request.AmbassadorId && ai.Id == request.ImageId)
+            .Where(ai => ai.AmbassadorId == request.AmbassadorId && ai.MediaId == request.ImageId)
             .SingleOrDefaultAsync(cancellationToken);
 
         Guard.Against.NotFound(request.ImageId, entity, parameterName: "Ambassador Image");
