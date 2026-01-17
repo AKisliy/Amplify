@@ -1,4 +1,3 @@
-
 using MediaIngest.Application.Media.Commands.UploadFromFile;
 using Microsoft.AspNetCore.Http.HttpResults;
 
@@ -10,7 +9,10 @@ public class Images : EndpointGroupBase
 
     public override void Map(RouteGroupBuilder groupBuilder)
     {
-        groupBuilder.MapPost("/upload/from-file", UploadFromFile);
+        groupBuilder.MapPost(UploadFromFile)
+            .Accepts<IFormFile>("multipart/form-data")
+            .DisableAntiforgery();
+        groupBuilder.MapPost("/import", UploadFromLink);
     }
 
     public async Task<Created<UploadFileDto>> UploadFromFile(ISender sender, IFormFile file)
@@ -18,5 +20,10 @@ public class Images : EndpointGroupBase
         var command = new UploadFromFileCommand(file.OpenReadStream(), file.FileName, file.ContentType);
         var result = await sender.Send(command);
         return TypedResults.Created($"/media/{result.MediaId}", result);
+    }
+
+    public async Task<Created<UploadFileDto>> UploadFromLink(ISender sender, string link)
+    {
+        throw new NotImplementedException();
     }
 }

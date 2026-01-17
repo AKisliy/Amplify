@@ -6,12 +6,12 @@
     "version": "1.0.0"
   },
   "paths": {
-    "/api/images/upload/from-file": {
+    "/api/images": {
       "post": {
         "tags": [
           "images"
         ],
-        "operationId": "PostApiImagesUploadFromFile",
+        "operationId": "UploadFromFile",
         "requestBody": {
           "content": {
             "multipart/form-data": {
@@ -28,6 +28,43 @@
             }
           }
         },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {}
+            }
+          },
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UploadFileDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/images/import": {
+      "post": {
+        "tags": [
+          "images"
+        ],
+        "operationId": "PostApiImagesImport",
+        "parameters": [
+          {
+            "name": "link",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "x-position": 1
+          }
+        ],
         "responses": {
           "200": {
             "description": "OK",
