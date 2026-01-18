@@ -1,0 +1,8 @@
+**/.git
+**/.vs
+**/bin
+**/obj
+**/TestResults
+Dockerfile*
+docker-compose*
+README.md

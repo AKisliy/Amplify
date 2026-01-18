@@ -1,0 +1,9 @@
+apiVersion: networking.istio.io/v1
+kind: Gateway
+metadata:
+  name: {{ .Values.gateway.name }}
+spec:
+  selector:
+    istio: ingressgateway
+  servers:
+  {{- toYaml .Values.gateway.servers | nindent 2 }}

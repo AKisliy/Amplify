@@ -1,0 +1,57 @@
+replicaCount: 1
+
+image:
+  repository: akisliy/amplify-userservice
+  pullPolicy: Always
+  tag: ""
+
+nameOverride: ""
+fullnameOverride: ""
+
+serviceAccount:
+  create: true
+  name: "user-service-sa"
+
+podLabels: {}
+
+
+service:
+  type: ClusterIP
+  port: 80
+
+resources: {}
+
+livenessProbe:
+  httpGet:
+    path: /
+    port: http
+readinessProbe:
+  httpGet:
+    path: /
+    port: http
+
+volumes: 
+  - name: config-volume
+    configMap:
+      name: userservice-config
+
+volumeMounts:
+  - name: config-volume
+    mountPath: /app/appsettings.Development.json
+    subPath: appsettings_override.json
+  
+
+virtualService:
+  name: muffin-currency-internal-vs
+  http:
+    timeout: 2s
+    retries:
+      attempts: 3
+      perTryTimeout: 2s
+      retryOn: gateway-error,connect-failure,refused-stream,5xx
+
+gateway:
+  name: amplify-gateway
+  
+# определяется в файлах окружений
+appConfig: {}

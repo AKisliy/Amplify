@@ -1,0 +1,9 @@
+image:
+  tag: {{ requiredEnv "USERSERVICE_IMAGE_TAG" }}
+
+gateway:
+  name: {{ .Values.global.gateway.name }}
+
+virtualService:
+  hosts:
+    - {{ .Values.global.appDomain }}
