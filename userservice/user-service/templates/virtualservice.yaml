@@ -15,6 +15,10 @@ spec:
   - match:
     - uri:
         prefix: "/api/auth"
+    - uri:
+        prefix: "/api/projects"
+    - uri:
+        prefix: "/api/ambassadors"
     route:
     - destination:
         host: "{{ include "user-service.fullname" . }}"
