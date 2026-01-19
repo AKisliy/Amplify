@@ -3,10 +3,12 @@ kind: VirtualService
 metadata:
   name: {{ .Values.virtualService.name }}
 spec:
-  {{- with .Values.virtualService.hosts }}
   hosts:
-    {{- toYaml . | nindent 4 }}
+  {{- range .Values.virtualService.hosts }}
+  - {{ . | quote }}
   {{- end }}
+  # intenral service communication
+  - "{{ include "user-service.fullname" . }}.{{ .Release.Namespace }}.svc.cluster.local"
   gateways:
   - {{ .Values.gateway.name }}
   http:

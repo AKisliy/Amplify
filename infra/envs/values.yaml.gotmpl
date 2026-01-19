@@ -1,0 +1,9 @@
+gateway:
+  name: {{ .Values.global.gateway.name }}
+  servers:
+  - port:
+      number: 80
+      name: http
+      protocol: HTTP
+    hosts:
+    - {{ .Values.global.appDomain }}

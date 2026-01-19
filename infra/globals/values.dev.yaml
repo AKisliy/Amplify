@@ -2,13 +2,3 @@ global:
   appDomain: dev.amplify-vkr.example.com
   gateway:
     name: amplify-gateway
-
-gateway:
-  name: amplify-gateway
-  servers:
-  - port:
-      number: 80
-      name: http
-      protocol: HTTP
-    hosts:
-    - dev.amplify-vkr.example.com

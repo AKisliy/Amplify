@@ -2,7 +2,7 @@ replicaCount: 1
 
 image:
   repository: akisliy/amplify-userservice
-  pullPolicy: Always
+  pullPolicy: IfNotPresent
   tag: ""
 
 nameOverride: ""
