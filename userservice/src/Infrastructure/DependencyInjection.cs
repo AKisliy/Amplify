@@ -18,6 +18,8 @@ using Resend;
 using UserService.Application.Common.Interfaces.Clients;
 using UserService.Infrastructure.Clients;
 using Microsoft.Extensions.Options;
+using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.HttpOverrides;
 
 namespace Microsoft.Extensions.DependencyInjection;
 
@@ -149,6 +151,14 @@ public static class DependencyInjection
             options.AddPolicy(Policies.CanPurge, policy => policy.RequireRole(Roles.Administrator)));
 
         builder.AddCorsUsage();
+
+        builder.Services.Configure<ForwardedHeadersOptions>(options =>
+        {
+            options.ForwardedHeaders =
+                ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
+            options.KnownNetworks.Clear();
+            options.KnownProxies.Clear();
+        });
     }
 
     private static void AddCorsUsage(this IHostApplicationBuilder builder)

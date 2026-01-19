@@ -1,0 +1,38 @@
+name: Deploy user-service
+
+on:
+    push:
+        branches:
+            - main
+        paths:
+            - "userservice/**"
+            - ".github/workflows/userservice-deploy.yaml"
+
+defaults:
+    run:
+        working-directory: ./userservice
+
+jobs:
+    build_and_push:
+        runs-on: ubuntu-latest
+        steps:
+            - name: Checkout code
+              uses: actions/checkout@v6
+
+            - name: Log in to Docker Hub
+              uses: docker/login-action@v2
+              with:
+                  username: ${{ secrets.DOCKER_HUB_USERNAME }}
+                  password: ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}
+
+            - name: Build and push user-service image
+              env:
+                  IMAGE_TAG: ${{ github.sha }}
+              run: |
+                  docker build \
+                      -t akisliy/amplify-userservice:${{ env.IMAGE_TAG }} \
+                      -t akisliy/amplify-userservice:latest \
+                      -f userservice/Dockerfile .
+
+                  docker push akisliy/amplify-userservice:${{ env.IMAGE_TAG }}
+                  docker push akisliy/amplify-userservice:latest

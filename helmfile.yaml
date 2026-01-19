@@ -1,0 +1,31 @@
+environments:
+  default:
+    values:
+      - infra/globals/values.yaml 
+  dev:
+    values:
+      - infra/globals/values.dev.yaml
+  prod:
+    values:
+      - infra/globals/values.prod.yaml
+---
+releases:
+  - name: gateway
+    chart: ./infra/
+    labels:
+      tier: infra
+    values:
+      - ./infra/envs/values.yaml.gotmpl
+      - ./infra/envs/values.{{ .Environment.Name }}.yaml
+
+  - name: userservice
+    chart: ./userservice/user-service
+    labels:
+      tier: backend
+      name: userservice
+    values:
+      - ./userservice/user-service/envs/values.yaml
+      - ./userservice/user-service/envs/values.yaml.gotmpl
+      - ./userservice/user-service/envs/values.{{ .Environment.Name }}.yaml
+    needs:
+      - gateway
