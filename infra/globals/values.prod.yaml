@@ -1,0 +1,4 @@
+global:
+  appDomain: dev.amplify-vkr.example.com
+  gateway:
+    name: amplify-gateway

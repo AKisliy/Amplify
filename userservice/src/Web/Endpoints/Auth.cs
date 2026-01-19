@@ -92,8 +92,9 @@ public class Auth : EndpointGroupBase
         var cookieOptions = new CookieOptions
         {
             HttpOnly = true,
-            Secure = true,
-            SameSite = SameSiteMode.Strict,
+            // In production, set Secure to true
+            Secure = false,
+            SameSite = SameSiteMode.None,
             Expires = DateTime.UtcNow.AddDays(30)
         };
 
