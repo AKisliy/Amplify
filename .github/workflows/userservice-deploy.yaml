@@ -1,4 +1,4 @@
-name: Deploy user-service
+name: User-service CI/CD
 
 on:
     push:
