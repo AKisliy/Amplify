@@ -4,7 +4,7 @@ on:
     push:
         branches:
             - main
-            - feature/AMPLIFY-37-Refine-CI-CD-for-UserService
+            - feature/AMPLIFY-24-CI-CD-for-UserService
         paths:
             - "userservice/**"
             - ".github/workflows/userservice-deploy.yaml"
