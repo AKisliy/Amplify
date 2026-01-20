@@ -1,4 +1,4 @@
-name: Deploy user-service
+name: User-service CI/CD
 
 on:
     push:
@@ -7,13 +7,37 @@ on:
         paths:
             - "userservice/**"
             - ".github/workflows/userservice-deploy.yaml"
-
-defaults:
-    run:
-        working-directory: ./userservice
+    workflow_dispatch:
+        inputs:
+            action:
+                description: "Action to perform"
+                required: true
+                default: "deploy"
+                type: choice
+                options:
+                    - deploy
+                    - rollback
 
 jobs:
-    build_and_push:
+    build:
+        if: github.event_name == 'push'
+        name: Build UserService app
+        runs-on: ubuntu-latest
+        steps:
+            - name: Checkout code
+              uses: actions/checkout@v6
+            - name: Set up .NET 9
+              uses: actions/setup-dotnet@v5
+              with:
+                  dotnet-version: "9.0.x"
+            - name: Restore dependencies
+              run: dotnet restore userservice/src/Web/Web.csproj
+            - name: Build
+              run: dotnet build --no-restore -c Release userservice/src/Web/Web.csproj
+    push-to-registry:
+        if: github.event_name == 'push'
+        needs: build
+        name: Build and Push Docker Image
         runs-on: ubuntu-latest
         steps:
             - name: Checkout code
@@ -32,7 +56,57 @@ jobs:
                   docker build \
                       -t akisliy/amplify-userservice:${{ env.IMAGE_TAG }} \
                       -t akisliy/amplify-userservice:latest \
-                      -f userservice/Dockerfile .
+                      -f userservice/Dockerfile userservice/
 
                   docker push akisliy/amplify-userservice:${{ env.IMAGE_TAG }}
                   docker push akisliy/amplify-userservice:latest
+    deploy:
+        if: github.event_name == 'workflow_dispatch' && inputs.action == 'deploy'
+        needs: push-to-registry
+        name: Deploy to Kubernetes with Helmfile
+        environment: production
+        runs-on: ubuntu-latest
+        steps:
+            - name: Checkout code
+              uses: actions/checkout@v6
+
+            - name: Setup Helmfile
+              uses: mamezou-tech/setup-helmfile@v2.2.0
+              with:
+                  helmfile-version: "v1.2.2"
+
+            - name: Create Kubeconfig
+              run: |
+                  mkdir -p $HOME/.kube
+                  echo "${{ secrets.KUBE_CONFIG_DATA }}" | base64 -d > $HOME/.kube/config
+                  chmod 600 $HOME/.kube/config
+
+            - name: Deploy user-service with Helmfile
+              env:
+                  USERSERVICE_IMAGE_TAG: ${{ github.sha }}
+              run: |
+                  helmfile -e dev sync --skip-diff-on-install
+    rollback:
+        if: github.event_name == 'workflow_dispatch' && inputs.action == 'rollback'
+        name: Rollback user-service Deployment
+        environment: production
+        runs-on: ubuntu-latest
+        steps:
+            - name: Checkout code
+              uses: actions/checkout@v6
+
+            - name: Setup Helmfile
+              uses: mamezou-tech/setup-helmfile@v2.2.0
+              with:
+                  helmfile-version: "v1.2.2"
+
+            - name: Create Kubeconfig
+              run: |
+                  mkdir -p $HOME/.kube
+                  echo "${{ secrets.KUBE_CONFIG_DATA }}" | base64 -d > $HOME/.kube/config
+                  chmod 600 $HOME/.kube/config
+
+            - name: Rollback user-service Deployment with Helmfile
+              run: |
+                  echo "Rolling back user-service..."
+                  helm rollback user-service -n amplify --wait
