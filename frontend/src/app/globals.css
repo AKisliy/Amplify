@@ -123,3 +123,22 @@
     @apply bg-background text-foreground;
   }
 }
+
+@layer utilities {
+  .bg-mesh {
+    background-color: var(--background);
+    background-image: 
+      radial-gradient(at 0% 0%, oklch(0.7 0.2 260 / 0.15) 0px, transparent 50%),
+      radial-gradient(at 100% 0%, oklch(0.6 0.2 300 / 0.1) 0px, transparent 50%),
+      radial-gradient(at 100% 100%, oklch(0.5 0.2 240 / 0.1) 0px, transparent 50%),
+      radial-gradient(at 0% 100%, oklch(0.8 0.1 200 / 0.15) 0px, transparent 50%);
+  }
+
+  .glass {
+    @apply bg-white/70 dark:bg-black/40 backdrop-blur-xl border border-white/20 dark:border-white/10 shadow-2xl;
+  }
+
+  .glass-card {
+    @apply glass rounded-3xl overflow-hidden;
+  }
+}

@@ -52,9 +52,23 @@ export const login = async (payload: LoginPayload): Promise<AuthResponse> => {
 // Refresh token
 // =====================
 
-export const refreshToken = async (): Promise<AuthResponse> => {
-  const { data } = await api.post<AuthResponse>(`${AUTH_BASE}/refresh`);
-  return data;
+export const refreshToken = async (): Promise<AuthResponse | null> => {
+  try {
+    const { data } = await api.post<AuthResponse>(
+      `${AUTH_BASE}/refresh`,
+      null,
+      { withCredentials: true },
+    );
+
+    return data;
+  } catch (error: any) {
+    if (error?.response?.status === 401) {
+      // Not logged in, totally normal
+      return null;
+    }
+
+    throw error;
+  }
 };
 
 // =====================

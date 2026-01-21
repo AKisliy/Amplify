@@ -34,14 +34,15 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   useEffect(() => {
     const restoreSession = async () => {
-      try {
-        const response = await refreshToken();
+      const response = await refreshToken();
+
+      if (response) {
         setUser(response.user);
-      } catch {
+      } else {
         setUser(null);
-      } finally {
-        setIsLoading(false);
       }
+
+      setIsLoading(false);
     };
 
     restoreSession();
@@ -65,7 +66,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const refresh = async () => {
     const response = await refreshToken();
-    setUser(response.user);
+
+    if (response) {
+      setUser(response.user);
+    } else {
+      setUser(null);
+    }
   };
 
   const authState = buildAuthState(user);
