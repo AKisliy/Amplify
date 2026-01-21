@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using Publisher.Core.Enums;
@@ -12,9 +13,11 @@ using Publisher.Infrastructure.Data;
 namespace Publisher.Infrastructure.Data.Migrations
 {
     [DbContext(typeof(PublisherDbContext))]
-    partial class PublisherDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260121064720_AddDataProtectionKeys")]
+    partial class AddDataProtectionKeys
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder

@@ -18,8 +18,11 @@ public static class HttpClientInjectionExtensions
 
     private static IServiceCollection AddInstagramHttpClient(this IServiceCollection services)
     {
-        services
-            .AddHttpClient<IInstagramApiClient, InstagramApiClient>(c => c.Timeout = Timeout.InfiniteTimeSpan)
+        services.AddHttpClient<IInstagramApiClient, InstagramApiClient>(c => c.Timeout = Timeout.InfiniteTimeSpan)
+            .AddInstagramConfiguration();
+
+        services.AddHttpClient<IInstagramIntegrationService, InstagramIntegrationService>(
+            c => c.Timeout = Timeout.InfiniteTimeSpan)
             .AddInstagramConfiguration();
         return services;
     }

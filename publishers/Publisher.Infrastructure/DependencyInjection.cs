@@ -33,6 +33,8 @@ using Microsoft.Extensions.Configuration;
 using System.Reflection;
 using FluentValidation;
 using Publisher.Infrastructure.Configuration.Options;
+using Publisher.Infrastructure.Configuration;
+using Microsoft.AspNetCore.DataProtection;
 
 namespace Publisher.Infrastructure;
 
@@ -47,10 +49,13 @@ public static class DependencyInjection
 
         services.AddTransient<ITokenProtector, TokenProtector>();
         services.AddScoped<IFileStorage, LocalFileStorage>();
+
         services.AddScoped<IInstagramApiClient, InstagramApiClient>();
         services.AddScoped<IInstagramUrlBuilder, InstagramUrlBuilder>();
         services.AddScoped<IInstagramPayloadBuilder, InstagramPayloadBuilder>();
         services.AddScoped<IInstagramHeaderBuilder, InstagramHeaderBuilder>();
+        services.AddScoped<IInstagramIntegrationService, InstagramIntegrationService>();
+
         services.AddScoped<IAccountPickerFactory, AccountPickerFactory>();
         services.AddScoped<ISocialMediaPublisherFactory, SocialMediaPublisherFactory>();
 
@@ -72,10 +77,15 @@ public static class DependencyInjection
         services.AddOptionsWithFluentValidation<DbConnectionOptions>(DbConnectionOptions.ConfigurationSection);
         services.AddOptionsWithFluentValidation<RabbitMQOptions>(RabbitMQOptions.ConfigurationSection);
         services.AddOptionsWithFluentValidation<S3Options>(S3Options.ConfigurationSection);
+        services.AddOptionsWithFluentValidation<InstagramApiOptions>(InstagramApiOptions.ConfigurationSection);
     }
 
     private static void AddDatabaseConnection(this IHostApplicationBuilder builder)
     {
+        builder.Services.AddDataProtection()
+            .PersistKeysToDbContext<PublisherDbContext>()
+            .SetApplicationName("AmplifyPublisherApp");
+
         builder.Services.AddDbContext<PublisherDbContext>((sp, options) =>
         {
             var dbOptions = sp.GetRequiredService<IOptions<DbConnectionOptions>>().Value;
@@ -101,6 +111,7 @@ public static class DependencyInjection
 
         builder.Services.AddScoped<IApplicationDbContext>(provider => provider.GetRequiredService<PublisherDbContext>());
         builder.Services.AddScoped<ISaveChangesInterceptor, AuditableEntityInterceptor>();
+        builder.Services.AddScoped<PublisherDbContextInitialiser>();
     }
 
 

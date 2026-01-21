@@ -1,20 +1,14 @@
-using Microsoft.Extensions.Configuration;
+using Publisher.Application.Common.Interfaces.Instagram;
 
 namespace Publisher.Application.Integrations.Queries;
 
-public record GetInstagramAuthUrlQuery : IRequest<string>;
+public record GetInstagramAuthUrlQuery : IRequest<InstargramAuthUrl>;
 
-public class GetInstagramAuthUrlHandler(IConfiguration configuration)
-    : IRequestHandler<GetInstagramAuthUrlQuery, string>
+public class GetInstagramAuthUrlHandler(IInstagramIntegrationService instagramIntegrationService)
+    : IRequestHandler<GetInstagramAuthUrlQuery, InstargramAuthUrl>
 {
-    public Task<string> Handle(GetInstagramAuthUrlQuery request, CancellationToken cancellationToken)
+    public async Task<InstargramAuthUrl> Handle(GetInstagramAuthUrlQuery request, CancellationToken cancellationToken)
     {
-        var appId = configuration["Instagram:AppId"];
-        var redirectUri = configuration["Instagram:RedirectUri"];
-        var scope = "instagram_basic,instagram_content_publish,pages_show_list,pages_read_engagement";
-
-        var url = $"https://www.facebook.com/v18.0/dialog/oauth?client_id={appId}&redirect_uri={redirectUri}&scope={scope}&response_type=code";
-
-        return Task.FromResult(url);
+        return await instagramIntegrationService.GetAuthUrlAsync();
     }
 }
