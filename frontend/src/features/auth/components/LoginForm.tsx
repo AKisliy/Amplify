@@ -5,6 +5,7 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { motion } from "framer-motion";
+import { useRouter } from "next/navigation";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -25,6 +26,7 @@ import { Sparkles, ArrowRight } from "lucide-react";
 
 export const LoginForm = () => {
   const { login } = useAuth();
+  const router = useRouter();
   const [serverError, setServerError] = useState<string | null>(null);
 
   const {
@@ -39,6 +41,8 @@ export const LoginForm = () => {
     try {
       setServerError(null);
       await login(values);
+      // Redirect using router.push (no page reload needed)
+      router.push("/dashboard");
     } catch (error: any) {
       setServerError("Invalid email or password");
     }

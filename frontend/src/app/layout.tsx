@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { AuthProvider } from "@/features/auth/hooks/AuthProvider";
+import { Toaster } from "@/components/ui/toaster";
 
 // const geistSans = Geist({
 //   variable: "--font-geist-sans",
@@ -24,9 +25,12 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en">
-      <body>
-        <AuthProvider>{children}</AuthProvider>
+    <html lang="en" suppressHydrationWarning>
+      <body suppressHydrationWarning>
+        <AuthProvider>
+          {children}
+          <Toaster />
+        </AuthProvider>
       </body>
     </html>
   );
