@@ -1,0 +1,10 @@
+# Ignore the actual local environment settings
+.env
+
+# Do NOT ignore the example file (you want to share the template)
+!.env.example
+
+# Standard Python/Poetry ignores
+__pycache__/
+.venv/
+dist/
