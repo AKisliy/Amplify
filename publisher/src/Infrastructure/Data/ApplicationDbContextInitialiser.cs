@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Builder;
+﻿using System.Globalization;
+using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Publisher.Domain.Entities;
@@ -78,6 +79,31 @@ public class ApplicationDbContextInitialiser(
         context.SocialAccounts.Add(account);
 
         logger.LogInformation("Added default account to DB with ID: {AccountId}", accountId);
+
+        var autoListId = new Guid("8dafea28-5230-445a-84b2-04e98cebce54");
+        var autoList = new AutoList
+        {
+            Id = autoListId,
+            Name = "Default autolist",
+            ProjectId = projectId,
+            Accounts = [account]
+        };
+
+        logger.LogInformation("Added default autolist with ID: {AutoListId}", autoListId);
+
+        var autoListEntryId = new Guid("dfc14e82-47ca-4b1e-979b-ba04758fd49b");
+        var autoListEntry = new AutoListEntry
+        {
+            Id = autoListEntryId,
+            AutoListId = autoListId,
+            DayOfWeeks = 2,
+            PublicationTime = TimeOnly.Parse("21:00", CultureInfo.InvariantCulture)
+        };
+
+        logger.LogInformation("Added default autolist entry with ID: {AutoListEntryId}", autoListEntryId);
+
+        context.AutoLists.Add(autoList);
+        context.AutoListEntries.Add(autoListEntry);
 
         await context.SaveChangesAsync();
     }
