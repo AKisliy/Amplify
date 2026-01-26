@@ -48,7 +48,7 @@ git push -u origin feature/AMPLIFY-37-add-deploy-instructions
 
 ### Step 2: Open Pull Request
 Go to the repository on GitHub. You should see a prompt to open a PR for your recently pushed branch. Click the green **Compare & pull request** button.
-!(open-pr)[./assets/dev_standards/Pasted image 20260126192955.png]
+![open-pr](./assets/dev_standards/Pasted%20image%2020260126192955.png)
 
 ### Step 3: Fill in PR Details
 Fill in the fields to help reviewers understand your changes and to link the PR to the project board.
@@ -59,7 +59,7 @@ Fill in the fields to help reviewers understand your changes and to link the PR 
 - **Projects:** Select **Amplify**.
 - **(Optional) Assignees:** Assign yourself.
 - **(Optional) Reviewers:** Select a team member to review your code.
-!(creating_pull_request)[./assets/dev_standards/Pasted image 20260126193653.png]
+![creating_pull_request](./assets/dev_standards/Pasted%20image%2020260126193653.png)
 
 ---
 ## 3. Merging
@@ -73,4 +73,4 @@ We use the **Squash and merge** strategy to keep our `main` branch history clean
 2. Select **Squash and merge**.
 3. Confirm the merge.
 
-!(SquashButton)[./assets/dev_standards/Pasted image 20260126193933.png]
+![SquashButton](./assets/dev_standards/Pasted%20image%2020260126193933.png)
