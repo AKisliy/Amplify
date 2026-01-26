@@ -74,3 +74,7 @@ We use the **Squash and merge** strategy to keep our `main` branch history clean
 3. Confirm the merge.
 
 ![SquashButton](./assets/dev_standards/Pasted%20image%2020260126193933.png)
+
+### Clean up after merging
+When you're done merging delete your dev branch by pressing this button:
+![DeleteBranch](./assets/dev_standards/delete_branch.png)
