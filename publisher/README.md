@@ -12,3 +12,11 @@ To deploy publisher service locally do the following:
 4. Spin up docker-compose: `docker compose up --build -d`
 
 That's it ✨ Go to http://localhost:6060/api/index.html?url=/api/specification.json - u should see swagger docs.
+
+### Local testing
+By default app will seed data every time u start it in dev mode. Here are default values:
+- Default Project's id = `7780aa16-edd0-4849-af77-f4280da56d6a`
+- Default Account connected to project = `7b577f75-d8a7-40c0-87d4-17bd49bb6842`
+- Default Autolist connected to project = `8dafea28-5230-445a-84b2-04e98cebce54`
+
+
