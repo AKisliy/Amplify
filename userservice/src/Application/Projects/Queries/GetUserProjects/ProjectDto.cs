@@ -20,7 +20,10 @@ public class ProjectDto
             CreateMap<Project, ProjectDto>()
                 .ForMember(
                     dest => dest.Photo,
-                    opt => opt.MapFrom<ImageUrlResolver, Guid?>(src => src.Photo));
+                    opt => opt.MapFrom<ImageUrlResolver, Guid?>(src => src.Photo))
+                .ForMember(
+                    dest => dest.AmbassadorId,
+                    opt => opt.Ignore()); // Will be populated in query handler
         }
     }
 }

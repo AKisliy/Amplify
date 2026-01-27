@@ -138,7 +138,7 @@ public static class DependencyInjection
 
         builder.Services.AddAuthorizationBuilder();
 
-        builder.Services.AddIdentityCore<ApplicationUser>(options => options.SignIn.RequireConfirmedAccount = true)
+        builder.Services.AddIdentityCore<ApplicationUser>(options => options.SignIn.RequireConfirmedAccount = false)
             .AddRoles<IdentityRole<Guid>>()
             .AddEntityFrameworkStores<ApplicationDbContext>()
             .AddSignInManager<ApplicationSignInManager>()

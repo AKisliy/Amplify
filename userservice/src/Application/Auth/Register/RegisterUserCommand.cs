@@ -4,6 +4,8 @@ using Microsoft.Extensions.Options;
 using System.Text;
 using UserService.Application.Common.Interfaces;
 using UserService.Application.Common.Options;
+using Microsoft.Extensions.Logging;
+using UserService.Application.Common.Exceptions;
 
 namespace UserService.Application.Auth.Register;
 
@@ -13,7 +15,8 @@ public class RegisterUserCommandHandler(
     ITokenService tokenService,
     IIdentityService identityService,
     IOptions<FrontendOptions> frontendOptions,
-    IEmailService emailService) : IRequestHandler<RegisterUserCommand, Guid>
+    IEmailService emailService,
+    ILogger<RegisterUserCommandHandler> logger) : IRequestHandler<RegisterUserCommand, Guid>
 {
     public async Task<Guid> Handle(RegisterUserCommand request, CancellationToken cancellationToken)
     {
@@ -22,7 +25,8 @@ public class RegisterUserCommandHandler(
         // TODO: change to have validator
         if (!result.Succeeded)
         {
-            throw new Exception();
+            var failures = result.Errors.Select(e => new FluentValidation.Results.ValidationFailure(string.Empty, e));
+            throw new UserService.Application.Common.Exceptions.ValidationException(failures);
         }
 
         var rawToken = await tokenService.GenerateEmailConfirmationTokenAsync(userId);
@@ -34,7 +38,18 @@ public class RegisterUserCommandHandler(
 
         var callbackUrl = Url.Combine(baseFrontendUrl, emailConfirmationPath).SetQueryParams(new { userId, code = encodedToken });
 
-        await emailService.SendConfirmationLinkAsync(request.Email, callbackUrl);
+        logger.LogWarning("Confirmation link for {Email}: {Url}", request.Email, callbackUrl);
+
+        try
+        {
+            await emailService.SendConfirmationLinkAsync(request.Email, callbackUrl);
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Failed to send confirmation email to {Email}. User was created successfully.", request.Email);
+            // Continue - user is created, they just won't get the email
+        }
+
         return userId;
     }
 }
