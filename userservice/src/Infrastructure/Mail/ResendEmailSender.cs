@@ -2,7 +2,7 @@ using Microsoft.Extensions.Logging;
 using Resend;
 using UserService.Application.Common.Interfaces;
 
-namespace UserService.Infrastructure;
+namespace UserService.Infrastructure.Mail;
 
 public class ResendEmailSender(IResend resend, ILogger<ResendEmailSender> logger) : IEmailService
 {

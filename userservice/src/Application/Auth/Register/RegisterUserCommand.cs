@@ -26,7 +26,7 @@ public class RegisterUserCommandHandler(
         if (!result.Succeeded)
         {
             var failures = result.Errors.Select(e => new FluentValidation.Results.ValidationFailure(string.Empty, e));
-            throw new UserService.Application.Common.Exceptions.ValidationException(failures);
+            throw new FluentValidation.ValidationException(failures);
         }
 
         var rawToken = await tokenService.GenerateEmailConfirmationTokenAsync(userId);
@@ -38,8 +38,6 @@ public class RegisterUserCommandHandler(
 
         var callbackUrl = Url.Combine(baseFrontendUrl, emailConfirmationPath).SetQueryParams(new { userId, code = encodedToken });
 
-        logger.LogWarning("Confirmation link for {Email}: {Url}", request.Email, callbackUrl);
-
         try
         {
             await emailService.SendConfirmationLinkAsync(request.Email, callbackUrl);
@@ -47,7 +45,6 @@ public class RegisterUserCommandHandler(
         catch (Exception ex)
         {
             logger.LogError(ex, "Failed to send confirmation email to {Email}. User was created successfully.", request.Email);
-            // Continue - user is created, they just won't get the email
         }
 
         return userId;

@@ -35,8 +35,6 @@ public class ForgotPasswordCommandHandler(
 
         var callbackUrl = Url.Combine(baseFrontendUrl, passwordResetPage).SetQueryParams(new { email = request.Email, code = encodedCode });
 
-        logger.LogWarning("Password reset link for {Email}: {Url}", request.Email, callbackUrl);
-
         try
         {
             await emailService.SendPasswordResetLinkAsync(request.Email, callbackUrl);
