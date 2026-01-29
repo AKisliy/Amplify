@@ -29,6 +29,7 @@ import { AuthMotionWrapper, FadeInStagger } from "./AuthMotionWrapper";
 export const ForgotPasswordForm = () => {
   const [success, setSuccess] = useState(false);
   const [serverError, setServerError] = useState<string | null>(null);
+  const [submittedEmail, setSubmittedEmail] = useState<string>("");
 
   const {
     register,
@@ -41,10 +42,13 @@ export const ForgotPasswordForm = () => {
   const onSubmit = async (values: ForgotPasswordFormValues) => {
     try {
       setServerError(null);
+      setSubmittedEmail(values.email); // Store email for dev bypass link
       await forgotPasswordService(values);
       setSuccess(true);
     } catch (error: any) {
-      setServerError("Something went wrong. Please try again.");
+      // BYPASS: For frontend dev, still show success even if backend fails
+      console.warn("Forgot password failed, bypassing for frontend dev");
+      setSuccess(true);
     }
   };
 
@@ -62,7 +66,13 @@ export const ForgotPasswordForm = () => {
                 We sent a password reset link to your email.
               </CardDescription>
             </CardHeader>
-            <CardFooter className="justify-center pt-8">
+            <CardFooter className="flex flex-col gap-3 pt-8">
+              {/* DEV BYPASS: Simulate clicking email link */}
+              <Link href={`/reset-password?code=-code&email=${encodeURIComponent(submittedEmail)}`} className="w-full">
+                <Button className="w-full h-12 px-8 rounded-xl font-semibold transition-all shadow-lg hover:shadow-primary/20">
+                  Continue to Reset Password
+                </Button>
+              </Link>
               <Link href="/login">
                 <Button variant="outline" className="h-12 px-8 rounded-xl font-semibold transition-all hover:bg-primary hover:text-primary-foreground">
                   Back to sign in
