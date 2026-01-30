@@ -34,7 +34,7 @@ public class AutoListSchedulerWorker(
 
                 foreach (var entry in autoListEntries)
                 {
-                    await bus.Publish(new PublishRequested(entry.Id, now), stoppingToken);
+                    await bus.Publish(new PublishFromAutoListRequested(entry.Id, now), stoppingToken);
 
                     logger.LogInformation("Scheduled event sent for Entry #{Id}", entry.Id);
                 }

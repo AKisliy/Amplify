@@ -10,7 +10,7 @@ public class FullAutoListDto
 
     public string Name { get; set; } = null!;
 
-    public InstagramPublishingPresetDto? InstagramPreset { get; set; }
+    public InstagramSettingsDto? InstagramPreset { get; set; }
 
     public ICollection<AutoListEntryDto> Entries { get; set; } = [];
 

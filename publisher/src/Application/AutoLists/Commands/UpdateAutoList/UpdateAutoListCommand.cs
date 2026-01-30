@@ -7,12 +7,10 @@ namespace Publisher.Application.AutoLists.Commands.UpdateAutoList;
 public record UpdateAutoListCommand(
     Guid Id,
     string Name,
-    InstagramPublishingPresetDto? InstagramPreset,
+    InstagramSettingsDto? InstagramPreset,
     List<SocialMediaAccountDto> Accounts) : IRequest;
 
-public class UpdateTodoItemCommandHandler(
-    IApplicationDbContext context,
-    IMapper mapper) : IRequestHandler<UpdateAutoListCommand>
+public class UpdateAutoListCommandHandler(IApplicationDbContext context) : IRequestHandler<UpdateAutoListCommand>
 {
     public async Task Handle(UpdateAutoListCommand request, CancellationToken cancellationToken)
     {
@@ -23,37 +21,9 @@ public class UpdateTodoItemCommandHandler(
 
         entity.Name = request.Name;
 
-        entity.InstagramPreset = await UpdateInstagramPresetAsync(request, cancellationToken);
-
         entity.Accounts = await GetUpdatedAccountsListAsync(request, cancellationToken);
 
         await context.SaveChangesAsync(cancellationToken);
-    }
-
-    private async Task<InstagramPublishingPreset?> UpdateInstagramPresetAsync(UpdateAutoListCommand request, CancellationToken cancellationToken)
-    {
-        var entity = await context.InstagramPublishingPresets
-            .Where(ps => ps.AutoListId == request.Id)
-            .FirstOrDefaultAsync(cancellationToken);
-
-        if (entity is not null && request.InstagramPreset is not null)
-        {
-            context.InstagramPublishingPresets.Entry(entity)
-                .CurrentValues
-                .SetValues(request.InstagramPreset);
-        }
-
-        if (entity is null && request.InstagramPreset is null)
-            return null;
-
-        if (entity is not null && request.InstagramPreset is null)
-            return null;
-
-        if (entity is null && request.InstagramPreset is not null)
-            return mapper.Map<InstagramPublishingPreset>(request.InstagramPreset);
-
-        entity!.ShareToFeed = request.InstagramPreset!.ShareToFeed;
-        return entity;
     }
 
     private Task<List<SocialAccount>> GetUpdatedAccountsListAsync(UpdateAutoListCommand request, CancellationToken cancellationToken)

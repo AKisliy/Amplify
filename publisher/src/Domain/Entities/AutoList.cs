@@ -8,8 +8,6 @@ public class AutoList : BaseAuditableEntity
 
     public virtual Project Project { get; set; } = null!;
 
-    public virtual InstagramPublishingPreset? InstagramPreset { get; set; }
-
     public virtual ICollection<AutoListEntry> Entries { get; set; } = [];
 
     public virtual ICollection<SocialAccount> Accounts { get; set; } = [];

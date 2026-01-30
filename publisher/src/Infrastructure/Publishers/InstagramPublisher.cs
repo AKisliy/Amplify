@@ -3,6 +3,7 @@ using Newtonsoft.Json;
 using Publisher.Application.Common.Interfaces;
 using Publisher.Application.Common.Models;
 using Publisher.Domain.Entities;
+using Publisher.Domain.Entities.PublicationSetup;
 using Publisher.Domain.Enums;
 using Publisher.Infrastructure.Clients.Instagram;
 using Publisher.Infrastructure.Constants;
@@ -20,7 +21,7 @@ public class InstagramPublisher(
 
     public async Task<PublicationResult> PostVideoAsync(SocialMediaPostConfig postConfig)
     {
-        var instPreset = postConfig.PublicationSettings.InstagramSettings;
+        var instPreset = postConfig.PublicationSettings.Instagram ?? new InstagramSettings();
 
         using var scope = SetupLoggingScope(postConfig);
         var videoKey = postConfig.PostFileId;

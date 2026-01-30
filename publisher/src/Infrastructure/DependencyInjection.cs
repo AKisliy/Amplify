@@ -27,11 +27,21 @@ using Publisher.Application.Common.Interfaces.Factory;
 using Publisher.Infrastructure.Factory;
 using Publisher.Infrastructure.Workers;
 using Publisher.Infrastructure.Consumers;
+using Publisher.Infrastructure.Scheduler;
+using Microsoft.AspNetCore.Builder;
+using Publisher.Infrastructure.Publishers;
 
 namespace Microsoft.Extensions.DependencyInjection;
 
 public static class DependencyInjection
 {
+    public static IApplicationBuilder UseInfrastructure(this IApplicationBuilder app)
+    {
+        app.UseScheduler();
+
+        return app;
+    }
+
     public static void AddInfrastructureServices(this IHostApplicationBuilder builder)
     {
         var services = builder.Services;
@@ -39,6 +49,7 @@ public static class DependencyInjection
 
         builder.AddDatabaseConnection();
 
+        services.AddPublishers(builder.Environment);
         services.AddScoped<IFileStorage, MediaServiceStorage>();
 
         services.AddScoped<InstagramApiClient>();
@@ -59,6 +70,8 @@ public static class DependencyInjection
         services.AddPollyPipelines();
         services.AddCustomHttpClients(builder.Configuration);
         services.AddBrokerConnection();
+
+        builder.AddSchedulerServices();
     }
 
     private static void AddInfrastructureOptionsWithFluentValidation(this IServiceCollection services)
@@ -73,6 +86,9 @@ public static class DependencyInjection
 
     private static void AddDatabaseConnection(this IHostApplicationBuilder builder)
     {
+        builder.Services.AddScoped<ISaveChangesInterceptor, AuditableEntityInterceptor>();
+        builder.Services.AddScoped<ISaveChangesInterceptor, DispatchDomainEventsInterceptor>();
+
         builder.Services.AddDataProtection()
             .PersistKeysToDbContext<ApplicationDbContext>()
             .SetApplicationName("AmplifyPublisherApp");
@@ -99,8 +115,22 @@ public static class DependencyInjection
         });
 
         builder.Services.AddScoped<IApplicationDbContext>(provider => provider.GetRequiredService<ApplicationDbContext>());
-        builder.Services.AddScoped<ISaveChangesInterceptor, AuditableEntityInterceptor>();
         builder.Services.AddScoped<ApplicationDbContextInitialiser>();
+    }
+
+    private static IServiceCollection AddPublishers(this IServiceCollection services, IHostEnvironment environment)
+    {
+        services.AddScoped<IPublicationService, PublicationService>();
+        if (environment.IsDevelopment())
+        {
+            services.AddScoped<ISocialMediaPublisher, DummyInstagramPublisher>();
+        }
+        else
+        {
+            services.AddScoped<ISocialMediaPublisher, InstagramPublisher>();
+        }
+
+        return services;
     }
 
 

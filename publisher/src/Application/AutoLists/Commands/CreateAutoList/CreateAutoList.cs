@@ -9,7 +9,7 @@ public record CreateAutoListCommand(
     Guid ProjectId,
     string Name,
     List<AutoListEntryDto> Entries,
-    InstagramPublishingPresetDto? InstagramPreset,
+    InstagramSettingsDto? InstagramPreset,
     List<SocialMediaAccountDto> Accounts) : IRequest<Guid>;
 
 
@@ -29,7 +29,6 @@ public class CreateAutoListHandler(
         {
             Name = request.Name,
             ProjectId = request.ProjectId,
-            InstagramPreset = mapper.Map<InstagramPublishingPreset>(request.InstagramPreset),
             Accounts = accounts,
             Entries = [.. request.Entries.Select(mapper.Map<AutoListEntry>)]
         };

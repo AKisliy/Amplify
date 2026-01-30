@@ -1,8 +1,9 @@
 using Publisher.Domain.Entities;
+using Publisher.Domain.Entities.PublicationSetup;
 
 namespace Publisher.Application.Common.Models.Dto;
 
-public class InstagramPublishingPresetDto
+public class InstagramSettingsDto
 {
     public bool ShareToFeed { get; set; }
 
@@ -10,9 +11,7 @@ public class InstagramPublishingPresetDto
     {
         public Mapping()
         {
-            CreateMap<InstagramPublishingPresetDto, InstagramPublishingPreset>();
-
-            CreateMap<InstagramPublishingPreset, InstagramPublishingPresetDto>();
+            CreateMap<InstagramSettingsDto, InstagramSettings>().ReverseMap();
         }
     }
 }

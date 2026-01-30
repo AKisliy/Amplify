@@ -5,7 +5,7 @@ namespace Publisher.Application.Common.Models;
 public record PublicationResult
 (
     PublicationStatus Status,
-    string Link
+    string PublicUrl
 )
 {
     public static PublicationResult Failed => new(PublicationStatus.Failed, string.Empty);

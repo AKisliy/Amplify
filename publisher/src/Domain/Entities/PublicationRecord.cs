@@ -6,10 +6,15 @@ public class PublicationRecord : BaseAuditableEntity
     public Guid MediaPostId { get; set; }
 
     public Guid SocialAccountId { get; set; }
-    public SocialProvider Provider { get; set; }
-    public string ExternalPostId { get; set; } = string.Empty;
 
-    public string PublicUrl { get; set; } = null!;
+    public SocialProvider Provider { get; set; }
+
+    public PublicationStatus Status { get; set; }
+
+    // TODO: should be updated after publication
+    public string? ExternalPostId { get; set; }
+
+    public string? PublicUrl { get; set; }
 
     public int LikesCount { get; set; }
 
@@ -24,4 +29,6 @@ public class PublicationRecord : BaseAuditableEntity
     public DateTime? StatsUpdatedAt { get; set; }
 
     public virtual MediaPost MediaPost { get; set; } = null!;
+
+    public virtual SocialAccount SocialAccount { get; set; } = null!;
 }

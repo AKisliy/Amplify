@@ -3,6 +3,7 @@ using Publisher.Application.Common.Interfaces;
 using Publisher.Application.Common.Interfaces.Factory;
 using Publisher.Application.Common.Models;
 using Publisher.Domain.Entities;
+using Publisher.Domain.Entities.PublicationSetup;
 using Publisher.Domain.Enums;
 
 namespace Publisher.Application.Publications.Commands.PublishNextPostInAutoList;
@@ -26,7 +27,6 @@ public class PublishNextPostInAutoListCommandHandler(
             .Include(entry => entry.AutoList)
             .ThenInclude(al => al.Accounts)
             .Include(entry => entry.AutoList)
-            .ThenInclude(al => al.InstagramPreset)
             .SingleOrDefaultAsync(x => x.Id == autoListEntryId, cancellationToken);
 
         Guard.Against.NotFound(autoListEntryId, autoListEntry);
@@ -41,10 +41,8 @@ public class PublishNextPostInAutoListCommandHandler(
             return;
         }
 
-        var publicationSettings = PublicationSettings.Default;
-
-        if (autoList.InstagramPreset is not null)
-            publicationSettings.InstagramSettings = autoList.InstagramPreset;
+        // TODO: add publication settings to autolist
+        var publicationSettings = new PublicationSettings();
 
         foreach (var account in autoListEntry.AutoList.Accounts)
         {
@@ -62,8 +60,10 @@ public class PublishNextPostInAutoListCommandHandler(
 
     private async Task<MediaPost?> RetrieveMediaForPublishingInAutoList(Guid autoListId)
     {
+        // TODO: implement logic to avoid republishing the same post
+        // previously was based on Status.Published check
         var media = await dbContext.MediaPosts
-            .Where(x => x.AutoListId == autoListId && x.Status == PublicationStatus.Scheduled)
+            .Where(x => x.AutoListId == autoListId)
             .OrderBy(x => x.Created)
             .FirstOrDefaultAsync();
 
