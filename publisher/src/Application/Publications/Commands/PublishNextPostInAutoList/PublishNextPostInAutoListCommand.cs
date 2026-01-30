@@ -41,8 +41,7 @@ public class PublishNextPostInAutoListCommandHandler(
             return;
         }
 
-        // TODO: add publication settings to autolist
-        var publicationSettings = new PublicationSettings();
+        var publicationSettings = autoList.PublicationSettings;
 
         foreach (var account in autoListEntry.AutoList.Accounts)
         {

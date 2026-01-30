@@ -380,7 +380,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/MediaPostDto"
+                  "$ref": "#/components/schemas/MediaPostResponseDto"
                 }
               }
             }
@@ -456,7 +456,7 @@
               "$ref": "#/components/schemas/AutoListEntryDto"
             }
           },
-          "instagramPreset": {
+          "instagramSettings": {
             "nullable": true,
             "oneOf": [
               {
@@ -502,7 +502,7 @@
           "name": {
             "type": "string"
           },
-          "instagramPreset": {
+          "instagramSettings": {
             "nullable": true,
             "oneOf": [
               {
@@ -590,7 +590,7 @@
           "name": {
             "type": "string"
           },
-          "instagramPreset": {
+          "instagramSettings": {
             "nullable": true,
             "oneOf": [
               {
@@ -627,7 +627,7 @@
           }
         }
       },
-      "MediaPostDto": {
+      "MediaPostResponseDto": {
         "type": "object",
         "additionalProperties": false,
         "properties": {
@@ -655,10 +655,10 @@
           "publicationRecords": {
             "type": "array",
             "items": {
-              "$ref": "#/components/schemas/PublicationRecordDto"
+              "$ref": "#/components/schemas/PublicationRecordResponseDto"
             }
           },
-          "instagramPublishingPreset": {
+          "instagramSettings": {
             "nullable": true,
             "oneOf": [
               {
@@ -680,7 +680,7 @@
           2
         ]
       },
-      "PublicationRecordDto": {
+      "PublicationRecordResponseDto": {
         "type": "object",
         "additionalProperties": false,
         "properties": {
