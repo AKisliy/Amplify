@@ -3,7 +3,6 @@ using Publisher.Application.Common.Interfaces;
 using Publisher.Application.Common.Interfaces.Factory;
 using Publisher.Application.Common.Models;
 using Publisher.Application.Common.Models.Dto;
-using Publisher.Application.Publications.Models;
 using Publisher.Domain.Entities;
 using Publisher.Domain.Entities.PublicationSetup;
 using Publisher.Domain.Enums;
@@ -17,15 +16,15 @@ public record PublishVideoCommand(
     IReadOnlyList<Guid> AccountIds,
     string? Description,
     Guid? CoverMediaId,
-    InstagramSettingsDto? InstagramPublishingPreset = null) : IRequest<MediaPostDto>;
+    InstagramSettingsDto? InstagramPublishingPreset = null) : IRequest<MediaPostResponseDto>;
 
 public class PublishVideoCommandHandler(
     ILogger<PublishVideoCommandHandler> logger,
     IApplicationDbContext dbContext,
     ISocialMediaPublisherFactory socialMediaPublisherFactory,
-    IMapper mapper) : IRequestHandler<PublishVideoCommand, MediaPostDto>
+    IMapper mapper) : IRequestHandler<PublishVideoCommand, MediaPostResponseDto>
 {
-    public async Task<MediaPostDto> Handle(PublishVideoCommand request, CancellationToken cancellationToken)
+    public async Task<MediaPostResponseDto> Handle(PublishVideoCommand request, CancellationToken cancellationToken)
     {
         logger.LogInformation(
             "Publishing video {MediaId} for project {ProjectId} to accounts: {AccountIds}",
@@ -76,6 +75,6 @@ public class PublishVideoCommandHandler(
             "Published video {MediaId} for project {ProjectId} to accounts: {AccountIds}",
             request.MediaId, request.ProjectId, string.Join(", ", request.AccountIds));
 
-        return mapper.Map<MediaPostDto>(mediaPost);
+        return mapper.Map<MediaPostResponseDto>(mediaPost);
     }
 }

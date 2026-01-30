@@ -2,9 +2,9 @@ using Publisher.Application.AutoLists.Queries.GetAutoList;
 using Publisher.Domain.Entities;
 using Publisher.Domain.Enums;
 
-namespace Publisher.Application.Publications.Models;
+namespace Publisher.Application.Common.Models;
 
-public class PublicationRecordDto
+public class PublicationRecordResponseDto
 {
     public Guid Id { get; set; }
 
@@ -20,7 +20,7 @@ public class PublicationRecordDto
     {
         public Mapping()
         {
-            CreateMap<PublicationRecord, PublicationRecordDto>();
+            CreateMap<PublicationRecord, PublicationRecordResponseDto>();
         }
     }
 }

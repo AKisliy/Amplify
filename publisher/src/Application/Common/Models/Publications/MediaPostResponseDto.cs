@@ -3,9 +3,9 @@ using Publisher.Application.Common.Models.Dto;
 using Publisher.Domain.Entities;
 using Publisher.Domain.Enums;
 
-namespace Publisher.Application.Publications.Models;
+namespace Publisher.Application.Common.Models;
 
-public class MediaPostDto
+public class MediaPostResponseDto
 {
     public Guid Id { get; set; }
 
@@ -19,15 +19,15 @@ public class MediaPostDto
 
     public PublicationType PublicationType { get; set; }
 
-    public IList<PublicationRecordDto> PublicationRecords { get; set; } = [];
+    public IList<PublicationRecordResponseDto> PublicationRecords { get; set; } = [];
 
-    public InstagramSettingsDto? InstagramPublishingPreset { get; set; } = null!;
+    public InstagramSettingsDto? InstagramSettings { get; set; } = null!;
 
     private class Mapping : Profile
     {
         public Mapping()
         {
-            CreateMap<MediaPost, MediaPostDto>()
+            CreateMap<MediaPost, MediaPostResponseDto>()
                 .ForMember(
                     dest => dest.MediaUrl,
                     opt => opt.MapFrom<ImageUrlResolver, Guid>(src => src.MediaId))

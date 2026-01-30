@@ -2,6 +2,8 @@ namespace Publisher.Application.Common.Options;
 
 public class ExternalUrlsOptions
 {
+    public const string SecionName = "ExternalUrls";
+
     public string MediaServiceApi { get; set; } = string.Empty;
 }
 

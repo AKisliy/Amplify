@@ -1,4 +1,3 @@
-using Publisher.Domain.Entities;
 using Publisher.Domain.Entities.PublicationSetup;
 
 namespace Publisher.Application.Common.Models.Dto;
