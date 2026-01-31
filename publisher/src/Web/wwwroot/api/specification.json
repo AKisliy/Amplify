@@ -356,12 +356,12 @@
         }
       }
     },
-    "/api/publications/publish": {
+    "/api/publications/video": {
       "post": {
         "tags": [
           "publications"
         ],
-        "operationId": "PostApiPublicationsPublish",
+        "operationId": "PostApiPublicationsVideo",
         "requestBody": {
           "x-name": "request",
           "content": {

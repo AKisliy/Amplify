@@ -11,10 +11,10 @@ public class Publications : EndpointGroupBase
 
     public override void Map(RouteGroupBuilder groupBuilder)
     {
-        groupBuilder.MapPost("publish", PublishPostAsync);
+        groupBuilder.MapPost("video", PublishVideoAsync);
     }
 
-    public async Task<Results<Created<MediaPostResponseDto>, BadRequest>> PublishPostAsync(IMediator mediator, [FromBody] PublishVideoCommand request)
+    public async Task<Results<Created<MediaPostResponseDto>, BadRequest>> PublishVideoAsync(IMediator mediator, [FromBody] PublishVideoCommand request)
     {
         var result = await mediator.Send(request, CancellationToken.None);
 
