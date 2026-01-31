@@ -2,6 +2,7 @@ using Microsoft.Extensions.Logging;
 using Publisher.Application.Common.Interfaces;
 using Publisher.Application.Common.Models.Dto;
 using Publisher.Domain.Entities;
+using Publisher.Domain.Entities.PublicationSetup;
 
 namespace Publisher.Application.AutoLists.Commands.CreateAutoList;
 
@@ -9,7 +10,7 @@ public record CreateAutoListCommand(
     Guid ProjectId,
     string Name,
     List<AutoListEntryDto> Entries,
-    InstagramPublishingPresetDto? InstagramPreset,
+    InstagramSettingsDto? InstagramSettings,
     List<SocialMediaAccountDto> Accounts) : IRequest<Guid>;
 
 
@@ -25,13 +26,19 @@ public class CreateAutoListHandler(
 
         var accounts = await GetSocialMediaAccountsAsync(request, cancellationToken);
 
+        var publicationSettings = new PublicationSettings();
+        if (request.InstagramSettings is not null)
+        {
+            publicationSettings.Instagram = mapper.Map<InstagramSettings>(request.InstagramSettings);
+        }
+
         var autoList = new AutoList
         {
             Name = request.Name,
             ProjectId = request.ProjectId,
-            InstagramPreset = mapper.Map<InstagramPublishingPreset>(request.InstagramPreset),
             Accounts = accounts,
-            Entries = [.. request.Entries.Select(mapper.Map<AutoListEntry>)]
+            Entries = [.. request.Entries.Select(mapper.Map<AutoListEntry>)],
+            PublicationSettings = publicationSettings
         };
 
         dbContext.AutoLists.Add(autoList);

@@ -21,6 +21,8 @@ else
     app.UseHsts();
 }
 
+app.UseInfrastructure();
+
 app.UseHealthChecks("/health");
 app.UseHttpsRedirection();
 app.UseStaticFiles();

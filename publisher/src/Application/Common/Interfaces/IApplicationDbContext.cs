@@ -4,6 +4,8 @@ namespace Publisher.Application.Common.Interfaces;
 
 public interface IApplicationDbContext
 {
+    DbSet<Project> Projects { get; }
+
     DbSet<AutoListEntry> AutoListEntries { get; }
 
     DbSet<MediaPost> MediaPosts { get; }
@@ -12,7 +14,7 @@ public interface IApplicationDbContext
 
     DbSet<AutoList> AutoLists { get; }
 
-    DbSet<InstagramPublishingPreset> InstagramPublishingPresets { get; }
+    DbSet<PublicationRecord> PublicationRecords { get; }
 
     Task<int> SaveChangesAsync(CancellationToken cancellationToken);
 }

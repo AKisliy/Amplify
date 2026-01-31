@@ -8,9 +8,9 @@ namespace Publisher.Infrastructure.Consumers;
 
 public class PublishRequestedConsumer(
     IMediator mediator,
-    ILogger<PublishRequestedConsumer> logger) : IConsumer<PublishRequested>
+    ILogger<PublishRequestedConsumer> logger) : IConsumer<PublishFromAutoListRequested>
 {
-    public async Task Consume(ConsumeContext<PublishRequested> context)
+    public async Task Consume(ConsumeContext<PublishFromAutoListRequested> context)
     {
         var autoListEntryId = context.Message.AutoListEntryId;
         var requestedTime = context.Message.Time;

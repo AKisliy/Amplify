@@ -1,3 +1,5 @@
+using Publisher.Domain.Entities.PublicationSetup;
+
 namespace Publisher.Domain.Entities;
 
 public class MediaPost : BaseAuditableEntity
@@ -11,13 +13,13 @@ public class MediaPost : BaseAuditableEntity
 
     public string? Description { get; set; }
 
-    public PublicationStatus Status { get; set; }
-
     public PublicationType PublicationType { get; set; }
 
-    public DateTime? PublishedAt { get; set; }
-
     public Guid? AutoListId { get; set; }
+
+    public PublicationSettings PublicationSettings { get; set; } = new();
+
+    public virtual ICollection<PublicationRecord> PublicationRecords { get; set; } = [];
 
     public virtual Project Project { get; set; } = null!;
 

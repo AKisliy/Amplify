@@ -1,3 +1,5 @@
+using Publisher.Domain.Entities.PublicationSetup;
+
 namespace Publisher.Application.Common.Models;
 
 public record SocialMediaPostConfig(

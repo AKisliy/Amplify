@@ -10,7 +10,7 @@ public class FullAutoListDto
 
     public string Name { get; set; } = null!;
 
-    public InstagramPublishingPresetDto? InstagramPreset { get; set; }
+    public InstagramSettingsDto? InstagramSettings { get; set; }
 
     public ICollection<AutoListEntryDto> Entries { get; set; } = [];
 
@@ -20,7 +20,10 @@ public class FullAutoListDto
     {
         public Mapping()
         {
-            CreateMap<AutoList, FullAutoListDto>();
+            CreateMap<AutoList, FullAutoListDto>()
+                .ForMember(
+                    dest => dest.InstagramSettings,
+                    opt => opt.MapFrom(src => src.PublicationSettings.Instagram));
         }
     }
 }

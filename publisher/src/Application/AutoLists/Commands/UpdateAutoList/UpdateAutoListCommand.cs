@@ -1,18 +1,18 @@
 using Publisher.Application.Common.Interfaces;
 using Publisher.Application.Common.Models.Dto;
 using Publisher.Domain.Entities;
+using Publisher.Domain.Entities.PublicationSetup;
 
 namespace Publisher.Application.AutoLists.Commands.UpdateAutoList;
 
 public record UpdateAutoListCommand(
     Guid Id,
     string Name,
-    InstagramPublishingPresetDto? InstagramPreset,
+    InstagramSettingsDto? InstagramSettings,
     List<SocialMediaAccountDto> Accounts) : IRequest;
 
-public class UpdateTodoItemCommandHandler(
-    IApplicationDbContext context,
-    IMapper mapper) : IRequestHandler<UpdateAutoListCommand>
+public class UpdateAutoListCommandHandler(IApplicationDbContext context, IMapper mapper)
+    : IRequestHandler<UpdateAutoListCommand>
 {
     public async Task Handle(UpdateAutoListCommand request, CancellationToken cancellationToken)
     {
@@ -22,38 +22,10 @@ public class UpdateTodoItemCommandHandler(
         Guard.Against.NotFound(request.Id, entity);
 
         entity.Name = request.Name;
-
-        entity.InstagramPreset = await UpdateInstagramPresetAsync(request, cancellationToken);
-
         entity.Accounts = await GetUpdatedAccountsListAsync(request, cancellationToken);
+        entity.PublicationSettings = GetUpdatedPublicationSettings(entity, request.InstagramSettings);
 
         await context.SaveChangesAsync(cancellationToken);
-    }
-
-    private async Task<InstagramPublishingPreset?> UpdateInstagramPresetAsync(UpdateAutoListCommand request, CancellationToken cancellationToken)
-    {
-        var entity = await context.InstagramPublishingPresets
-            .Where(ps => ps.AutoListId == request.Id)
-            .FirstOrDefaultAsync(cancellationToken);
-
-        if (entity is not null && request.InstagramPreset is not null)
-        {
-            context.InstagramPublishingPresets.Entry(entity)
-                .CurrentValues
-                .SetValues(request.InstagramPreset);
-        }
-
-        if (entity is null && request.InstagramPreset is null)
-            return null;
-
-        if (entity is not null && request.InstagramPreset is null)
-            return null;
-
-        if (entity is null && request.InstagramPreset is not null)
-            return mapper.Map<InstagramPublishingPreset>(request.InstagramPreset);
-
-        entity!.ShareToFeed = request.InstagramPreset!.ShareToFeed;
-        return entity;
     }
 
     private Task<List<SocialAccount>> GetUpdatedAccountsListAsync(UpdateAutoListCommand request, CancellationToken cancellationToken)
@@ -62,5 +34,20 @@ public class UpdateTodoItemCommandHandler(
         return context.SocialAccounts
             .Where(x => newIds.Contains(x.Id))
             .ToListAsync(cancellationToken);
+    }
+
+    private PublicationSettings GetUpdatedPublicationSettings(AutoList autoList, InstagramSettingsDto? instagramSettingsDto)
+    {
+        var previousSettings = autoList.PublicationSettings;
+        if (instagramSettingsDto is null)
+        {
+            previousSettings.Instagram = null;
+        }
+        else
+        {
+            previousSettings.Instagram = mapper.Map<InstagramSettings>(instagramSettingsDto);
+        }
+
+        return previousSettings;
     }
 }
