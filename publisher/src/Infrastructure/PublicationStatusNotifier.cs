@@ -22,6 +22,6 @@ public class PublicationStatusNotifier(
             publicationRecord.Id,
             publicationRecord.Status.ToString(),
             publicationRecord.PublicUrl,
-            "");
+            publicationRecord.PublicationErrorMessage);
     }
 }

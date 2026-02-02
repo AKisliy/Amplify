@@ -47,6 +47,7 @@ public class PublicationService(
 
             // TODO: maybe add exception details to the record
             publicationRecord.Status = PublicationStatus.Failed;
+            publicationRecord.PublicationErrorMessage = "Publishing failed";
             publicationRecord.AddDomainEvent(new PublicationRecordStatusChangedEvent(publicationRecord));
             await applicationDbContext.SaveChangesAsync(cancellationToken);
 

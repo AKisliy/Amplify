@@ -16,6 +16,8 @@ public class PublicationRecord : BaseAuditableEntity
 
     public string? PublicUrl { get; set; }
 
+    public string? PublicationErrorMessage { get; set; }
+
     public int LikesCount { get; set; }
 
     public int ViewsCount { get; set; }
