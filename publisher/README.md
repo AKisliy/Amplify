@@ -18,5 +18,17 @@ By default app will seed data every time u start it in dev mode. Here are defaul
 - Default Project's id = `7780aa16-edd0-4849-af77-f4280da56d6a`
 - Default Account connected to project = `7b577f75-d8a7-40c0-87d4-17bd49bb6842`
 - Default Autolist connected to project = `8dafea28-5230-445a-84b2-04e98cebce54`
+- Also app is configured with default JWT (100 years expiry). You can find it in logs.
+
+### Testing and generating SignalR clients
+In this project we have [SignalR](https://github.com/SignalR/SignalR). It has great tooling, so there are auto-generated TypeScript clients in `./signalr-test` folder. 
+
+You can test them when main app is running - just navigate to `./signalr-test` folder and run:
+```sh
+npm install
+npx tsx client.ts
+```
+Then send some requests to `/api/publications/video` endpoint (just use [swagger](https://localhost:6060/api/index.html?url=/api/specification.json#/publications/PostApiPublicationsVideo)) and watch status updates popping up in your console ✨ (P.S. dummy publication takes 7 seconds)
+
 
 

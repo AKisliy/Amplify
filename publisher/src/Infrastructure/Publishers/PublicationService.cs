@@ -5,6 +5,7 @@ using Publisher.Application.Common.Interfaces;
 using Publisher.Application.Common.Interfaces.Factory;
 using Publisher.Application.Common.Models;
 using Publisher.Domain.Enums;
+using Publisher.Domain.Events.Publications;
 using Publisher.Domain.Exceptions;
 
 namespace Publisher.Infrastructure.Publishers;
@@ -35,6 +36,7 @@ public class PublicationService(
             publicationSettings);
 
         publicationRecord.Status = PublicationStatus.Pending;
+        publicationRecord.AddDomainEvent(new PublicationRecordStatusChangedEvent(publicationRecord));
         await applicationDbContext.SaveChangesAsync(cancellationToken);
 
         var result = await publisher.PostVideoAsync(config);
@@ -45,6 +47,7 @@ public class PublicationService(
 
             // TODO: maybe add exception details to the record
             publicationRecord.Status = PublicationStatus.Failed;
+            publicationRecord.AddDomainEvent(new PublicationRecordStatusChangedEvent(publicationRecord));
             await applicationDbContext.SaveChangesAsync(cancellationToken);
 
             // throw exception to trigger retry
@@ -57,6 +60,7 @@ public class PublicationService(
         }
 
         publicationRecord.Status = PublicationStatus.Published;
+        publicationRecord.AddDomainEvent(new PublicationRecordStatusChangedEvent(publicationRecord));
         await applicationDbContext.SaveChangesAsync(cancellationToken);
     }
 }
