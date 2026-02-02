@@ -708,10 +708,10 @@
         "description": "",
         "x-enumNames": [
           "None",
-          "Published",
-          "Failed",
           "Scheduled",
-          "Pending"
+          "Processing",
+          "Published",
+          "Failed"
         ],
         "enum": [
           0,

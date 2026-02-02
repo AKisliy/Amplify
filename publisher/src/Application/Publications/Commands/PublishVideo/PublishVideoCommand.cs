@@ -22,18 +22,24 @@ public class PublishVideoCommandHandler(
     ILogger<PublishVideoCommandHandler> logger,
     IApplicationDbContext dbContext,
     ISocialMediaPublisherFactory socialMediaPublisherFactory,
+    IUser user,
     IMapper mapper) : IRequestHandler<PublishVideoCommand, MediaPostResponseDto>
 {
     public async Task<MediaPostResponseDto> Handle(PublishVideoCommand request, CancellationToken cancellationToken)
     {
+        var userId = user.Id;
+
+        Guard.Against.Null(userId, nameof(userId));
+
         logger.LogInformation(
-            "Publishing video {MediaId} for project {ProjectId} to accounts: {AccountIds}",
-            request.MediaId, request.ProjectId, string.Join(", ", request.AccountIds));
+            "Publishing video {MediaId} for project {ProjectId} to accounts: {AccountIds} (user {UserId})",
+            request.MediaId, request.ProjectId, string.Join(", ", request.AccountIds), userId);
 
         var mediaPost = new MediaPost
         {
             MediaId = request.MediaId,
             ProjectId = request.ProjectId,
+            UserId = userId.Value,
             Description = request.Description,
             CoverMediaId = request.CoverMediaId,
             PublicationType = PublicationType.Manual,

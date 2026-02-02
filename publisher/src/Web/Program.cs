@@ -1,4 +1,5 @@
 using Publisher.Infrastructure.Data;
+using Publisher.Infrastructure.Hubs;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -7,6 +8,8 @@ builder.AddKeyVaultIfConfigured();
 builder.AddApplicationServices();
 builder.AddInfrastructureServices();
 builder.AddWebServices();
+
+builder.Services.AddSignalR();
 
 var app = builder.Build();
 
@@ -37,6 +40,7 @@ app.UseSwaggerUi(settings =>
 app.UseExceptionHandler(options => { });
 
 app.Map("/", () => Results.Redirect("/api"));
+app.MapHub<PublisherHub>("/hubs/publisher");
 
 app.MapEndpoints();
 

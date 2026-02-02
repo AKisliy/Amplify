@@ -30,6 +30,10 @@ using Publisher.Infrastructure.Consumers;
 using Publisher.Infrastructure.Scheduler;
 using Microsoft.AspNetCore.Builder;
 using Publisher.Infrastructure.Publishers;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.IdentityModel.Tokens;
+using System.Security.Claims;
+using System.Text;
 
 namespace Microsoft.Extensions.DependencyInjection;
 
@@ -49,6 +53,8 @@ public static class DependencyInjection
 
         builder.AddDatabaseConnection();
 
+        services.AddAuth();
+
         services.AddPublishers(builder.Environment);
         services.AddScoped<IFileStorage, MediaServiceStorage>();
 
@@ -57,6 +63,8 @@ public static class DependencyInjection
         services.AddScoped<InstagramPayloadBuilder>();
         services.AddScoped<InstagramHeaderBuilder>();
         services.AddScoped<IInstagramIntegrationService, InstagramIntegrationService>();
+
+        services.AddScoped<IPublicationStatusNotifier, PublicationStatusNotifier>();
 
         // TODO: should be in Application layer --- IGNORE ---
         // services.AddScoped<IAccountPickerFactory, AccountPickerFactory>();
@@ -183,6 +191,39 @@ public static class DependencyInjection
                 cfg.ConfigureEndpoints(context);
             });
         });
+
+        return services;
+    }
+
+    private static IServiceCollection AddAuth(this IServiceCollection services)
+    {
+        services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+            .AddJwtBearer(options =>
+            {
+                var isDevelopment = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") == "Development";
+
+                if (isDevelopment)
+                {
+                    options.TokenValidationParameters = new TokenValidationParameters
+                    {
+                        ValidateAudience = false,
+                        ValidateIssuer = false,
+                        ValidateLifetime = true,
+                        ValidateIssuerSigningKey = true,
+                        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes("ЭТО_МОЙ_СУПЕР_СЕКРЕТНЫЙ_КЛЮЧ_ДЛЯ_ТЕСТОВ_12345")),
+                        NameClaimType = ClaimTypes.NameIdentifier
+                    };
+                }
+                else
+                {
+                    options.Authority = "https://my-auth-domain.com/";
+                    options.TokenValidationParameters = new TokenValidationParameters
+                    {
+                        ValidateAudience = false,
+                        NameClaimType = ClaimTypes.NameIdentifier
+                    };
+                }
+            });
 
         return services;
     }

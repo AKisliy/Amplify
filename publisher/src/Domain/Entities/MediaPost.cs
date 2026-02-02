@@ -8,6 +8,8 @@ public class MediaPost : BaseAuditableEntity
 
     public Guid MediaId { get; set; }
 
+    public Guid UserId { get; set; }
+
     // TODO: not sure, if cover could be uploaded via URL 
     public Guid? CoverMediaId { get; set; }
 

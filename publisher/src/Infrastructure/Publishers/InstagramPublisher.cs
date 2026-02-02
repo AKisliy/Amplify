@@ -49,21 +49,21 @@ public class InstagramPublisher(
         if (creationId is null)
         {
             await HandleErrorResponse(creationResponse);
-            return PublicationResult.Failed;
+            return PublicationResult.Failed("Failed to create reel container");
         }
 
         var uploadCompletionResponse = await instagramApiClient.WaitForContainerUploadAsync(creationId, credentials.AccessToken);
         if (uploadCompletionResponse.StatusCode != InstagramApi.UploadStatus.Finished)
         {
             await HandleErrorResponse(uploadCompletionResponse);
-            return PublicationResult.Failed;
+            return PublicationResult.Failed("Upload did not finish successfully");
         }
 
         var publishResponse = await instagramApiClient.PublishAsync(credentials, creationId);
         if (publishResponse.Id == null)
         {
             await HandleErrorResponse(publishResponse);
-            return PublicationResult.Failed;
+            return PublicationResult.Failed("Failed to publish reel");
         }
 
         var postLink = await instagramApiClient.GetPostLink(publishResponse.Id, credentials.AccessToken);
