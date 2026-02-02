@@ -5,7 +5,6 @@ using Publisher.Application.Common.Interfaces;
 using Publisher.Application.Common.Interfaces.Factory;
 using Publisher.Application.Common.Models;
 using Publisher.Domain.Enums;
-using Publisher.Domain.Events.Publications;
 using Publisher.Domain.Exceptions;
 
 namespace Publisher.Infrastructure.Publishers;
@@ -18,50 +17,47 @@ public class PublicationService(
     [AutomaticRetry(Attempts = 3)]
     public async Task PublishPostAsync(Guid publicationRecordId, CancellationToken cancellationToken)
     {
-        var publicationRecord = applicationDbContext.PublicationRecords
+        var publicationRecord = await applicationDbContext.PublicationRecords
             .Include(pr => pr.MediaPost)
-            .FirstOrDefault(pr => pr.Id == publicationRecordId);
+            .FirstOrDefaultAsync(pr => pr.Id == publicationRecordId, cancellationToken);
 
-        Guard.Against.NotFound(publicationRecordId, publicationRecord, "Publication record not found");
+        Guard.Against.NotFound(publicationRecordId, publicationRecord);
 
-        var publisher = socialMediaPublisherFactory.GetSocialMediaPublisher(publicationRecord.Provider);
-
-        var publicationSettings = publicationRecord.MediaPost.PublicationSettings;
-
-        var config = new SocialMediaPostConfig(
-            publicationRecord.MediaPost.MediaId,
-            publicationRecord.MediaPost.Description,
-            publicationRecord.MediaPost.CoverMediaId,
-            publicationRecord.SocialAccountId,
-            publicationSettings);
-
-        publicationRecord.Status = PublicationStatus.Pending;
-        publicationRecord.AddDomainEvent(new PublicationRecordStatusChangedEvent(publicationRecord));
-        await applicationDbContext.SaveChangesAsync(cancellationToken);
-
-        var result = await publisher.PostVideoAsync(config);
-
-        if (result.Status == PublicationStatus.Failed)
+        if (publicationRecord.Status != PublicationStatus.Processing)
         {
-            logger.LogWarning("Failed to publish post {PublicationRecordId}", publicationRecordId);
+            publicationRecord.StartProcessing();
+            await applicationDbContext.SaveChangesAsync(cancellationToken);
+        }
 
-            // TODO: maybe add exception details to the record
-            publicationRecord.Status = PublicationStatus.Failed;
-            publicationRecord.PublicationErrorMessage = "Publishing failed";
-            publicationRecord.AddDomainEvent(new PublicationRecordStatusChangedEvent(publicationRecord));
+        try
+        {
+            var publisher = socialMediaPublisherFactory.GetSocialMediaPublisher(publicationRecord.Provider);
+            var publicationSettings = publicationRecord.MediaPost.PublicationSettings;
+
+            var config = new SocialMediaPostConfig(
+                publicationRecord.MediaPost.MediaId,
+                publicationRecord.MediaPost.Description,
+                publicationRecord.MediaPost.CoverMediaId,
+                publicationRecord.SocialAccountId,
+                publicationSettings);
+
+            var result = await publisher.PostVideoAsync(config);
+
+            if (result.Status == PublicationStatus.Failed)
+            {
+                throw new PublishingException(result.ErrorMessage ?? "Unknown error");
+            }
+
+            publicationRecord.MarkAsPublished(result.PublicUrl!);
+            await applicationDbContext.SaveChangesAsync(cancellationToken);
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Publishing failed");
+            publicationRecord.MarkAsFailed(ex.Message);
             await applicationDbContext.SaveChangesAsync(cancellationToken);
 
-            // throw exception to trigger retry
-            throw new PublishingException("Publication failed");
+            throw;
         }
-
-        if (result.Status == PublicationStatus.Published)
-        {
-            publicationRecord.PublicUrl = result.PublicUrl;
-        }
-
-        publicationRecord.Status = PublicationStatus.Published;
-        publicationRecord.AddDomainEvent(new PublicationRecordStatusChangedEvent(publicationRecord));
-        await applicationDbContext.SaveChangesAsync(cancellationToken);
     }
 }

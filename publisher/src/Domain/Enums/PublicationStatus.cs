@@ -4,7 +4,7 @@ public enum PublicationStatus
 {
     None,
     Scheduled,
-    Pending,
+    Processing,
     Published,
     Failed
 }
