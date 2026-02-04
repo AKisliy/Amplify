@@ -3,6 +3,7 @@ using Newtonsoft.Json;
 using Publisher.Application.Common.Interfaces;
 using Publisher.Application.Common.Models;
 using Publisher.Domain.Entities;
+using Publisher.Domain.Entities.PublicationSetup;
 using Publisher.Domain.Enums;
 using Publisher.Infrastructure.Clients.Instagram;
 using Publisher.Infrastructure.Constants;
@@ -20,7 +21,7 @@ public class InstagramPublisher(
 
     public async Task<PublicationResult> PostVideoAsync(SocialMediaPostConfig postConfig)
     {
-        var instPreset = postConfig.PublicationSettings.InstagramSettings;
+        var instPreset = postConfig.PublicationSettings.Instagram ?? new InstagramSettings();
 
         using var scope = SetupLoggingScope(postConfig);
         var videoKey = postConfig.PostFileId;
@@ -48,21 +49,21 @@ public class InstagramPublisher(
         if (creationId is null)
         {
             await HandleErrorResponse(creationResponse);
-            return PublicationResult.Failed;
+            return PublicationResult.Failed("Failed to create reel container");
         }
 
         var uploadCompletionResponse = await instagramApiClient.WaitForContainerUploadAsync(creationId, credentials.AccessToken);
         if (uploadCompletionResponse.StatusCode != InstagramApi.UploadStatus.Finished)
         {
             await HandleErrorResponse(uploadCompletionResponse);
-            return PublicationResult.Failed;
+            return PublicationResult.Failed("Upload did not finish successfully");
         }
 
         var publishResponse = await instagramApiClient.PublishAsync(credentials, creationId);
         if (publishResponse.Id == null)
         {
             await HandleErrorResponse(publishResponse);
-            return PublicationResult.Failed;
+            return PublicationResult.Failed("Failed to publish reel");
         }
 
         var postLink = await instagramApiClient.GetPostLink(publishResponse.Id, credentials.AccessToken);

@@ -79,19 +79,16 @@ public class IdentityService(
         if (!result.Succeeded) throw new Exception();
     }
 
-    public async Task<Result<(Guid UserId, string Email, IList<string> Roles)>> AuthenticateAsync(string email, string password)
+    public async Task<(Guid UserId, string Email, IList<string> Roles)> AuthenticateAsync(string email, string password)
     {
-        var user = await userManager.FindByEmailAsync(email);
-        if (user == null)
-            return Result<(Guid, string, IList<string>)>.Failure(new[] { "Invalid email or password." });
+        var user = await userManager.FindByEmailAsync(email) ?? throw new UnauthorizedAccessException();
 
         var result = await signInManager.CheckPasswordSignInAsync(user, password, false);
-        if (!result.Succeeded)
-            return Result<(Guid, string, IList<string>)>.Failure(new[] { "Invalid email or password." });
+        if (!result.Succeeded) throw new UnauthorizedAccessException();
 
         var roles = await userManager.GetRolesAsync(user);
 
-        return Result<(Guid, string, IList<string>)>.Success((user.Id, user.Email!, roles));
+        return (user.Id, user.Email!, roles);
     }
 
     public async Task ResetPasswordAsync(string email, string code, string newPassword)

@@ -27,11 +27,25 @@ using Publisher.Application.Common.Interfaces.Factory;
 using Publisher.Infrastructure.Factory;
 using Publisher.Infrastructure.Workers;
 using Publisher.Infrastructure.Consumers;
+using Publisher.Infrastructure.Scheduler;
+using Microsoft.AspNetCore.Builder;
+using Publisher.Infrastructure.Publishers;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.IdentityModel.Tokens;
+using System.Security.Claims;
+using System.Text;
 
 namespace Microsoft.Extensions.DependencyInjection;
 
 public static class DependencyInjection
 {
+    public static IApplicationBuilder UseInfrastructure(this IApplicationBuilder app)
+    {
+        app.UseScheduler();
+
+        return app;
+    }
+
     public static void AddInfrastructureServices(this IHostApplicationBuilder builder)
     {
         var services = builder.Services;
@@ -39,6 +53,9 @@ public static class DependencyInjection
 
         builder.AddDatabaseConnection();
 
+        services.AddAuth();
+
+        services.AddPublishers(builder.Environment);
         services.AddScoped<IFileStorage, MediaServiceStorage>();
 
         services.AddScoped<InstagramApiClient>();
@@ -46,6 +63,8 @@ public static class DependencyInjection
         services.AddScoped<InstagramPayloadBuilder>();
         services.AddScoped<InstagramHeaderBuilder>();
         services.AddScoped<IInstagramIntegrationService, InstagramIntegrationService>();
+
+        services.AddScoped<IPublicationStatusNotifier, PublicationStatusNotifier>();
 
         // TODO: should be in Application layer --- IGNORE ---
         // services.AddScoped<IAccountPickerFactory, AccountPickerFactory>();
@@ -59,6 +78,8 @@ public static class DependencyInjection
         services.AddPollyPipelines();
         services.AddCustomHttpClients(builder.Configuration);
         services.AddBrokerConnection();
+
+        builder.AddSchedulerServices();
     }
 
     private static void AddInfrastructureOptionsWithFluentValidation(this IServiceCollection services)
@@ -73,6 +94,9 @@ public static class DependencyInjection
 
     private static void AddDatabaseConnection(this IHostApplicationBuilder builder)
     {
+        builder.Services.AddScoped<ISaveChangesInterceptor, AuditableEntityInterceptor>();
+        builder.Services.AddScoped<ISaveChangesInterceptor, DispatchDomainEventsInterceptor>();
+
         builder.Services.AddDataProtection()
             .PersistKeysToDbContext<ApplicationDbContext>()
             .SetApplicationName("AmplifyPublisherApp");
@@ -99,8 +123,22 @@ public static class DependencyInjection
         });
 
         builder.Services.AddScoped<IApplicationDbContext>(provider => provider.GetRequiredService<ApplicationDbContext>());
-        builder.Services.AddScoped<ISaveChangesInterceptor, AuditableEntityInterceptor>();
         builder.Services.AddScoped<ApplicationDbContextInitialiser>();
+    }
+
+    private static IServiceCollection AddPublishers(this IServiceCollection services, IHostEnvironment environment)
+    {
+        services.AddScoped<IPublicationService, PublicationService>();
+        if (environment.IsDevelopment())
+        {
+            services.AddScoped<ISocialMediaPublisher, DummyInstagramPublisher>();
+        }
+        else
+        {
+            services.AddScoped<ISocialMediaPublisher, InstagramPublisher>();
+        }
+
+        return services;
     }
 
 
@@ -153,6 +191,39 @@ public static class DependencyInjection
                 cfg.ConfigureEndpoints(context);
             });
         });
+
+        return services;
+    }
+
+    private static IServiceCollection AddAuth(this IServiceCollection services)
+    {
+        services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+            .AddJwtBearer(options =>
+            {
+                var isDevelopment = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") == "Development";
+
+                if (isDevelopment)
+                {
+                    options.TokenValidationParameters = new TokenValidationParameters
+                    {
+                        ValidateAudience = false,
+                        ValidateIssuer = false,
+                        ValidateLifetime = true,
+                        ValidateIssuerSigningKey = true,
+                        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes("ЭТО_МОЙ_СУПЕР_СЕКРЕТНЫЙ_КЛЮЧ_ДЛЯ_ТЕСТОВ_12345")),
+                        NameClaimType = ClaimTypes.NameIdentifier
+                    };
+                }
+                else
+                {
+                    options.Authority = "https://my-auth-domain.com/";
+                    options.TokenValidationParameters = new TokenValidationParameters
+                    {
+                        ValidateAudience = false,
+                        NameClaimType = ClaimTypes.NameIdentifier
+                    };
+                }
+            });
 
         return services;
     }

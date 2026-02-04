@@ -16,10 +16,9 @@ public class GetUserProjectsQueryHandler(IApplicationDbContext dbContext, IUser 
         var projects = await dbContext.Projects
             .Where(x => x.UserId == user.Id)
             .OrderByDescending(x => x.Created)
-            .ToListAsync(cancellationToken);
+            .ToListAsync();
 
         var projectDtos = mapper.Map<IReadOnlyCollection<ProjectDto>>(projects);
-
         return projectDtos;
     }
 }

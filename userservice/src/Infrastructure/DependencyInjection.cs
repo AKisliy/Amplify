@@ -9,6 +9,7 @@ using Microsoft.EntityFrameworkCore.Diagnostics;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Hosting;
 using UserService.Infrastructure.Options;
+using UserService.Infrastructure;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using System.Security.Cryptography;
@@ -19,7 +20,6 @@ using UserService.Infrastructure.Clients;
 using Microsoft.Extensions.Options;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.HttpOverrides;
-using UserService.Infrastructure.Mail;
 
 namespace Microsoft.Extensions.DependencyInjection;
 
@@ -49,14 +49,7 @@ public static class DependencyInjection
 
         builder.Services.AddScoped<ApplicationDbContextInitialiser>();
 
-        if (builder.Environment.IsDevelopment())
-        {
-            builder.Services.AddTransient<IEmailService, DummyEmailSender>();
-        }
-        else
-        {
-            builder.Services.AddTransient<IEmailService, ResendEmailSender>();
-        }
+        builder.Services.AddTransient<IEmailService, ResendEmailSender>();
 
         builder.AddAuth();
         builder.AddMailSender();
@@ -145,7 +138,7 @@ public static class DependencyInjection
 
         builder.Services.AddAuthorizationBuilder();
 
-        builder.Services.AddIdentityCore<ApplicationUser>(options => options.SignIn.RequireConfirmedAccount = false)
+        builder.Services.AddIdentityCore<ApplicationUser>(options => options.SignIn.RequireConfirmedAccount = true)
             .AddRoles<IdentityRole<Guid>>()
             .AddEntityFrameworkStores<ApplicationDbContext>()
             .AddSignInManager<ApplicationSignInManager>()

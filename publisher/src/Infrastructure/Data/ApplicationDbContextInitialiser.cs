@@ -55,8 +55,12 @@ public class ApplicationDbContextInitialiser(
     {
         // Default data
         // Seed, if necessary
-
         var projectId = new Guid("7780aa16-edd0-4849-af77-f4280da56d6a");
+        var accountId = new Guid("7b577f75-d8a7-40c0-87d4-17bd49bb6842");
+        var autoListId = new Guid("8dafea28-5230-445a-84b2-04e98cebce54");
+        var autoListEntryId = new Guid("dfc14e82-47ca-4b1e-979b-ba04758fd49b");
+        const string defaultJwtToken = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJodHRwOi8vc2NoZW1hcy54bWxzb2FwLm9yZy93cy8yMDA1LzA1L2lkZW50aXR5L2NsYWltcy9uYW1laWRlbnRpZmllciI6ImY1MTdhNjdjLTAyYjEtNDcxMC05YjM1LTA0OTJiMDI5ZDBjNCIsImh0dHA6Ly9zY2hlbWFzLnhtbHNvYXAub3JnL3dzLzIwMDUvMDUvaWRlbnRpdHkvY2xhaW1zL2VtYWlsYWRkcmVzcyI6ImZyb250ZW5kQGRldi5sb2NhbCIsInJvbGUiOiJBZG1pbiIsImV4cCI6NDkyNTcyNzQ4MSwiaXNzIjoiZGV2LWxvY2FsIiwiYXVkIjoicHVibGlzaGVyLWFwaSJ9.UrSq4n_bP-UYX5bZdR81RvhncRm4uOod4ljEqkjGDW0";
+
         context.Projects.Add(new Project
         {
             Id = projectId
@@ -64,8 +68,6 @@ public class ApplicationDbContextInitialiser(
 
         logger.LogInformation("Default project was added to DB with ID: {ProjectId}", projectId);
 
-
-        var accountId = new Guid("7b577f75-d8a7-40c0-87d4-17bd49bb6842");
         var account = new SocialAccount
         {
             Id = accountId,
@@ -80,7 +82,6 @@ public class ApplicationDbContextInitialiser(
 
         logger.LogInformation("Added default account to DB with ID: {AccountId}", accountId);
 
-        var autoListId = new Guid("8dafea28-5230-445a-84b2-04e98cebce54");
         var autoList = new AutoList
         {
             Id = autoListId,
@@ -91,7 +92,6 @@ public class ApplicationDbContextInitialiser(
 
         logger.LogInformation("Added default autolist with ID: {AutoListId}", autoListId);
 
-        var autoListEntryId = new Guid("dfc14e82-47ca-4b1e-979b-ba04758fd49b");
         var autoListEntry = new AutoListEntry
         {
             Id = autoListEntryId,
@@ -106,5 +106,7 @@ public class ApplicationDbContextInitialiser(
         context.AutoListEntries.Add(autoListEntry);
 
         await context.SaveChangesAsync();
+
+        logger.LogInformation("Your default JWT token (expires in 100 years, for testing ONLY): {JwtToken}", defaultJwtToken);
     }
 }

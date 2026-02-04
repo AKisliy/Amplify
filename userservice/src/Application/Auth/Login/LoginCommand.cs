@@ -11,12 +11,7 @@ public class LoginUserCommandHandler(
 {
     public async Task<LoginResponse> Handle(LoginUserCommand request, CancellationToken cancellationToken)
     {
-        var authResult = await identityService.AuthenticateAsync(request.Email, request.Password);
-
-        if (!authResult.Succeeded)
-            throw new UnauthorizedAccessException();
-
-        var (userId, email, roles) = authResult.Data;
+        var (userId, email, roles) = await identityService.AuthenticateAsync(request.Email, request.Password);
 
         var accessToken = await tokenService.GenerateAccessTokenAsync(userId, email, roles);
         var refreshToken = await tokenService.GenerateRefreshTokenAsync(userId);

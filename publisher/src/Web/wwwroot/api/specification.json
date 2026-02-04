@@ -355,6 +355,41 @@
           }
         }
       }
+    },
+    "/api/publications/video": {
+      "post": {
+        "tags": [
+          "publications"
+        ],
+        "operationId": "PostApiPublicationsVideo",
+        "requestBody": {
+          "x-name": "request",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PublishVideoCommand"
+              }
+            }
+          },
+          "required": true,
+          "x-position": 1
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MediaPostResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": ""
+          }
+        }
+      }
     }
   },
   "components": {
@@ -421,11 +456,11 @@
               "$ref": "#/components/schemas/AutoListEntryDto"
             }
           },
-          "instagramPreset": {
+          "instagramSettings": {
             "nullable": true,
             "oneOf": [
               {
-                "$ref": "#/components/schemas/InstagramPublishingPresetDto"
+                "$ref": "#/components/schemas/InstagramSettingsDto"
               }
             ]
           },
@@ -437,7 +472,7 @@
           }
         }
       },
-      "InstagramPublishingPresetDto": {
+      "InstagramSettingsDto": {
         "type": "object",
         "additionalProperties": false,
         "properties": {
@@ -467,11 +502,11 @@
           "name": {
             "type": "string"
           },
-          "instagramPreset": {
+          "instagramSettings": {
             "nullable": true,
             "oneOf": [
               {
-                "$ref": "#/components/schemas/InstagramPublishingPresetDto"
+                "$ref": "#/components/schemas/InstagramSettingsDto"
               }
             ]
           },
@@ -555,11 +590,11 @@
           "name": {
             "type": "string"
           },
-          "instagramPreset": {
+          "instagramSettings": {
             "nullable": true,
             "oneOf": [
               {
-                "$ref": "#/components/schemas/InstagramPublishingPresetDto"
+                "$ref": "#/components/schemas/InstagramSettingsDto"
               }
             ]
           },
@@ -589,6 +624,138 @@
             "items": {
               "$ref": "#/components/schemas/FullSocialAccountDto"
             }
+          }
+        }
+      },
+      "MediaPostResponseDto": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "guid"
+          },
+          "projectId": {
+            "type": "string",
+            "format": "guid"
+          },
+          "description": {
+            "type": "string"
+          },
+          "mediaUrl": {
+            "type": "string"
+          },
+          "coverUrl": {
+            "type": "string",
+            "nullable": true
+          },
+          "publicationType": {
+            "$ref": "#/components/schemas/PublicationType"
+          },
+          "publicationRecords": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PublicationRecordResponseDto"
+            }
+          },
+          "instagramSettings": {
+            "nullable": true,
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/InstagramSettingsDto"
+              }
+            ]
+          }
+        }
+      },
+      "PublicationType": {
+        "type": "integer",
+        "description": "",
+        "x-enumNames": [
+          "Manual",
+          "AutoList"
+        ],
+        "enum": [
+          1,
+          2
+        ]
+      },
+      "PublicationRecordResponseDto": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "guid"
+          },
+          "provider": {
+            "$ref": "#/components/schemas/SocialProvider"
+          },
+          "status": {
+            "$ref": "#/components/schemas/PublicationStatus"
+          },
+          "publicUrl": {
+            "type": "string",
+            "nullable": true
+          },
+          "socialAccount": {
+            "$ref": "#/components/schemas/FullSocialAccountDto"
+          }
+        }
+      },
+      "PublicationStatus": {
+        "type": "integer",
+        "description": "",
+        "x-enumNames": [
+          "None",
+          "Scheduled",
+          "Processing",
+          "Published",
+          "Failed"
+        ],
+        "enum": [
+          0,
+          1,
+          2,
+          3,
+          4
+        ]
+      },
+      "PublishVideoCommand": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "mediaId": {
+            "type": "string",
+            "format": "guid"
+          },
+          "projectId": {
+            "type": "string",
+            "format": "guid"
+          },
+          "accountIds": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "format": "guid"
+            }
+          },
+          "description": {
+            "type": "string",
+            "nullable": true
+          },
+          "coverMediaId": {
+            "type": "string",
+            "format": "guid",
+            "nullable": true
+          },
+          "instagramPublishingPreset": {
+            "nullable": true,
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/InstagramSettingsDto"
+              }
+            ]
           }
         }
       }

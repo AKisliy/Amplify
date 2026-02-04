@@ -9,8 +9,4 @@ public class Project : BaseAuditableEntity
     public Guid? Photo { get; set; }
 
     public Guid UserId { get; set; }
-
-    public Guid? AmbassadorId { get; set; }
-
-    public virtual Ambassador? Ambassador { get; set; }
 }

@@ -31,15 +31,6 @@ else
 
 app.UseHealthChecks("/health");
 app.UseHttpsRedirection();
-
-app.UseRouting();
-
-var corsOptions = app.Services.GetRequiredService<IOptions<CorsOptions>>();
-app.UseCors(corsOptions.Value.DefaultPolicyName);
-
-app.UseAuthentication();
-app.UseAuthorization();
-
 app.UseStaticFiles();
 
 app.UseSwaggerUi(settings =>
@@ -47,6 +38,10 @@ app.UseSwaggerUi(settings =>
     settings.Path = "/api";
     settings.DocumentPath = "/api/specification.json";
 });
+
+
+var corsOptions = app.Services.GetRequiredService<IOptions<CorsOptions>>();
+app.UseCors(corsOptions.Value.DefaultPolicyName);
 
 
 app.UseExceptionHandler(options => { });

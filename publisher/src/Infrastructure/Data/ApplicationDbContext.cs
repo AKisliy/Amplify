@@ -23,11 +23,11 @@ public class ApplicationDbContext : DbContext, IApplicationDbContext, IDataProte
     // TODO: отследить связи других сущностей с Project
     public DbSet<Project> Projects => Set<Project>();
 
+    public DbSet<PublicationRecord> PublicationRecords => Set<PublicationRecord>();
+
     public DbSet<AutoList> AutoLists => Set<AutoList>();
 
     public DbSet<AutoListEntry> AutoListEntries => Set<AutoListEntry>();
-
-    public DbSet<InstagramPublishingPreset> InstagramPublishingPresets => Set<InstagramPublishingPreset>();
 
     public DbSet<MediaPost> MediaPosts => Set<MediaPost>();
 
