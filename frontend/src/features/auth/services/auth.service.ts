@@ -1,4 +1,5 @@
 import api from "@/lib/axios";
+import { decodeJwt, getCookie } from "@/lib/jwt";
 import {
   RegisterPayload,
   LoginPayload,
@@ -7,6 +8,7 @@ import {
   ConfirmEmailParams,
   AuthResponse,
   ApiSuccessResponse,
+  AuthUser,
 } from "../types";
 
 const AUTH_BASE = "/auth";
@@ -44,8 +46,19 @@ export const confirmEmail = async (
 // =====================
 
 export const login = async (payload: LoginPayload): Promise<AuthResponse> => {
-  const { data } = await api.post<AuthResponse>(`${AUTH_BASE}/login`, payload);
-  return data;
+  // Backend sets httpOnly cookies but doesn't return user info
+  await api.post(`${AUTH_BASE}/login`, payload);
+  
+  // Since httpOnly cookies can't be accessed by JavaScript and backend doesn't return user info,
+  // create a minimal user object with info from the login form
+  // The backend authenticated the user successfully, so we know they're valid
+  const user: AuthUser = {
+    id: 'temp-id', // Temporary - not critical for auth flow
+    email: payload.email,
+    emailConfirmed: true, // Assume true if login succeeded
+  };
+  
+  return { user };
 };
 
 // =====================
