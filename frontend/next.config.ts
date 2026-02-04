@@ -1,11 +1,3 @@
-// import type { NextConfig } from "next";
-
-// const nextConfig: NextConfig = {
-//   /* config options here */
-//   reactCompiler: true,
-// };
-
-// export default nextConfig;
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
@@ -16,6 +8,14 @@ const nextConfig: NextConfig = {
         destination: `${process.env.NEXT_PUBLIC_API_BASE_URL}/:path*`,
       },
     ];
+  },
+  images: {
+    remotePatterns: [
+      {
+        protocol: "https",
+        hostname: "www.bigfootdigital.co.uk",
+      },
+    ],
   },
 };
 

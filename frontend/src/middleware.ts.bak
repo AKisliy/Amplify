@@ -14,14 +14,22 @@ const PROTECTED_PREFIX = "/dashboard";
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
-  const accessToken = request.cookies.get("accessToken")?.value;
+  const accessToken = request.cookies.get("MyAppAccessToken")?.value;
+  
+  // Debug logging
+  console.log("Middleware check:", {
+    pathname,
+    hasAccessToken: !!accessToken,
+    allCookies: request.cookies.getAll().map(c => c.name)
+  });
 
   const isAuthRoute = AUTH_ROUTES.some((route) => pathname.startsWith(route));
 
-  const isProtectedRoute = pathname.startsWith(PROTECTED_PREFIX);
+  const isProtectedRoute = pathname.startsWith(PROTECTED_PREFIX) || pathname.startsWith("/projects");
 
   // User not logged in and tries to access protected route
   if (!accessToken && isProtectedRoute) {
+    console.log("Redirecting to login - no access token");
     const loginUrl = new URL("/login", request.url);
     return NextResponse.redirect(loginUrl);
   }
@@ -43,5 +51,6 @@ export const config = {
     "/reset-password",
     "/confirm-email",
     "/dashboard/:path*",
+    "/projects/:path*",
   ],
 };
