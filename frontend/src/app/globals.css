@@ -139,6 +139,6 @@
   }
 
   .glass-card {
-    @apply glass rounded-3xl overflow-hidden;
+    @apply bg-white/70 dark:bg-black/40 backdrop-blur-xl border border-white/20 dark:border-white/10 shadow-2xl rounded-3xl overflow-hidden;
   }
 }

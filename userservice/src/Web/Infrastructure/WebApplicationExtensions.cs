@@ -1,4 +1,5 @@
 ﻿using System.Reflection;
+using Microsoft.Extensions.Options;
 
 namespace UserService.Web.Infrastructure;
 
@@ -8,10 +9,13 @@ public static class WebApplicationExtensions
     {
         var groupName = group.GroupName ?? group.GetType().Name;
 
+        var corsOptions = app.Services.GetRequiredService<IOptions<UserService.Infrastructure.Options.CorsOptions>>();
+
         return app
             .MapGroup($"/api/{groupName}")
             .WithGroupName(groupName)
-            .WithTags(groupName);
+            .WithTags(groupName)
+            .RequireCors(corsOptions.Value.DefaultPolicyName);
     }
 
     public static WebApplication MapEndpoints(this WebApplication app)

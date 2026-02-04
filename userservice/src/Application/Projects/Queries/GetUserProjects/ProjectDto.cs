@@ -13,6 +13,8 @@ public class ProjectDto
 
     public string? Photo { get; set; }
 
+    public Guid? AmbassadorId { get; set; }
+
     private class Mapping : Profile
     {
         public Mapping()

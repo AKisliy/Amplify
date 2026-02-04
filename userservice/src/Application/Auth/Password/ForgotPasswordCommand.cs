@@ -7,6 +7,8 @@ using Microsoft.Extensions.Options;
 using UserService.Application.Common.Interfaces;
 using UserService.Application.Common.Options;
 
+using Microsoft.Extensions.Logging;
+
 namespace UserService.Application.Auth.Password;
 
 public record ForgotPasswordCommand(string Email) : IRequest;
@@ -14,7 +16,8 @@ public record ForgotPasswordCommand(string Email) : IRequest;
 public class ForgotPasswordCommandHandler(
     ITokenService tokenService,
     IEmailService emailService,
-    IOptions<FrontendOptions> frontendOptions) : IRequestHandler<ForgotPasswordCommand>
+    IOptions<FrontendOptions> frontendOptions,
+    ILogger<ForgotPasswordCommandHandler> logger) : IRequestHandler<ForgotPasswordCommand>
 {
     public async Task Handle(ForgotPasswordCommand request, CancellationToken cancellationToken)
     {
@@ -25,13 +28,20 @@ public class ForgotPasswordCommandHandler(
             return;
         }
 
-        code = WebEncoders.Base64UrlEncode(Encoding.UTF8.GetBytes(code));
+        var encodedCode = WebEncoders.Base64UrlEncode(Encoding.UTF8.GetBytes(code));
 
         var baseFrontendUrl = frontendOptions.Value.Url;
         var passwordResetPage = frontendOptions.Value.PasswordResetPath;
 
-        var callbackUrl = Url.Combine(baseFrontendUrl, passwordResetPage).SetQueryParams(new { email = request.Email, code });
+        var callbackUrl = Url.Combine(baseFrontendUrl, passwordResetPage).SetQueryParams(new { email = request.Email, code = encodedCode });
 
-        await emailService.SendPasswordResetLinkAsync(request.Email, callbackUrl);
+        try
+        {
+            await emailService.SendPasswordResetLinkAsync(request.Email, callbackUrl);
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Failed to send password reset email to {Email}.", request.Email);
+        }
     }
 }
