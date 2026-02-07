@@ -1,0 +1,112 @@
+name: Publisher CI/CD
+
+on:
+    push:
+        branches:
+            - main
+        paths:
+            - "publisher/**"
+            - ".github/workflows/publisher-deploy.yaml"
+    workflow_dispatch:
+        inputs:
+            action:
+                description: "Action to perform"
+                required: true
+                default: "deploy"
+                type: choice
+                options:
+                    - deploy
+                    - rollback
+
+jobs:
+    build:
+        if: github.event_name == 'push'
+        name: Build Publisher app
+        runs-on: ubuntu-latest
+        steps:
+            - name: Checkout code
+              uses: actions/checkout@v6
+            - name: Set up .NET 9
+              uses: actions/setup-dotnet@v5
+              with:
+                  dotnet-version: "9.0.x"
+            - name: Restore dependencies
+              run: dotnet restore publisher/src/Web/Web.csproj
+            - name: Build
+              run: dotnet build --no-restore -c Release publisher/src/Web/Web.csproj
+    push-to-registry:
+        if: github.event_name == 'push'
+        needs: build
+        name: Build and Push Docker Image
+        runs-on: ubuntu-latest
+        steps:
+            - name: Checkout code
+              uses: actions/checkout@v6
+
+            - name: Log in to Docker Hub
+              uses: docker/login-action@v2
+              with:
+                  username: ${{ secrets.DOCKER_HUB_USERNAME }}
+                  password: ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}
+
+            - name: Build and push publisher image
+              env:
+                  IMAGE_TAG: ${{ github.sha }}
+              run: |
+                  docker build \
+                      -t akisliy/amplify-publisher:${{ env.IMAGE_TAG }} \
+                      -t akisliy/amplify-publisher:latest \
+                      -f publisher/Dockerfile publisher/
+
+                  docker push akisliy/amplify-publisher:${{ env.IMAGE_TAG }}
+                  docker push akisliy/amplify-publisher:latest
+    deploy:
+        if: github.event_name == 'workflow_dispatch' && inputs.action == 'deploy'
+        needs: push-to-registry
+        name: Deploy to Kubernetes with Helmfile
+        environment: production
+        runs-on: ubuntu-latest
+        steps:
+            - name: Checkout code
+              uses: actions/checkout@v6
+
+            - name: Setup Helmfile
+              uses: mamezou-tech/setup-helmfile@v2.2.0
+              with:
+                  helmfile-version: "v1.2.2"
+
+            - name: Create Kubeconfig
+              run: |
+                  mkdir -p $HOME/.kube
+                  echo "${{ secrets.KUBE_CONFIG_DATA }}" | base64 -d > $HOME/.kube/config
+                  chmod 600 $HOME/.kube/config
+
+            - name: Deploy publisher with Helmfile
+              env:
+                  PUBLISHER_IMAGE_TAG: ${{ github.sha }}
+              run: |
+                  helmfile -e dev -l app=publisher sync --skip-diff-on-install
+    rollback:
+        if: github.event_name == 'workflow_dispatch' && inputs.action == 'rollback'
+        name: Rollback publisher Deployment
+        environment: production
+        runs-on: ubuntu-latest
+        steps:
+            - name: Checkout code
+              uses: actions/checkout@v6
+
+            - name: Setup Helmfile
+              uses: mamezou-tech/setup-helmfile@v2.2.0
+              with:
+                  helmfile-version: "v1.2.2"
+
+            - name: Create Kubeconfig
+              run: |
+                  mkdir -p $HOME/.kube
+                  echo "${{ secrets.KUBE_CONFIG_DATA }}" | base64 -d > $HOME/.kube/config
+                  chmod 600 $HOME/.kube/config
+
+            - name: Rollback publisher Deployment with Helmfile
+              run: |
+                  echo "Rolling back publisher..."
+                  helm rollback publisher -n amplify --wait
