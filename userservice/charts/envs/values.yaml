@@ -42,7 +42,7 @@ volumeMounts:
   
 
 virtualService:
-  name: muffin-currency-internal-vs
+  name: userservice-vs
   http:
     timeout: 2s
     retries:

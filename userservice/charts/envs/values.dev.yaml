@@ -10,13 +10,14 @@ appConfig:
       Microsoft: Warning
 
   MailOptions:
-    ApiKey: ""
+    ApiKey: "API_KEY"
 
   Jwt:
     Key: "DevelopmentSecretKeyForJwtTokenGeneration"
     Issuer: "MyAppDevelopment"
     Audience: "MyAppDevelopmentUsers"
-    PrivateKeyPem: ""
+    PrivateKeyPem: "-----BEGIN PRIVATE KEY-----\nMIIEvAIBADANBgkqhkiG9w0BAQEFAASCBKYwggSiAgEAAoIBAQCxHFHd6PSj473m\n6JvPKT4fwcIy0PMQsjs2VudEcVKeB5NoC9KOvy1wRF//FJIx/25qwb93lsAQPqCu\ngjc9GO6ZPoYIw5zwifHjJAuouQ3AS84ehDJPwr1uHYA2vUArKQ5yq5K0qENURucO\nyfLqRg+/SI9Mki7bc1kXLzzvAnvTE7JmwxAuxmRm89gScLoCQjeOYC5+xfmIukBP\nRNrOnHb/vMt59zfnl0ibBJK32J9O+XspTB8JvqkgGD+0CDFdZdQwtq92A3vtz5Cm\n7AKc638RhCk+MDkm3sLr+aDQBONnscgJfF9a+xSKTMcO/l+wkdyL2bdxd3xaReeH\nJdS4or3NAgMBAAECggEACyurmDD4uRuEnzs9lIfX5L3eR0E5i2yKYoeBp6X0HYaB\nzBauzZUOQx305gxAmkmvh6k3r83AyGWC0e7hmAdqCR1R69yWme9BY9+iop4lWWMO\nmYsh9zjjpL3Ul99A3FgHEsFyi9VvBbJBIYQoP5FyrdBgRWaU8P9p95XhpHuGHs5s\n0yI1pRhNro2tLpn+PfrlpeGN7eJcgn2sMaDWhLI1qD/1c1EO6WDbOOOx+jgiQQqL\nsvvxZpS6eadusMytAAY3sxwbJNWNUbK2sItWHObZSuOz6erxRCP8j3zy/HEY6QUJ\nrAlPtflLkD1wQS6KDHleT9FpnEW3vkL4wFmec/n8IQKBgQDheitrPIT69MgUjrrj\nCJnhnvh/b0LyGkFhfhMQPx8H2jqL3JjndEKwgycVzbcbfri4QI+43U/nOnigjNIy\nKWTXAuhiOLHOTOaDBn4ONIB8XVuItMl/FunRcinMPjPCnLB/VWrxyYRfncS9TUP4\nQhVaXot3/ce6F8IUqfqQ9M980QKBgQDJFgX93PwXfI2yN8zzT6yCG21FARA+KJHJ\ndm4DEn6+bFpZ609/hgSCL0ftk3LlgH7lb1amfU8jG6pwSVgiZk+ZWoiUlww96ruC\nKyhk7OUhYHTg+HS+RMUeWQx23yqBrg336D9l3vEFpsOGa5+CxjBIQhH90owtZ7kt\nm1ee9JIAPQKBgD/9MutJDphF9a5X31PlMf6k5fMMeVxJ9Toc1H4s27qXxTvCDCbL\niM2dOu9mJUwJR5UKxX76V93Qa0FtFY4kzzhx289cNaHNkzGmGwoe/kPNHtgKLpEB\nyLOnCZOsJ3ZYj4JjlGkv/oBAPwBWOC7xWiv+Xuhbvl3itjK1FqYiw+uxAoGACZKy\n1lMe7T9Qv5tIdozkeY00toRGca8cwaqRsjO/NPGTm5RIRJnsvQXjNrw+TA7B+8pB\nJcvxaIp4or/bIkgcogBdYDWQr6HtK1VCpwtgHSaqactqQ2Sivb8fiMk3DNVsdNDp\ns7/ZWZuG029sOJ2WztnWYW8UnVTCzBkJItgh20ECgYBHaZNUtjOaqOHjyVOqOyw7\nj4lXbox+fgnMkVelalpLv+bQXUd16hcU5ztg6+fo6VPiT1lObCZcNobZomXII2mU\nOJVnOuWcCWPAv1yYAsByPhG8nLmc1dS8yPj/Nxn+6agV0gcvQlWlSokWHcjJOyO7\nVRADnOB2UEfUN7Q7dDLWbA==\n-----END PRIVATE KEY-----"
+
 
   MyCookies:
     AccessTokenCookieName: MyAppAccessToken

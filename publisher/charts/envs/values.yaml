@@ -31,16 +31,10 @@ readinessProbe:
 volumes: 
   - name: config-volume
     configMap:
-      name: userservice-config
-
-volumeMounts:
-  - name: config-volume
-    mountPath: /app/appsettings.Development.json
-    subPath: appsettings_override.json
-  
+      name: publisher-config
 
 virtualService:
-  name: muffin-currency-internal-vs
+  name: publisher-vs
   http:
     timeout: 2s
     retries:

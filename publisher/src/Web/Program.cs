@@ -1,3 +1,5 @@
+using Microsoft.Extensions.Options;
+using Publisher.Infrastructure.Configuration.Options;
 using Publisher.Infrastructure.Data;
 using Publisher.Infrastructure.Hubs;
 
@@ -12,6 +14,16 @@ builder.AddWebServices();
 builder.Services.AddSignalR();
 
 var app = builder.Build();
+
+var publisherOptions = app.Services.GetRequiredService<IOptions<PublisherOptions>>().Value;
+if (!string.IsNullOrEmpty(publisherOptions.BasePath))
+{
+    app.Logger.LogInformation("Using path base: {PathBase}", publisherOptions.BasePath);
+    var pathBase = publisherOptions.BasePath.StartsWith("/")
+        ? publisherOptions.BasePath
+        : "/" + publisherOptions.BasePath;
+    app.UsePathBase(pathBase);
+}
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
@@ -33,13 +45,12 @@ app.UseStaticFiles();
 app.UseSwaggerUi(settings =>
 {
     settings.Path = "/api";
-    settings.DocumentPath = "/api/specification.json";
+    settings.DocumentPath = $"{publisherOptions.BasePath}/api/specification.json";
 });
-
 
 app.UseExceptionHandler(options => { });
 
-app.Map("/", () => Results.Redirect("/api"));
+app.Map("/", () => Results.Redirect("api/index.html"));
 app.MapHub<PublisherHub>("/hubs/publisher");
 
 app.MapEndpoints();

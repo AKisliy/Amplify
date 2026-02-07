@@ -90,6 +90,7 @@ public static class DependencyInjection
         services.AddOptionsWithFluentValidation<MediaServiceOptions>(MediaServiceOptions.ConfigurationSection);
         services.AddOptionsWithFluentValidation<InstagramApiOptions>(InstagramApiOptions.ConfigurationSection);
         services.AddOptionsWithFluentValidation<RabbitMQOptions>(RabbitMQOptions.ConfigurationSection);
+        services.AddOptionsWithFluentValidation<PublisherOptions>(PublisherOptions.ConfigurationSection);
     }
 
     private static void AddDatabaseConnection(this IHostApplicationBuilder builder)

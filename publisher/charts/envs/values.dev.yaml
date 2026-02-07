@@ -1,8 +1,13 @@
 environment: Development
 
+volumeMounts:
+  - name: config-volume
+    mountPath: /app/appsettings.Development.json
+    subPath: appsettings_override.json
+
 appConfig:
   DbConnectionOptions:
-    Default: "Host=host.minikube.internal;Port=6433;Database=myDb;Username=dev_user;Password=dev_password"
+    Default: "Host=host.minikube.internal;Port=6432;Database=myDb;Username=dev_user;Password=dev_password"
   Logging:
     LogLevel:
       Default: "Information"
@@ -17,9 +22,9 @@ appConfig:
     ApiVersion: "v22.0"
     DailyLimit: 200
     BaseGraphHostUrl: "https://graph.facebook.com/"
-  RabbitMqOptions:
-    HostName: "host.minikube.internal"
-    UserName: "guest"
+  RabbitMQOptions:
+    Host: "host.minikube.internal"
+    Username: "guest"
     Password: "guest"
   ExternalUrls:
     MediaServiceApi: "http://host.minikube.internal:6001"

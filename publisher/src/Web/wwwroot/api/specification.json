@@ -5,6 +5,12 @@
     "title": "Publisher API",
     "version": "1.0.0"
   },
+  "servers": [
+    {
+      "url": "/publisher",
+      "description": "Publisher Service"
+    }
+  ],
   "paths": {
     "/api/autolistentry": {
       "post": {
