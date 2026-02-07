@@ -1,5 +1,5 @@
 image:
-  tag: {{ requiredEnv "PUBLISHER_IMAGE_TAG" }}
+  tag: {{ env "PUBLISHER_IMAGE_TAG" | default "latest" }}
 
 gateway:
   name: {{ .Values.global.gateway.name }}

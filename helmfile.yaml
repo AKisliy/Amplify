@@ -22,7 +22,7 @@ releases:
     chart: ./userservice/charts
     labels:
       tier: backend
-      name: userservice
+      app: userservice
     values:
       - ./userservice/charts/envs/values.yaml
       - ./userservice/charts/envs/values.yaml.gotmpl
@@ -34,7 +34,7 @@ releases:
     chart: ./publisher/charts
     labels:
       tier: backend
-      name: publisher
+      app: publisher
     values:
       - ./publisher/charts/envs/values.yaml
       - ./publisher/charts/envs/values.yaml.gotmpl
