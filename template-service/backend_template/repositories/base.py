@@ -18,7 +18,7 @@ class BaseRepository(Generic[ModelType]):
     Dependencies are injected automatically by FastAPI.
     """
     
-    def __init__(self, model: Type[ModelType], db: Annotated[AsyncSession, Depends(get_db)]):
+    def __init__(self, model: Type[ModelType], db: AsyncSession):
         """
         :param model: The SQLAlchemy model class (e.g. ProjectTemplate)
         :param db: The AsyncSession injected by FastAPI
