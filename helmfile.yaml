@@ -19,13 +19,25 @@ releases:
       - ./infra/envs/values.{{ .Environment.Name }}.yaml
 
   - name: userservice
-    chart: ./userservice/user-service
+    chart: ./userservice/charts
     labels:
       tier: backend
       name: userservice
     values:
-      - ./userservice/user-service/envs/values.yaml
-      - ./userservice/user-service/envs/values.yaml.gotmpl
-      - ./userservice/user-service/envs/values.{{ .Environment.Name }}.yaml
+      - ./userservice/charts/envs/values.yaml
+      - ./userservice/charts/envs/values.yaml.gotmpl
+      - ./userservice/charts/envs/values.{{ .Environment.Name }}.yaml
+    needs:
+      - gateway
+  
+  - name: publisher
+    chart: ./publisher/charts
+    labels:
+      tier: backend
+      name: publisher
+    values:
+      - ./publisher/charts/envs/values.yaml
+      - ./publisher/charts/envs/values.yaml.gotmpl
+      - ./publisher/charts/envs/values.{{ .Environment.Name }}.yaml
     needs:
       - gateway
