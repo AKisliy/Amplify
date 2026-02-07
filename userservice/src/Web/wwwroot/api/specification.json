@@ -5,6 +5,12 @@
     "title": "UserService API",
     "version": "1.0.0"
   },
+  "servers": [
+    {
+      "url": "/userservice",
+      "description": "Userservice API"
+    }
+  ],
   "paths": {
     "/api/ambassadors": {
       "post": {

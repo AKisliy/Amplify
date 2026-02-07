@@ -1,7 +1,7 @@
 replicaCount: 1
 
 image:
-  repository: akisliy/amplify-userservice
+  repository: akisliy/amplify-publisher
   pullPolicy: IfNotPresent
   tag: ""
 
@@ -10,10 +10,8 @@ fullnameOverride: ""
 
 serviceAccount:
   create: true
-  name: "user-service-sa"
 
 podLabels: {}
-
 
 service:
   type: ClusterIP
@@ -33,16 +31,10 @@ readinessProbe:
 volumes: 
   - name: config-volume
     configMap:
-      name: userservice-config
-
-volumeMounts:
-  - name: config-volume
-    mountPath: /app/appsettings.Development.json
-    subPath: appsettings_override.json
-  
+      name: publisher-config
 
 virtualService:
-  name: muffin-currency-internal-vs
+  name: publisher-vs
   http:
     timeout: 2s
     retries:

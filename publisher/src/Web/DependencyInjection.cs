@@ -44,6 +44,16 @@ public static class DependencyInjection
             });
 
             configure.OperationProcessors.Add(new AspNetCoreOperationSecurityScopeProcessor("JWT"));
+
+            configure.PostProcess = document =>
+            {
+                document.Servers.Clear();
+                document.Servers.Add(new OpenApiServer
+                {
+                    Url = "/publisher",
+                    Description = "Publisher Service"
+                });
+            };
         });
     }
 

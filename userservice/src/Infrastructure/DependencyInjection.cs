@@ -9,7 +9,6 @@ using Microsoft.EntityFrameworkCore.Diagnostics;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Hosting;
 using UserService.Infrastructure.Options;
-using UserService.Infrastructure;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using System.Security.Cryptography;
@@ -20,6 +19,7 @@ using UserService.Infrastructure.Clients;
 using Microsoft.Extensions.Options;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.HttpOverrides;
+using UserService.Infrastructure.Mail;
 
 namespace Microsoft.Extensions.DependencyInjection;
 
@@ -64,6 +64,7 @@ public static class DependencyInjection
         services.AddOptions<MyCookiesOptions>().BindConfiguration(MyCookiesOptions.SectionName);
         services.AddOptions<CorsOptions>().BindConfiguration(CorsOptions.SectionName);
         services.AddOptions<InternalUrlsOptions>().BindConfiguration(InternalUrlsOptions.SectionName);
+        services.AddOptions<UserserviceOptions>().BindConfiguration(UserserviceOptions.SectionName);
     }
 
     private static void AddAuth(this IHostApplicationBuilder builder)

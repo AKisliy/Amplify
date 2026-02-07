@@ -1,7 +1,7 @@
-using Microsoft.AspNetCore.Cors.Infrastructure;
 using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.Extensions.Options;
 using UserService.Infrastructure.Data;
+using UserService.Infrastructure.Options;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -12,6 +12,12 @@ builder.AddInfrastructureServices();
 builder.AddWebServices();
 
 var app = builder.Build();
+
+var options = app.Services.GetRequiredService<IOptions<UserserviceOptions>>().Value;
+if (!string.IsNullOrEmpty(options.BasePath))
+{
+    app.UsePathBase(options.BasePath);
+}
 
 app.UseForwardedHeaders(new ForwardedHeadersOptions
 {
@@ -40,13 +46,13 @@ app.UseSwaggerUi(settings =>
 });
 
 
-var corsOptions = app.Services.GetRequiredService<IOptions<CorsOptions>>();
+var corsOptions = app.Services.GetRequiredService<IOptions<UserService.Infrastructure.Options.CorsOptions>>();
 app.UseCors(corsOptions.Value.DefaultPolicyName);
 
 
 app.UseExceptionHandler(options => { });
 
-app.Map("/", () => Results.Redirect("/api"));
+app.Map("/", () => Results.Redirect("api/index.html"));
 
 app.MapEndpoints();
 

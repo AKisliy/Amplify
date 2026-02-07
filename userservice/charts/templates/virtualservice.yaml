@@ -14,7 +14,7 @@ spec:
   http:
   - match:
     - uri:
-        prefix: "/api"
+        prefix: "/userservice"
     route:
     - destination:
         host: "{{ include "user-service.fullname" . }}"
