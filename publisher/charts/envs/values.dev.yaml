@@ -1,0 +1,25 @@
+environment: Development
+
+appConfig:
+  DbConnectionOptions:
+    Default: "Host=host.minikube.internal;Port=6433;Database=myDb;Username=dev_user;Password=dev_password"
+  Logging:
+    LogLevel:
+      Default: "Information"
+      Microsoft: "Warning"
+      Microsoft.Hosting.Lifetime: "Information"
+  MediaService:
+    BaseUrl: "http://host.minikube.internal:6001"
+  InstagramApiOptions:
+    AppId: "instagram_app_id"
+    AppSecret: "instagram_app_secret"
+    RedirectUri: "http://host.minikube.internal:6001/auth/instagram/callback"
+    ApiVersion: "v22.0"
+    DailyLimit: 200
+    BaseGraphHostUrl: "https://graph.facebook.com/"
+  RabbitMqOptions:
+    HostName: "host.minikube.internal"
+    UserName: "guest"
+    Password: "guest"
+  ExternalUrls:
+    MediaServiceApi: "http://host.minikube.internal:6001"
