@@ -372,7 +372,14 @@
         },
         "responses": {
           "200": {
-            "description": ""
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LoginResponse"
+                }
+              }
+            }
           }
         }
       }
@@ -383,9 +390,28 @@
           "auth"
         ],
         "operationId": "RefreshToken",
+        "requestBody": {
+          "x-name": "request",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RefreshTokenCommand"
+              }
+            }
+          },
+          "required": true,
+          "x-position": 1
+        },
         "responses": {
           "200": {
-            "description": ""
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LoginResponse"
+                }
+              }
+            }
           }
         }
       }
@@ -445,7 +471,20 @@
         "tags": [
           "auth"
         ],
-        "operationId": "GetApiAuth.wellKnownJwks.json",
+        "operationId": "JWKS",
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        }
+      }
+    },
+    "/api/auth/.well-known/openid-configuration": {
+      "get": {
+        "tags": [
+          "auth"
+        ],
+        "operationId": "GetApiAuth.wellKnownOpenidConfiguration",
         "responses": {
           "200": {
             "description": ""
@@ -747,6 +786,18 @@
           }
         }
       },
+      "LoginResponse": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "accessToken": {
+            "type": "string"
+          },
+          "refreshToken": {
+            "type": "string"
+          }
+        }
+      },
       "LoginUserCommand": {
         "type": "object",
         "additionalProperties": false,
@@ -755,6 +806,18 @@
             "type": "string"
           },
           "password": {
+            "type": "string"
+          }
+        }
+      },
+      "RefreshTokenCommand": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "accessToken": {
+            "type": "string"
+          },
+          "refreshToken": {
             "type": "string"
           }
         }

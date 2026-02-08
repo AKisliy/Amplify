@@ -1,6 +1,8 @@
+using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.Extensions.Options;
 using UserService.Application.Auth.ConfirmEmail;
 using UserService.Application.Auth.Login;
+using UserService.Application.Auth.Models;
 using UserService.Application.Auth.Password;
 using UserService.Application.Auth.Refresh;
 using UserService.Application.Auth.Register;
@@ -47,10 +49,32 @@ public class Auth : EndpointGroupBase
             return Results.Ok();
         });
 
-        groupBuilder.MapGet(".well-known/jwks.json", (ITokenService tokenService) => Results.Ok(tokenService.GetJwks())).AllowAnonymous();
+        groupBuilder.MapGet(
+            ".well-known/jwks.json",
+            (ITokenService tokenService) => Results.Ok(tokenService.GetJwks()))
+            .AllowAnonymous()
+            .WithName("JWKS");
+
+        groupBuilder.MapGet(".well-known/openid-configuration", (
+            ITokenService tokenService,
+            LinkGenerator linkGenerator,
+            IOptions<JwtOptions> jwtOptions,
+            HttpContext httpContext) =>
+        {
+            var issuer = jwtOptions.Value.Issuer;
+            var jwksUri = linkGenerator.GetUriByName(httpContext, "JWKS");
+
+            Guard.Against.Null(jwksUri);
+
+            return Results.Ok(new MinimalOpenIdConfiguration
+            {
+                JwksUri = jwksUri,
+                Issuer = issuer
+            });
+        }).AllowAnonymous();
     }
 
-    private static async Task<IResult> LoginUser(
+    private static async Task<Ok<LoginResponse>> LoginUser(
         ISender sender,
         IOptions<MyCookiesOptions> cookieOptions,
         LoginUserCommand command,
@@ -58,47 +82,19 @@ public class Auth : EndpointGroupBase
     {
         var result = await sender.Send(command);
 
-        AppendTokenCookies(context, cookieOptions.Value, result.AccessToken, result.RefreshToken);
-
-        return Results.Ok(new { Message = "Login successful" });
+        return TypedResults.Ok(result);
     }
 
-    private static async Task<IResult> RefreshToken(
+    private static async Task<Ok<LoginResponse>> RefreshToken(
+        RefreshTokenCommand request,
         ISender sender,
         IOptions<MyCookiesOptions> cookieOptions,
         HttpContext context)
     {
-        if (!context.Request.Cookies.TryGetValue(cookieOptions.Value.RefreshTokenCookieName, out var incomingRefreshToken) ||
-            !context.Request.Cookies.TryGetValue(cookieOptions.Value.AccessTokenCookieName, out var incomingAccessToken) ||
-            string.IsNullOrEmpty(incomingRefreshToken) || string.IsNullOrEmpty(incomingAccessToken))
-        {
-            return Results.Unauthorized();
-        }
+        Guard.Against.NullOrEmpty(request.AccessToken, nameof(request.AccessToken));
+        Guard.Against.NullOrEmpty(request.RefreshToken, nameof(request.RefreshToken));
 
-        var command = new RefreshTokenCommand(incomingAccessToken, incomingRefreshToken);
-        var result = await sender.Send(command);
-
-        AppendTokenCookies(context, cookieOptions.Value, result.AccessToken, result.RefreshToken);
-
-        return Results.Ok();
-    }
-
-    private static void AppendTokenCookies(
-        HttpContext context,
-        MyCookiesOptions myCookiesOptions,
-        string accessToken,
-        string refreshToken)
-    {
-        var cookieOptions = new CookieOptions
-        {
-            HttpOnly = true,
-            // In production, set Secure to true
-            Secure = false,
-            SameSite = SameSiteMode.None,
-            Expires = DateTime.UtcNow.AddDays(30)
-        };
-
-        context.Response.Cookies.Append(myCookiesOptions.AccessTokenCookieName, accessToken, cookieOptions);
-        context.Response.Cookies.Append(myCookiesOptions.RefreshTokenCookieName, refreshToken, cookieOptions);
+        var result = await sender.Send(request);
+        return TypedResults.Ok(result);
     }
 }

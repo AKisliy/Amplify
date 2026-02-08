@@ -15,7 +15,7 @@ public class AutoLists : EndpointGroupBase
     {
         groupBuilder.MapPost(CreateAutoList);
         groupBuilder.MapGet(GetAutoList, "{id}");
-        groupBuilder.MapGet(GetAutoListsForProject);
+        groupBuilder.MapGet(GetAutoListsForProject).RequireAuthorization();
         groupBuilder.MapPut(UpdateAutoList, "{id}");
         groupBuilder.MapDelete(DeleteAutoList, "{id}");
     }

@@ -34,6 +34,8 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using System.Security.Claims;
 using System.Text;
+using Microsoft.IdentityModel.Logging;
+using Microsoft.Extensions.Configuration;
 
 namespace Microsoft.Extensions.DependencyInjection;
 
@@ -53,7 +55,7 @@ public static class DependencyInjection
 
         builder.AddDatabaseConnection();
 
-        services.AddAuth();
+        builder.AddAuth();
 
         services.AddPublishers(builder.Environment);
         services.AddScoped<IFileStorage, MediaServiceStorage>();
@@ -91,6 +93,7 @@ public static class DependencyInjection
         services.AddOptionsWithFluentValidation<InstagramApiOptions>(InstagramApiOptions.ConfigurationSection);
         services.AddOptionsWithFluentValidation<RabbitMQOptions>(RabbitMQOptions.ConfigurationSection);
         services.AddOptionsWithFluentValidation<PublisherOptions>(PublisherOptions.ConfigurationSection);
+        services.AddOptionsWithFluentValidation<JwtOptions>(JwtOptions.ConfigurationSection);
     }
 
     private static void AddDatabaseConnection(this IHostApplicationBuilder builder)
@@ -196,8 +199,19 @@ public static class DependencyInjection
         return services;
     }
 
-    private static IServiceCollection AddAuth(this IServiceCollection services)
+    private static IHostApplicationBuilder AddAuth(this IHostApplicationBuilder builder)
     {
+        var services = builder.Services;
+        var configuration = builder.Configuration;
+
+        var jwtOptions = new JwtOptions()
+        {
+            Issuer = "",
+            Audience = ""
+        };
+
+        configuration.GetSection(JwtOptions.ConfigurationSection).Bind(jwtOptions);
+
         services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             .AddJwtBearer(options =>
             {
@@ -217,16 +231,24 @@ public static class DependencyInjection
                 }
                 else
                 {
-                    options.Authority = "https://my-auth-domain.com/";
+                    options.Authority = jwtOptions.Issuer;
+                    options.RequireHttpsMetadata = false;
+
                     options.TokenValidationParameters = new TokenValidationParameters
                     {
-                        ValidateAudience = false,
-                        NameClaimType = ClaimTypes.NameIdentifier
+                        ValidateIssuer = true,
+                        ValidIssuers = [jwtOptions.Issuer],
+
+                        ValidateAudience = true,
+                        ValidAudience = jwtOptions.Audience,
+
+                        ValidateIssuerSigningKey = true,
                     };
+
                 }
             });
 
-        return services;
+        return builder;
     }
 }
 
