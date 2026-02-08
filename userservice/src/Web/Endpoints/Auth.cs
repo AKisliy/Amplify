@@ -1,6 +1,8 @@
+using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.Extensions.Options;
 using UserService.Application.Auth.ConfirmEmail;
 using UserService.Application.Auth.Login;
+using UserService.Application.Auth.Models;
 using UserService.Application.Auth.Password;
 using UserService.Application.Auth.Refresh;
 using UserService.Application.Auth.Register;
@@ -47,10 +49,32 @@ public class Auth : EndpointGroupBase
             return Results.Ok();
         });
 
-        groupBuilder.MapGet(".well-known/jwks.json", (ITokenService tokenService) => Results.Ok(tokenService.GetJwks())).AllowAnonymous();
+        groupBuilder.MapGet(
+            ".well-known/jwks.json",
+            (ITokenService tokenService) => Results.Ok(tokenService.GetJwks()))
+            .AllowAnonymous()
+            .WithName("JWKS");
+
+        groupBuilder.MapGet(".well-known/openid-configuration", (
+            ITokenService tokenService,
+            LinkGenerator linkGenerator,
+            IOptions<JwtOptions> jwtOptions,
+            HttpContext httpContext) =>
+        {
+            var issuer = jwtOptions.Value.Issuer;
+            var jwksUri = linkGenerator.GetUriByName(httpContext, "JWKS");
+
+            Guard.Against.Null(jwksUri);
+
+            return Results.Ok(new MinimalOpenIdConfiguration
+            {
+                JwksUri = jwksUri,
+                Issuer = issuer
+            });
+        }).AllowAnonymous();
     }
 
-    private static async Task<IResult> LoginUser(
+    private static async Task<Ok<LoginResponse>> LoginUser(
         ISender sender,
         IOptions<MyCookiesOptions> cookieOptions,
         LoginUserCommand command,
@@ -58,10 +82,10 @@ public class Auth : EndpointGroupBase
     {
         var result = await sender.Send(command);
 
-        return Results.Ok(result);
+        return TypedResults.Ok(result);
     }
 
-    private static async Task<IResult> RefreshToken(
+    private static async Task<Ok<LoginResponse>> RefreshToken(
         RefreshTokenCommand request,
         ISender sender,
         IOptions<MyCookiesOptions> cookieOptions,
@@ -71,6 +95,6 @@ public class Auth : EndpointGroupBase
         Guard.Against.NullOrEmpty(request.RefreshToken, nameof(request.RefreshToken));
 
         var result = await sender.Send(request);
-        return Results.Ok(result);
+        return TypedResults.Ok(result);
     }
 }

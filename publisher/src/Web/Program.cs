@@ -48,6 +48,9 @@ app.UseSwaggerUi(settings =>
     settings.DocumentPath = $"{publisherOptions.BasePath}/api/specification.json";
 });
 
+app.UseAuthentication();
+app.UseAuthorization();
+
 app.UseExceptionHandler(options => { });
 
 app.Map("/", () => Results.Redirect("api/index.html"));

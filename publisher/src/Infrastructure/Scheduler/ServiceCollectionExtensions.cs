@@ -18,7 +18,10 @@ internal static class ServiceCollectionExtensions
             config.SetDataCompatibilityLevel(CompatibilityLevel.Version_180)
                 .UseSimpleAssemblyNameTypeSerializer()
                 .UseRecommendedSerializerSettings()
-                .UsePostgreSqlStorage(c => c.UseNpgsqlConnection(() => options.Default));
+                .UsePostgreSqlStorage(c => c.UseNpgsqlConnection(() => options.Default), new PostgreSqlStorageOptions
+                {
+                    PrepareSchemaIfNecessary = true
+                });
         });
 
         builder.Services.AddHangfireServer();

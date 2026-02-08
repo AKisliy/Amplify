@@ -108,7 +108,7 @@ public static class DependencyInjection
                     ValidateLifetime = true,
                     ValidateIssuerSigningKey = true,
 
-                    ValidIssuer = jwtOptions.Issuer,
+                    ValidIssuer = "https://localhost:5001/userservice/api/auth",
                     ValidAudience = jwtOptions.Audience,
                     IssuerSigningKey = validationKey,
                     ValidAlgorithms = [SecurityAlgorithms.RsaSha256]
