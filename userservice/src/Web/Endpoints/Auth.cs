@@ -58,47 +58,19 @@ public class Auth : EndpointGroupBase
     {
         var result = await sender.Send(command);
 
-        AppendTokenCookies(context, cookieOptions.Value, result.AccessToken, result.RefreshToken);
-
-        return Results.Ok(new { Message = "Login successful" });
+        return Results.Ok(result);
     }
 
     private static async Task<IResult> RefreshToken(
+        RefreshTokenCommand request,
         ISender sender,
         IOptions<MyCookiesOptions> cookieOptions,
         HttpContext context)
     {
-        if (!context.Request.Cookies.TryGetValue(cookieOptions.Value.RefreshTokenCookieName, out var incomingRefreshToken) ||
-            !context.Request.Cookies.TryGetValue(cookieOptions.Value.AccessTokenCookieName, out var incomingAccessToken) ||
-            string.IsNullOrEmpty(incomingRefreshToken) || string.IsNullOrEmpty(incomingAccessToken))
-        {
-            return Results.Unauthorized();
-        }
+        Guard.Against.NullOrEmpty(request.AccessToken, nameof(request.AccessToken));
+        Guard.Against.NullOrEmpty(request.RefreshToken, nameof(request.RefreshToken));
 
-        var command = new RefreshTokenCommand(incomingAccessToken, incomingRefreshToken);
-        var result = await sender.Send(command);
-
-        AppendTokenCookies(context, cookieOptions.Value, result.AccessToken, result.RefreshToken);
-
-        return Results.Ok();
-    }
-
-    private static void AppendTokenCookies(
-        HttpContext context,
-        MyCookiesOptions myCookiesOptions,
-        string accessToken,
-        string refreshToken)
-    {
-        var cookieOptions = new CookieOptions
-        {
-            HttpOnly = true,
-            // In production, set Secure to true
-            Secure = false,
-            SameSite = SameSiteMode.None,
-            Expires = DateTime.UtcNow.AddDays(30)
-        };
-
-        context.Response.Cookies.Append(myCookiesOptions.AccessTokenCookieName, accessToken, cookieOptions);
-        context.Response.Cookies.Append(myCookiesOptions.RefreshTokenCookieName, refreshToken, cookieOptions);
+        var result = await sender.Send(request);
+        return Results.Ok(result);
     }
 }

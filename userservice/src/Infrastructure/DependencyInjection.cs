@@ -77,17 +77,8 @@ public static class DependencyInjection
             PrivateKeyPem = ""
         };
 
-        var cookieOptions = new MyCookiesOptions()
-        {
-            AccessTokenCookieName = "",
-            RefreshTokenCookieName = ""
-        };
-
-        IdentityModelEventSource.ShowPII = true;
-        IdentityModelEventSource.LogCompleteSecurityArtifact = true;
 
         configuration.GetSection(JwtOptions.SectionName).Bind(jwtOptions);
-        configuration.GetSection(MyCookiesOptions.SectionName).Bind(cookieOptions);
 
         if (string.IsNullOrEmpty(jwtOptions.PrivateKeyPem))
         {
@@ -121,19 +112,6 @@ public static class DependencyInjection
                     ValidAudience = jwtOptions.Audience,
                     IssuerSigningKey = validationKey,
                     ValidAlgorithms = [SecurityAlgorithms.RsaSha256]
-                };
-
-                options.Events = new JwtBearerEvents
-                {
-                    OnMessageReceived = context =>
-                    {
-                        if (context.Request.Cookies.ContainsKey(cookieOptions.AccessTokenCookieName))
-                        {
-                            context.Token = context.Request.Cookies[cookieOptions.AccessTokenCookieName];
-                        }
-
-                        return Task.CompletedTask;
-                    }
                 };
             });
 
