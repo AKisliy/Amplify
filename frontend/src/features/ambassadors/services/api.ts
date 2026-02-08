@@ -4,6 +4,8 @@ import type {
   CreateAmbassadorDto,
   UpdateAmbassadorDto,
   Project,
+  CreateProjectDto,
+  UpdateProjectDto,
   AmbassadorImage,
 } from "../types";
 
@@ -166,4 +168,27 @@ export const projectApi = {
     const response = await api.get<Project>(`/projects/${id}`);
     return response.data;
   },
+
+  /**
+   * Create a new project
+   */
+  async createProject(data: CreateProjectDto): Promise<string> {
+    const response = await api.post<string>("/projects", data);
+    return response.data;
+  },
+
+  /**
+   * Update an existing project
+   */
+  async updateProject(data: UpdateProjectDto): Promise<void> {
+    await api.put(`/projects/${data.id}`, data);
+  },
+
+  /**
+   * Delete a project
+   */
+  async deleteProject(id: string): Promise<void> {
+    await api.delete(`/projects/${id}`);
+  },
 };
+
