@@ -15,10 +15,12 @@ import { AmbassadorDialog } from "./AmbassadorDialog";
 import type { AmbassadorFormValues } from "../schemas/ambassador.schema";
 import { Gallery } from "./gallery/Gallery";
 import { useAmbassadorImages } from "../hooks/useAmbassadorImages";
+import { InstagramConnection } from "@/features/integrations/components/InstagramConnection";
 
 interface AmbassadorViewProps {
   ambassador: Ambassador | null;
   projectName: string;
+  projectId: string;
   isLoading: boolean;
   onCreateAmbassador: (values: AmbassadorFormValues) => Promise<void>;
   onUpdateAmbassador: (values: AmbassadorFormValues) => Promise<void>;
@@ -28,6 +30,7 @@ interface AmbassadorViewProps {
 export function AmbassadorView({
   ambassador,
   projectName,
+  projectId,
   isLoading,
   onCreateAmbassador,
   onUpdateAmbassador,
@@ -153,10 +156,13 @@ export function AmbassadorView({
 
         {/* Tabs Section */}
         <Tabs defaultValue="bio" className="w-full">
-          <TabsList className="grid w-full max-w-md grid-cols-2">
+          <TabsList className="grid w-full max-w-2xl grid-cols-3">
             <TabsTrigger value="bio">Bio</TabsTrigger>
             <TabsTrigger value="images" disabled={!ambassador}>
               Images
+            </TabsTrigger>
+            <TabsTrigger value="integrations" disabled={!ambassador}>
+              Integrations
             </TabsTrigger>
           </TabsList>
 
@@ -208,6 +214,18 @@ export function AmbassadorView({
                  )}
               </CardContent>
             </Card>
+          </TabsContent>
+
+          <TabsContent value="integrations" className="mt-6">
+            <div className="space-y-4">
+              <div>
+                <h3 className="text-lg font-semibold mb-2">Social Media Connections</h3>
+                <p className="text-sm text-muted-foreground mb-4">
+                  Connect social media accounts to enable content publishing for this project.
+                </p>
+              </div>
+              <InstagramConnection projectId={projectId} />
+            </div>
           </TabsContent>
         </Tabs>
       </motion.div>

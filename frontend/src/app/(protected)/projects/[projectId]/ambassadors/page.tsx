@@ -80,6 +80,7 @@ export default function ProjectAmbassadorPage() {
         <AmbassadorView
           ambassador={ambassador}
           projectName={project?.name || "Project"}
+          projectId={projectId}
           isLoading={ambassadorLoading || projectLoading}
           onCreateAmbassador={handleCreateAmbassador}
           onUpdateAmbassador={handleUpdateAmbassador}
