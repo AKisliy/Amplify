@@ -14,7 +14,7 @@ import type { Ambassador } from "../types";
 import { AmbassadorDialog } from "./AmbassadorDialog";
 import type { AmbassadorFormValues } from "../schemas/ambassador.schema";
 import { Gallery } from "./gallery/Gallery";
-import { useAmbassador } from "../hooks/useAmbassador";
+import { useAmbassadorImages } from "../hooks/useAmbassadorImages";
 
 interface AmbassadorViewProps {
   ambassador: Ambassador | null;
@@ -37,7 +37,7 @@ export function AmbassadorView({
   const [isDeleting, setIsDeleting] = useState(false);
   
   // Use the hook to get images if ambassador exists
-  const { images, refreshImages } = useAmbassador(ambassador?.id);
+  const { images, refreshImages } = useAmbassadorImages(ambassador?.id);
 
   const getInitials = (name: string) => {
     return name

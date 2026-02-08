@@ -18,3 +18,36 @@ export type UpdateAmbassadorPayload = {
   biography?: string | null;
   behavioralPatterns?: string | null;
 };
+
+// DTO type aliases for API compatibility
+export type CreateAmbassadorDto = CreateAmbassadorPayload;
+export type UpdateAmbassadorDto = UpdateAmbassadorPayload;
+
+// Project types
+export type Project = {
+  id: string;
+  name: string;
+  description?: string | null;
+  photo?: string | null;
+  ambassadorId?: string; // Used by mock data
+};
+
+export type CreateProjectDto = {
+  name: string;
+  description?: string | null;
+  photo?: string | null;
+};
+
+export type UpdateProjectDto = {
+  id: string;
+  name: string;
+  description?: string | null;
+  photo?: string | null;
+};
+
+// Ambassador Image types
+export type AmbassadorImage = {
+  id: string;
+  imageUrl: string;
+  imageType: number;
+};
