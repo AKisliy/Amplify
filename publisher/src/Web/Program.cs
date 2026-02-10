@@ -42,10 +42,19 @@ app.UseHealthChecks("/health");
 app.UseHttpsRedirection();
 app.UseStaticFiles();
 
+app.UseOpenApi(settings =>
+{
+    settings.Path = string.IsNullOrEmpty(publisherOptions.BasePath) 
+        ? "/api/specification.json" 
+        : $"{publisherOptions.BasePath}/api/specification.json";
+});
+
 app.UseSwaggerUi(settings =>
 {
     settings.Path = "/api";
-    settings.DocumentPath = $"{publisherOptions.BasePath}/api/specification.json";
+    settings.DocumentPath = string.IsNullOrEmpty(publisherOptions.BasePath) 
+        ? "/api/specification.json" 
+        : $"{publisherOptions.BasePath}/api/specification.json";
 });
 
 app.UseAuthentication();
@@ -53,7 +62,9 @@ app.UseAuthorization();
 
 app.UseExceptionHandler(options => { });
 
-app.Map("/", () => Results.Redirect("api/index.html"));
+app.Map("/", () => Results.Redirect(string.IsNullOrEmpty(publisherOptions.BasePath) 
+    ? "/api/index.html?url=/api/specification.json" 
+    : $"{publisherOptions.BasePath}/api/index.html?url={publisherOptions.BasePath}/api/specification.json"));
 app.MapHub<PublisherHub>("/hubs/publisher");
 
 app.MapEndpoints();

@@ -1,0 +1,99 @@
+services:
+  userservice:
+    build:
+      context: ./userservice
+      dockerfile: Dockerfile
+    ports:
+      - "5001:5001"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ConnectionStrings__UserServiceDb=Host=postgres;Port=5432;Database=userservice_db;Username=postgres;Password=postgres;
+      - RabbitMQOptions__Host=rabbitmq
+      # Configure URLs for correct communication
+      - UserserviceOptions__BasePath=
+      - InternalUrls__MediaServiceInternalBaseUrl=http://media-ingest:5001
+      - ExternalUrls__MediaServiceApi=http://172.50.50.56:5003/api
+      - Frontend__Url=http://172.50.50.56:3000
+      - Jwt__Issuer=http://172.50.50.56:5001/api/auth
+      # CORS - allow access from anywhere for development purposes (or list specific IPs)
+      - CorsOptions__AllowedOrigins__0=http://172.50.50.56:5001
+      - CorsOptions__AllowedOrigins__1=http://172.50.50.56:5002
+      - CorsOptions__AllowedOrigins__2=http://172.50.50.56:5003
+      - CorsOptions__AllowedOrigins__3=http://localhost:3000
+    depends_on:
+      - postgres
+      - rabbitmq
+
+  publisher:
+    build:
+      context: ./publisher
+      dockerfile: Dockerfile
+    ports:
+      - "5002:5001"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - DbConnectionOptions__Default=Host=postgres;Port=5432;Database=publisher_db;Username=postgres;Password=postgres;
+      - RabbitMQOptions__Host=rabbitmq
+      # Remove BasePath to access at root
+      - PublisherOptions__BasePath=
+      # Use internal docker networking for service-to-service calls
+      - MediaService__BaseUrl=http://media-ingest:5001/api
+      - Jwt__Issuer=http://172.50.50.56:5001/api/auth
+      - ExternalUrls__MediaServiceApi=http://172.50.50.56:5003/api
+      - InstagramApiOptions__AppId=dummy_app_id
+      - InstagramApiOptions__AppSecret=dummy_app_secret
+    depends_on:
+      - postgres
+      - rabbitmq
+      - userservice
+      - media-ingest
+
+  media-ingest:
+    build:
+      context: ./media-ingest
+      dockerfile: Dockerfile
+    ports:
+      - "5003:5001"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - DbConnection__Default=Host=postgres;Port=5432;Database=media_ingest_db;Username=postgres;Password=postgres;
+      - S3__Host=minio:9000
+      - S3__AccessKey=admin
+      - S3__SecretKey=password
+      - YtDlp__YoutubeDlPath=/usr/local/bin/yt-dlp
+    depends_on:
+      - postgres
+      - minio
+
+  postgres:
+    image: postgres:15-alpine
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+    ports:
+      - "5432:5432"
+    volumes:
+      - ./init-db.sql:/docker-entrypoint-initdb.d/init-db.sql
+      - postgres_data:/var/lib/postgresql/data
+
+  rabbitmq:
+    image: rabbitmq:3-management
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+
+  minio:
+    image: minio/minio
+    command: server /data --console-address ":9001"
+    environment:
+      - MINIO_ROOT_USER=admin
+      - MINIO_ROOT_PASSWORD=password
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    volumes:
+      - minio_data:/data
+
+volumes:
+  postgres_data:
+  minio_data:
