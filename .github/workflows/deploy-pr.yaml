@@ -79,5 +79,7 @@ jobs:
                   cache-to: type=gha,mode=max
 
             - name: Deploy via Helmfile
+              env:
+                  USERSERVICE_IMAGE_TAG: ${{ env.IMAGE_TAG }}
               run: |
                   helmfile -e dev -l app=userservice apply
