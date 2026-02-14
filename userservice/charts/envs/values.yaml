@@ -1,7 +1,7 @@
 replicaCount: 1
 
 image:
-  repository: akisliy/amplify-userservice
+  repository: ghcr.io/akisliy/amplify/userservice
   pullPolicy: IfNotPresent
   tag: ""
 

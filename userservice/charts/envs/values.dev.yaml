@@ -2,7 +2,7 @@ environment: "Development"
 
 appConfig:
   ConnectionStrings:
-    UserServiceDb: "Host=host.minikube.internal;Port=6433;Database=myDb;Username=dev_user;Password=dev_password;"
+    UserServiceDb: "Host=postgres-postgresql.test-env.svc.cluster.local;Port=5432;Database=amplify_db;Username=app_user;Password=app_password;"
 
   Logging:
     LogLevel:
