@@ -23,11 +23,11 @@ resources: {}
 
 livenessProbe:
   httpGet:
-    path: /
+    path: /userservice
     port: http
 readinessProbe:
   httpGet:
-    path: /
+    path: /userservice
     port: http
 
 volumes: 
