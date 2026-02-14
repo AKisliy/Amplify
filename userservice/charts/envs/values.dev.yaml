@@ -27,6 +27,9 @@ appConfig:
     AllowedOrigins:
       - "http://dev.amplify-vkr.example.com"
     DefaultPolicyName: DevelopmentCorsPolicy
+  
+  UserserviceOptions:
+    BasePath: "/userservice"
 
   Frontend:
     Url: "http://dev.amplify-vkr.example.com"
