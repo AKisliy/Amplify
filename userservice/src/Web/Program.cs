@@ -40,6 +40,12 @@ app.UseHealthChecks("/health");
 app.UseHttpsRedirection();
 app.UseStaticFiles();
 
+app.UseSwaggerUi(settings =>
+{
+    settings.Path = "/api";
+    settings.DocumentPath = "specification.json";
+});
+
 app.UseAuthentication();
 app.UseAuthorization();
 
