@@ -37,7 +37,7 @@ volumes:
 
 volumeMounts:
   - name: config-volume
-    mountPath: /app/appsettings.json
+    mountPath: /app/appsettings.Development.json # TODO: this is shit, change it
     subPath: appsettings_override.json
   
 
