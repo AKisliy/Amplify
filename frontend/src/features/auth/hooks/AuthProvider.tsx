@@ -10,7 +10,6 @@ import {
 
 import {
   login as loginService,
-  refreshToken,
   getMe,
 } from "../services/auth.service";
 
@@ -35,31 +34,34 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   useEffect(() => {
     const restoreSession = async () => {
       console.log("AuthProvider: Attempting to restore session...");
-      
-      // Try to restore from localStorage first (fallback for unstable backend)
+
       const storedUser = localStorage.getItem("auth_user");
-      if (storedUser) {
+      const storedToken = localStorage.getItem("accessToken");
+
+      if (storedUser && storedToken) {
         try {
           const parsedUser = JSON.parse(storedUser);
-          console.log("AuthProvider: Restored from localStorage", parsedUser);
           setUser(parsedUser);
-          setIsLoading(false);
-          return;
+          // Verify session with backend
+          try {
+            // getMe will trigger refresh via interceptor if needed
+            const { user: freshUser } = await getMe();
+            setUser(freshUser);
+            localStorage.setItem("auth_user", JSON.stringify(freshUser));
+          } catch (err) {
+            console.log("AuthProvider: Session validation failed", err);
+            // If validation fails (and refresh fails), clear session
+            // But maybe we are offline? Optimistically keep user if not 401?
+            // Interceptor handles 401 by clearing everything.
+          }
         } catch (e) {
+          console.log("AuthProvider: Error parsing stored user", e);
           localStorage.removeItem("auth_user");
         }
-      }
-
-      const response = await refreshToken();
-
-      if (response) {
-        console.log("AuthProvider: Session restored successfully", response.user);
-        setUser(response.user);
-        // Sync successful backend session to local storage
-        localStorage.setItem("auth_user", JSON.stringify(response.user));
       } else {
-        console.log("AuthProvider: No session found");
-        setUser(null);
+        // No token, clear everything just in case
+        localStorage.removeItem("accessToken");
+        localStorage.removeItem("refreshToken");
         localStorage.removeItem("auth_user");
       }
 
@@ -73,39 +75,34 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     console.log("AuthProvider: Logging in...");
     const response = await loginService(payload);
     console.log("AuthProvider: Login successful", response.user);
-    setUser(response.user);
-    // Persist to local storage
-    localStorage.setItem("auth_user", JSON.stringify(response.user));
+
+    const { user, accessToken, refreshToken } = response;
+
+    setUser(user);
+    localStorage.setItem("auth_user", JSON.stringify(user));
+    localStorage.setItem("accessToken", accessToken);
+    localStorage.setItem("refreshToken", refreshToken);
   };
 
   const logout = async () => {
+    setUser(null);
+    localStorage.removeItem("auth_user");
+    localStorage.removeItem("accessToken");
+    localStorage.removeItem("refreshToken");
+    // Optional: Call backend logout if needed
     try {
-      await fetch("/api/auth/logout", {
-        method: "POST",
-        credentials: "include",
-      });
-    } finally {
-      setUser(null);
-      localStorage.removeItem("auth_user");
+      // await api.post("/auth/logout");
+    } catch (e) {
+      // ignore
     }
   };
 
   const refresh = async () => {
-    // Try localStorage first to prevent flickering
+    // Manual refresh if needed, largely handled by interceptor
+    // But we can reload user from storage
     const storedUser = localStorage.getItem("auth_user");
     if (storedUser) {
-        setUser(JSON.parse(storedUser));
-        return;
-    }
-
-    const response = await refreshToken();
-
-    if (response) {
-      setUser(response.user);
-      localStorage.setItem("auth_user", JSON.stringify(response.user));
-    } else {
-      setUser(null);
-      localStorage.removeItem("auth_user");
+      setUser(JSON.parse(storedUser));
     }
   };
 
