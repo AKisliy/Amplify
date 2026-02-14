@@ -45,12 +45,6 @@ app.UseOpenApi(settings =>
     settings.Path = "/api/specification.json";
 });
 
-app.UseSwaggerUi(settings =>
-{
-    settings.Path = "/api";
-    settings.DocumentPath = "/api/specification.json";
-});
-
 app.UseAuthentication();
 app.UseAuthorization();
 

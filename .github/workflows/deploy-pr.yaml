@@ -1,0 +1,56 @@
+name: Deploy PR to Dev Server
+
+on:
+    pull_request:
+        types: [opened, synchronize, reopened]
+        branches: [main]
+
+env:
+    REGISTRY: ghcr.io
+    IMAGE_NAME: ${{ github.repository }}
+
+jobs:
+    changes:
+        runs-on: ubuntu-latest
+        outputs:
+            userservice: ${{ steps.filter.outputs.userservice }}
+        steps:
+            - uses: actions/checkout@v4
+            - uses: dorny/paths-filter@v2
+              id: filter
+              with:
+                  filters: |
+                      userservice:
+                        - 'userservice/**'
+
+    deploy-userservice:
+        needs: changes
+        if: ${{ needs.changes.outputs.userservice == 'true' }}
+        runs-on: ubuntu-latest
+        steps:
+            - uses: actions/checkout@v4
+            - name: Log in to Registry
+              uses: docker/login-action@v3
+              with:
+                  username: ${{ secrets.DOCKER_HUB_USERNAME }}
+                  password: ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}
+
+            - name: Build and push
+              uses: docker/build-push-action@v5
+              with:
+                  context: ./userservice
+                  push: true
+                  tags: akisliy/amplify-userservice:dev
+
+            - name: Deploy via SSH
+              uses: appleboy/ssh-action@v1.0.3
+              with:
+                  host: ${{ secrets.SSH_HOST }}
+                  username: ${{ secrets.SSH_USER }}
+                  port: ${{ secrets.SSH_PORT }}
+                  key: ${{ secrets.SSH_KEY }}
+                  script: |
+                      cd ${{ vars.TEST_SERVER_DOCKER_COMPOSE_PATH }}
+                      echo ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }} | docker login ghcr.io -u ${{ secrets.DOCKER_HUB_USERNAME }} --password-stdin
+                      docker-compose pull userservice
+                      docker-compose up -d --no-deps --build userservice
