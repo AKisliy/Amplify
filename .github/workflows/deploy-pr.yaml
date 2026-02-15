@@ -5,14 +5,6 @@ on:
         types: [opened, synchronize, reopened]
         branches: [main, develop]
 
-env:
-    PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
-    CLUSTER_NAME: amplify-cluster
-    ZONE: europe-west3-a
-
-    REGISTRY: ghcr.io
-    IMAGE_NAME_BASE: ghcr.io/${{ github.repository }}
-
 jobs:
     changes:
         runs-on: ubuntu-latest
