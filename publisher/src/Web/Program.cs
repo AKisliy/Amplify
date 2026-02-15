@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.Extensions.Options;
 using Publisher.Infrastructure.Configuration.Options;
 using Publisher.Infrastructure.Data;
@@ -21,6 +22,11 @@ if (!string.IsNullOrEmpty(publisherOptions.BasePath))
     app.Logger.LogInformation("Using path base: {PathBase}", publisherOptions.BasePath);
     app.UsePathBase(publisherOptions.BasePath);
 }
+
+app.UseForwardedHeaders(new ForwardedHeadersOptions
+{
+    ForwardedHeaders = ForwardedHeaders.XForwardedProto | ForwardedHeaders.XForwardedHost
+});
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
