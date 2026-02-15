@@ -8,7 +8,7 @@ externalSecret:
   refreshInterval: 1h
 
 image:
-  repository: akisliy/amplify-publisher
+  repository: ghcr.io/akisliy/amplify/publisher
   pullPolicy: IfNotPresent
   tag: ""
 
