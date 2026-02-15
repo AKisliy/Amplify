@@ -4,9 +4,6 @@ secrets:
   connectionStringKey: userservice-db-conn 
 
 appConfig:
-  ConnectionStrings:
-    UserServiceDb: "Host=postgres-postgresql.test-env.svc.cluster.local;Port=5432;Database=amplify_db;Username=app_user;Password=app_password;"
-
   Logging:
     LogLevel:
       Default: Information
