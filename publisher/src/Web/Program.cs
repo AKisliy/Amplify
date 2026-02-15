@@ -19,10 +19,7 @@ var publisherOptions = app.Services.GetRequiredService<IOptions<PublisherOptions
 if (!string.IsNullOrEmpty(publisherOptions.BasePath))
 {
     app.Logger.LogInformation("Using path base: {PathBase}", publisherOptions.BasePath);
-    var pathBase = publisherOptions.BasePath.StartsWith("/")
-        ? publisherOptions.BasePath
-        : "/" + publisherOptions.BasePath;
-    app.UsePathBase(pathBase);
+    app.UsePathBase(publisherOptions.BasePath);
 }
 
 // Configure the HTTP request pipeline.
