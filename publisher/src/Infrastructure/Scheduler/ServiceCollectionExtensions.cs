@@ -10,6 +10,8 @@ namespace Publisher.Infrastructure.Scheduler;
 
 internal static class ServiceCollectionExtensions
 {
+    private const string SchedulerSchemaName = "publisher_hangfire";
+
     public static IHostApplicationBuilder AddSchedulerServices(this IHostApplicationBuilder builder)
     {
         builder.Services.AddHangfire((provider, config) =>
@@ -20,6 +22,7 @@ internal static class ServiceCollectionExtensions
                 .UseRecommendedSerializerSettings()
                 .UsePostgreSqlStorage(c => c.UseNpgsqlConnection(() => options.Default), new PostgreSqlStorageOptions
                 {
+                    SchemaName = SchedulerSchemaName,
                     PrepareSchemaIfNecessary = true
                 });
         });

@@ -10,6 +10,8 @@ namespace Publisher.Infrastructure.Data;
 
 public class ApplicationDbContext : DbContext, IApplicationDbContext, IDataProtectionKeyContext
 {
+    public const string DefaultSchemaName = "publisher";
+
     private readonly IDataProtectionProvider _dataProtectionProvider;
 
     public ApplicationDbContext(
@@ -38,6 +40,7 @@ public class ApplicationDbContext : DbContext, IApplicationDbContext, IDataProte
     protected override void OnModelCreating(ModelBuilder builder)
     {
         base.OnModelCreating(builder);
+        builder.HasDefaultSchema(DefaultSchemaName);
         builder.ApplyConfigurationsFromAssembly(Assembly.GetExecutingAssembly());
 
         var encryptionConverter = new EncryptedConverter(_dataProtectionProvider, "SocialCredsKey");

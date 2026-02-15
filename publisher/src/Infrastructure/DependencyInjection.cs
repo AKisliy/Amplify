@@ -34,7 +34,6 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using System.Security.Claims;
 using System.Text;
-using Microsoft.IdentityModel.Logging;
 using Microsoft.Extensions.Configuration;
 
 namespace Microsoft.Extensions.DependencyInjection;
@@ -118,10 +117,12 @@ public static class DependencyInjection
             options.UseNpgsql(
                 dataSource,
                 o => o
-                    .MapEnum<SocialProvider>()
-                    .MapEnum<PublicationStatus>()
+                    .MapEnum<SocialProvider>(schemaName: ApplicationDbContext.DefaultSchemaName)
+                    .MapEnum<PublicationStatus>(schemaName: ApplicationDbContext.DefaultSchemaName)
                     .EnableRetryOnFailure(4)
+                    .MigrationsHistoryTable("__EFMigrationsHistory", ApplicationDbContext.DefaultSchemaName)
             );
+
             options.UseSnakeCaseNamingConvention();
             options.AddInterceptors(sp.GetServices<ISaveChangesInterceptor>());
         });
