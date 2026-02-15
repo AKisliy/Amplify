@@ -12,8 +12,12 @@ namespace UserService.Infrastructure.Data.Migrations
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
+            migrationBuilder.EnsureSchema(
+                name: "userservice");
+
             migrationBuilder.CreateTable(
                 name: "asp_net_roles",
+                schema: "userservice",
                 columns: table => new
                 {
                     id = table.Column<Guid>(type: "uuid", nullable: false),
@@ -28,6 +32,7 @@ namespace UserService.Infrastructure.Data.Migrations
 
             migrationBuilder.CreateTable(
                 name: "asp_net_users",
+                schema: "userservice",
                 columns: table => new
                 {
                     id = table.Column<Guid>(type: "uuid", nullable: false),
@@ -52,24 +57,8 @@ namespace UserService.Infrastructure.Data.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "todo_lists",
-                columns: table => new
-                {
-                    id = table.Column<Guid>(type: "uuid", nullable: false),
-                    title = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: false),
-                    colour_code = table.Column<string>(type: "text", nullable: false),
-                    created = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
-                    created_by = table.Column<Guid>(type: "uuid", nullable: true),
-                    last_modified = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
-                    last_modified_by = table.Column<Guid>(type: "uuid", nullable: true)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("pk_todo_lists", x => x.id);
-                });
-
-            migrationBuilder.CreateTable(
                 name: "asp_net_role_claims",
+                schema: "userservice",
                 columns: table => new
                 {
                     id = table.Column<int>(type: "integer", nullable: false)
@@ -84,6 +73,7 @@ namespace UserService.Infrastructure.Data.Migrations
                     table.ForeignKey(
                         name: "fk_asp_net_role_claims_asp_net_roles_role_id",
                         column: x => x.role_id,
+                        principalSchema: "userservice",
                         principalTable: "asp_net_roles",
                         principalColumn: "id",
                         onDelete: ReferentialAction.Cascade);
@@ -91,6 +81,7 @@ namespace UserService.Infrastructure.Data.Migrations
 
             migrationBuilder.CreateTable(
                 name: "asp_net_user_claims",
+                schema: "userservice",
                 columns: table => new
                 {
                     id = table.Column<int>(type: "integer", nullable: false)
@@ -105,6 +96,7 @@ namespace UserService.Infrastructure.Data.Migrations
                     table.ForeignKey(
                         name: "fk_asp_net_user_claims_asp_net_users_user_id",
                         column: x => x.user_id,
+                        principalSchema: "userservice",
                         principalTable: "asp_net_users",
                         principalColumn: "id",
                         onDelete: ReferentialAction.Cascade);
@@ -112,6 +104,7 @@ namespace UserService.Infrastructure.Data.Migrations
 
             migrationBuilder.CreateTable(
                 name: "asp_net_user_logins",
+                schema: "userservice",
                 columns: table => new
                 {
                     login_provider = table.Column<string>(type: "text", nullable: false),
@@ -125,6 +118,7 @@ namespace UserService.Infrastructure.Data.Migrations
                     table.ForeignKey(
                         name: "fk_asp_net_user_logins_asp_net_users_user_id",
                         column: x => x.user_id,
+                        principalSchema: "userservice",
                         principalTable: "asp_net_users",
                         principalColumn: "id",
                         onDelete: ReferentialAction.Cascade);
@@ -132,6 +126,7 @@ namespace UserService.Infrastructure.Data.Migrations
 
             migrationBuilder.CreateTable(
                 name: "asp_net_user_roles",
+                schema: "userservice",
                 columns: table => new
                 {
                     user_id = table.Column<Guid>(type: "uuid", nullable: false),
@@ -143,12 +138,14 @@ namespace UserService.Infrastructure.Data.Migrations
                     table.ForeignKey(
                         name: "fk_asp_net_user_roles_asp_net_roles_role_id",
                         column: x => x.role_id,
+                        principalSchema: "userservice",
                         principalTable: "asp_net_roles",
                         principalColumn: "id",
                         onDelete: ReferentialAction.Cascade);
                     table.ForeignKey(
                         name: "fk_asp_net_user_roles_asp_net_users_user_id",
                         column: x => x.user_id,
+                        principalSchema: "userservice",
                         principalTable: "asp_net_users",
                         principalColumn: "id",
                         onDelete: ReferentialAction.Cascade);
@@ -156,6 +153,7 @@ namespace UserService.Infrastructure.Data.Migrations
 
             migrationBuilder.CreateTable(
                 name: "asp_net_user_tokens",
+                schema: "userservice",
                 columns: table => new
                 {
                     user_id = table.Column<Guid>(type: "uuid", nullable: false),
@@ -169,6 +167,7 @@ namespace UserService.Infrastructure.Data.Migrations
                     table.ForeignKey(
                         name: "fk_asp_net_user_tokens_asp_net_users_user_id",
                         column: x => x.user_id,
+                        principalSchema: "userservice",
                         principalTable: "asp_net_users",
                         principalColumn: "id",
                         onDelete: ReferentialAction.Cascade);
@@ -176,12 +175,13 @@ namespace UserService.Infrastructure.Data.Migrations
 
             migrationBuilder.CreateTable(
                 name: "projects",
+                schema: "userservice",
                 columns: table => new
                 {
                     id = table.Column<Guid>(type: "uuid", nullable: false),
                     name = table.Column<string>(type: "text", nullable: false),
                     description = table.Column<string>(type: "text", nullable: true),
-                    photo = table.Column<string>(type: "text", nullable: true),
+                    photo = table.Column<Guid>(type: "uuid", nullable: true),
                     user_id = table.Column<Guid>(type: "uuid", nullable: false),
                     created = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
                     created_by = table.Column<Guid>(type: "uuid", nullable: true),
@@ -194,50 +194,121 @@ namespace UserService.Infrastructure.Data.Migrations
                     table.ForeignKey(
                         name: "fk_projects_asp_net_users_user_id",
                         column: x => x.user_id,
+                        principalSchema: "userservice",
                         principalTable: "asp_net_users",
                         principalColumn: "id",
                         onDelete: ReferentialAction.Cascade);
                 });
 
+            migrationBuilder.CreateTable(
+                name: "ambassadors",
+                schema: "userservice",
+                columns: table => new
+                {
+                    id = table.Column<Guid>(type: "uuid", nullable: false),
+                    name = table.Column<string>(type: "text", nullable: false),
+                    biography = table.Column<string>(type: "text", nullable: true),
+                    behavioral_patterns = table.Column<string>(type: "text", nullable: true),
+                    project_id = table.Column<Guid>(type: "uuid", nullable: false),
+                    created = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
+                    created_by = table.Column<Guid>(type: "uuid", nullable: true),
+                    last_modified = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
+                    last_modified_by = table.Column<Guid>(type: "uuid", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("pk_ambassadors", x => x.id);
+                    table.ForeignKey(
+                        name: "fk_ambassadors_projects_project_id",
+                        column: x => x.project_id,
+                        principalSchema: "userservice",
+                        principalTable: "projects",
+                        principalColumn: "id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "ambassador_images",
+                schema: "userservice",
+                columns: table => new
+                {
+                    id = table.Column<Guid>(type: "uuid", nullable: false),
+                    media_id = table.Column<Guid>(type: "uuid", nullable: false),
+                    image_type = table.Column<int>(type: "integer", nullable: false),
+                    ambassador_id = table.Column<Guid>(type: "uuid", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("pk_ambassador_images", x => x.id);
+                    table.ForeignKey(
+                        name: "fk_ambassador_images_ambassadors_ambassador_id",
+                        column: x => x.ambassador_id,
+                        principalSchema: "userservice",
+                        principalTable: "ambassadors",
+                        principalColumn: "id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateIndex(
+                name: "ix_ambassador_images_ambassador_id",
+                schema: "userservice",
+                table: "ambassador_images",
+                column: "ambassador_id");
+
+            migrationBuilder.CreateIndex(
+                name: "ix_ambassadors_project_id",
+                schema: "userservice",
+                table: "ambassadors",
+                column: "project_id",
+                unique: true);
+
             migrationBuilder.CreateIndex(
                 name: "ix_asp_net_role_claims_role_id",
+                schema: "userservice",
                 table: "asp_net_role_claims",
                 column: "role_id");
 
             migrationBuilder.CreateIndex(
                 name: "RoleNameIndex",
+                schema: "userservice",
                 table: "asp_net_roles",
                 column: "normalized_name",
                 unique: true);
 
             migrationBuilder.CreateIndex(
                 name: "ix_asp_net_user_claims_user_id",
+                schema: "userservice",
                 table: "asp_net_user_claims",
                 column: "user_id");
 
             migrationBuilder.CreateIndex(
                 name: "ix_asp_net_user_logins_user_id",
+                schema: "userservice",
                 table: "asp_net_user_logins",
                 column: "user_id");
 
             migrationBuilder.CreateIndex(
                 name: "ix_asp_net_user_roles_role_id",
+                schema: "userservice",
                 table: "asp_net_user_roles",
                 column: "role_id");
 
             migrationBuilder.CreateIndex(
                 name: "EmailIndex",
+                schema: "userservice",
                 table: "asp_net_users",
                 column: "normalized_email");
 
             migrationBuilder.CreateIndex(
                 name: "UserNameIndex",
+                schema: "userservice",
                 table: "asp_net_users",
                 column: "normalized_user_name",
                 unique: true);
 
             migrationBuilder.CreateIndex(
                 name: "ix_projects_user_id",
+                schema: "userservice",
                 table: "projects",
                 column: "user_id");
         }
@@ -246,31 +317,44 @@ namespace UserService.Infrastructure.Data.Migrations
         protected override void Down(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.DropTable(
-                name: "asp_net_role_claims");
+                name: "ambassador_images",
+                schema: "userservice");
 
             migrationBuilder.DropTable(
-                name: "asp_net_user_claims");
+                name: "asp_net_role_claims",
+                schema: "userservice");
 
             migrationBuilder.DropTable(
-                name: "asp_net_user_logins");
+                name: "asp_net_user_claims",
+                schema: "userservice");
 
             migrationBuilder.DropTable(
-                name: "asp_net_user_roles");
+                name: "asp_net_user_logins",
+                schema: "userservice");
 
             migrationBuilder.DropTable(
-                name: "asp_net_user_tokens");
+                name: "asp_net_user_roles",
+                schema: "userservice");
 
             migrationBuilder.DropTable(
-                name: "projects");
+                name: "asp_net_user_tokens",
+                schema: "userservice");
 
             migrationBuilder.DropTable(
-                name: "todo_lists");
+                name: "ambassadors",
+                schema: "userservice");
 
             migrationBuilder.DropTable(
-                name: "asp_net_roles");
+                name: "asp_net_roles",
+                schema: "userservice");
 
             migrationBuilder.DropTable(
-                name: "asp_net_users");
+                name: "projects",
+                schema: "userservice");
+
+            migrationBuilder.DropTable(
+                name: "asp_net_users",
+                schema: "userservice");
         }
     }
 }

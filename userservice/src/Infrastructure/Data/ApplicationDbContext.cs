@@ -19,6 +19,7 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
     protected override void OnModelCreating(ModelBuilder builder)
     {
         base.OnModelCreating(builder);
+        builder.HasDefaultSchema("userservice");
         builder.ApplyConfigurationsFromAssembly(Assembly.GetExecutingAssembly());
         builder.ChangeIdentityTablesNaming();
     }

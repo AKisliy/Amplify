@@ -12,7 +12,6 @@ using UserService.Infrastructure.Options;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using System.Security.Cryptography;
-using Microsoft.IdentityModel.Logging;
 using Resend;
 using UserService.Application.Common.Interfaces.Clients;
 using UserService.Infrastructure.Clients;
@@ -20,6 +19,7 @@ using Microsoft.Extensions.Options;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.HttpOverrides;
 using UserService.Infrastructure.Mail;
+using Npgsql;
 
 namespace Microsoft.Extensions.DependencyInjection;
 
@@ -30,6 +30,9 @@ public static class DependencyInjection
         var connectionString = builder.Configuration.GetConnectionString("UserServiceDb");
         Guard.Against.Null(connectionString, message: "Connection string 'UserServiceDb' not found.");
 
+        var connectionBuilder = new NpgsqlConnectionStringBuilder(connectionString);
+        connectionString = connectionBuilder.ToString();
+
         builder.Services.AddScoped<ITokenService, TokenService>();
         builder.Services.AddSingleton<IJwtTokenGenerator, JwtTokenGenerator>();
 
@@ -39,7 +42,9 @@ public static class DependencyInjection
         builder.Services.AddDbContext<ApplicationDbContext>((sp, options) =>
         {
             options.AddInterceptors(sp.GetServices<ISaveChangesInterceptor>());
-            options.UseNpgsql(connectionString);
+            options.UseNpgsql(
+                connectionString,
+                npgsqlOptions => npgsqlOptions.MigrationsHistoryTable("__EFMigrationsHistory", "userservice"));
             options.UseSnakeCaseNamingConvention();
             options.ConfigureWarnings(warnings => warnings.Ignore(RelationalEventId.PendingModelChangesWarning));
         });

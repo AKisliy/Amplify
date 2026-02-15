@@ -17,6 +17,7 @@ namespace UserService.Infrastructure.Data.Migrations
         {
 #pragma warning disable 612, 618
             modelBuilder
+                .HasDefaultSchema("userservice")
                 .HasAnnotation("ProductVersion", "9.0.0")
                 .HasAnnotation("Relational:MaxIdentifierLength", 63);
 
@@ -51,7 +52,7 @@ namespace UserService.Infrastructure.Data.Migrations
                         .IsUnique()
                         .HasDatabaseName("RoleNameIndex");
 
-                    b.ToTable("asp_net_roles", (string)null);
+                    b.ToTable("asp_net_roles", "userservice");
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<System.Guid>", b =>
@@ -81,7 +82,7 @@ namespace UserService.Infrastructure.Data.Migrations
                     b.HasIndex("RoleId")
                         .HasDatabaseName("ix_asp_net_role_claims_role_id");
 
-                    b.ToTable("asp_net_role_claims", (string)null);
+                    b.ToTable("asp_net_role_claims", "userservice");
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserClaim<System.Guid>", b =>
@@ -111,7 +112,7 @@ namespace UserService.Infrastructure.Data.Migrations
                     b.HasIndex("UserId")
                         .HasDatabaseName("ix_asp_net_user_claims_user_id");
 
-                    b.ToTable("asp_net_user_claims", (string)null);
+                    b.ToTable("asp_net_user_claims", "userservice");
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserLogin<System.Guid>", b =>
@@ -138,7 +139,7 @@ namespace UserService.Infrastructure.Data.Migrations
                     b.HasIndex("UserId")
                         .HasDatabaseName("ix_asp_net_user_logins_user_id");
 
-                    b.ToTable("asp_net_user_logins", (string)null);
+                    b.ToTable("asp_net_user_logins", "userservice");
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserRole<System.Guid>", b =>
@@ -157,7 +158,7 @@ namespace UserService.Infrastructure.Data.Migrations
                     b.HasIndex("RoleId")
                         .HasDatabaseName("ix_asp_net_user_roles_role_id");
 
-                    b.ToTable("asp_net_user_roles", (string)null);
+                    b.ToTable("asp_net_user_roles", "userservice");
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserToken<System.Guid>", b =>
@@ -181,7 +182,7 @@ namespace UserService.Infrastructure.Data.Migrations
                     b.HasKey("UserId", "LoginProvider", "Name")
                         .HasName("pk_asp_net_user_tokens");
 
-                    b.ToTable("asp_net_user_tokens", (string)null);
+                    b.ToTable("asp_net_user_tokens", "userservice");
                 });
 
             modelBuilder.Entity("UserService.Domain.Entities.Ambassador", b =>
@@ -231,7 +232,7 @@ namespace UserService.Infrastructure.Data.Migrations
                         .IsUnique()
                         .HasDatabaseName("ix_ambassadors_project_id");
 
-                    b.ToTable("ambassadors", (string)null);
+                    b.ToTable("ambassadors", "userservice");
                 });
 
             modelBuilder.Entity("UserService.Domain.Entities.AmbassadorImage", b =>
@@ -259,7 +260,7 @@ namespace UserService.Infrastructure.Data.Migrations
                     b.HasIndex("AmbassadorId")
                         .HasDatabaseName("ix_ambassador_images_ambassador_id");
 
-                    b.ToTable("ambassador_images", (string)null);
+                    b.ToTable("ambassador_images", "userservice");
                 });
 
             modelBuilder.Entity("UserService.Domain.Entities.Project", b =>
@@ -308,7 +309,7 @@ namespace UserService.Infrastructure.Data.Migrations
                     b.HasIndex("UserId")
                         .HasDatabaseName("ix_projects_user_id");
 
-                    b.ToTable("projects", (string)null);
+                    b.ToTable("projects", "userservice");
                 });
 
             modelBuilder.Entity("UserService.Infrastructure.Identity.ApplicationUser", b =>
@@ -389,7 +390,7 @@ namespace UserService.Infrastructure.Data.Migrations
                         .IsUnique()
                         .HasDatabaseName("UserNameIndex");
 
-                    b.ToTable("asp_net_users", (string)null);
+                    b.ToTable("asp_net_users", "userservice");
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<System.Guid>", b =>
