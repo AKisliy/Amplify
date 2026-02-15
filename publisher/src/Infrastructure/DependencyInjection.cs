@@ -87,7 +87,6 @@ public static class DependencyInjection
     {
         services.AddValidatorsFromAssembly(Assembly.GetExecutingAssembly());
 
-        services.AddOptionsWithFluentValidation<DbConnectionOptions>(DbConnectionOptions.ConfigurationSection);
         services.AddOptionsWithFluentValidation<MediaServiceOptions>(MediaServiceOptions.ConfigurationSection);
         services.AddOptionsWithFluentValidation<InstagramApiOptions>(InstagramApiOptions.ConfigurationSection);
         services.AddOptionsWithFluentValidation<RabbitMQOptions>(RabbitMQOptions.ConfigurationSection);
@@ -104,11 +103,15 @@ public static class DependencyInjection
             .PersistKeysToDbContext<ApplicationDbContext>()
             .SetApplicationName("AmplifyPublisherApp");
 
+        var connectionString = builder.Configuration.GetConnectionString("Default");
+        Guard.Against.Null(connectionString, message: "Connection string 'Default' not found");
+
+        var connectionBuilder = new NpgsqlConnectionStringBuilder(connectionString);
+        connectionString = connectionBuilder.ToString();
+
         builder.Services.AddDbContext<ApplicationDbContext>((sp, options) =>
         {
-            var dbOptions = sp.GetRequiredService<IOptions<DbConnectionOptions>>().Value;
-
-            var dataSourceBuilder = new NpgsqlDataSourceBuilder(dbOptions.Default);
+            var dataSourceBuilder = new NpgsqlDataSourceBuilder(connectionString);
             dataSourceBuilder
                 .MapEnum<SocialProvider>()
                 .MapEnum<PublicationStatus>();

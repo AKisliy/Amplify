@@ -14,6 +14,7 @@ env:
     REGISTRY: ghcr.io
     IMAGE_NAME_BASE: ghcr.io/${{ github.repository }}
 
+Host=ep-twilight-star-ab1y78pz-pooler.eu-west-2.aws.neon.tech;Database=neondb;Username=user;Password=password;Ssl Mode=Require;
 # TODO: this can be simplified by separating deploy job to template
 jobs:
     changes:
