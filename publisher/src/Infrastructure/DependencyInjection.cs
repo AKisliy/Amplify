@@ -185,11 +185,12 @@ public static class DependencyInjection
             config.UsingRabbitMq((context, cfg) =>
             {
                 var options = context.GetRequiredService<IOptions<RabbitMQOptions>>().Value;
-                cfg.Host(options.Host, h =>
-                {
-                    h.Username(options.Username);
-                    h.Password(options.Password);
-                });
+                cfg.Host(options.Url);
+                // cfg.Host(options.Host, h =>
+                // {
+                //     h.Username(options.Username);
+                //     h.Password(options.Password);
+                // });
 
                 // TODO: Decide whether we start publishing based on event or direct api trigger
                 // cfg.Message<PostCreated>(x => x.SetEntityName("post-created"));
