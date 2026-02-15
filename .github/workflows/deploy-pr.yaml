@@ -34,7 +34,7 @@ jobs:
     deploy-userservice:
         needs: changes
         if: ${{ needs.changes.outputs.userservice == 'true' }}
-        uses: ./.github/workflows/deploy-template.yml
+        uses: AKisliy/Amplify/.github/workflows/deploy-template.yml@feature/AMPLIFY-107-Docker-compose-for-test
         with:
             service_folder: "userservice"
             app_label: "userservice"
@@ -45,7 +45,7 @@ jobs:
     deploy-publisher:
         needs: changes
         if: ${{ needs.changes.outputs.publisher == 'true' }}
-        uses: ./.github/workflows/deploy-template.yml
+        uses: AKisliy/Amplify/.github/workflows/deploy-template.yml@feature/AMPLIFY-107-Docker-compose-for-test
         with:
             service_folder: "publisher"
             app_label: "publisher"
