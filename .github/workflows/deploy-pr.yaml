@@ -9,12 +9,10 @@ env:
     PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
     CLUSTER_NAME: amplify-cluster
     ZONE: europe-west3-a
-    NAMESPACE: test-env
 
     REGISTRY: ghcr.io
     IMAGE_NAME_BASE: ghcr.io/${{ github.repository }}
 
-# TODO: this can be simplified by separating deploy job to template
 jobs:
     changes:
         runs-on: ubuntu-latest
@@ -36,109 +34,21 @@ jobs:
     deploy-userservice:
         needs: changes
         if: ${{ needs.changes.outputs.userservice == 'true' }}
-        runs-on: ubuntu-latest
-        permissions:
-            contents: read
-            packages: write
-            id-token: write
-
-        steps:
-            - uses: actions/checkout@v4
-            - name: Lowercase Image Name
-              run: |
-                  echo "IMAGE_NAME=${IMAGE_NAME_BASE,,}/userservice" >> $GITHUB_ENV
-                  echo "IMAGE_TAG=pr-${{ github.event.number }}-${{ github.sha }}" >> $GITHUB_ENV
-
-            - name: Log in to GHCR
-              uses: docker/login-action@v3
-              with:
-                  registry: ${{ env.REGISTRY }}
-                  username: ${{ github.actor }}
-                  password: ${{ secrets.GITHUB_TOKEN }}
-
-            - id: "auth"
-              uses: "google-github-actions/auth@v2"
-              with:
-                  credentials_json: "${{ secrets.GCP_CREDENTIALS }}"
-
-            - name: Get GKE Credentials
-              uses: google-github-actions/get-gke-credentials@v2
-              with:
-                  cluster_name: ${{ env.CLUSTER_NAME }}
-                  location: ${{ env.ZONE }}
-
-            - name: Setup Helm
-              uses: azure/setup-helm@v3
-
-            - name: Setup Helmfile
-              uses: mamezou-tech/setup-helmfile@v2.2.0
-
-            - name: Build and Push Docker Image
-              uses: docker/build-push-action@v5
-              with:
-                  context: ./userservice
-                  push: true
-                  tags: ${{ env.IMAGE_NAME }}:${{ env.IMAGE_TAG }}
-                  cache-from: type=gha
-                  cache-to: type=gha,mode=max
-
-            - name: Deploy via Helmfile
-              env:
-                  USERSERVICE_IMAGE_TAG: ${{ env.IMAGE_TAG }}
-              run: |
-                  helmfile -e dev -l app=userservice apply
+        uses: ./.github/workflows/deploy-template.yml
+        with:
+            service_folder: "userservice"
+            app_label: "userservice"
+            image_tag_var_name: "USERSERVICE_IMAGE_TAG"
+            env_name: "dev"
+        secrets: inherit
 
     deploy-publisher:
         needs: changes
         if: ${{ needs.changes.outputs.publisher == 'true' }}
-        runs-on: ubuntu-latest
-        permissions:
-            contents: read
-            packages: write
-            id-token: write
-
-        steps:
-            - uses: actions/checkout@v4
-            - name: Lowercase Image Name
-              run: |
-                  echo "IMAGE_NAME=${IMAGE_NAME_BASE,,}/publisher" >> $GITHUB_ENV
-                  echo "IMAGE_TAG=pr-${{ github.event.number }}-${{ github.sha }}" >> $GITHUB_ENV
-
-            - name: Log in to GHCR
-              uses: docker/login-action@v3
-              with:
-                  registry: ${{ env.REGISTRY }}
-                  username: ${{ github.actor }}
-                  password: ${{ secrets.GITHUB_TOKEN }}
-
-            - id: "auth"
-              uses: "google-github-actions/auth@v2"
-              with:
-                  credentials_json: "${{ secrets.GCP_CREDENTIALS }}"
-
-            - name: Get GKE Credentials
-              uses: google-github-actions/get-gke-credentials@v2
-              with:
-                  cluster_name: ${{ env.CLUSTER_NAME }}
-                  location: ${{ env.ZONE }}
-
-            - name: Setup Helm
-              uses: azure/setup-helm@v3
-
-            - name: Setup Helmfile
-              uses: mamezou-tech/setup-helmfile@v2.2.0
-
-            - name: Build and Push Docker Image
-              uses: docker/build-push-action@v5
-              with:
-                  context: ./publisher
-                  push: true
-                  tags: ${{ env.IMAGE_NAME }}:${{ env.IMAGE_TAG }}
-                  cache-from: type=gha
-                  cache-to: type=gha,mode=max
-
-            - name: Deploy via Helmfile
-              env:
-                  PUBLISHER_IMAGE_TAG: ${{ env.IMAGE_TAG }}
-              run: |
-                  helmfile -e dev -l app=publisher apply
+        uses: ./.github/workflows/deploy-template.yml
+        with:
+            service_folder: "publisher"
+            app_label: "publisher"
+            image_tag_var_name: "PUBLISHER_IMAGE_TAG"
+            env_name: "dev"
+        secrets: inherit
