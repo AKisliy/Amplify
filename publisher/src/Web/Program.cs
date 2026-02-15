@@ -56,7 +56,15 @@ app.UseAuthorization();
 
 app.UseExceptionHandler(options => { });
 
-app.Map("/", () => Results.Redirect("api/index.html?url=specification.json"));
+app.MapGet("/", (HttpContext context) =>
+{
+    var basePath = context.Request.PathBase.Value;
+    var redirectUrl = string.IsNullOrEmpty(basePath)
+        ? "api/index.html?url=specification.json"
+        : $"{basePath}/api/index.html?url=specification.json";
+
+    return Results.Redirect(redirectUrl);
+});
 app.MapHub<PublisherHub>("/hubs/publisher");
 
 app.MapEndpoints();
