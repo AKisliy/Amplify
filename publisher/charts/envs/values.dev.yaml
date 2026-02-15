@@ -5,6 +5,8 @@ secrets:
     key: publisher-db-conn-test
   hangfireConnectionString:
     key: publisher-hangfire-db-conn-test
+  rabbitMqConnection:
+    key: rabbitmq-test
 
 volumeMounts:
   - name: config-volume
