@@ -1,5 +1,12 @@
 replicaCount: 1
 
+secret:
+  name: publisher-k8s-secret
+
+externalSecret:
+  name: publisher-secrets
+  refreshInterval: 1h
+
 image:
   repository: akisliy/amplify-publisher
   pullPolicy: IfNotPresent

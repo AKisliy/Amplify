@@ -8,11 +8,12 @@ namespace Publisher.Infrastructure.Scheduler;
 
 internal static class ServiceCollectionExtensions
 {
+    private const string SchedulerConnectionStringKey = "Hangfire";
     private const string SchedulerSchemaName = "publisher_hangfire";
 
     public static IHostApplicationBuilder AddSchedulerServices(this IHostApplicationBuilder builder)
     {
-        var connectionString = builder.Configuration.GetConnectionString("Default");
+        var connectionString = builder.Configuration.GetConnectionString(SchedulerConnectionStringKey);
         Guard.Against.NullOrEmpty(connectionString);
 
         builder.Services.AddHangfire((provider, config) =>

@@ -43,6 +43,9 @@ spec:
               value: "{{ .Values.environment }}"
             - name: ASPNETCORE_HTTP_PORTS
               value: "{{ .Values.service.port }}"
+          envFrom:
+            - secretRef:
+                name: {{ .Values.secret.name }}
           {{- with .Values.volumeMounts }}
           volumeMounts:
             {{- toYaml . | nindent 12 }}
