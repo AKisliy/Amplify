@@ -42,18 +42,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         try {
           const parsedUser = JSON.parse(storedUser);
           setUser(parsedUser);
-          // Verify session with backend
-          try {
-            // getMe will trigger refresh via interceptor if needed
-            const { user: freshUser } = await getMe();
-            setUser(freshUser);
-            localStorage.setItem("auth_user", JSON.stringify(freshUser));
-          } catch (err) {
-            console.log("AuthProvider: Session validation failed", err);
-            // If validation fails (and refresh fails), clear session
-            // But maybe we are offline? Optimistically keep user if not 401?
-            // Interceptor handles 401 by clearing everything.
-          }
+          // Verify session validity by checking token expiration locally if possible,
+          // or just assume valid until 401. 
+          // Since /users/me is not available, we rely on the stored user and token.
+          // The Axios interceptor will handle 401s if the token is invalid/expired.
+          setUser(parsedUser);
+          console.log("AuthProvider: Session restored from storage");
         } catch (e) {
           console.log("AuthProvider: Error parsing stored user", e);
           localStorage.removeItem("auth_user");
@@ -74,9 +68,15 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const login = async (payload: LoginPayload) => {
     console.log("AuthProvider: Logging in...");
     const response = await loginService(payload);
-    console.log("AuthProvider: Login successful", response.user);
 
-    const { user, accessToken, refreshToken } = response;
+    const { accessToken, refreshToken, ...userData } = response;
+    const user: AuthUser = {
+      id: userData.id,
+      email: userData.email,
+      emailConfirmed: true // If they can login, email is confirmed or allowed
+    };
+
+    console.log("AuthProvider: Login successful", user);
 
     setUser(user);
     localStorage.setItem("auth_user", JSON.stringify(user));

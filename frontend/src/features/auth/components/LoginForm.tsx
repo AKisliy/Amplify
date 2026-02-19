@@ -42,7 +42,11 @@ export const LoginForm = () => {
       setServerError(null);
       // Attempt real login
       await login(values);
-      router.push("/dashboard");
+      // Small delay to ensure state and localStorage are fully synced
+      // and React has a chance to start the re-render.
+      setTimeout(() => {
+        router.push("/dashboard");
+      }, 100);
     } catch (error: any) {
       setServerError(
         error?.response?.data?.title || error.message || "Something went wrong. Please try again."
@@ -56,7 +60,7 @@ export const LoginForm = () => {
       <div className="hidden lg:flex flex-col justify-between p-12 bg-primary/5 dark:bg-primary/10 overflow-hidden relative">
         <div className="relative z-10">
           <Link href="/" className="flex items-center gap-2 font-bold text-2xl tracking-tighter">
-            <motion.div 
+            <motion.div
               whileHover={{ rotate: 180 }}
               transition={{ duration: 0.5 }}
               className="w-10 h-10 rounded-xl bg-primary flex items-center justify-center text-primary-foreground"
@@ -66,9 +70,9 @@ export const LoginForm = () => {
             Amplify
           </Link>
         </div>
-        
+
         <div className="relative z-10 max-w-lg">
-          <motion.h2 
+          <motion.h2
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2, duration: 0.6 }}
@@ -77,7 +81,7 @@ export const LoginForm = () => {
             Manage your projects, <br />
             ambassadors, and <span className="text-primary">content in one place</span>
           </motion.h2>
-          <motion.p 
+          <motion.p
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.4, duration: 0.6 }}
@@ -87,7 +91,7 @@ export const LoginForm = () => {
           </motion.p>
         </div>
 
-        <motion.div 
+        <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.6, duration: 0.6 }}
@@ -95,8 +99,8 @@ export const LoginForm = () => {
         >
           <div className="flex -space-x-3">
             {[1, 2, 3, 4].map((i) => (
-              <motion.div 
-                key={i} 
+              <motion.div
+                key={i}
                 whileHover={{ y: -5, scale: 1.1 }}
                 className="w-10 h-10 rounded-full border-4 border-background bg-muted overflow-hidden shadow-sm"
               >
@@ -108,30 +112,30 @@ export const LoginForm = () => {
         </motion.div>
 
         {/* Decorative elements */}
-        <motion.div 
-          animate={{ 
+        <motion.div
+          animate={{
             scale: [1, 1.2, 1],
             opacity: [0.3, 0.5, 0.3],
           }}
-          transition={{ 
+          transition={{
             duration: 8,
             repeat: Infinity,
             repeatType: "reverse"
           }}
-          className="absolute top-0 right-0 -translate-y-1/2 translate-x-1/2 w-[600px] h-[600px] bg-primary/20 rounded-full blur-[120px]" 
+          className="absolute top-0 right-0 -translate-y-1/2 translate-x-1/2 w-[600px] h-[600px] bg-primary/20 rounded-full blur-[120px]"
         />
-        <motion.div 
-          animate={{ 
+        <motion.div
+          animate={{
             scale: [1, 1.1, 1],
             opacity: [0.3, 0.4, 0.3],
           }}
-          transition={{ 
+          transition={{
             duration: 10,
             repeat: Infinity,
             repeatType: "reverse",
             delay: 1
           }}
-          className="absolute bottom-0 left-0 translate-y-1/2 -translate-x-1/2 w-[500px] h-[500px] bg-accent/20 rounded-full blur-[120px]" 
+          className="absolute bottom-0 left-0 translate-y-1/2 -translate-x-1/2 w-[500px] h-[500px] bg-accent/20 rounded-full blur-[120px]"
         />
       </div>
 

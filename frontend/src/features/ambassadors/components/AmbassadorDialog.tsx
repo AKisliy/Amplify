@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { motion } from "framer-motion";
@@ -46,11 +47,23 @@ export function AmbassadorDialog({
   } = useForm<AmbassadorFormValues>({
     resolver: zodResolver(ambassadorSchema),
     defaultValues: {
-      name: ambassador?.name || "",
-      biography: ambassador?.biography || "",
-      behavioralPatterns: ambassador?.behavioralPatterns || "",
+      name: "",
+      biography: "",
+      behavioralPatterns: "",
     },
   });
+
+  // Reset form when ambassador changes or dialog opens (if we want to clear it)
+  // We use useEffect to update the form values when the `ambassador` prop changes
+  useEffect(() => {
+    if (open) {
+      reset({
+        name: ambassador?.name || "",
+        biography: ambassador?.biography || "",
+        behavioralPatterns: ambassador?.behavioralPatterns || "",
+      });
+    }
+  }, [ambassador, open, reset]);
 
   const handleFormSubmit = async (values: AmbassadorFormValues) => {
     try {
