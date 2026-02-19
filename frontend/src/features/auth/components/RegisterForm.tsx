@@ -39,26 +39,19 @@ export const RegisterForm = () => {
   const onSubmit = async (values: RegisterFormValues) => {
     try {
       setServerError(null);
-      
-      // 1. Attempt real registration (for backend record)
-      try {
-        await registerService({
-          email: values.email,
-          password: values.password,
-        });
-      } catch (e: any) {
-        // Ignore "User already exists" or similar for this dev bypass
-        // OR just proceed if we want to force login
-        if (e?.response?.status !== 409) {
-             console.warn("Registration error, but attempting bypass anyway:", e);
-        }
-      }
+      // 1. Attempt real registration
+      await registerService({
+        email: values.email,
+        password: values.password,
+      });
 
-      // 3. Show success screen
+      // 2. Show success screen
       setSuccess(true);
-      
+
     } catch (error: any) {
-      setServerError("Something went wrong. Please try again.");
+      console.error("Registration failed:", error);
+      const errorMessage = error?.response?.data?.message || "Something went wrong. Please try again.";
+      setServerError(errorMessage);
     }
   };
 
@@ -95,7 +88,7 @@ export const RegisterForm = () => {
       <div className="hidden lg:flex flex-col justify-between p-12 bg-primary/5 dark:bg-primary/10 overflow-hidden relative">
         <div className="relative z-10">
           <Link href="/" className="flex items-center gap-2 font-bold text-2xl tracking-tighter">
-            <motion.div 
+            <motion.div
               whileHover={{ rotate: 180 }}
               transition={{ duration: 0.5 }}
               className="w-10 h-10 rounded-xl bg-primary flex items-center justify-center text-primary-foreground"
@@ -105,9 +98,9 @@ export const RegisterForm = () => {
             Amplify
           </Link>
         </div>
-        
+
         <div className="relative z-10 max-w-lg">
-          <motion.h2 
+          <motion.h2
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2, duration: 0.6 }}
@@ -122,7 +115,7 @@ export const RegisterForm = () => {
               "Automate publishing with flexible schedules",
               "Manage content, media, and performance in one dashboard"
             ].map((text, i) => (
-              <motion.div 
+              <motion.div
                 key={text}
                 initial={{ opacity: 0, x: -20 }}
                 animate={{ opacity: 1, x: 0 }}
@@ -138,7 +131,7 @@ export const RegisterForm = () => {
           </div>
         </div>
 
-        <motion.div 
+        <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.8, duration: 0.6 }}
@@ -153,7 +146,7 @@ export const RegisterForm = () => {
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-primary to-accent overflow-hidden p-[2px]">
               <div className="w-full h-full rounded-full bg-background overflow-hidden relative">
-                 <img src="https://i.pravatar.cc/100?u=sarah" alt="user" className="object-cover w-full h-full" />
+                <img src="https://i.pravatar.cc/100?u=sarah" alt="user" className="object-cover w-full h-full" />
               </div>
             </div>
             <div>
@@ -164,30 +157,30 @@ export const RegisterForm = () => {
         </motion.div>
 
         {/* Decorative elements */}
-        <motion.div 
-          animate={{ 
+        <motion.div
+          animate={{
             scale: [1, 1.2, 1],
             opacity: [0.3, 0.5, 0.3],
           }}
-          transition={{ 
+          transition={{
             duration: 8,
             repeat: Infinity,
             repeatType: "reverse"
           }}
-          className="absolute top-0 right-0 -translate-y-1/2 translate-x-1/2 w-[600px] h-[600px] bg-primary/20 rounded-full blur-[120px]" 
+          className="absolute top-0 right-0 -translate-y-1/2 translate-x-1/2 w-[600px] h-[600px] bg-primary/20 rounded-full blur-[120px]"
         />
-        <motion.div 
-          animate={{ 
+        <motion.div
+          animate={{
             scale: [1, 1.1, 1],
             opacity: [0.3, 0.4, 0.3],
           }}
-          transition={{ 
+          transition={{
             duration: 10,
             repeat: Infinity,
             repeatType: "reverse",
             delay: 1
           }}
-          className="absolute bottom-0 left-0 translate-y-1/2 -translate-x-1/2 w-[500px] h-[500px] bg-accent/20 rounded-full blur-[120px]" 
+          className="absolute bottom-0 left-0 translate-y-1/2 -translate-x-1/2 w-[500px] h-[500px] bg-accent/20 rounded-full blur-[120px]"
         />
       </div>
 
@@ -249,7 +242,7 @@ export const RegisterForm = () => {
                       />
                     </div>
                   </div>
-                  
+
                   {(errors.password || errors.confirmPassword) && (
                     <div className="space-y-1">
                       {errors.password && <p className="text-sm text-destructive">{errors.password.message}</p>}

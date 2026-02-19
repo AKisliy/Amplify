@@ -9,7 +9,12 @@ export const getAmbassador = async (id: string): Promise<Ambassador> => {
 };
 
 export const createAmbassador = async (payload: CreateAmbassadorPayload): Promise<string> => {
-  const { data } = await api.post<string>(BASE_URL, payload);
+  const sanitizedPayload = {
+    ...payload,
+    biography: payload.biography || null,
+    behavioralPatterns: payload.behavioralPatterns || null,
+  };
+  const { data } = await api.post<string>(BASE_URL, sanitizedPayload);
   return data;
 };
 

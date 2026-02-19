@@ -46,7 +46,9 @@ export interface AuthUser {
 // =====================
 
 export interface AuthResponse {
-  user: AuthUser;
+  id: string;
+  email: string;
+  roles: string[];
   accessToken: string;
   refreshToken: string;
 }

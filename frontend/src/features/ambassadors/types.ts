@@ -29,7 +29,7 @@ export type Project = {
   name: string;
   description?: string | null;
   photo?: string | null;
-  ambassadorId?: string; // Used by mock data
+  ambassadorId?: string | null;
 };
 
 export type CreateProjectDto = {
