@@ -1,0 +1,9 @@
+image:
+  tag: {{ env "MEDIA_INGEST_IMAGE_TAG" | default "latest" }}
+
+gateway:
+  name: {{ .Values.global.gateway.name }}
+
+virtualService:
+  hosts:
+    - {{ .Values.global.appDomain }}

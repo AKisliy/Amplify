@@ -1,0 +1,20 @@
+environment: "Development"
+
+secret:
+  name: mediaingest-k8s-secret
+
+secrets:
+  s3AccessKey: test-bucket-access-key
+  s3SecretKey: test-bucket-secret-key
+
+appConfig:
+  S3:
+    Host: "storage.googleapis.com"
+    AccessKey: ""
+    SecretKey: ""
+    BucketName: "amplify-media-test"
+    UseSsl: true
+  YtDlp:
+    YoutubeDlPath: "/opt/homebrew/bin/yt-dlp"
+  DbConnection:
+    Default: "Host=localhost;Port=54321;Database=usersDb;Username=root;Password=password"

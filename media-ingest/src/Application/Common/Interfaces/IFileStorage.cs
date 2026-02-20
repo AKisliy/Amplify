@@ -6,9 +6,9 @@ public interface IFileStorage
 {
     Task<Stream> OpenFileAsync(string filePath, CancellationToken cancellationToken = default);
 
-    Task<string> SaveFileAsync(Stream fileStream, string fileName, CancellationToken cancellationToken = default);
+    Task<string> SaveFileAsync(Stream fileStream, string fileKey, CancellationToken cancellationToken = default);
 
-    Task<string> SaveFileAsync(byte[] fileContent, string fileName, CancellationToken cancellationToken = default);
+    Task<string> SaveFileAsync(byte[] fileContent, string fileKey, CancellationToken cancellationToken = default);
 
     Task DeleteFileAsync(string path, CancellationToken cancellationToken = default);
 

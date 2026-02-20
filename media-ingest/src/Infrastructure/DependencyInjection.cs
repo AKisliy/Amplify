@@ -91,7 +91,7 @@ public static class DependencyInjection
         services.AddMinio(configureClient => configureClient
             .WithEndpoint(options.Host)
             .WithCredentials(options.AccessKey, options.SecretKey)
-            .WithSSL(false)
+            .WithSSL(options.UseSsl)
             .Build()
         );
 

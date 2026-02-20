@@ -1,0 +1,56 @@
+replicaCount: 1
+
+image:
+  repository: akisliy/amplify-mediaingest
+  pullPolicy: IfNotPresent
+  tag: ""
+
+nameOverride: ""
+fullnameOverride: ""
+
+serviceAccount:
+  create: true
+  name: "mediaingest-sa"
+
+podLabels: {}
+
+service:
+  type: ClusterIP
+  port: 80
+
+resources: {}
+
+livenessProbe:
+  httpGet:
+    path: /health
+    port: http
+readinessProbe:
+  httpGet:
+    path: /health
+    port: http
+
+
+volumes: 
+  - name: config-volume
+    configMap:
+      name: mediaingest-config
+
+volumeMounts:
+  - name: config-volume
+    mountPath: /app/appsettings.Development.json
+    subpath: appsettings_override.json
+
+virtualService:
+  name: mediaingest-vs
+  http:
+    timeout: 2s
+    retries:
+      attempts: 3
+      perTryTimeout: 2s
+      retryOn: gateway-error,connect-failure,refused-stream,5xx
+
+gateway:
+  name: amplify-gateway
+
+# определяется в файлах окружения
+appConfig: {}

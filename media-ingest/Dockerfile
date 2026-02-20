@@ -24,6 +24,11 @@ RUN dotnet publish "Web.csproj" -c Release -o /app/publish /p:UseAppHost=false -
 FROM mcr.microsoft.com/dotnet/aspnet:9.0 AS final
 WORKDIR /app
 
+USER root
+RUN apt-get update && apt-get install -y python3 curl && rm -rf /var/lib/apt/lists/*
+RUN curl -L https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp -o /usr/local/bin/yt-dlp
+RUN chmod a+rx /usr/local/bin/yt-dlp
+
 ENV ASPNETCORE_HTTP_PORTS=5001
 EXPOSE 5001
 

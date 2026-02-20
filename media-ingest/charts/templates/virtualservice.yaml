@@ -1,0 +1,27 @@
+apiVersion: networking.istio.io/v1
+kind: VirtualService
+metadata:
+  name: {{ .Values.virtualService.name }}
+spec:
+  hosts:
+  {{- range .Values.virtualService.hosts }}
+  - {{ . | quote }}
+  {{- end }}
+  # intenral service communication
+  - "{{ include "mediaingest.fullname" . }}.{{ .Release.Namespace }}.svc.cluster.local"
+  gateways:
+  - {{ .Values.gateway.name }}
+  http:
+  - match:
+    - uri:
+        prefix: "/media"
+    route:
+    - destination:
+        host: "{{ include "mediaingest.fullname" . }}"
+        port:
+          number: {{ .Values.service.port }}
+    timeout: {{ .Values.virtualService.http.timeout }}
+    retries:
+      attempts: {{ .Values.virtualService.http.retries.attempts }}
+      perTryTimeout: {{ .Values.virtualService.http.retries.perTryTimeout }}
+      retryOn: {{ .Values.virtualService.http.retries.retryOn }}

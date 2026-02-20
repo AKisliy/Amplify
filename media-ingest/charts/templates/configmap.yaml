@@ -1,0 +1,7 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: mediaingest-config
+data:
+  "appsettings_override.json": |
+    {{- .Values.appConfig | toPrettyJson | nindent 4 }}
