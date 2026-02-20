@@ -6,6 +6,7 @@ secret:
 secrets:
   s3AccessKey: test-bucket-access-key
   s3SecretKey: test-bucket-secret-key
+  connectionStringKey: userservice-db-conn 
 
 volumeMounts:
   - name: config-volume
