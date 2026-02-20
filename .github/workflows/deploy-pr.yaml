@@ -11,6 +11,7 @@ jobs:
         outputs:
             userservice: ${{ steps.filter.outputs.userservice }}
             publisher: ${{ steps.filter.outputs.publisher }}
+            media-ingest: ${{ steps.filter.outputs.media-ingest }}
         steps:
             - uses: actions/checkout@v4
             - uses: dorny/paths-filter@v2
@@ -22,6 +23,8 @@ jobs:
                         - 'helmfile.yaml'
                       publisher:
                         - 'publisher/**'
+                      media-ingest:
+                        - 'media-ingest/**'
 
     deploy-userservice:
         needs: changes
@@ -42,5 +45,16 @@ jobs:
             service_folder: "publisher"
             app_label: "publisher"
             image_tag_var_name: "PUBLISHER_IMAGE_TAG"
+            env_name: "dev"
+        secrets: inherit
+
+    deploy-media-ingest:
+        needs: changes
+        if: ${{ needs.changes.outputs.media-ingest == 'true' }}
+        uses: ./.github/workflows/deploy-template.yaml
+        with:
+            service_folder: "media-ingest"
+            app_label: "media-ingest"
+            image_tag_var_name: "MEDIA_INGEST_IMAGE_TAG"
             env_name: "dev"
         secrets: inherit
