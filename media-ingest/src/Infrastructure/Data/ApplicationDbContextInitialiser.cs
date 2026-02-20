@@ -1,6 +1,7 @@
 using MediaIngest.Application.Common.Interfaces;
 using MediaIngest.Domain.Entities;
 using Microsoft.AspNetCore.Builder;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
@@ -32,9 +33,7 @@ public class ApplicationDbContextInitialiser(
     {
         try
         {
-            // See https://jasontaylor.dev/ef-core-database-initialisation-strategies
-            await context.Database.EnsureDeletedAsync();
-            await context.Database.EnsureCreatedAsync();
+            await context.Database.MigrateAsync();
         }
         catch (Exception ex)
         {
