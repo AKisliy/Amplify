@@ -24,3 +24,5 @@ appConfig:
     YoutubeDlPath: "/opt/homebrew/bin/yt-dlp"
   DbConnection:
     Default: "Host=localhost;Port=54321;Database=usersDb;Username=root;Password=password"
+  MediaIngest:
+    BasePath: "/media"

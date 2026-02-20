@@ -79,6 +79,7 @@ public static class DependencyInjection
         services.AddOptionsWithFluentValidation<S3Options>(S3Options.ConfigurationSection);
         services.AddOptionsWithFluentValidation<YtDlpOptions>(YtDlpOptions.ConfigurationSection);
         services.AddOptionsWithFluentValidation<DbConnectionOptions>(DbConnectionOptions.ConfigurationSection);
+        services.AddOptionsWithFluentValidation<MediaIngestOptions>(MediaIngestOptions.SectionName);
     }
 
     private static void AddHttpClients(this IServiceCollection services)
