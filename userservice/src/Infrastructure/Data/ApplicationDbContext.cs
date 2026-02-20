@@ -12,6 +12,8 @@ namespace UserService.Infrastructure.Data;
 public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options)
     : IdentityDbContext<ApplicationUser, IdentityRole<Guid>, Guid>(options), IApplicationDbContext
 {
+    public const string DefaultSchemaName = "userservice";
+
     public DbSet<Project> Projects => Set<Project>();
     public DbSet<Ambassador> Ambassadors => Set<Ambassador>();
     public DbSet<AmbassadorImage> AmbassadorImages => Set<AmbassadorImage>();
@@ -19,7 +21,7 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
     protected override void OnModelCreating(ModelBuilder builder)
     {
         base.OnModelCreating(builder);
-        builder.HasDefaultSchema("userservice");
+        builder.HasDefaultSchema(DefaultSchemaName);
         builder.ApplyConfigurationsFromAssembly(Assembly.GetExecutingAssembly());
         builder.ChangeIdentityTablesNaming();
     }

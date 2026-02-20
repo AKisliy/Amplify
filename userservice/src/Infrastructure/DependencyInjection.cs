@@ -20,6 +20,7 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.HttpOverrides;
 using UserService.Infrastructure.Mail;
 using Npgsql;
+using Microsoft.EntityFrameworkCore.Migrations;
 
 namespace Microsoft.Extensions.DependencyInjection;
 
@@ -44,7 +45,7 @@ public static class DependencyInjection
             options.AddInterceptors(sp.GetServices<ISaveChangesInterceptor>());
             options.UseNpgsql(
                 connectionString,
-                npgsqlOptions => npgsqlOptions.MigrationsHistoryTable("__EFMigrationsHistory", "userservice"));
+                npgsqlOptions => npgsqlOptions.MigrationsHistoryTable(HistoryRepository.DefaultTableName, ApplicationDbContext.DefaultSchemaName));
             options.UseSnakeCaseNamingConvention();
             options.ConfigureWarnings(warnings => warnings.Ignore(RelationalEventId.PendingModelChangesWarning));
         });
