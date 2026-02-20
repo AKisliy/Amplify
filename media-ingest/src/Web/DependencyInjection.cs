@@ -1,6 +1,8 @@
 ﻿using Azure.Identity;
+using MediaIngest.Infrastructure.Configuration;
 using MediaIngest.Infrastructure.Data;
 using Microsoft.AspNetCore.Mvc;
+using NSwag;
 
 namespace Microsoft.Extensions.DependencyInjection;
 
@@ -23,7 +25,23 @@ public static class DependencyInjection
 
         builder.Services.AddEndpointsApiExplorer();
 
-        builder.Services.AddOpenApiDocument((configure, sp) => configure.Title = "MediaIngest API");
+        var mediaIngestOptions = new MediaIngestOptions();
+        builder.Configuration.GetSection(MediaIngestOptions.SectionName).Bind(mediaIngestOptions);
+
+        builder.Services.AddOpenApiDocument((configure, sp) =>
+        {
+            configure.Title = "MediaIngest API";
+
+            configure.PostProcess = document =>
+            {
+                document.Servers.Clear();
+                document.Servers.Add(new OpenApiServer
+                {
+                    Url = string.IsNullOrEmpty(mediaIngestOptions.BasePath) ? "/" : mediaIngestOptions.BasePath,
+                    Description = "Media-ingest API"
+                });
+            };
+        });
 
         builder.Services.AddOpenApi();
     }

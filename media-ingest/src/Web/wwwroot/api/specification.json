@@ -5,6 +5,12 @@
     "title": "MediaIngest API",
     "version": "1.0.0"
   },
+  "servers": [
+    {
+      "url": "/media",
+      "description": "Media-ingest API"
+    }
+  ],
   "paths": {
     "/api/images": {
       "post": {
