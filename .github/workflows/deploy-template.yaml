@@ -76,7 +76,7 @@ jobs:
               uses: mamezou-tech/setup-helmfile@v2.2.0
 
             - name: Build and Push Docker Image
-              uses: docker/build-push-action@v5
+              uses: docker/build-push-action@v6
               with:
                   context: ./${{ inputs.service_folder }}
                   push: true
