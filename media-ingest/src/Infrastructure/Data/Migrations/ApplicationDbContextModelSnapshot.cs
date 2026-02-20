@@ -17,6 +17,7 @@ namespace MediaIngest.Infrastructure.Data.Migrations
         {
 #pragma warning disable 612, 618
             modelBuilder
+                .HasDefaultSchema("media_ingest")
                 .HasAnnotation("ProductVersion", "9.0.0")
                 .HasAnnotation("Relational:MaxIdentifierLength", 63);
 
@@ -59,7 +60,7 @@ namespace MediaIngest.Infrastructure.Data.Migrations
                     b.HasKey("Id")
                         .HasName("pk_media_files");
 
-                    b.ToTable("media_files", (string)null);
+                    b.ToTable("media_files", "media_ingest");
                 });
 #pragma warning restore 612, 618
         }

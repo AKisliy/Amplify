@@ -12,7 +12,7 @@ using UserService.Infrastructure.Data;
 namespace UserService.Infrastructure.Data.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20260115172124_Init")]
+    [Migration("20260214183435_Init")]
     partial class Init
     {
         /// <inheritdoc />
@@ -20,6 +20,7 @@ namespace UserService.Infrastructure.Data.Migrations
         {
 #pragma warning disable 612, 618
             modelBuilder
+                .HasDefaultSchema("userservice")
                 .HasAnnotation("ProductVersion", "9.0.0")
                 .HasAnnotation("Relational:MaxIdentifierLength", 63);
 
@@ -54,7 +55,7 @@ namespace UserService.Infrastructure.Data.Migrations
                         .IsUnique()
                         .HasDatabaseName("RoleNameIndex");
 
-                    b.ToTable("asp_net_roles", (string)null);
+                    b.ToTable("asp_net_roles", "userservice");
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<System.Guid>", b =>
@@ -84,7 +85,7 @@ namespace UserService.Infrastructure.Data.Migrations
                     b.HasIndex("RoleId")
                         .HasDatabaseName("ix_asp_net_role_claims_role_id");
 
-                    b.ToTable("asp_net_role_claims", (string)null);
+                    b.ToTable("asp_net_role_claims", "userservice");
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserClaim<System.Guid>", b =>
@@ -114,7 +115,7 @@ namespace UserService.Infrastructure.Data.Migrations
                     b.HasIndex("UserId")
                         .HasDatabaseName("ix_asp_net_user_claims_user_id");
 
-                    b.ToTable("asp_net_user_claims", (string)null);
+                    b.ToTable("asp_net_user_claims", "userservice");
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserLogin<System.Guid>", b =>
@@ -141,7 +142,7 @@ namespace UserService.Infrastructure.Data.Migrations
                     b.HasIndex("UserId")
                         .HasDatabaseName("ix_asp_net_user_logins_user_id");
 
-                    b.ToTable("asp_net_user_logins", (string)null);
+                    b.ToTable("asp_net_user_logins", "userservice");
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserRole<System.Guid>", b =>
@@ -160,7 +161,7 @@ namespace UserService.Infrastructure.Data.Migrations
                     b.HasIndex("RoleId")
                         .HasDatabaseName("ix_asp_net_user_roles_role_id");
 
-                    b.ToTable("asp_net_user_roles", (string)null);
+                    b.ToTable("asp_net_user_roles", "userservice");
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserToken<System.Guid>", b =>
@@ -184,7 +185,85 @@ namespace UserService.Infrastructure.Data.Migrations
                     b.HasKey("UserId", "LoginProvider", "Name")
                         .HasName("pk_asp_net_user_tokens");
 
-                    b.ToTable("asp_net_user_tokens", (string)null);
+                    b.ToTable("asp_net_user_tokens", "userservice");
+                });
+
+            modelBuilder.Entity("UserService.Domain.Entities.Ambassador", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<string>("BehavioralPatterns")
+                        .HasColumnType("text")
+                        .HasColumnName("behavioral_patterns");
+
+                    b.Property<string>("Biography")
+                        .HasColumnType("text")
+                        .HasColumnName("biography");
+
+                    b.Property<DateTimeOffset>("Created")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created");
+
+                    b.Property<Guid?>("CreatedBy")
+                        .HasColumnType("uuid")
+                        .HasColumnName("created_by");
+
+                    b.Property<DateTimeOffset>("LastModified")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("last_modified");
+
+                    b.Property<Guid?>("LastModifiedBy")
+                        .HasColumnType("uuid")
+                        .HasColumnName("last_modified_by");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("name");
+
+                    b.Property<Guid>("ProjectId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("project_id");
+
+                    b.HasKey("Id")
+                        .HasName("pk_ambassadors");
+
+                    b.HasIndex("ProjectId")
+                        .IsUnique()
+                        .HasDatabaseName("ix_ambassadors_project_id");
+
+                    b.ToTable("ambassadors", "userservice");
+                });
+
+            modelBuilder.Entity("UserService.Domain.Entities.AmbassadorImage", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<Guid>("AmbassadorId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("ambassador_id");
+
+                    b.Property<int>("ImageType")
+                        .HasColumnType("integer")
+                        .HasColumnName("image_type");
+
+                    b.Property<Guid>("MediaId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("media_id");
+
+                    b.HasKey("Id")
+                        .HasName("pk_ambassador_images");
+
+                    b.HasIndex("AmbassadorId")
+                        .HasDatabaseName("ix_ambassador_images_ambassador_id");
+
+                    b.ToTable("ambassador_images", "userservice");
                 });
 
             modelBuilder.Entity("UserService.Domain.Entities.Project", b =>
@@ -219,8 +298,8 @@ namespace UserService.Infrastructure.Data.Migrations
                         .HasColumnType("text")
                         .HasColumnName("name");
 
-                    b.Property<string>("Photo")
-                        .HasColumnType("text")
+                    b.Property<Guid?>("Photo")
+                        .HasColumnType("uuid")
                         .HasColumnName("photo");
 
                     b.Property<Guid>("UserId")
@@ -233,42 +312,7 @@ namespace UserService.Infrastructure.Data.Migrations
                     b.HasIndex("UserId")
                         .HasDatabaseName("ix_projects_user_id");
 
-                    b.ToTable("projects", (string)null);
-                });
-
-            modelBuilder.Entity("UserService.Domain.Entities.TodoList", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid")
-                        .HasColumnName("id");
-
-                    b.Property<DateTimeOffset>("Created")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("created");
-
-                    b.Property<Guid?>("CreatedBy")
-                        .HasColumnType("uuid")
-                        .HasColumnName("created_by");
-
-                    b.Property<DateTimeOffset>("LastModified")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("last_modified");
-
-                    b.Property<Guid?>("LastModifiedBy")
-                        .HasColumnType("uuid")
-                        .HasColumnName("last_modified_by");
-
-                    b.Property<string>("Title")
-                        .IsRequired()
-                        .HasMaxLength(200)
-                        .HasColumnType("character varying(200)")
-                        .HasColumnName("title");
-
-                    b.HasKey("Id")
-                        .HasName("pk_todo_lists");
-
-                    b.ToTable("todo_lists", (string)null);
+                    b.ToTable("projects", "userservice");
                 });
 
             modelBuilder.Entity("UserService.Infrastructure.Identity.ApplicationUser", b =>
@@ -349,7 +393,7 @@ namespace UserService.Infrastructure.Data.Migrations
                         .IsUnique()
                         .HasDatabaseName("UserNameIndex");
 
-                    b.ToTable("asp_net_users", (string)null);
+                    b.ToTable("asp_net_users", "userservice");
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<System.Guid>", b =>
@@ -409,6 +453,28 @@ namespace UserService.Infrastructure.Data.Migrations
                         .HasConstraintName("fk_asp_net_user_tokens_asp_net_users_user_id");
                 });
 
+            modelBuilder.Entity("UserService.Domain.Entities.Ambassador", b =>
+                {
+                    b.HasOne("UserService.Domain.Entities.Project", "Project")
+                        .WithOne()
+                        .HasForeignKey("UserService.Domain.Entities.Ambassador", "ProjectId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_ambassadors_projects_project_id");
+
+                    b.Navigation("Project");
+                });
+
+            modelBuilder.Entity("UserService.Domain.Entities.AmbassadorImage", b =>
+                {
+                    b.HasOne("UserService.Domain.Entities.Ambassador", null)
+                        .WithMany()
+                        .HasForeignKey("AmbassadorId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_ambassador_images_ambassadors_ambassador_id");
+                });
+
             modelBuilder.Entity("UserService.Domain.Entities.Project", b =>
                 {
                     b.HasOne("UserService.Infrastructure.Identity.ApplicationUser", null)
@@ -417,32 +483,6 @@ namespace UserService.Infrastructure.Data.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired()
                         .HasConstraintName("fk_projects_asp_net_users_user_id");
-                });
-
-            modelBuilder.Entity("UserService.Domain.Entities.TodoList", b =>
-                {
-                    b.OwnsOne("UserService.Domain.ValueObjects.Colour", "Colour", b1 =>
-                        {
-                            b1.Property<Guid>("TodoListId")
-                                .HasColumnType("uuid")
-                                .HasColumnName("id");
-
-                            b1.Property<string>("Code")
-                                .IsRequired()
-                                .HasColumnType("text")
-                                .HasColumnName("colour_code");
-
-                            b1.HasKey("TodoListId");
-
-                            b1.ToTable("todo_lists");
-
-                            b1.WithOwner()
-                                .HasForeignKey("TodoListId")
-                                .HasConstraintName("fk_todo_lists_todo_lists_id");
-                        });
-
-                    b.Navigation("Colour")
-                        .IsRequired();
                 });
 #pragma warning restore 612, 618
         }

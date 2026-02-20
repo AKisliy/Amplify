@@ -34,7 +34,6 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using System.Security.Claims;
 using System.Text;
-using Microsoft.IdentityModel.Logging;
 using Microsoft.Extensions.Configuration;
 
 namespace Microsoft.Extensions.DependencyInjection;
@@ -88,7 +87,6 @@ public static class DependencyInjection
     {
         services.AddValidatorsFromAssembly(Assembly.GetExecutingAssembly());
 
-        services.AddOptionsWithFluentValidation<DbConnectionOptions>(DbConnectionOptions.ConfigurationSection);
         services.AddOptionsWithFluentValidation<MediaServiceOptions>(MediaServiceOptions.ConfigurationSection);
         services.AddOptionsWithFluentValidation<InstagramApiOptions>(InstagramApiOptions.ConfigurationSection);
         services.AddOptionsWithFluentValidation<RabbitMQOptions>(RabbitMQOptions.ConfigurationSection);
@@ -105,11 +103,15 @@ public static class DependencyInjection
             .PersistKeysToDbContext<ApplicationDbContext>()
             .SetApplicationName("AmplifyPublisherApp");
 
+        var connectionString = builder.Configuration.GetConnectionString("Default");
+        Guard.Against.Null(connectionString, message: "Connection string 'Default' not found");
+
+        var connectionBuilder = new NpgsqlConnectionStringBuilder(connectionString);
+        connectionString = connectionBuilder.ToString();
+
         builder.Services.AddDbContext<ApplicationDbContext>((sp, options) =>
         {
-            var dbOptions = sp.GetRequiredService<IOptions<DbConnectionOptions>>().Value;
-
-            var dataSourceBuilder = new NpgsqlDataSourceBuilder(dbOptions.Default);
+            var dataSourceBuilder = new NpgsqlDataSourceBuilder(connectionString);
             dataSourceBuilder
                 .MapEnum<SocialProvider>()
                 .MapEnum<PublicationStatus>();
@@ -118,10 +120,12 @@ public static class DependencyInjection
             options.UseNpgsql(
                 dataSource,
                 o => o
-                    .MapEnum<SocialProvider>()
-                    .MapEnum<PublicationStatus>()
+                    .MapEnum<SocialProvider>(schemaName: ApplicationDbContext.DefaultSchemaName)
+                    .MapEnum<PublicationStatus>(schemaName: ApplicationDbContext.DefaultSchemaName)
                     .EnableRetryOnFailure(4)
+                    .MigrationsHistoryTable("__EFMigrationsHistory", ApplicationDbContext.DefaultSchemaName)
             );
+
             options.UseSnakeCaseNamingConvention();
             options.AddInterceptors(sp.GetServices<ISaveChangesInterceptor>());
         });
@@ -181,11 +185,12 @@ public static class DependencyInjection
             config.UsingRabbitMq((context, cfg) =>
             {
                 var options = context.GetRequiredService<IOptions<RabbitMQOptions>>().Value;
-                cfg.Host(options.Host, h =>
-                {
-                    h.Username(options.Username);
-                    h.Password(options.Password);
-                });
+                cfg.Host(options.Url);
+                // cfg.Host(options.Host, h =>
+                // {
+                //     h.Username(options.Username);
+                //     h.Password(options.Password);
+                // });
 
                 // TODO: Decide whether we start publishing based on event or direct api trigger
                 // cfg.Message<PostCreated>(x => x.SetEntityName("post-created"));

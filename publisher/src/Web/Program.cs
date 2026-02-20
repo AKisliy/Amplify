@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.Extensions.Options;
 using Publisher.Infrastructure.Configuration.Options;
 using Publisher.Infrastructure.Data;
@@ -19,11 +20,13 @@ var publisherOptions = app.Services.GetRequiredService<IOptions<PublisherOptions
 if (!string.IsNullOrEmpty(publisherOptions.BasePath))
 {
     app.Logger.LogInformation("Using path base: {PathBase}", publisherOptions.BasePath);
-    var pathBase = publisherOptions.BasePath.StartsWith("/")
-        ? publisherOptions.BasePath
-        : "/" + publisherOptions.BasePath;
-    app.UsePathBase(pathBase);
+    app.UsePathBase(publisherOptions.BasePath);
 }
+
+app.UseForwardedHeaders(new ForwardedHeadersOptions
+{
+    ForwardedHeaders = ForwardedHeaders.XForwardedProto | ForwardedHeaders.XForwardedHost
+});
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
@@ -42,19 +45,10 @@ app.UseHealthChecks("/health");
 app.UseHttpsRedirection();
 app.UseStaticFiles();
 
-app.UseOpenApi(settings =>
-{
-    settings.Path = string.IsNullOrEmpty(publisherOptions.BasePath) 
-        ? "/api/specification.json" 
-        : $"{publisherOptions.BasePath}/api/specification.json";
-});
-
 app.UseSwaggerUi(settings =>
 {
     settings.Path = "/api";
-    settings.DocumentPath = string.IsNullOrEmpty(publisherOptions.BasePath) 
-        ? "/api/specification.json" 
-        : $"{publisherOptions.BasePath}/api/specification.json";
+    settings.DocumentPath = "specification.json";
 });
 
 app.UseAuthentication();
@@ -62,9 +56,15 @@ app.UseAuthorization();
 
 app.UseExceptionHandler(options => { });
 
-app.Map("/", () => Results.Redirect(string.IsNullOrEmpty(publisherOptions.BasePath) 
-    ? "/api/index.html?url=/api/specification.json" 
-    : $"{publisherOptions.BasePath}/api/index.html?url={publisherOptions.BasePath}/api/specification.json"));
+app.MapGet("/", (HttpContext context) =>
+{
+    var basePath = context.Request.PathBase.Value;
+    var redirectUrl = string.IsNullOrEmpty(basePath)
+        ? "api/index.html?url=specification.json"
+        : $"{basePath}/api/index.html?url=specification.json";
+
+    return Results.Redirect(redirectUrl);
+});
 app.MapHub<PublisherHub>("/hubs/publisher");
 
 app.MapEndpoints();

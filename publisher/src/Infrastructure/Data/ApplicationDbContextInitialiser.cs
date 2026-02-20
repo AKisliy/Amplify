@@ -1,5 +1,6 @@
 ﻿using System.Globalization;
 using Microsoft.AspNetCore.Builder;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Publisher.Domain.Entities;
@@ -29,8 +30,7 @@ public class ApplicationDbContextInitialiser(
         try
         {
             // See https://jasontaylor.dev/ef-core-database-initialisation-strategies
-            await context.Database.EnsureDeletedAsync();
-            await context.Database.EnsureCreatedAsync();
+            await context.Database.MigrateAsync();
         }
         catch (Exception ex)
         {
@@ -61,12 +61,15 @@ public class ApplicationDbContextInitialiser(
         var autoListEntryId = new Guid("dfc14e82-47ca-4b1e-979b-ba04758fd49b");
         const string defaultJwtToken = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJodHRwOi8vc2NoZW1hcy54bWxzb2FwLm9yZy93cy8yMDA1LzA1L2lkZW50aXR5L2NsYWltcy9uYW1laWRlbnRpZmllciI6ImY1MTdhNjdjLTAyYjEtNDcxMC05YjM1LTA0OTJiMDI5ZDBjNCIsImh0dHA6Ly9zY2hlbWFzLnhtbHNvYXAub3JnL3dzLzIwMDUvMDUvaWRlbnRpdHkvY2xhaW1zL2VtYWlsYWRkcmVzcyI6ImZyb250ZW5kQGRldi5sb2NhbCIsInJvbGUiOiJBZG1pbiIsImV4cCI6NDkyNTcyNzQ4MSwiaXNzIjoiZGV2LWxvY2FsIiwiYXVkIjoicHVibGlzaGVyLWFwaSJ9.UrSq4n_bP-UYX5bZdR81RvhncRm4uOod4ljEqkjGDW0";
 
-        context.Projects.Add(new Project
+        if (!context.Projects.Any())
         {
-            Id = projectId
-        });
+            context.Projects.Add(new Project
+            {
+                Id = projectId
+            });
 
-        logger.LogInformation("Default project was added to DB with ID: {ProjectId}", projectId);
+            logger.LogInformation("Default project was added to DB with ID: {ProjectId}", projectId);
+        }
 
         var account = new SocialAccount
         {
@@ -78,9 +81,12 @@ public class ApplicationDbContextInitialiser(
             TokenExpiresAt = DateTime.UtcNow.AddYears(100)
         };
 
-        context.SocialAccounts.Add(account);
+        if (!context.SocialAccounts.Any())
+        {
+            context.SocialAccounts.Add(account);
 
-        logger.LogInformation("Added default account to DB with ID: {AccountId}", accountId);
+            logger.LogInformation("Added default account to DB with ID: {AccountId}", accountId);
+        }
 
         var autoList = new AutoList
         {
@@ -90,7 +96,6 @@ public class ApplicationDbContextInitialiser(
             Accounts = [account]
         };
 
-        logger.LogInformation("Added default autolist with ID: {AutoListId}", autoListId);
 
         var autoListEntry = new AutoListEntry
         {
@@ -100,10 +105,14 @@ public class ApplicationDbContextInitialiser(
             PublicationTime = TimeOnly.Parse("21:00", CultureInfo.InvariantCulture)
         };
 
-        logger.LogInformation("Added default autolist entry with ID: {AutoListEntryId}", autoListEntryId);
 
-        context.AutoLists.Add(autoList);
-        context.AutoListEntries.Add(autoListEntry);
+        if (!context.AutoListEntries.Any() && !context.AutoLists.Any())
+        {
+            context.AutoLists.Add(autoList);
+            context.AutoListEntries.Add(autoListEntry);
+            logger.LogInformation("Added default autolist with ID: {AutoListId}", autoListId);
+            logger.LogInformation("Added default autolist entry with ID: {AutoListEntryId}", autoListEntryId);
+        }
 
         await context.SaveChangesAsync();
 

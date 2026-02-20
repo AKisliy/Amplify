@@ -1,13 +1,19 @@
 environment: Development
 
+secrets:
+  defaultConnectionString:
+    key: publisher-db-conn-test
+  hangfireConnectionString:
+    key: publisher-hangfire-db-conn-test
+  rabbitMqConnection:
+    key: rabbitmq-test
+
 volumeMounts:
   - name: config-volume
     mountPath: /app/appsettings.Development.json
     subPath: appsettings_override.json
 
 appConfig:
-  DbConnectionOptions:
-    Default: "Host=host.minikube.internal;Port=6432;Database=myDb;Username=dev_user;Password=dev_password"
   Logging:
     LogLevel:
       Default: "Information"
@@ -31,3 +37,5 @@ appConfig:
   Jwt:
     Issuer: "http://userservice.default.svc.cluster.local/userservice/api/auth"
     Audience: "MyAppDevelopmentUsers"
+  PublisherOptions:
+    BasePath: /publisher

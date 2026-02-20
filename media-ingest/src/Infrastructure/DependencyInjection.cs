@@ -10,6 +10,7 @@ using MediaIngest.Infrastructure.FileStorage;
 using MediaIngest.Infrastructure.MediaLinkResolvers;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Diagnostics;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Options;
@@ -61,6 +62,7 @@ public static class DependencyInjection
                     .MapEnum<FileType>()
                     .MapEnum<MediaType>()
                     .EnableRetryOnFailure(4)
+                    .MigrationsHistoryTable(HistoryRepository.DefaultTableName, ApplicationDbContext.DefaultSchemaName)
                 );
             options.UseSnakeCaseNamingConvention();
             options.AddInterceptors(sp.GetServices<ISaveChangesInterceptor>());
@@ -77,6 +79,7 @@ public static class DependencyInjection
         services.AddOptionsWithFluentValidation<S3Options>(S3Options.ConfigurationSection);
         services.AddOptionsWithFluentValidation<YtDlpOptions>(YtDlpOptions.ConfigurationSection);
         services.AddOptionsWithFluentValidation<DbConnectionOptions>(DbConnectionOptions.ConfigurationSection);
+        services.AddOptionsWithFluentValidation<MediaIngestOptions>(MediaIngestOptions.SectionName);
     }
 
     private static void AddHttpClients(this IServiceCollection services)

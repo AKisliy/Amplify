@@ -1,7 +1,7 @@
 replicaCount: 1
 
 image:
-  repository: akisliy/amplify-userservice
+  repository: ghcr.io/akisliy/amplify/userservice
   pullPolicy: IfNotPresent
   tag: ""
 
@@ -23,11 +23,11 @@ resources: {}
 
 livenessProbe:
   httpGet:
-    path: /
+    path: /userservice/health
     port: http
 readinessProbe:
   httpGet:
-    path: /
+    path: /userservice/health
     port: http
 
 volumes: 
@@ -37,7 +37,7 @@ volumes:
 
 volumeMounts:
   - name: config-volume
-    mountPath: /app/appsettings.Development.json
+    mountPath: /app/appsettings.Development.json # TODO: this is shit, change it
     subPath: appsettings_override.json
   
 

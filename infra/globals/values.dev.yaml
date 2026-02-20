@@ -1,4 +1,4 @@
 global:
-  appDomain: dev.amplify-vkr.example.com
+  appDomain: amplify.34.40.73.43.nip.io
   gateway:
     name: amplify-gateway

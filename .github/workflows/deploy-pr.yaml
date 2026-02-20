@@ -1,0 +1,60 @@
+name: Deploy PR to Test Env (K8s)
+
+on:
+    pull_request:
+        types: [opened, synchronize, reopened]
+        branches: [main, develop]
+
+jobs:
+    changes:
+        runs-on: ubuntu-latest
+        outputs:
+            userservice: ${{ steps.filter.outputs.userservice }}
+            publisher: ${{ steps.filter.outputs.publisher }}
+            media-ingest: ${{ steps.filter.outputs.media-ingest }}
+        steps:
+            - uses: actions/checkout@v4
+            - uses: dorny/paths-filter@v2
+              id: filter
+              with:
+                  filters: |
+                      userservice:
+                        - 'userservice/**'
+                        - 'helmfile.yaml'
+                      publisher:
+                        - 'publisher/**'
+                      media-ingest:
+                        - 'media-ingest/**'
+
+    deploy-userservice:
+        needs: changes
+        if: ${{ needs.changes.outputs.userservice == 'true' }}
+        uses: ./.github/workflows/deploy-template.yaml
+        with:
+            service_folder: "userservice"
+            app_label: "userservice"
+            image_tag_var_name: "USERSERVICE_IMAGE_TAG"
+            env_name: "dev"
+        secrets: inherit
+
+    deploy-publisher:
+        needs: changes
+        if: ${{ needs.changes.outputs.publisher == 'true' }}
+        uses: ./.github/workflows/deploy-template.yaml
+        with:
+            service_folder: "publisher"
+            app_label: "publisher"
+            image_tag_var_name: "PUBLISHER_IMAGE_TAG"
+            env_name: "dev"
+        secrets: inherit
+
+    deploy-media-ingest:
+        needs: changes
+        if: ${{ needs.changes.outputs.media-ingest == 'true' }}
+        uses: ./.github/workflows/deploy-template.yaml
+        with:
+            service_folder: "media-ingest"
+            app_label: "media-ingest"
+            image_tag_var_name: "MEDIA_INGEST_IMAGE_TAG"
+            env_name: "dev"
+        secrets: inherit
