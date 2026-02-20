@@ -1,7 +1,7 @@
 replicaCount: 1
 
 image:
-  repository: akisliy/amplify-mediaingest
+  repository: ghcr.io/akisliy/amplify/media-ingest
   pullPolicy: IfNotPresent
   tag: ""
 
