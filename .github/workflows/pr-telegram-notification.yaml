@@ -1,0 +1,57 @@
+name: Notify Telegram on PR to Main
+
+on:
+    pull_request:
+        types: [opened]
+        branches: [main]
+
+jobs:
+    notify:
+        runs-on: ubuntu-latest
+        steps:
+            - uses: actions/checkout@v6
+
+            - name: Filter changed paths
+              uses: dorny/paths-filter@v3
+              id: filter
+              with:
+                  filters: |
+                      frontend: 'frontend/**'
+                      userservice: 'userservice/**'
+                      publisher: 'publisher/**'
+                      media-ingest: 'media-ingest/**'
+                      template-service: 'template-service/**'
+
+            - name: Build Notification Message
+              run: |
+                  SERVICES=""
+
+                  # Проверяем флаги и собираем список
+                  [[ "${{ steps.filter.outputs.userservice }}" == "true" ]] && SERVICES+="- 📦 userservice"$'\n'
+                  [[ "${{ steps.filter.outputs.publisher }}" == "true" ]] && SERVICES+="- 📦 publisher"$'\n'
+                  [[ "${{ steps.filter.outputs.media-ingest }}" == "true" ]] && SERVICES+="- 📦 media-ingest"$'\n'
+                  [[ "${{ steps.filter.outputs.frontend }}" == "true" ]] && SERVICES+="- 📦 frontend"$'\n'
+                  [[ "${{ steps.filter.outputs.template-service }}" == "true" ]] && SERVICES+="- 📦 template-service"$'\n'
+
+                  # Если ни одна папка сервисов не затронута (например, поменяли только README)
+                  [[ -z "$SERVICES" ]] && SERVICES="- ⚙️ Только общие файлы/инфраструктура"
+
+                  {
+                    echo "TG_MESSAGE<<EOF"
+                    echo "🔥 *Новый Pull Request в main!*"
+                    echo "👤 *Автор:* ${{ github.actor }}"
+                    echo ""
+                    echo "🛠 *Затронутые сервисы:*"
+                    echo "$SERVICES"
+                    echo "🔗 [Посмотреть PR #${{ github.event.pull_request.number }}](${{ github.event.pull_request.html_url }})"
+                    echo "EOF"
+                  } >> "$GITHUB_ENV"
+
+            - name: Send Telegram Notification
+              uses: appleboy/telegram-action@master
+              with:
+                  to: ${{ secrets.TELEGRAM_CHAT_ID }}
+                  token: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+                  message: ${{ env.TG_MESSAGE }}
+                  format: markdown
+                  disable_web_page_preview: true
