@@ -70,6 +70,7 @@ releases:
           tag: latest
 
   - name: mediaingest
+    namespace: "{{ .Values.namespace }}"
     chart: ./media-ingest/charts
     labels:
       tier: backend
