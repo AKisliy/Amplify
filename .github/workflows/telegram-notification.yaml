@@ -7,7 +7,7 @@ on:
 
 jobs:
   notify-opened:
-    if: ${{ github.event_name == 'pull_request' && github.event.pull_request.state == 'opened'}}
+    if: ${{ github.event_name == 'pull_request' && github.event.action == 'opened'}}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
@@ -58,15 +58,15 @@ jobs:
           disable_web_page_preview: true
 
   notify-merged:
-    if: github.event.action == 'closed' && github.event.pull_request.merged == true
+    if: ${{ github.event.action == 'closed' && github.event.pull_request.merged == true }}
     runs-on: ubuntu-latest
     steps:
       - name: Build Notification Message
         run: |
           {
             echo "TG_MESSAGE<<EOF"
-            echo "✅ *[PR #${{ github.event.pull_request.number }}](${{ github.event.pull_request.html_url }}) был успешно смержен в main!*"
-            echo "🗣️ *Инициатор:* ${{ github.actor }}"
+            echo "✅ [PR #${{ github.event.pull_request.number }}](${{ github.event.pull_request.html_url }}) *был успешно смержен в main!*"
+            echo "🗣️ Инициатор: ${{ github.actor }}"
             echo "EOF"
           } >> "$GITHUB_ENV"
 
