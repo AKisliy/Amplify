@@ -41,3 +41,16 @@ releases:
       - ./publisher/charts/envs/values.{{ .Environment.Name }}.yaml
     needs:
       - gateway
+    
+  - name: mediaingest
+    chart: ./media-ingest/charts
+    labels:
+      tier: backend
+      app: media-ingest
+    values:
+      - ./media-ingest/charts/envs/values.yaml
+      - ./media-ingest/charts/envs/values.yaml.gotmpl
+      - ./media-ingest/charts/envs/values.{{ .Environment.Name }}.yaml
+    needs:
+      - gateway
+    

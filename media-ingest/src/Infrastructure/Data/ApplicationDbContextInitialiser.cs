@@ -64,12 +64,13 @@ public class ApplicationDbContextInitialiser(
             var imagePath = Path.Combine(basePath, "assets", "samples", "sample-image.jpg");
 
             var imageFile = File.OpenRead(imagePath);
+            var mediaKey = "sample-file-key.jpg";
 
             var mediaFileId = new Guid("5ee06455-ef52-453f-8cb4-33a028567c28");
             var mediaFile = new MediaFile
             {
                 Id = mediaFileId,
-                FileKey = "sample-file-key",
+                FileKey = mediaKey,
                 OriginalFileName = "sample-image.jpg",
                 ContentType = "image/jpeg",
                 FileSize = imageFile.Length
@@ -77,7 +78,7 @@ public class ApplicationDbContextInitialiser(
 
             context.MediaFiles.Add(mediaFile);
 
-            await fileStorage.SaveFileAsync(imageFile, mediaFile.OriginalFileName);
+            await fileStorage.SaveFileAsync(imageFile, mediaKey);
 
             await context.SaveChangesAsync();
 

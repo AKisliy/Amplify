@@ -11,6 +11,8 @@ public class S3Options
     public string SecretKey { get; set; } = string.Empty;
 
     public string Host { get; set; } = string.Empty;
+
+    public bool UseSsl { get; set; } = false;
 }
 
 public sealed class S3OptionsValidator : AbstractValidator<S3Options>

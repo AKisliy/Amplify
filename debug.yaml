@@ -1,0 +1,517 @@
+---
+# Source: infra/templates/amplify-gateway.yaml
+apiVersion: networking.istio.io/v1
+kind: Gateway
+metadata:
+  name: amplify-gateway
+spec:
+  selector:
+    istio: ingressgateway
+  servers:
+  - hosts:
+    - dev.amplify-vkr.example.com
+    port:
+      name: http
+      number: 80
+      protocol: HTTP
+
+---
+# Source: userservice/templates/serviceaccount.yaml
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: user-service-sa
+  labels:
+    helm.sh/chart: userservice-0.1.0
+    app.kubernetes.io/name: userservice
+    app.kubernetes.io/instance: userservice
+    app.kubernetes.io/version: "1.16.0"
+    app.kubernetes.io/managed-by: Helm
+automountServiceAccountToken:
+---
+# Source: userservice/templates/configmap.yaml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: userservice-config
+data:
+  "appsettings_override.json": |
+    {
+      "ConnectionStrings": {
+        "UserServiceDb": "Host=host.minikube.internal;Port=6433;Database=myDb;Username=dev_user;Password=dev_password;"
+      },
+      "CorsOptions": {
+        "AllowedOrigins": [
+          "http://dev.amplify-vkr.example.com"
+        ],
+        "DefaultPolicyName": "DevelopmentCorsPolicy"
+      },
+      "ExternalUrls": {
+        "MediaServiceApi": "https://media.my-prod-site.com"
+      },
+      "Frontend": {
+        "EmailConfirmationPath": "/confirm-email",
+        "EmailConfirmedPath": "/api/index.html?url=/api/specification.json",
+        "PasswordResetPath": "/reset-password",
+        "Url": "http://dev.amplify-vkr.example.com"
+      },
+      "InternalUrls": {
+        "MediaServiceInternalBaseUrl": "http://media-service.default.svc.cluster.local"
+      },
+      "Jwt": {
+        "Audience": "MyAppDevelopmentUsers",
+        "Issuer": "http://userservice.default.svc.cluster.local/userservice/api/auth",
+        "Key": "DevelopmentSecretKeyForJwtTokenGeneration",
+        "PrivateKeyPem": "-----BEGIN PRIVATE KEY-----\nMIIEvAIBADANBgkqhkiG9w0BAQEFAASCBKYwggSiAgEAAoIBAQCxHFHd6PSj473m\n6JvPKT4fwcIy0PMQsjs2VudEcVKeB5NoC9KOvy1wRF//FJIx/25qwb93lsAQPqCu\ngjc9GO6ZPoYIw5zwifHjJAuouQ3AS84ehDJPwr1uHYA2vUArKQ5yq5K0qENURucO\nyfLqRg+/SI9Mki7bc1kXLzzvAnvTE7JmwxAuxmRm89gScLoCQjeOYC5+xfmIukBP\nRNrOnHb/vMt59zfnl0ibBJK32J9O+XspTB8JvqkgGD+0CDFdZdQwtq92A3vtz5Cm\n7AKc638RhCk+MDkm3sLr+aDQBONnscgJfF9a+xSKTMcO/l+wkdyL2bdxd3xaReeH\nJdS4or3NAgMBAAECggEACyurmDD4uRuEnzs9lIfX5L3eR0E5i2yKYoeBp6X0HYaB\nzBauzZUOQx305gxAmkmvh6k3r83AyGWC0e7hmAdqCR1R69yWme9BY9+iop4lWWMO\nmYsh9zjjpL3Ul99A3FgHEsFyi9VvBbJBIYQoP5FyrdBgRWaU8P9p95XhpHuGHs5s\n0yI1pRhNro2tLpn+PfrlpeGN7eJcgn2sMaDWhLI1qD/1c1EO6WDbOOOx+jgiQQqL\nsvvxZpS6eadusMytAAY3sxwbJNWNUbK2sItWHObZSuOz6erxRCP8j3zy/HEY6QUJ\nrAlPtflLkD1wQS6KDHleT9FpnEW3vkL4wFmec/n8IQKBgQDheitrPIT69MgUjrrj\nCJnhnvh/b0LyGkFhfhMQPx8H2jqL3JjndEKwgycVzbcbfri4QI+43U/nOnigjNIy\nKWTXAuhiOLHOTOaDBn4ONIB8XVuItMl/FunRcinMPjPCnLB/VWrxyYRfncS9TUP4\nQhVaXot3/ce6F8IUqfqQ9M980QKBgQDJFgX93PwXfI2yN8zzT6yCG21FARA+KJHJ\ndm4DEn6+bFpZ609/hgSCL0ftk3LlgH7lb1amfU8jG6pwSVgiZk+ZWoiUlww96ruC\nKyhk7OUhYHTg+HS+RMUeWQx23yqBrg336D9l3vEFpsOGa5+CxjBIQhH90owtZ7kt\nm1ee9JIAPQKBgD/9MutJDphF9a5X31PlMf6k5fMMeVxJ9Toc1H4s27qXxTvCDCbL\niM2dOu9mJUwJR5UKxX76V93Qa0FtFY4kzzhx289cNaHNkzGmGwoe/kPNHtgKLpEB\nyLOnCZOsJ3ZYj4JjlGkv/oBAPwBWOC7xWiv+Xuhbvl3itjK1FqYiw+uxAoGACZKy\n1lMe7T9Qv5tIdozkeY00toRGca8cwaqRsjO/NPGTm5RIRJnsvQXjNrw+TA7B+8pB\nJcvxaIp4or/bIkgcogBdYDWQr6HtK1VCpwtgHSaqactqQ2Sivb8fiMk3DNVsdNDp\ns7/ZWZuG029sOJ2WztnWYW8UnVTCzBkJItgh20ECgYBHaZNUtjOaqOHjyVOqOyw7\nj4lXbox+fgnMkVelalpLv+bQXUd16hcU5ztg6+fo6VPiT1lObCZcNobZomXII2mU\nOJVnOuWcCWPAv1yYAsByPhG8nLmc1dS8yPj/Nxn+6agV0gcvQlWlSokWHcjJOyO7\nVRADnOB2UEfUN7Q7dDLWbA==\n-----END PRIVATE KEY-----"
+      },
+      "Logging": {
+        "LogLevel": {
+          "Default": "Information",
+          "Microsoft": "Warning"
+        }
+      },
+      "MailOptions": {
+        "ApiKey": "API_KEY"
+      },
+      "MyCookies": {
+        "AccessTokenCookieName": "MyAppAccessToken",
+        "RefreshTokenCookieName": "MyAppRefreshToken"
+      }
+    }
+---
+# Source: userservice/templates/service.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: userservice
+  labels:
+    helm.sh/chart: userservice-0.1.0
+    app.kubernetes.io/name: userservice
+    app.kubernetes.io/instance: userservice
+    app.kubernetes.io/version: "1.16.0"
+    app.kubernetes.io/managed-by: Helm
+spec:
+  type: ClusterIP
+  ports:
+    - port: 80
+      targetPort: http
+      protocol: TCP
+      name: http
+  selector:
+    app.kubernetes.io/name: userservice
+    app.kubernetes.io/instance: userservice
+---
+# Source: userservice/templates/deployment.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: userservice
+  labels:
+    helm.sh/chart: userservice-0.1.0
+    app.kubernetes.io/name: userservice
+    app.kubernetes.io/instance: userservice
+    app.kubernetes.io/version: "1.16.0"
+    app.kubernetes.io/managed-by: Helm
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: userservice
+      app.kubernetes.io/instance: userservice
+  template:
+    metadata:
+      labels:
+        helm.sh/chart: userservice-0.1.0
+        app.kubernetes.io/name: userservice
+        app.kubernetes.io/instance: userservice
+        app.kubernetes.io/version: "1.16.0"
+        app.kubernetes.io/managed-by: Helm
+    spec:
+      serviceAccountName: user-service-sa
+      containers:
+        - name: userservice
+          image: "akisliy/amplify-userservice:latest"
+          imagePullPolicy: IfNotPresent
+          ports:
+            - name: http
+              containerPort: 80
+              protocol: TCP
+          livenessProbe:
+            httpGet:
+              path: /
+              port: http
+          readinessProbe:
+            httpGet:
+              path: /
+              port: http
+          env:
+            - name: ASPNETCORE_ENVIRONMENT
+              value: "Development"
+            - name: ASPNETCORE_HTTP_PORTS
+              value: "80"
+          volumeMounts:
+            - mountPath: /app/appsettings.Development.json
+              name: config-volume
+              subPath: appsettings_override.json
+      volumes:
+        - configMap:
+            name: userservice-config
+          name: config-volume
+---
+# Source: userservice/templates/virtualservice.yaml
+apiVersion: networking.istio.io/v1
+kind: VirtualService
+metadata:
+  name: userservice-vs
+spec:
+  hosts:
+  - "dev.amplify-vkr.example.com"
+  # intenral service communication
+  - "userservice.default.svc.cluster.local"
+  gateways:
+  - amplify-gateway
+  http:
+  - match:
+    - uri:
+        prefix: "/userservice"
+    route:
+    - destination:
+        host: "userservice"
+        port:
+          number: 80
+    timeout: 2s
+    retries:
+      attempts: 3
+      perTryTimeout: 2s
+      retryOn: gateway-error,connect-failure,refused-stream,5xx
+
+---
+# Source: publisher/templates/serviceaccount.yaml
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: publisher
+  labels:
+    helm.sh/chart: publisher-0.1.0
+    app.kubernetes.io/name: publisher
+    app.kubernetes.io/instance: publisher
+    app.kubernetes.io/version: "1.16.0"
+    app.kubernetes.io/managed-by: Helm
+automountServiceAccountToken:
+---
+# Source: publisher/templates/configmap.yaml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: publisher-config
+data:
+  "appsettings_override.json": |
+    {
+      "DbConnectionOptions": {
+        "Default": "Host=host.minikube.internal;Port=6432;Database=myDb;Username=dev_user;Password=dev_password"
+      },
+      "ExternalUrls": {
+        "MediaServiceApi": "http://host.minikube.internal:6001"
+      },
+      "InstagramApiOptions": {
+        "ApiVersion": "v22.0",
+        "AppId": "instagram_app_id",
+        "AppSecret": "instagram_app_secret",
+        "BaseGraphHostUrl": "https://graph.facebook.com/",
+        "DailyLimit": 200,
+        "RedirectUri": "http://host.minikube.internal:6001/auth/instagram/callback"
+      },
+      "Jwt": {
+        "Audience": "MyAppDevelopmentUsers",
+        "Issuer": "http://userservice.default.svc.cluster.local/userservice/api/auth"
+      },
+      "Logging": {
+        "LogLevel": {
+          "Default": "Information",
+          "Microsoft": "Warning",
+          "Microsoft.Hosting.Lifetime": "Information"
+        }
+      },
+      "MediaService": {
+        "BaseUrl": "http://host.minikube.internal:6001"
+      },
+      "RabbitMQOptions": {
+        "Host": "host.minikube.internal",
+        "Password": "guest",
+        "Username": "guest"
+      }
+    }
+---
+# Source: publisher/templates/service.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: publisher
+  labels:
+    helm.sh/chart: publisher-0.1.0
+    app.kubernetes.io/name: publisher
+    app.kubernetes.io/instance: publisher
+    app.kubernetes.io/version: "1.16.0"
+    app.kubernetes.io/managed-by: Helm
+spec:
+  type: ClusterIP
+  ports:
+    - port: 80
+      targetPort: http
+      protocol: TCP
+      name: http
+  selector:
+    app.kubernetes.io/name: publisher
+    app.kubernetes.io/instance: publisher
+---
+# Source: publisher/templates/deployment.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: publisher
+  labels:
+    helm.sh/chart: publisher-0.1.0
+    app.kubernetes.io/name: publisher
+    app.kubernetes.io/instance: publisher
+    app.kubernetes.io/version: "1.16.0"
+    app.kubernetes.io/managed-by: Helm
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: publisher
+      app.kubernetes.io/instance: publisher
+  template:
+    metadata:
+      labels:
+        helm.sh/chart: publisher-0.1.0
+        app.kubernetes.io/name: publisher
+        app.kubernetes.io/instance: publisher
+        app.kubernetes.io/version: "1.16.0"
+        app.kubernetes.io/managed-by: Helm
+    spec:
+      serviceAccountName: publisher
+      containers:
+        - name: publisher
+          image: "akisliy/amplify-publisher:latest"
+          imagePullPolicy: IfNotPresent
+          ports:
+            - name: http
+              containerPort: 80
+              protocol: TCP
+          livenessProbe:
+            httpGet:
+              path: /
+              port: http
+          readinessProbe:
+            httpGet:
+              path: /
+              port: http
+          env:
+            - name: ASPNETCORE_ENVIRONMENT
+              value: "Development"
+            - name: ASPNETCORE_HTTP_PORTS
+              value: "80"
+          volumeMounts:
+            - mountPath: /app/appsettings.Development.json
+              name: config-volume
+              subPath: appsettings_override.json
+      volumes:
+        - configMap:
+            name: publisher-config
+          name: config-volume
+---
+# Source: publisher/templates/virtualservice.yaml
+apiVersion: networking.istio.io/v1
+kind: VirtualService
+metadata:
+  name: publisher-vs
+spec:
+  hosts:
+  - "dev.amplify-vkr.example.com"
+  # intenral service communication
+  - "publisher.default.svc.cluster.local"
+  gateways:
+  - amplify-gateway
+  http:
+  - match:
+    - uri:
+        prefix: "/publisher"
+    route:
+    - destination:
+        host: "publisher"
+        port:
+          number: 80
+    timeout: 2s
+    retries:
+      attempts: 3
+      perTryTimeout: 2s
+      retryOn: gateway-error,connect-failure,refused-stream,5xx
+
+---
+# Source: mediaingest/templates/serviceaccount.yaml
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: mediaingest-sa
+  labels:
+    helm.sh/chart: mediaingest-0.1.0
+    app.kubernetes.io/name: mediaingest
+    app.kubernetes.io/instance: mediaingest
+    app.kubernetes.io/version: "1.16.0"
+    app.kubernetes.io/managed-by: Helm
+automountServiceAccountToken:
+---
+# Source: mediaingest/templates/configmap.yaml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: mediaingest-config
+data:
+  "appsettings_override.json": |
+    {
+      "DbConnection": {
+        "Default": "Host=localhost;Port=54321;Database=usersDb;Username=root;Password=password"
+      },
+      "S3": {
+        "AccessKey": "",
+        "BucketName": "amplify-media-test",
+        "Host": "storage.googleapis.com",
+        "SecretKey": "",
+        "UseSsl": true
+      },
+      "YtDlp": {
+        "YoutubeDlPath": "/opt/homebrew/bin/yt-dlp"
+      }
+    }
+---
+# Source: mediaingest/templates/service.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: mediaingest
+  labels:
+    helm.sh/chart: mediaingest-0.1.0
+    app.kubernetes.io/name: mediaingest
+    app.kubernetes.io/instance: mediaingest
+    app.kubernetes.io/version: "1.16.0"
+    app.kubernetes.io/managed-by: Helm
+spec:
+  type: ClusterIP
+  ports:
+    - port: 80
+      targetPort: http
+      protocol: TCP
+      name: http
+  selector:
+    app.kubernetes.io/name: mediaingest
+    app.kubernetes.io/instance: mediaingest
+---
+# Source: mediaingest/templates/deployment.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mediaingest
+  labels:
+    helm.sh/chart: mediaingest-0.1.0
+    app.kubernetes.io/name: mediaingest
+    app.kubernetes.io/instance: mediaingest
+    app.kubernetes.io/version: "1.16.0"
+    app.kubernetes.io/managed-by: Helm
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: mediaingest
+      app.kubernetes.io/instance: mediaingest
+  template:
+    metadata:
+      labels:
+        helm.sh/chart: mediaingest-0.1.0
+        app.kubernetes.io/name: mediaingest
+        app.kubernetes.io/instance: mediaingest
+        app.kubernetes.io/version: "1.16.0"
+        app.kubernetes.io/managed-by: Helm
+    spec:
+      serviceAccountName: mediaingest-sa
+      containers:
+        - name: mediaingest
+          image: "akisliy/amplify-mediaingest:latest"
+          imagePullPolicy: IfNotPresent
+          ports:
+            - name: http
+              containerPort: 80
+              protocol: TCP
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: http
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: http
+          env:
+            - name: ASPNETCORE_ENVIRONMENT
+              value: "Development"
+            - name: ASPNETCORE_HTTP_PORTS
+              value: "80"
+          envFrom:
+            - secretRef:
+                name: mediaingest-k8s-secret
+          volumeMounts:
+            - mountPath: /app/appsettings.Development.json
+              name: config-volume
+              subpath: appsettings_override.json
+      volumes:
+        - configMap:
+            name: mediaingest-config
+          name: config-volume
+---
+# Source: mediaingest/templates/external-secrets.yaml
+apiVersion: external-secrets.io/v1
+kind: ExternalSecret
+metadata:
+  name: mediaingest-external-secrets
+spec:
+  refreshInterval: 1h            
+  secretStoreRef:
+    kind: ClusterSecretStore
+    name: gcp-store            
+  target:
+    name: mediaingest-k8s-secret
+    creationPolicy: Owner
+  data:
+  - secretKey: S3__AccessKey 
+    remoteRef:
+      key: test-bucket-access-key
+  - secretKey: S3__SecretKey
+    remoteRef:
+      Key: test-bucket-secret-key
+---
+# Source: mediaingest/templates/virtualservice.yaml
+apiVersion: networking.istio.io/v1
+kind: VirtualService
+metadata:
+  name: mediaingest-vs
+spec:
+  hosts:
+  - "dev.amplify-vkr.example.com"
+  # intenral service communication
+  - "mediaingest.default.svc.cluster.local"
+  gateways:
+  - amplify-gateway
+  http:
+  - match:
+    - uri:
+        prefix: "/media"
+    route:
+    - destination:
+        host: "mediaingest"
+        port:
+          number: 80
+    timeout: 2s
+    retries:
+      attempts: 3
+      perTryTimeout: 2s
+      retryOn: gateway-error,connect-failure,refused-stream,5xx
+
