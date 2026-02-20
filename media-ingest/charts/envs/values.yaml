@@ -35,11 +35,6 @@ volumes:
     configMap:
       name: mediaingest-config
 
-volumeMounts:
-  - name: config-volume
-    mountPath: /app/appsettings.Development.json
-    subpath: appsettings_override.json
-
 virtualService:
   name: mediaingest-vs
   http:
