@@ -48,17 +48,16 @@ jobs:
             echo "EOF"
           } >> "$GITHUB_ENV"
 
-      - name: Send Telegram Notification
-        uses: appleboy/telegram-action@master
+      - name: Send Telegram Notification to Topic
+        uses: ./.github/actions/telegram-notify
         with:
-          to: ${{ secrets.TELEGRAM_CHAT_ID }}
-          token: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           message: ${{ env.TG_MESSAGE }}
-          format: markdown
-          disable_web_page_preview: true
+          chat_id: ${{ secrets.TELEGRAM_CHAT_ID }}
+          topic_id: ${{ vars.TELEGRAM_TOPIC_ID }}
+          bot_token: ${{ secrets.TELEGRAM_BOT_TOKEN }}
 
   notify-merged:
-    if: ${{ github.event.action == 'closed' && github.event.pull_request.merged == true }}
+    if: github.event.action == 'closed' && github.event.pull_request.merged == true
     runs-on: ubuntu-latest
     steps:
       - name: Build Notification Message
@@ -70,11 +69,10 @@ jobs:
             echo "EOF"
           } >> "$GITHUB_ENV"
 
-      - name: Send Telegram Notification
-        uses: appleboy/telegram-action@master
+      - name: Send Telegram Notification to Topic
+        uses: ./.github/actions/telegram-notify
         with:
-          to: ${{ secrets.TELEGRAM_CHAT_ID }}
-          token: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           message: ${{ env.TG_MESSAGE }}
-          format: markdown
-          disable_web_page_preview: true
+          chat_id: ${{ secrets.TELEGRAM_CHAT_ID }}
+          topic_id: ${{ vars.TELEGRAM_TOPIC_ID }}
+          bot_token: ${{ secrets.TELEGRAM_BOT_TOKEN }}
