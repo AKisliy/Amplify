@@ -2,9 +2,9 @@ environments:
   default:
     values:
       - infra/globals/values.yaml
-  dev:
+  stage:
     values:
-      - infra/globals/values.dev.yaml
+      - infra/globals/values.stage.yaml
       - namespace: test-env
   prod:
     values:

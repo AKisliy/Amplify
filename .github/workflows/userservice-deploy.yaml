@@ -85,7 +85,7 @@ jobs:
               env:
                   USERSERVICE_IMAGE_TAG: ${{ github.sha }}
               run: |
-                  helmfile -e dev -l app=userservice sync --skip-diff-on-install
+                  helmfile -e stage -l app=userservice sync --skip-diff-on-install
     rollback:
         if: github.event_name == 'workflow_dispatch' && inputs.action == 'rollback'
         name: Rollback user-service Deployment

@@ -34,7 +34,7 @@ jobs:
             service_folder: "userservice"
             app_label: "userservice"
             image_tag_var_name: "USERSERVICE_IMAGE_TAG"
-            env_name: "dev"
+            env_name: "stage"
         secrets: inherit
 
     deploy-publisher:
@@ -45,7 +45,7 @@ jobs:
             service_folder: "publisher"
             app_label: "publisher"
             image_tag_var_name: "PUBLISHER_IMAGE_TAG"
-            env_name: "dev"
+            env_name: "stage"
         secrets: inherit
 
     deploy-media-ingest:
@@ -56,5 +56,5 @@ jobs:
             service_folder: "media-ingest"
             app_label: "media-ingest"
             image_tag_var_name: "MEDIA_INGEST_IMAGE_TAG"
-            env_name: "dev"
+            env_name: "stage"
         secrets: inherit

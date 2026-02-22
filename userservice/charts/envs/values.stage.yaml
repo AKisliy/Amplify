@@ -1,4 +1,4 @@
-environment: "Development"
+environment: "Staging"
 
 secrets:
   connectionStringKey: userservice-db-conn 
