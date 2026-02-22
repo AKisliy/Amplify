@@ -14,8 +14,8 @@ on:
             env_name:
                 required: false
                 type: string
-                default: "dev"
-                description: "Environment (dev/prod)"
+                default: "stage"
+                description: "Environment (stage/prod)"
             image_tag_var_name:
                 required: true
                 type: string

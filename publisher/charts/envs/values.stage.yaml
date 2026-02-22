@@ -1,4 +1,4 @@
-environment: Development
+environment: Staging
 
 secrets:
   defaultConnectionString:
@@ -10,7 +10,7 @@ secrets:
 
 volumeMounts:
   - name: config-volume
-    mountPath: /app/appsettings.Development.json
+    mountPath: /app/appsettings.Staging.json
     subPath: appsettings_override.json
 
 appConfig:
@@ -20,7 +20,7 @@ appConfig:
       Microsoft: "Warning"
       Microsoft.Hosting.Lifetime: "Information"
   MediaService:
-    BaseUrl: "http://host.minikube.internal:6001"
+    BaseUrl: "http://mediaingest.test-env.svc.cluster.local"
   InstagramApiOptions:
     AppId: "instagram_app_id"
     AppSecret: "instagram_app_secret"
@@ -29,13 +29,13 @@ appConfig:
     DailyLimit: 200
     BaseGraphHostUrl: "https://graph.facebook.com/"
   RabbitMQOptions:
-    Host: "host.minikube.internal"
-    Username: "guest"
-    Password: "guest"
+    Host: ""
+    Username: ""
+    Password: ""
   ExternalUrls:
     MediaServiceApi: "http://host.minikube.internal:6001"
   Jwt:
-    Issuer: "http://userservice.default.svc.cluster.local/userservice/api/auth"
+    Issuer: "http://userservice.test-env.svc.cluster.local/userservice/api/auth"
     Audience: "MyAppDevelopmentUsers"
   PublisherOptions:
     BasePath: /publisher

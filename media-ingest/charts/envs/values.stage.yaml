@@ -1,4 +1,4 @@
-environment: "Development"
+environment: "Staging"
 
 secret:
   name: mediaingest-k8s-secret
@@ -10,7 +10,7 @@ secrets:
 
 volumeMounts:
   - name: config-volume
-    mountPath: /app/appsettings.Development.json
+    mountPath: /app/appsettings.Staging.json
     subPath: appsettings_override.json
 
 appConfig:
@@ -22,7 +22,8 @@ appConfig:
     UseSsl: true
   YtDlp:
     YoutubeDlPath: "/opt/homebrew/bin/yt-dlp"
-  DbConnection:
-    Default: "Host=localhost;Port=54321;Database=usersDb;Username=root;Password=password"
   MediaIngest:
     BasePath: "/media"
+  Jwt:
+    Issuer: "http://userservice.test-env.svc.cluster.local/userservice/api/auth"
+    Audience: "MyAppDevelopmentUsers"

@@ -44,6 +44,8 @@ app.UseSwaggerUi(settings =>
     settings.DocumentPath = "specification.json";
 });
 
+app.UseAuthentication();
+app.UseAuthorization();
 
 app.UseExceptionHandler(options => { });
 
