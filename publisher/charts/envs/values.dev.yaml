@@ -35,7 +35,7 @@ appConfig:
   ExternalUrls:
     MediaServiceApi: "http://host.minikube.internal:6001"
   Jwt:
-    Issuer: "http://userservice.default.svc.cluster.local/userservice/api/auth"
+    Issuer: "http://userservice.test-env.svc.cluster.local/userservice/api/auth"
     Audience: "MyAppDevelopmentUsers"
   PublisherOptions:
     BasePath: /publisher
