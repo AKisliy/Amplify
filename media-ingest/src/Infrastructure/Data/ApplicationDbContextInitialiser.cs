@@ -29,6 +29,8 @@ public class ApplicationDbContextInitialiser(
     ApplicationDbContext context,
     IFileStorage fileStorage)
 {
+    private const string DevJwt = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJodHRwOi8vc2NoZW1hcy54bWxzb2FwLm9yZy93cy8yMDA1LzA1L2lkZW50aXR5L2NsYWltcy9uYW1laWRlbnRpZmllciI6ImY1MTdhNjdjLTAyYjEtNDcxMC05YjM1LTA0OTJiMDI5ZDBjNCIsImh0dHA6Ly9zY2hlbWFzLnhtbHNvYXAub3JnL3dzLzIwMDUvMDUvaWRlbnRpdHkvY2xhaW1zL2VtYWlsYWRkcmVzcyI6ImZyb250ZW5kQGRldi5sb2NhbCIsInJvbGUiOiJBZG1pbiIsImV4cCI6NDkyNTcyNzQ4MSwiaXNzIjoiZGV2LWxvY2FsIiwiYXVkIjoicHVibGlzaGVyLWFwaSJ9.UrSq4n_bP-UYX5bZdR81RvhncRm4uOod4ljEqkjGDW0";
+
     public async Task InitialiseAsync()
     {
         try
@@ -83,5 +85,7 @@ public class ApplicationDbContextInitialiser(
 
             logger.LogInformation("Seeded database with sample media file with ID: {MediaFileId}", mediaFileId);
         }
+
+        logger.LogInformation("Your default JWT token (expires in 100 years, for testing ONLY): {JwtToken}", DevJwt);
     }
 }

@@ -11,8 +11,9 @@ public class Images : EndpointGroupBase
     {
         groupBuilder.MapPost(UploadFromFile)
             .Accepts<IFormFile>("multipart/form-data")
-            .DisableAntiforgery();
-        groupBuilder.MapPost("/import", UploadFromLink);
+            .DisableAntiforgery()
+            .RequireAuthorization();
+        groupBuilder.MapPost("/import", UploadFromLink).RequireAuthorization();
     }
 
     public async Task<Created<UploadFileDto>> UploadFromFile(ISender sender, IFormFile file)

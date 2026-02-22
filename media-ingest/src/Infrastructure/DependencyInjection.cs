@@ -3,6 +3,7 @@ using MediaIngest.Application.Common.Interfaces;
 using MediaIngest.Application.Common.Options;
 using MediaIngest.Application.Media.Commands.Upload;
 using MediaIngest.Domain.Enums;
+using MediaIngest.Infrastructure.Auth;
 using MediaIngest.Infrastructure.Configuration;
 using MediaIngest.Infrastructure.Data;
 using MediaIngest.Infrastructure.Data.Interceptors;
@@ -42,6 +43,8 @@ public static class DependencyInjection
         builder.Services.AddScoped<IFileStorage, S3Storage>();
 
         builder.Services.AddHttpClients();
+
+        builder.AddAuth();
     }
 
     private static void AddApplicationDb(this IServiceCollection services)

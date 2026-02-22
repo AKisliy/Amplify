@@ -14,7 +14,7 @@ public class Media : EndpointGroupBase
     {
         groupBuilder.MapPost(UploadFromLink);
 
-        groupBuilder.MapGet("/{mediaId:guid}", GetMediaById);
+        groupBuilder.MapGet("/{mediaId:guid}", GetMediaById).RequireAuthorization();
 
         groupBuilder.MapDelete("/{mediaId:guid}", DeleteMediaById)
             .WithDescription("ONLY for internal use. Don't call from client apps.");
