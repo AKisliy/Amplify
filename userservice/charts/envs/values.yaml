@@ -34,11 +34,6 @@ volumes:
   - name: config-volume
     configMap:
       name: userservice-config
-
-volumeMounts:
-  - name: config-volume
-    mountPath: /app/appsettings.Development.json # TODO: this is shit, change it
-    subPath: appsettings_override.json
   
 
 virtualService:

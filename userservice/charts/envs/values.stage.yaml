@@ -3,6 +3,11 @@ environment: "Staging"
 secrets:
   connectionStringKey: userservice-db-conn 
 
+volumeMounts:
+  - name: config-volume
+    mountPath: /app/appsettings.Staging.json 
+    subPath: appsettings_override.json
+
 appConfig:
   Logging:
     LogLevel:
