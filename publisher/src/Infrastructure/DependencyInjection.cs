@@ -87,7 +87,6 @@ public static class DependencyInjection
     {
         services.AddValidatorsFromAssembly(Assembly.GetExecutingAssembly());
 
-        services.AddOptionsWithFluentValidation<MediaServiceOptions>(MediaServiceOptions.ConfigurationSection);
         services.AddOptionsWithFluentValidation<InstagramApiOptions>(InstagramApiOptions.ConfigurationSection);
         services.AddOptionsWithFluentValidation<RabbitMQOptions>(RabbitMQOptions.ConfigurationSection);
         services.AddOptionsWithFluentValidation<PublisherOptions>(PublisherOptions.ConfigurationSection);
