@@ -11,6 +11,7 @@ import { useProjects } from "@/features/ambassadors/hooks/useProjects";
 import { AmbassadorView } from "@/features/ambassadors/components/AmbassadorView";
 import { ProjectSelector } from "@/features/ambassadors/components/ProjectSelector";
 import type { AmbassadorFormValues } from "@/features/ambassadors/schemas/ambassador.schema";
+import { ProjectHeader } from "@/components/ProjectHeader";
 
 export default function ProjectAmbassadorPage() {
   const params = useParams();
@@ -92,34 +93,7 @@ export default function ProjectAmbassadorPage() {
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
-      <motion.header
-        initial={{ opacity: 0, y: -20 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="border-b border-border/50 bg-card/50 backdrop-blur-sm sticky top-0 z-10"
-      >
-        <div className="container mx-auto px-6 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <button
-                onClick={() => router.push("/dashboard")}
-                className="flex items-center gap-2 hover:opacity-80 transition-opacity"
-              >
-                <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
-                  <Home className="w-4 h-4 text-primary" />
-                </div>
-                <span className="font-semibold text-lg">Amplify</span>
-              </button>
-              <div className="h-6 w-px bg-border" />
-              <h1 className="text-xl font-semibold">Ambassador</h1>
-              <div className="h-6 w-px bg-border" />
-              <ProjectSelector
-                projects={projects}
-                isLoading={projectsLoading}
-              />
-            </div>
-          </div>
-        </div>
-      </motion.header>
+      <ProjectHeader projects={projects} isLoading={projectsLoading} />
 
       {/* Main Content */}
       <main className="container mx-auto px-6 py-8">

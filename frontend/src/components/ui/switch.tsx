@@ -1,35 +1,54 @@
 "use client"
 
 import * as React from "react"
-import * as SwitchPrimitive from "@radix-ui/react-switch"
-
 import { cn } from "@/lib/utils"
 
-function Switch({
-  className,
-  size = "default",
-  ...props
-}: React.ComponentProps<typeof SwitchPrimitive.Root> & {
+interface SwitchProps extends Omit<React.InputHTMLAttributes<HTMLInputElement>, "size"> {
+  checked?: boolean
+  onCheckedChange?: (checked: boolean) => void
   size?: "sm" | "default"
-}) {
-  return (
-    <SwitchPrimitive.Root
-      data-slot="switch"
-      data-size={size}
-      className={cn(
-        "peer data-[state=checked]:bg-primary data-[state=unchecked]:bg-input focus-visible:border-ring focus-visible:ring-ring/50 dark:data-[state=unchecked]:bg-input/80 group/switch inline-flex shrink-0 items-center rounded-full border border-transparent shadow-xs transition-all outline-none focus-visible:ring-[3px] disabled:cursor-not-allowed disabled:opacity-50 data-[size=default]:h-[1.15rem] data-[size=default]:w-8 data-[size=sm]:h-3.5 data-[size=sm]:w-6",
-        className
-      )}
-      {...props}
-    >
-      <SwitchPrimitive.Thumb
-        data-slot="switch-thumb"
-        className={cn(
-          "bg-background dark:data-[state=unchecked]:bg-foreground dark:data-[state=checked]:bg-primary-foreground pointer-events-none block rounded-full ring-0 transition-transform group-data-[size=default]/switch:size-4 group-data-[size=sm]/switch:size-3 data-[state=checked]:translate-x-[calc(100%-2px)] data-[state=unchecked]:translate-x-0"
-        )}
-      />
-    </SwitchPrimitive.Root>
-  )
 }
+
+const Switch = React.forwardRef<HTMLInputElement, SwitchProps>(
+  ({ className, checked, onCheckedChange, size = "default", ...props }, ref) => {
+    const handleToggle = (e: React.ChangeEvent<HTMLInputElement>) => {
+      onCheckedChange?.(e.target.checked)
+    }
+
+    return (
+      <div className="inline-flex items-center">
+        <label className="relative inline-flex items-center cursor-pointer group">
+          <input
+            type="checkbox"
+            className="sr-only peer"
+            checked={checked}
+            onChange={handleToggle}
+            ref={ref}
+            {...props}
+          />
+          <div
+            className={cn(
+              "peer transition-all rounded-full border border-transparent shadow-sm outline-none bg-input peer-checked:bg-primary",
+              "focus-visible:ring-[3px] focus-visible:ring-ring/50",
+              size === "default" ? "h-[1.15rem] w-8" : "h-3.5 w-6",
+              className
+            )}
+          >
+            <div
+              className={cn(
+                "bg-background rounded-full transition-transform shadow-sm pointer-events-none",
+                size === "default" ? "size-4 mt-[0.5px] ml-[0.5px]" : "size-3 mt-[0.25px] ml-[0.25px]",
+                checked
+                  ? (size === "default" ? "translate-x-[calc(100%-4px)]" : "translate-x-[calc(100%-4px)]")
+                  : "translate-x-0"
+              )}
+            />
+          </div>
+        </label>
+      </div>
+    )
+  }
+)
+Switch.displayName = "Switch"
 
 export { Switch }
