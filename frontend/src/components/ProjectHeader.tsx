@@ -2,7 +2,7 @@
 
 import { useRouter, useParams, usePathname } from "next/navigation";
 import { motion } from "framer-motion";
-import { User, Calendar, Home } from "lucide-react";
+import { User, Calendar, Home, Link as LinkIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { UserMenu } from "@/components/UserMenu";
 import { ProjectSelector } from "@/features/ambassadors/components/ProjectSelector";
@@ -21,12 +21,13 @@ export function ProjectHeader({ projects, isLoading }: ProjectHeaderProps) {
 
   const isAmbassadorPage = pathname?.includes("/ambassadors");
   const isAutolistsPage = pathname?.includes("/autolists");
+  const isIntegrationsPage = pathname?.includes("/integrations");
 
   const handleLogoClick = () => {
     router.push("/dashboard");
   };
 
-  const handleTabClick = (tab: "ambassadors" | "autolists") => {
+  const handleTabClick = (tab: "ambassadors" | "autolists" | "integrations") => {
     if (!projectId) return;
     router.push(`/projects/${projectId}/${tab}`);
   };
@@ -86,6 +87,21 @@ export function ProjectHeader({ projects, isLoading }: ProjectHeaderProps) {
                     <div className="flex items-center gap-2">
                       <Calendar className="w-4 h-4" />
                       Autolists
+                    </div>
+                  </button>
+                  <button
+                    onClick={() => handleTabClick("integrations")}
+                    className={cn(
+                      "px-4 py-2 rounded-lg text-sm font-medium transition-all",
+                      "hover:bg-muted/80",
+                      isIntegrationsPage
+                        ? "bg-blue-500/10 text-blue-600"
+                        : "text-muted-foreground"
+                    )}
+                  >
+                    <div className="flex items-center gap-2">
+                      <LinkIcon className="w-4 h-4" />
+                      Integrations
                     </div>
                   </button>
                 </nav>
