@@ -21,6 +21,7 @@ import {
 } from "@/components/ui/select";
 
 import { useAutolist } from "@/features/autolists/hooks/useAutolist";
+import { useIntegrations } from "@/features/integrations/hooks/useIntegrations";
 import { TimeSlotRow } from "@/features/autolists/components/TimeSlotRow";
 import type { AutoListEntry } from "@/features/autolists/types";
 
@@ -34,10 +35,14 @@ export default function AutolistDetailsPage() {
     autolist,
     isLoading,
     updateAutolist,
+    createAutolist,
     addEntry,
     updateEntry,
     deleteEntry,
   } = useAutolist(autolistId);
+
+  const { integrations } = useIntegrations(projectId);
+  const instagramIntegrations = integrations.filter(i => i.socialProvider === 1);
 
   const [name, setName] = useState("");
   const [autoPublish, setAutoPublish] = useState(true);
@@ -46,48 +51,63 @@ export default function AutolistDetailsPage() {
   const [isSaving, setIsSaving] = useState(false);
   const [hasChanges, setHasChanges] = useState(false);
 
+  const [selectedAccountId, setSelectedAccountId] = useState<string>("");
+
   // Sync local state with autolist data
   useEffect(() => {
     if (autolist) {
       setName(autolist.name || "");
-      setShareToFeed(autolist.instagramPreset?.shareToFeed ?? false);
+      setShareToFeed(autolist.instagramSettings?.shareToFeed ?? false);
+      if (autolist.accounts && autolist.accounts.length > 0) {
+        setSelectedAccountId(autolist.accounts[0].id);
+      } else if (instagramIntegrations.length > 0) {
+        // Default to first available integration if none selected
+        setSelectedAccountId(instagramIntegrations[0].id);
+      }
       setHasChanges(false);
     }
-  }, [autolist]);
+  }, [autolist, instagramIntegrations]);
 
   // Track changes
   useEffect(() => {
     if (autolist) {
       const nameChanged = name !== autolist.name;
-      const shareToFeedChanged = shareToFeed !== (autolist.instagramPreset?.shareToFeed ?? false);
-      setHasChanges(nameChanged || shareToFeedChanged);
+      const shareToFeedChanged = shareToFeed !== (autolist.instagramSettings?.shareToFeed ?? false);
+      const accountChanged = selectedAccountId !== (autolist.accounts?.[0]?.id ?? "");
+      setHasChanges(nameChanged || shareToFeedChanged || accountChanged);
     }
-  }, [name, shareToFeed, autolist]);
+  }, [name, shareToFeed, selectedAccountId, autolist]);
 
   const handleBack = () => {
     router.push(`/projects/${projectId}/autolists`);
   };
 
   const handleSave = async () => {
-    if (!autolist || !hasChanges) return;
-    
+    if (!autolist || (!hasChanges && autolistId !== "new")) return;
+
     setIsSaving(true);
     try {
-      // Simulate save with timeout (frontend only for now)
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      // Update local state to match saved state
-      if (autolist) {
-        autolist.name = name;
-        if (autolist.instagramPreset) {
-          autolist.instagramPreset.shareToFeed = shareToFeed;
-        }
+      const accountsToSave = selectedAccountId ? [{ id: selectedAccountId }] : [];
+
+      if (autolistId === "new") {
+        const newId = await createAutolist({
+          projectId,
+          name: name || "New Autolist",
+          instagramSettings: { shareToFeed },
+          entries: [],
+          accounts: accountsToSave,
+        });
+        // Navigate to the newly created autolist
+        router.replace(`/projects/${projectId}/autolists/${newId}`);
+      } else {
+        await updateAutolist({
+          id: autolistId,
+          name,
+          instagramSettings: { shareToFeed },
+          accounts: accountsToSave,
+        });
+        setHasChanges(false);
       }
-      
-      setHasChanges(false);
-      
-      // Optional: Show success message
-      console.log("Changes saved successfully (frontend only)");
     } catch (error) {
       console.error("Save failed:", error);
     } finally {
@@ -269,7 +289,33 @@ export default function AutolistDetailsPage() {
                     </Select>
                   </div>
                 </div>
-                <div className="flex items-center gap-3 pt-2">
+                <div className="grid gap-4 sm:grid-cols-2 mt-4">
+                  <div className="space-y-2">
+                    <Label className="text-sm">Instagram Account</Label>
+                    <Select
+                      value={selectedAccountId}
+                      onValueChange={setSelectedAccountId}
+                      disabled={instagramIntegrations.length === 0}
+                    >
+                      <SelectTrigger className="w-full">
+                        <SelectValue placeholder={instagramIntegrations.length === 0 ? "No accounts linked" : "Select account"} />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {instagramIntegrations.map((acc) => (
+                          <SelectItem key={acc.id} value={acc.id}>
+                            @{acc.username}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    {instagramIntegrations.length === 0 && (
+                      <p className="text-xs text-muted-foreground mt-1">
+                        Connect an <a href={`/projects/${projectId}/integrations`} className="text-primary underline">Instagram account</a> to publish.
+                      </p>
+                    )}
+                  </div>
+                </div>
+                <div className="flex items-center gap-3 pt-4">
                   <Switch
                     id="share-to-feed"
                     checked={shareToFeed}

@@ -7,45 +7,40 @@ export interface AutoListEntry {
   publicationTime: string; // TimeOnly format: "HH:mm:ss"
 }
 
-export interface InstagramPublishingPreset {
-  id?: string;
-  autoListId?: string;
+export interface InstagramSettings {
   shareToFeed: boolean;
 }
 
 export interface SocialMediaAccount {
   id: string;
-  name?: string;
-  platform?: string;
+  socialProvider?: number;
+  username?: string;
 }
 
 export interface AutoList {
   id: string;
   name: string;
-  actorId: string;
-  postContainerId: string;
   entries: AutoListEntry[];
   accounts: SocialMediaAccount[];
-  instagramPreset?: InstagramPublishingPreset;
+  instagramSettings?: InstagramSettings;
   // Computed fields for display
   nextPublishTime?: string;
   postsCount?: number;
 }
 
 export interface CreateAutoListDto {
-  actorId: string;
-  postContainerId: string;
+  projectId: string;
   name: string;
   entries: Omit<AutoListEntry, "id" | "autoListId">[];
-  instagramPreset?: Omit<InstagramPublishingPreset, "id" | "autoListId">;
-  accounts: Pick<SocialMediaAccount, "id">[];
+  instagramSettings?: InstagramSettings;
+  accounts: { id: string }[];
 }
 
 export interface UpdateAutoListDto {
   id: string;
   name: string;
-  instagramPreset?: Omit<InstagramPublishingPreset, "id" | "autoListId">;
-  accounts: Pick<SocialMediaAccount, "id">[];
+  instagramSettings?: InstagramSettings;
+  accounts: { id: string }[];
 }
 
 export interface CreateAutoListEntryDto {

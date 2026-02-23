@@ -13,20 +13,28 @@ interface AutoListsResponse {
 
 export const autolistApi = {
   /**
-   * Get all autolists for an actor
+   * Get all autolists for a project
    */
-  async getAutolists(actorId: string): Promise<AutoList[]> {
-    const response = await api.get<AutoListsResponse>(`/autolist`, {
-      params: { actorId },
+  async getAutolists(projectId: string): Promise<AutoList[]> {
+    const response = await api.get<AutoListsResponse>(`/autolists`, {
+      params: { ProjectId: projectId },
     });
     return response.data.autoLists;
+  },
+
+  /**
+   * Get an autolist by ID
+   */
+  async getAutolist(id: string): Promise<AutoList> {
+    const response = await api.get<AutoList>(`/autolists/${id}`);
+    return response.data;
   },
 
   /**
    * Create a new autolist
    */
   async createAutolist(data: CreateAutoListDto): Promise<string> {
-    const response = await api.post<string>("/autolist", data);
+    const response = await api.post<string>("/autolists", data);
     return response.data;
   },
 
@@ -34,14 +42,14 @@ export const autolistApi = {
    * Update an existing autolist
    */
   async updateAutolist(id: string, data: UpdateAutoListDto): Promise<void> {
-    await api.put(`/autolist/${id}`, data);
+    await api.put(`/autolists/${id}`, data);
   },
 
   /**
    * Delete an autolist
    */
   async deleteAutolist(id: string): Promise<void> {
-    await api.delete(`/autolist/${id}`);
+    await api.delete(`/autolists/${id}`);
   },
 
   /**
