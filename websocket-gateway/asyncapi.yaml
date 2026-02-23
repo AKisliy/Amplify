@@ -1,0 +1,61 @@
+asyncapi: '3.1.0'
+info:
+  title: WebSocket Gateway
+  version: '1.0.0'
+  description: |
+    Сервис, который слушает события из RabbitMQ и пушит их клиентам через SignalR.
+    Этот документ описывает входящие сообщения (AMQP).
+
+servers:
+  development:
+    host: amqp://localhost:5672
+    protocol: amqp
+    description: Внутренний брокер сообщений кластера.
+    bindings:
+      amqp:
+        is: routingKey
+        queue:
+          name: websocket-gateway.publications.queue
+          durable: true
+          exclusive: false
+          autoDelete: false
+        exchange:
+          name: publications-exchange
+          type: topic
+          durable: true
+          autoDelete: false
+        bindingVersion: 0.2.0
+        routingKey: publication.status.changed
+
+channels:
+  publications:
+    address: 'publications'
+    title: Publications channel
+    description: This channel is used to exchange messages about publication events
+    messages:
+      publicationStatusChanged:
+        $ref: '#/components/messages/PublicationStatusChanged'
+    servers:
+      - $ref: '#/servers/development'
+    bindings:
+      amqp:
+        is: queue
+        queue:
+          exclusive: true
+
+operations:
+  receivePublicationStatusChanged:
+    action: receive
+    channel:
+      $ref: "#/channels/publications"
+    messages:
+      - $ref: '#/components/messages/PublicationStatusChanged'
+
+components:
+  messages:
+    PublicationStatusChanged:
+      name: PublicationStatusChanged
+      description: Генерируется сервисом публикаций, когда статус меняется (Draft -> Published и т.д.)
+      contentType: application/x-protobuf
+      payload:
+        $ref: '../proto/publications/v1/events.proto'
