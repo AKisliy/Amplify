@@ -56,6 +56,31 @@ api.interceptors.request.use(
     }
 );
 
+// Top level variables for token refresh state
+let isRefreshing = false;
+let failedQueue: Array<{ resolve: (value?: unknown) => void; reject: (reason?: any) => void }> = [];
+
+const processQueue = (error: any, token: string | null = null) => {
+    failedQueue.forEach((prom) => {
+        if (error) {
+            prom.reject(error);
+        } else {
+            prom.resolve(token);
+        }
+    });
+
+    failedQueue = [];
+};
+
+const handleLogout = () => {
+    if (typeof window !== "undefined") {
+        localStorage.removeItem("accessToken");
+        localStorage.removeItem("refreshToken");
+        localStorage.removeItem("auth_user");
+        window.location.href = "/login";
+    }
+};
+
 // Response interceptor for API calls
 api.interceptors.response.use(
     (response) => {
@@ -66,54 +91,69 @@ api.interceptors.response.use(
 
         // Check if error is 401 and we haven't retried yet
         if (error.response?.status === 401 && !originalRequest._retry) {
+            if (isRefreshing) {
+                // If already refreshing, wait in the queue and retry when complete
+                return new Promise(function (resolve, reject) {
+                    failedQueue.push({ resolve, reject });
+                })
+                    .then((token) => {
+                        originalRequest.headers.Authorization = `Bearer ${token}`;
+                        return api(originalRequest);
+                    })
+                    .catch((err) => {
+                        return Promise.reject(err);
+                    });
+            }
+
             originalRequest._retry = true;
+            isRefreshing = true;
 
-            try {
-                console.log("Axios Interceptor: 401 detected, attempting refresh...");
-                // Attempt to refresh token
-                const refreshToken = localStorage.getItem("refreshToken");
-                const accessToken = localStorage.getItem("accessToken");
+            const refreshToken = typeof window !== "undefined" ? localStorage.getItem("refreshToken") : null;
+            const accessToken = typeof window !== "undefined" ? localStorage.getItem("accessToken") : null;
 
-                if (refreshToken && accessToken) {
-                    // Call refresh endpoint directly
-                    // Construct URL explicitly to ensure it points to the correct service
+            if (refreshToken && accessToken) {
+                try {
+                    console.log("Axios Interceptor: 401 detected, attempting refresh...");
                     const envUrl = process.env.NEXT_PUBLIC_API_BASE_URL || "http://amplify.34.40.73.43.nip.io";
                     const refreshUrl = `${envUrl}/userservice/api/auth/refresh`;
 
-                    console.log("Axios Interceptor: Calling refresh endpoint:", refreshUrl);
-
-                    // We must include the expired access token if the backend requires (commonly in 'RefreshTokenCommand')
-                    // Assuming the backend endpoint confirms to: POST /auth/refresh { accessToken, refreshToken }
+                    // Call refresh endpoint directly
                     const { data } = await axios.post(refreshUrl, {
                         accessToken,
                         refreshToken
                     });
 
-                    console.log("Axios Interceptor: Refresh successful", data);
+                    console.log("Axios Interceptor: Refresh successful");
 
                     // Update stored tokens
-                    localStorage.setItem("accessToken", data.accessToken);
-                    localStorage.setItem("refreshToken", data.refreshToken);
+                    if (typeof window !== "undefined") {
+                        localStorage.setItem("accessToken", data.accessToken);
+                        localStorage.setItem("refreshToken", data.refreshToken);
+                    }
 
                     // Update authorization header for the RETRY
                     originalRequest.headers.Authorization = `Bearer ${data.accessToken}`;
 
-                    // Important: Update the instance's custom headers too for future requests
+                    // Update the instance's custom headers too for future requests
                     api.defaults.headers.common["Authorization"] = `Bearer ${data.accessToken}`;
 
-                    // Retry original request
+                    // Resolve the queue and retry original request
+                    processQueue(null, data.accessToken);
                     return api(originalRequest);
+                } catch (refreshError) {
+                    console.error("Axios Interceptor: Refresh failed", refreshError);
+                    processQueue(refreshError, null);
+                    handleLogout();
+                    return Promise.reject(refreshError);
+                } finally {
+                    isRefreshing = false;
                 }
-            } catch (refreshError) {
-                console.error("Axios Interceptor: Refresh failed", refreshError);
-                // Refresh failed - clear tokens and redirect to login
-                localStorage.removeItem("accessToken");
-                localStorage.removeItem("refreshToken");
-                localStorage.removeItem("auth_user");
-
-                if (typeof window !== "undefined") {
-                    window.location.href = "/login";
-                }
+            } else {
+                // No token available to refresh, log out immediately
+                processQueue(new Error("No refresh token available"), null);
+                isRefreshing = false;
+                handleLogout();
+                return Promise.reject(error);
             }
         }
 
