@@ -54,6 +54,9 @@ app.UseSwaggerUi(settings =>
 app.UseAuthentication();
 app.UseAuthorization();
 
+var corsOptions = app.Services.GetRequiredService<IOptions<CorsOptions>>();
+app.UseCors(corsOptions.Value.DefaultPolicyName);
+
 app.UseExceptionHandler(options => { });
 
 app.MapGet("/", (HttpContext context) =>
