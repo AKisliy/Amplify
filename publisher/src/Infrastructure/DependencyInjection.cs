@@ -36,6 +36,7 @@ using System.Security.Claims;
 using System.Text;
 using Microsoft.Extensions.Configuration;
 using Publisher.Infrastructure.Auth;
+using Publisher.Infrastructure.Broker;
 
 namespace Microsoft.Extensions.DependencyInjection;
 
@@ -168,38 +169,6 @@ public static class DependencyInjection
                     logger?.LogInformation("Retry attempt {Attempt} for container upload", args.AttemptNumber);
                     return ValueTask.CompletedTask;
                 }
-            });
-        });
-
-        return services;
-    }
-
-    private static IServiceCollection AddBrokerConnection(this IServiceCollection services)
-    {
-        services.AddMassTransit(config =>
-        {
-            config.AddConsumer<PublishRequestedConsumer>();
-            // TODO: probably should have smth like projected created
-
-            config.SetSnakeCaseEndpointNameFormatter();
-
-
-            config.UsingRabbitMq((context, cfg) =>
-            {
-                var options = context.GetRequiredService<IOptions<RabbitMQOptions>>().Value;
-                cfg.Host(options.Url);
-                // cfg.Host(options.Host, h =>
-                // {
-                //     h.Username(options.Username);
-                //     h.Password(options.Password);
-                // });
-
-                // TODO: Decide whether we start publishing based on event or direct api trigger
-                // cfg.Message<PostCreated>(x => x.SetEntityName("post-created"));
-
-                cfg.UseInMemoryOutbox(context);
-
-                cfg.ConfigureEndpoints(context);
             });
         });
 

@@ -60,6 +60,8 @@ internal static class ServiceCollectionExtensions
                 }
             });
 
+        services.AddAuthorization();
+
         return builder;
     }
 }

@@ -11,7 +11,7 @@ To deploy publisher service locally do the following:
 3. Download it and put in `publisher/` directory.
 4. Spin up docker-compose: `docker compose up --build -d`
 
-That's it ✨ Go to http://localhost:6060/api/index.html?url=/api/specification.json - u should see swagger docs.
+That's it ✨ Go to http://localhost:6001/api/index.html?url=/api/specification.json - u should see swagger docs.
 
 ### Local testing
 By default app will seed data every time u start it in dev mode. Here are default values:
@@ -28,7 +28,7 @@ You can test them when main app is running - just navigate to `./signalr-test` f
 npm install
 npx tsx client.ts
 ```
-Then send some requests to `/api/publications/video` endpoint (just use [swagger](https://localhost:6060/api/index.html?url=/api/specification.json#/publications/PostApiPublicationsVideo)) and watch status updates popping up in your console ✨ (P.S. dummy publication takes 7 seconds)
+Then send some requests to `/api/publications/video` endpoint (just use [swagger](https://localhost:6001/api/index.html?url=/api/specification.json#/publications/PostApiPublicationsVideo)) and watch status updates popping up in your console ✨ (P.S. dummy publication takes 7 seconds)
 
 
 

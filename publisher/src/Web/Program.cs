@@ -2,7 +2,6 @@ using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.Extensions.Options;
 using Publisher.Infrastructure.Configuration.Options;
 using Publisher.Infrastructure.Data;
-using Publisher.Infrastructure.Hubs;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -11,8 +10,6 @@ builder.AddKeyVaultIfConfigured();
 builder.AddApplicationServices();
 builder.AddInfrastructureServices();
 builder.AddWebServices();
-
-builder.Services.AddSignalR();
 
 var app = builder.Build();
 
@@ -68,7 +65,6 @@ app.MapGet("/", (HttpContext context) =>
 
     return Results.Redirect(redirectUrl);
 });
-app.MapHub<PublisherHub>("/hubs/publisher");
 
 app.MapEndpoints();
 
