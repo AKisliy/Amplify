@@ -30,7 +30,7 @@ internal static class ServiceCollectionExtensions
                 // });
                 cfg.Message<PublicationStatusChanged>(x => x.SetEntityName("publication-status-changed"));
 
-                cfg.UseRawJsonSerializer();
+                cfg.UseRawJsonSerializer(RawSerializerOptions.AnyMessageType, isDefault: true);
 
                 cfg.UseInMemoryOutbox(context);
 

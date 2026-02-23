@@ -10,6 +10,7 @@
     <PackageReference Include="Flurl" />
     <PackageReference Include="MassTransit" />
     <PackageReference Include="MassTransit.RabbitMQ" />
+    <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" />
     <PackageReference Include="RabbitMQ.Client" />
     <PackageReference Include="TypedSignalR.Client.TypeScript.Attributes" />
   </ItemGroup>
