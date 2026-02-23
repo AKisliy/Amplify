@@ -39,3 +39,7 @@ appConfig:
     Audience: "MyAppDevelopmentUsers"
   PublisherOptions:
     BasePath: /publisher
+  CorsOptions:
+    AllowedOrigins:
+      - "http://localhost:3000"
+    DefaultPolicyName: DevelopmentCorsPolicy

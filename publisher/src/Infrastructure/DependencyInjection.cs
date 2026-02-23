@@ -56,6 +56,7 @@ public static class DependencyInjection
         builder.AddDatabaseConnection();
 
         builder.AddAuth();
+        builder.AddCorsUsage();
 
         services.AddPublishers(builder.Environment);
         services.AddScoped<IFileStorage, MediaServiceStorage>();
@@ -92,6 +93,7 @@ public static class DependencyInjection
         services.AddOptionsWithFluentValidation<RabbitMQOptions>(RabbitMQOptions.ConfigurationSection);
         services.AddOptionsWithFluentValidation<PublisherOptions>(PublisherOptions.ConfigurationSection);
         services.AddOptionsWithFluentValidation<JwtOptions>(JwtOptions.ConfigurationSection);
+        services.AddOptionsWithFluentValidation<CorsOptions>(CorsOptions.SectionName);
     }
 
     private static void AddDatabaseConnection(this IHostApplicationBuilder builder)
@@ -202,6 +204,25 @@ public static class DependencyInjection
         });
 
         return services;
+    }
+
+    private static void AddCorsUsage(this IHostApplicationBuilder builder)
+    {
+        var corsOptions = new CorsOptions()
+        {
+            DefaultPolicyName = ""
+        };
+
+        builder.Configuration.GetSection(CorsOptions.SectionName).Bind(corsOptions);
+
+        Guard.Against.NullOrEmpty(corsOptions.DefaultPolicyName, message: "Cors policy name is not set");
+
+        builder.Services.AddCors(options => options.AddPolicy(
+            corsOptions.DefaultPolicyName,
+            builder => builder.WithOrigins([.. corsOptions.AllowedOrigins])
+                .AllowAnyHeader()
+                .AllowAnyMethod()
+                .AllowCredentials()));
     }
 }
 
