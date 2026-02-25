@@ -1,9 +1,9 @@
 using TypedSignalR.Client;
 
-namespace Publisher.Infrastructure.Receivers;
+namespace WebSocketGateway.Web.Receivers;
 
 [Receiver]
-public interface IPublisherReceiver
+public interface IClientReceiver
 {
     Task OnPublicationStatusChanged(Guid publicationRecordId, string status, string? publicUrl, string? error);
 }

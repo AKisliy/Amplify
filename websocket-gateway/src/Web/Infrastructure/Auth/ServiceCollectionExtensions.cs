@@ -1,13 +1,13 @@
 using System.Security.Claims;
 using System.Text;
+using Infrastructure.Configuration;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.IdentityModel.Tokens;
-using Publisher.Infrastructure.Configuration.Options;
 
-namespace Publisher.Infrastructure.Auth;
+namespace WebSocketGateway.Infrastructure.Auth;
 
 internal static class ServiceCollectionExtensions
 {
@@ -59,8 +59,6 @@ internal static class ServiceCollectionExtensions
 
                 }
             });
-
-        services.AddAuthorization();
 
         return builder;
     }

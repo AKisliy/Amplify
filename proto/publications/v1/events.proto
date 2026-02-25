@@ -1,0 +1,14 @@
+syntax = "proto3";
+
+option csharp_namespace = "WebSocketGateway.Contracts.Events";
+package publications.v1;
+
+/**
+ * Event fired when publication status was changed
+ */
+message PublicationStatusChanged {
+  string id = 1;
+  string status = 2;
+  string public_url = 3;
+  optional string error_message = 4;
+}
