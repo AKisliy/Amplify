@@ -22,6 +22,7 @@ jobs:
             publisher: 'publisher/**'
             media-ingest: 'media-ingest/**'
             template-service: 'template-service/**'
+            ws-gateway: 'websocket-gateway/**'
 
       - name: Build Notification Message
         run: |

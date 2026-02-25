@@ -1,2 +1,5 @@
 secretStore:
   name: {{ .Values.global.secretStore.name }}
+
+image:
+  tag: {{ env "WS_GATEWAY_IMAGE_TAG" | default "latest" }}

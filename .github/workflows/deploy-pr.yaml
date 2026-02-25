@@ -12,6 +12,7 @@ jobs:
             userservice: ${{ steps.filter.outputs.userservice }}
             publisher: ${{ steps.filter.outputs.publisher }}
             media-ingest: ${{ steps.filter.outputs.media-ingest }}
+            ws-gateway: ${{ steps.filter.outputs.ws-gateway }}
         steps:
             - uses: actions/checkout@v4
             - uses: dorny/paths-filter@v2
@@ -25,6 +26,8 @@ jobs:
                         - 'publisher/**'
                       media-ingest:
                         - 'media-ingest/**'
+                      ws-gateway:
+                        - 'websocket-gateway/**'
 
     deploy-userservice:
         needs: changes
@@ -56,5 +59,16 @@ jobs:
             service_folder: "media-ingest"
             app_label: "media-ingest"
             image_tag_var_name: "MEDIA_INGEST_IMAGE_TAG"
+            env_name: "stage"
+        secrets: inherit
+
+    deploy-websocket-gateway:
+        needs: changes
+        if: ${{ needs.changes.outputs.ws-gateway == 'true'}}
+        uses: ./.github/workflows/deploy-template.yaml
+        with:
+            service_folder: "websocket-gateway"
+            app_label: "ws-gateway"
+            image_tag_var_name: "WS_GATEWAY_IMAGE_TAG"
             env_name: "stage"
         secrets: inherit
