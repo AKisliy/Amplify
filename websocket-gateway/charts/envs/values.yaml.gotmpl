@@ -3,3 +3,6 @@ secretStore:
 
 image:
   tag: {{ env "WS_GATEWAY_IMAGE_TAG" | default "latest" }}
+
+gateway:
+  name: {{ .Values.global.gateway.name }}
