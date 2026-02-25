@@ -2,3 +2,5 @@ global:
   appDomain: amplify.34.40.73.43.nip.io
   gateway:
     name: amplify-gateway
+  secretStore:
+    name: gcp-store

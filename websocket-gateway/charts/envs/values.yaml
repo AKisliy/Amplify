@@ -1,0 +1,49 @@
+replicaCount: 1
+
+image:
+  repository: ghcr.io/akisliy/amplify/websocket-gateway
+  pullPolicy: IfNotPresent
+  tag: ""
+
+nameOverride: ""
+fullnameOverride: ""
+
+serviceAccount:
+  create: true
+
+podLabels: {}
+
+podSecurityContext: {}
+
+service:
+  type: ClusterIP
+  port: 80
+
+livenessProbe:
+  httpGet:
+    path: /health
+    port: http
+readinessProbe:
+  httpGet:
+    path: /health
+    port: http
+
+volumes:
+  - name: config-volume
+    configMap:
+      name: ws-gateway
+
+gateway:
+  name: amplify-gateway
+
+virtualService:
+  name: ws-gateway-vs
+  http:
+    timeout: 2s
+    retries:
+      attempts: 3
+      perTryTimeout: 2s
+      retryOn: gateway-error,connect-failure,refused-stream,5xx
+
+# override in specific env file
+appConfig: {}

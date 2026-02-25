@@ -1,0 +1,18 @@
+environment: Staging
+
+secrets:
+  rabbitMqConnection:
+    key: rabbitmq-test
+
+volumeMounts:
+  - name: config-volume
+    mountPath: /app/appsettings.Staging.json
+    subPath: appsettings_override.json
+  
+appConfig:
+  Logging:
+    LogLevel: 
+      Default: Information
+      Microsoft.AspNetCore: Warning
+  RabbitMQ:
+    Url: ""
