@@ -1,0 +1,2 @@
+secretStore:
+  name: {{ .Values.global.secretStore.name }}
