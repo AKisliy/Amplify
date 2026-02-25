@@ -31,7 +31,7 @@ readinessProbe:
 volumes:
   - name: config-volume
     configMap:
-      name: ws-gateway
+      name: ws-gateway-config
 
 gateway:
   name: amplify-gateway
