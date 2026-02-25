@@ -45,5 +45,12 @@ virtualService:
       perTryTimeout: 2s
       retryOn: gateway-error,connect-failure,refused-stream,5xx
 
+externalSecret:
+  name: ws-gateway-external-secret
+  refreshInterval: 1h
+
+secret:
+  name: ws-gateway-secret
+
 # override in specific env file
 appConfig: {}
