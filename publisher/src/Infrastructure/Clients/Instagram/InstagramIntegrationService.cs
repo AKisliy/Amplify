@@ -1,4 +1,6 @@
 using System.Net.Http.Json;
+using System.Text;
+using Flurl;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Newtonsoft.Json;
@@ -8,6 +10,7 @@ using Publisher.Domain.Entities;
 using Publisher.Domain.Enums;
 using Publisher.Infrastructure.Configuration.Options;
 using Publisher.Infrastructure.Models.Facebook;
+using Publisher.Infrastructure.Models.Integration;
 
 namespace Publisher.Infrastructure.Clients.Instagram;
 
@@ -18,6 +21,15 @@ public class InstagramIntegrationService(
     ILogger<InstagramIntegrationService> logger)
     : IInstagramIntegrationService
 {
+    private readonly IReadOnlyList<string> _scopesForPublishing = [
+        "instagram_basic",
+        "instagram_content_publish",
+        "pages_show_list",
+        "pages_read_engagement",
+        "ads_management",
+        "business_management"
+    ];
+
     public async Task<bool> ConnectInstagramAccountAsync(
         string code,
         Guid projectId,
@@ -90,13 +102,22 @@ public class InstagramIntegrationService(
         return true;
     }
 
-    public Task<InstagramAuthUrl> GetAuthUrlAsync(CancellationToken cancellationToken)
+    public Task<InstagramAuthUrl> GetAuthUrlAsync(Guid projectId, CancellationToken cancellationToken)
     {
         var appId = instOptions.Value.AppId;
         var redirectUri = instOptions.Value.RedirectUri;
-        var scope = "instagram_basic,instagram_content_publish,pages_show_list,pages_read_engagement,ads_management,business_management";
+        var scope = string.Join(',', _scopesForPublishing);
 
-        var url = $"https://www.facebook.com/v18.0/dialog/oauth?client_id={appId}&redirect_uri={redirectUri}&scope={scope}&response_type=code";
+        var state = new IntegrationState(projectId);
+        var stateBytes = Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(state));
+        var encodedState = Convert.ToBase64String(stateBytes);
+
+        var url = new Url("https://www.facebook.com/v18.0/dialog/oauth");
+        url.AppendQueryParam("client_id", appId)
+            .AppendQueryParam("redirect_uri", redirectUri)
+            .AppendQueryParam("scope", scope)
+            .AppendQueryParam("response_type", "code")
+            .AppendQueryParam("state", encodedState);
 
         return Task.FromResult(new InstagramAuthUrl(url));
     }

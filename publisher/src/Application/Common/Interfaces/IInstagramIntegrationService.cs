@@ -9,6 +9,6 @@ public interface IInstagramIntegrationService
         Guid projectId,
         CancellationToken cancellationToken = default);
 
-    Task<InstagramAuthUrl> GetAuthUrlAsync(CancellationToken cancellationToken = default);
+    Task<InstagramAuthUrl> GetAuthUrlAsync(Guid projectId, CancellationToken cancellationToken = default);
 }
 
