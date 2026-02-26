@@ -20,7 +20,7 @@ public class Integrations : EndpointGroupBase
 
     public async Task<Ok<InstagramAuthUrl>> GetInstagramAuthUrl(ISender sender, Guid projectId)
     {
-        var query = new GetInstagramAuthUrlQuery();
+        var query = new GetInstagramAuthUrlQuery(projectId);
         var result = await sender.Send(query);
         return TypedResults.Ok(result);
     }
