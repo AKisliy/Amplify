@@ -16,3 +16,10 @@ appConfig:
       Microsoft.AspNetCore: Warning
   RabbitMQ:
     Url: ""
+  CorsOptions:
+    AllowedOrigins:
+      - "http://localhost:3000"
+    DefaultPolicyName: "StageCorsPolicy"
+  Jwt:
+    Issuer: "http://userservice.test-env.svc.cluster.local/userservice/api/auth"
+    Audience: "MyAppDevelopmentUsers"

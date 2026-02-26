@@ -81,4 +81,17 @@ releases:
       - ./media-ingest/charts/envs/values.{{ .Environment.Name }}.yaml
     needs:
       - gateway
+  
+  - name: ws-gateway
+    namespace: "{{ .Values.namespace }}"
+    chart: ./websocket-gateway/charts
+    labels:
+      tier: backend
+      app: ws-gateway
+    values:
+      - ./websocket-gateway/charts/envs/values.yaml
+      - ./websocket-gateway/charts/envs/values.yaml.gotmpl
+      - ./websocket-gateway/charts/envs/values.{{ .Environment.Name }}.yaml
+    needs:
+      - gateway
 

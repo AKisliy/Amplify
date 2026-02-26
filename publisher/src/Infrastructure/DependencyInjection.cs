@@ -37,6 +37,7 @@ using System.Text;
 using Microsoft.Extensions.Configuration;
 using Publisher.Infrastructure.Auth;
 using Publisher.Infrastructure.Broker;
+using Microsoft.EntityFrameworkCore.Migrations;
 
 namespace Microsoft.Extensions.DependencyInjection;
 
@@ -126,7 +127,7 @@ public static class DependencyInjection
                     .MapEnum<SocialProvider>(schemaName: ApplicationDbContext.DefaultSchemaName)
                     .MapEnum<PublicationStatus>(schemaName: ApplicationDbContext.DefaultSchemaName)
                     .EnableRetryOnFailure(4)
-                    .MigrationsHistoryTable("__EFMigrationsHistory", ApplicationDbContext.DefaultSchemaName)
+                    .MigrationsHistoryTable(HistoryRepository.DefaultTableName, ApplicationDbContext.DefaultSchemaName)
             );
 
             options.UseSnakeCaseNamingConvention();
@@ -140,7 +141,7 @@ public static class DependencyInjection
     private static IServiceCollection AddPublishers(this IServiceCollection services, IHostEnvironment environment)
     {
         services.AddScoped<IPublicationService, PublicationService>();
-        if (environment.IsDevelopment())
+        if (environment.IsDevelopment() || environment.IsStaging())
         {
             services.AddScoped<ISocialMediaPublisher, DummyInstagramPublisher>();
         }

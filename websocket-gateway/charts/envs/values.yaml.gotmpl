@@ -1,0 +1,12 @@
+secretStore:
+  name: {{ .Values.global.secretStore.name }}
+
+image:
+  tag: {{ env "WS_GATEWAY_IMAGE_TAG" | default "latest" }}
+
+gateway:
+  name: {{ .Values.global.gateway.name }}
+
+virtualService:
+  hosts:
+    - {{ .Values.global.appDomain }}

@@ -1,3 +1,4 @@
+using Infrastructure.Configuration;
 using WebSocketGateway.Infrastructure.Auth;
 using WebSocketGateway.Web.Configuration;
 using WebSocketGateway.Web.Configuration.Extensions;
@@ -19,6 +20,7 @@ public static class DependencyInjection
     private static IServiceCollection AddInfrastructureOptions(this IServiceCollection services)
     {
         services.AddOptionsWithFluentValidation<CorsOptions>(CorsOptions.SectionName);
+        services.AddOptionsWithFluentValidation<JwtOptions>(JwtOptions.ConfigurationSection);
 
         return services;
     }

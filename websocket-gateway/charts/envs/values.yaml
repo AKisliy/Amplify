@@ -31,7 +31,7 @@ readinessProbe:
 volumes:
   - name: config-volume
     configMap:
-      name: ws-gateway
+      name: ws-gateway-config
 
 gateway:
   name: amplify-gateway
@@ -44,6 +44,13 @@ virtualService:
       attempts: 3
       perTryTimeout: 2s
       retryOn: gateway-error,connect-failure,refused-stream,5xx
+
+externalSecret:
+  name: ws-gateway-external-secret
+  refreshInterval: 1h
+
+secret:
+  name: ws-gateway-secret
 
 # override in specific env file
 appConfig: {}

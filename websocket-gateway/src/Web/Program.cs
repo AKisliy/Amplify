@@ -18,6 +18,8 @@ builder.Services.AddOptionsWithFluentValidation<RabbitMQOptions>(RabbitMQOptions
 
 var app = builder.Build();
 
+app.UseHealthChecks("/health");
+
 app.UseAuthentication();
 app.UseAuthorization();
 
