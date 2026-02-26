@@ -28,7 +28,6 @@
     <PackageReference Include="Newtonsoft.Json" />
     <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" />
     <PackageReference Include="Polly" />
-    <PackageReference Include="TypedSignalR.Client.TypeScript.Attributes" />
   </ItemGroup>
 
   <ItemGroup>
