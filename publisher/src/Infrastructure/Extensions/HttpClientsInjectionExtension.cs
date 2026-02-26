@@ -21,10 +21,6 @@ public static class HttpClientInjectionExtensions
         services.AddHttpClient<InstagramApiClient>(c => c.Timeout = Timeout.InfiniteTimeSpan)
             .AddInstagramConfiguration();
 
-        // TODO: remove when all API-calls are moved to InstagramApiClient --- IGNORE ---
-        services.AddHttpClient<IInstagramIntegrationService, InstagramIntegrationService>(
-            c => c.Timeout = Timeout.InfiniteTimeSpan)
-            .AddInstagramConfiguration();
         return services;
     }
 

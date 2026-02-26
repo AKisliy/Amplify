@@ -1,8 +1,10 @@
+using System.Net.Http.Json;
 using Newtonsoft.Json;
 using Polly.Registry;
 using Publisher.Domain.Entities;
 using Publisher.Infrastructure.Constants;
 using Publisher.Infrastructure.Models.Exceptions;
+using Publisher.Infrastructure.Models.Facebook;
 using Publisher.Infrastructure.Models.Instagram;
 using static Publisher.Infrastructure.Constants.InstagramApi;
 
@@ -80,6 +82,39 @@ public class InstagramApiClient(
 
         var proccessedResponse = await HandleInstagramResponseAsync(apiResponse);
         return proccessedResponse;
+    }
+
+    public async Task<FacebookTokenResponse> GetShortLivedAccessTokenAsync(string code, CancellationToken cancellationToken = default)
+    {
+        var url = urlBuilder.GetUrlForShortLivedToken(code);
+
+        var response = await httpClient.GetFromJsonAsync<FacebookTokenResponse>(url, cancellationToken) ??
+            throw new InstagramException("Failed to get short-lived token");
+        return response;
+    }
+
+    public async Task<FacebookTokenResponse> GetLongLivedAccessTokenAsync(string shortLivedAccessToken, CancellationToken cancellationToken = default)
+    {
+        var url = urlBuilder.GetUrlForLongLivedToken(shortLivedAccessToken);
+
+        var response = await httpClient.GetFromJsonAsync<FacebookTokenResponse>(url, cancellationToken) ??
+            throw new InstagramException("Failed to get long-lived token");
+
+        return response;
+    }
+
+    public async Task<FacebookAccountsResponse> GetFacebookAccountsAsync(string accessToken, CancellationToken cancellationToken = default)
+    {
+        var url = urlBuilder.GetUrlForFacebookAccounts(accessToken);
+
+        var accountsResponse = await httpClient.GetFromJsonAsync<FacebookAccountsResponse>(
+            url,
+            cancellationToken);
+
+        if (accountsResponse == null)
+            throw new InstagramException("Failed to get facebook accounts");
+
+        return accountsResponse;
     }
 
     private async Task<HttpRequestMessage> GetUploadRequestMessageAsync(string videoPath, string accessToken, string creationId)
