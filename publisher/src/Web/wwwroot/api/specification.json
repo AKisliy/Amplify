@@ -12,6 +12,16 @@
     }
   ],
   "paths": {
+    "/": {
+      "get": {
+        "operationId": "Get",
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        }
+      }
+    },
     "/api/autolistentry": {
       "post": {
         "tags": [
@@ -399,7 +409,12 @@
           "400": {
             "description": ""
           }
-        }
+        },
+        "security": [
+          {
+            "JWT": []
+          }
+        ]
       }
     }
   },
@@ -422,6 +437,10 @@
         "type": "object",
         "additionalProperties": false,
         "properties": {
+          "id": {
+            "type": "string",
+            "format": "guid"
+          },
           "dayOfWeeks": {
             "type": "integer",
             "format": "int32"
