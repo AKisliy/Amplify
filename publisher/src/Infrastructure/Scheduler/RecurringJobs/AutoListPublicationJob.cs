@@ -18,10 +18,10 @@ public class AutoListPublicationJob(
 
         var autoListEntries = await retriever.GetEntriesForTriggerAsync(now, cancellationToken);
 
-        logger.LogInformation("Found {Count} entries to process", autoListEntries.Count);
+        logger.LogDebug("Found {Count} entries to process", autoListEntries.Count);
 
         await bus.PublishBatch(autoListEntries.Select(entry => new PublishFromAutoListRequested(entry.Id, now)), cancellationToken);
 
-        logger.LogInformation("Scheduled event sent for {Count} entries", autoListEntries.Count);
+        logger.LogDebug("Scheduled event sent for {Count} entries", autoListEntries.Count);
     }
 }
