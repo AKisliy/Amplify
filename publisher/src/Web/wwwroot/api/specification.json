@@ -279,12 +279,12 @@
         }
       }
     },
-    "/api/integrations/{projectId}/instagram/auth-url": {
+    "/api/connections/{projectId}/auth-url": {
       "get": {
         "tags": [
-          "integrations"
+          "connections"
         ],
-        "operationId": "GetApiIntegrationsInstagramAuthUrl",
+        "operationId": "GetApiConnectionsAuthUrl",
         "parameters": [
           {
             "name": "projectId",
@@ -295,6 +295,15 @@
               "format": "guid"
             },
             "x-position": 1
+          },
+          {
+            "name": "provider",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/SocialProvider"
+            },
+            "x-position": 2
           }
         ],
         "responses": {
@@ -303,7 +312,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/InstagramAuthUrl"
+                  "$ref": "#/components/schemas/AuthUrlResponse"
                 }
               }
             }
@@ -311,20 +320,19 @@
         }
       }
     },
-    "/api/integrations/{projectId}/instagram/connect": {
+    "/api/connections": {
       "post": {
         "tags": [
-          "integrations"
+          "connections"
         ],
-        "operationId": "PostApiIntegrationsInstagramConnect",
+        "operationId": "Connection",
         "parameters": [
           {
-            "name": "projectId",
-            "in": "path",
+            "name": "state",
+            "in": "query",
             "required": true,
             "schema": {
-              "type": "string",
-              "format": "guid"
+              "type": "string"
             },
             "x-position": 1
           },
@@ -345,12 +353,12 @@
         }
       }
     },
-    "/api/integrations/{projectId}": {
+    "/api/connections/{projectId}": {
       "get": {
         "tags": [
-          "integrations"
+          "connections"
         ],
-        "operationId": "GetApiIntegrations",
+        "operationId": "GetApiConnections",
         "parameters": [
           {
             "name": "projectId",
@@ -369,7 +377,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/IntegrationsVm"
+                  "$ref": "#/components/schemas/ConnectionsVm"
                 }
               }
             }
@@ -571,7 +579,7 @@
         }
       },
       "SocialProvider": {
-        "type": "integer",
+        "type": "string",
         "description": "",
         "x-enumNames": [
           "Instagram",
@@ -579,9 +587,9 @@
           "Youtube"
         ],
         "enum": [
-          1,
-          2,
-          4
+          "Instagram",
+          "TikTok",
+          "Youtube"
         ]
       },
       "AutoListsVm": {
@@ -636,7 +644,7 @@
           }
         }
       },
-      "InstagramAuthUrl": {
+      "AuthUrlResponse": {
         "type": "object",
         "additionalProperties": false,
         "properties": {
@@ -645,11 +653,11 @@
           }
         }
       },
-      "IntegrationsVm": {
+      "ConnectionsVm": {
         "type": "object",
         "additionalProperties": false,
         "properties": {
-          "integrations": {
+          "connections": {
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/FullSocialAccountDto"
@@ -699,15 +707,15 @@
         }
       },
       "PublicationType": {
-        "type": "integer",
+        "type": "string",
         "description": "",
         "x-enumNames": [
           "Manual",
           "AutoList"
         ],
         "enum": [
-          1,
-          2
+          "Manual",
+          "AutoList"
         ]
       },
       "PublicationRecordResponseDto": {
@@ -734,7 +742,7 @@
         }
       },
       "PublicationStatus": {
-        "type": "integer",
+        "type": "string",
         "description": "",
         "x-enumNames": [
           "None",
@@ -744,11 +752,11 @@
           "Failed"
         ],
         "enum": [
-          0,
-          1,
-          2,
-          3,
-          4
+          "None",
+          "Scheduled",
+          "Processing",
+          "Published",
+          "Failed"
         ]
       },
       "PublishVideoCommand": {

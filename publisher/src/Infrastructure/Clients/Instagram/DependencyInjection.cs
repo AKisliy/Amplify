@@ -1,19 +1,37 @@
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Http.Resilience;
 using Polly;
 using Publisher.Application.Common.Interfaces;
 using Publisher.Infrastructure.Clients.Instagram;
 using Publisher.Infrastructure.Configuration.Resilience;
+using Publisher.Infrastructure.Publishers;
 
-namespace Publisher.Infrastructure.Extensions;
+namespace Microsoft.Extensions.DependencyInjection;
 
-public static class HttpClientInjectionExtensions
+internal static class InstagramDependencyInjection
 {
-    public static IServiceCollection AddCustomHttpClients(this IServiceCollection services, IConfiguration configuration)
+    internal static IHostApplicationBuilder AddInstagramConnection(this IHostApplicationBuilder builder)
     {
+        var services = builder.Services;
+        var environment = builder.Environment;
+
+        services.AddScoped<InstagramApiClient>();
+        services.AddScoped<InstagramUrlBuilder>();
+        services.AddScoped<InstagramPayloadBuilder>();
+        services.AddScoped<InstagramHeaderBuilder>();
+        services.AddScoped<IConnectionService, InstagramConnectionService>();
         services.AddInstagramHttpClient();
-        return services;
+
+        if (environment.IsDevelopment() || environment.IsStaging())
+        {
+            services.AddScoped<ISocialMediaPublisher, DummyInstagramPublisher>();
+        }
+        else
+        {
+            services.AddScoped<ISocialMediaPublisher, InstagramPublisher>();
+        }
+
+        return builder;
     }
 
     private static IServiceCollection AddInstagramHttpClient(this IServiceCollection services)
