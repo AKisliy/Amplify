@@ -12,7 +12,6 @@ using FluentValidation;
 using System.Reflection;
 using Publisher.Infrastructure.Configuration.Options;
 using Microsoft.AspNetCore.DataProtection;
-using Microsoft.Extensions.Options;
 using Npgsql;
 using Publisher.Domain.Enums;
 using Polly;
@@ -22,18 +21,11 @@ using Polly.Retry;
 using static Publisher.Infrastructure.Constants.InstagramApi;
 using Microsoft.Extensions.Logging;
 using Publisher.Infrastructure.Extensions;
-using MassTransit;
 using Publisher.Application.Common.Interfaces.Factory;
 using Publisher.Infrastructure.Factory;
-using Publisher.Infrastructure.Workers;
-using Publisher.Infrastructure.Consumers;
 using Publisher.Infrastructure.Scheduler;
 using Microsoft.AspNetCore.Builder;
 using Publisher.Infrastructure.Publishers;
-using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.IdentityModel.Tokens;
-using System.Security.Claims;
-using System.Text;
 using Microsoft.Extensions.Configuration;
 using Publisher.Infrastructure.Auth;
 using Publisher.Infrastructure.Broker;
@@ -77,8 +69,6 @@ public static class DependencyInjection
 
         services.AddScoped<AutoListEntryRetriever>();
         services.AddSingleton(TimeProvider.System);
-
-        services.AddHostedService<AutoListSchedulerWorker>();
 
         services.AddPollyPipelines();
         services.AddCustomHttpClients(builder.Configuration);

@@ -14,7 +14,7 @@ public class PublishRequestedConsumer(
     {
         var autoListEntryId = context.Message.AutoListEntryId;
         var requestedTime = context.Message.Time;
-        logger.LogDebug("Consumed event for {AutoListEntryId}", autoListEntryId);
+        logger.LogInformation("Consumed event for {AutoListEntryId}", autoListEntryId);
 
         var publishNextVideoCommand = new PublishNextPostInAutoListCommand(autoListEntryId, requestedTime);
 
