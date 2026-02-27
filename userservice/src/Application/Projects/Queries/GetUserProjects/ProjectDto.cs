@@ -13,6 +13,8 @@ public class ProjectDto
 
     public string? Photo { get; set; }
 
+    public Guid? AmbassadorId { get; set; }
+
     private class Mapping : Profile
     {
         public Mapping()
@@ -20,7 +22,10 @@ public class ProjectDto
             CreateMap<Project, ProjectDto>()
                 .ForMember(
                     dest => dest.Photo,
-                    opt => opt.MapFrom<ImageUrlResolver, Guid?>(src => src.Photo));
+                    opt => opt.MapFrom<ImageUrlResolver, Guid?>(src => src.Photo))
+                .ForMember(
+                    dest => dest.AmbassadorId,
+                    opt => opt.MapFrom(src => src.Ambassador != null ? src.Ambassador.Id : (Guid?)null));
         }
     }
 }
