@@ -384,6 +384,24 @@
         }
       }
     },
+    "/api/auth/logout": {
+      "post": {
+        "tags": [
+          "auth"
+        ],
+        "operationId": "PostApiAuthLogout",
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "JWT": []
+          }
+        ]
+      }
+    },
     "/api/auth/refresh": {
       "post": {
         "tags": [
@@ -903,6 +921,11 @@
           },
           "photo": {
             "type": "string",
+            "nullable": true
+          },
+          "ambassadorId": {
+            "type": "string",
+            "format": "guid",
             "nullable": true
           }
         }

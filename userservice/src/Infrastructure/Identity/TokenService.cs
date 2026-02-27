@@ -4,11 +4,9 @@ using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Security.Cryptography;
 using Microsoft.AspNetCore.Identity;
-using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using UserService.Application.Common.Interfaces;
 using UserService.Application.Common.Models;
-using UserService.Infrastructure.Options;
 
 public class TokenService(UserManager<ApplicationUser> userManager, IJwtTokenGenerator tokenGenerator) : ITokenService
 {
@@ -42,7 +40,15 @@ public class TokenService(UserManager<ApplicationUser> userManager, IJwtTokenGen
         return refreshToken;
     }
 
-    public async Task<(Result Result, Guid UserId, string Email, IList<string> Roles)> ValidateRefreshTokenAsync(Guid userId, string refreshToken)
+    public async Task RevokeRefreshTokenAsync(Guid userId)
+    {
+        var user = await userManager.FindByIdAsync(userId.ToString()) ?? throw new Exception("User not found");
+        await userManager.RemoveAuthenticationTokenAsync(user, "Default", "RefreshToken");
+    }
+
+    public async Task<(Result Result, Guid UserId, string Email, IList<string> Roles)> ValidateRefreshTokenAsync(
+        Guid userId,
+        string refreshToken)
     {
         var user = await userManager.FindByIdAsync(userId.ToString());
 

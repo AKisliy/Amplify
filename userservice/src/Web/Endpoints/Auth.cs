@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.Extensions.Options;
 using UserService.Application.Auth.ConfirmEmail;
 using UserService.Application.Auth.Login;
+using UserService.Application.Auth.Logout;
 using UserService.Application.Auth.Models;
 using UserService.Application.Auth.Password;
 using UserService.Application.Auth.Refresh;
@@ -34,6 +35,12 @@ public class Auth : EndpointGroupBase
         });
 
         groupBuilder.MapPost(LoginUser, "login");
+        groupBuilder.MapPost("logout", async (ISender sender) =>
+        {
+            var command = new LogoutCommand();
+            await sender.Send(command);
+            return Results.Ok();
+        }).RequireAuthorization();
 
         groupBuilder.MapPost(RefreshToken, "refresh");
 
