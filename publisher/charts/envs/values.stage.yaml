@@ -53,4 +53,4 @@ appConfig:
   TikTokApi:
     ClientKey: ""
     ClientSecret: ""
-    RedirectUri: "http://host.minikube.internal:6001/auth/tiktok/callback"
+    RedirectUri: "http://amplify.34.40.73.43.nip.io/userservice/api"
