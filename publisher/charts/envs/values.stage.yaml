@@ -7,6 +7,10 @@ secrets:
     key: publisher-hangfire-db-conn-test
   rabbitMqConnection:
     key: rabbitmq-test
+  tikTokClientKey:
+    key: tiktok-client-key-sandbox
+  tikTokClientSecret:
+    key: tiktok-client-secret-sandbox
 
 volumeMounts:
   - name: config-volume

@@ -23,8 +23,6 @@ internal class CreateNewConnectionHandler(IConnectionServiceFactory integrationS
 
         var integrationsService = integrationServiceFactory.GetConnectionService(integrationState.Provider);
 
-        await integrationsService.ConnectAccountAsync(request.Code, integrationState, cancellationToken);
-
-        return new ConnectionResult("/connections");
+        return await integrationsService.ConnectAccountAsync(request.Code, integrationState, cancellationToken);
     }
 }
