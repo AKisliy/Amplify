@@ -24,25 +24,19 @@ By default app will seed data every time u start it in dev mode. Here are defaul
 
 This section describes how to integrate external services with the Publisher API.
 
-#### Instagram
+#### Social Media Connections
 
-To connect an Instagram account, the frontend application should follow these steps:
+To connect a social media account (e.g., Instagram, TikTok), the frontend application should follow these steps:
 
-1.  **Get the Authorization URL**: The frontend should make a `GET` request to the `/api/integrations/{projectId}/instagram/auth-url` endpoint, where `{projectId}` is the ID of the project to which the Instagram account will be linked. The backend will respond with a URL for Instagram's authorization page.
+1.  **Get the Authorization URL**: The frontend should make a `GET` request to the appropriate endpoint to obtain a unique authorization URL for the desired social media platform. For example, to connect Instagram for a specific project, you would call `/api/integrations/{projectId}/instagram/auth-url`.
 
-2.  **Redirect the User**: The frontend should redirect the user to the authorization URL received from the backend. This will take the user to Instagram to approve the connection.
+2.  **Redirect the User**: The frontend should redirect the user to the authorization URL returned by the backend. This URL will lead the user to the social media platform's website to approve the connection. The `redirectUrl` provided in the backend's response will point to a page on the frontend application, such as a loading or confirmation page.
 
-3.  **Handle the Callback**: After the user approves the connection, Instagram will redirect them back to a predefined callback URL. This callback will include a `code` and a `state` parameter in the query string.
+3.  **Handle the Callback**: After the user approves the connection, the social media platform will redirect them back to the `redirectUrl` specified in step 2. This callback URL will include `code` and `state` as query parameters.
 
-4.  **Decode the State and Connect**: The `state` parameter is a Base64-encoded JSON object containing the `projectId`. The frontend should decode this `state` to retrieve the `projectId`. The `state` structure is as following:
-```json
-{
-    "projectId": "YOUR_PROJECT_ID"
-}
-```
-Then, it should make a `POST` request to the `/api/integrations/{projectId}/instagram/connect` endpoint, including the `code` received from Instagram.
+4.  **Connect the Account**: On the callback page, the frontend should extract the `code` and `state` from the query parameters and make a `POST` request to the `/api/connections` endpoint, sending these values in the request body.
 
-Once these steps are completed, the Instagram account will be connected to the specified project.
+The backend will then process the information, finalize the connection with the social media platform, and redirect the user to an appropriate page within the application to confirm that the account has been successfully linked.
 
 
 
