@@ -7,7 +7,6 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Diagnostics;
 using Microsoft.Extensions.Hosting;
 using Publisher.Infrastructure.Storage;
-using Publisher.Infrastructure.Clients.Instagram;
 using FluentValidation;
 using System.Reflection;
 using Publisher.Infrastructure.Configuration.Options;
@@ -20,12 +19,10 @@ using Publisher.Infrastructure.Constants;
 using Polly.Retry;
 using static Publisher.Infrastructure.Constants.InstagramApi;
 using Microsoft.Extensions.Logging;
-using Publisher.Infrastructure.Extensions;
 using Publisher.Application.Common.Interfaces.Factory;
 using Publisher.Infrastructure.Factory;
 using Publisher.Infrastructure.Scheduler;
 using Microsoft.AspNetCore.Builder;
-using Publisher.Infrastructure.Publishers;
 using Microsoft.Extensions.Configuration;
 using Publisher.Infrastructure.Auth;
 using Publisher.Infrastructure.Broker;
@@ -52,29 +49,22 @@ public static class DependencyInjection
         builder.AddAuth();
         builder.AddCorsUsage();
 
-        services.AddPublishers(builder.Environment);
         services.AddScoped<IFileStorage, MediaServiceStorage>();
-
-        services.AddScoped<InstagramApiClient>();
-        services.AddScoped<InstagramUrlBuilder>();
-        services.AddScoped<InstagramPayloadBuilder>();
-        services.AddScoped<InstagramHeaderBuilder>();
-        services.AddScoped<IInstagramIntegrationService, InstagramIntegrationService>();
 
         services.AddScoped<IPublicationStatusNotifier, PublicationStatusNotifier>();
 
-        // TODO: should be in Application layer --- IGNORE ---
-        // services.AddScoped<IAccountPickerFactory, AccountPickerFactory>();
         services.AddScoped<ISocialMediaPublisherFactory, SocialMediaPublisherFactory>();
+        services.AddScoped<IConnectionServiceFactory, ConnectionServiceFactory>();
 
         services.AddScoped<AutoListEntryRetriever>();
         services.AddSingleton(TimeProvider.System);
 
         services.AddPollyPipelines();
-        services.AddCustomHttpClients(builder.Configuration);
         services.AddBrokerConnection();
 
         builder.AddSchedulerServices();
+
+        builder.AddSocialMediaConnections();
     }
 
     private static void AddInfrastructureOptionsWithFluentValidation(this IServiceCollection services)
@@ -86,6 +76,8 @@ public static class DependencyInjection
         services.AddOptionsWithFluentValidation<PublisherOptions>(PublisherOptions.ConfigurationSection);
         services.AddOptionsWithFluentValidation<JwtOptions>(JwtOptions.ConfigurationSection);
         services.AddOptionsWithFluentValidation<CorsOptions>(CorsOptions.SectionName);
+        services.AddOptionsWithFluentValidation<TikTokApiOptions>(TikTokApiOptions.ConfigurationSection);
+        services.AddOptionsWithFluentValidation<FrontendOptions>(FrontendOptions.ConfigurationSection);
     }
 
     private static void AddDatabaseConnection(this IHostApplicationBuilder builder)
@@ -128,21 +120,6 @@ public static class DependencyInjection
         builder.Services.AddScoped<ApplicationDbContextInitialiser>();
     }
 
-    private static IServiceCollection AddPublishers(this IServiceCollection services, IHostEnvironment environment)
-    {
-        services.AddScoped<IPublicationService, PublicationService>();
-        if (environment.IsDevelopment() || environment.IsStaging())
-        {
-            services.AddScoped<ISocialMediaPublisher, DummyInstagramPublisher>();
-        }
-        else
-        {
-            services.AddScoped<ISocialMediaPublisher, InstagramPublisher>();
-        }
-
-        return services;
-    }
-
 
     private static IServiceCollection AddPollyPipelines(this IServiceCollection services)
     {
@@ -183,6 +160,12 @@ public static class DependencyInjection
                 .AllowAnyHeader()
                 .AllowAnyMethod()
                 .AllowCredentials()));
+    }
+
+    private static void AddSocialMediaConnections(this IHostApplicationBuilder builder)
+    {
+        builder.AddInstagramConnection();
+        builder.AddTikTokConnection();
     }
 }
 

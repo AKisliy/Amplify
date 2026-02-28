@@ -1,24 +1,26 @@
-using System.Net.Http.Json;
 using System.Text;
 using Flurl;
+using Microsoft.AspNetCore.WebUtilities;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Newtonsoft.Json;
 using Publisher.Application.Common.Interfaces;
-using Publisher.Application.Common.Models.Instagram;
+using Publisher.Application.Common.Models;
+using Publisher.Application.Common.Models.Dto;
+using Publisher.Application.Connections.Commands;
 using Publisher.Domain.Entities;
 using Publisher.Domain.Enums;
 using Publisher.Infrastructure.Configuration.Options;
-using Publisher.Infrastructure.Models.Integration;
 
 namespace Publisher.Infrastructure.Clients.Instagram;
 
-public class InstagramIntegrationService(
+internal class InstagramConnectionService(
     IOptions<InstagramApiOptions> instOptions,
     InstagramApiClient instagramApiClient,
     IApplicationDbContext dbContext,
-    ILogger<InstagramIntegrationService> logger)
-    : IInstagramIntegrationService
+    IOptions<FrontendOptions> frontendOptions,
+    ILogger<InstagramConnectionService> logger)
+    : IConnectionService
 {
     private const int DefaultExpirationDays = 60;
     private readonly IReadOnlyList<string> _scopesForPublishing = [
@@ -30,9 +32,11 @@ public class InstagramIntegrationService(
         "business_management"
     ];
 
-    public async Task<bool> ConnectInstagramAccountAsync(
+    public SocialProvider SocialProvider => SocialProvider.Instagram;
+
+    public async Task<ConnectionResult> ConnectAccountAsync(
         string code,
-        Guid projectId,
+        ConnectionState state,
         CancellationToken cancellationToken)
     {
         var shortLivedTokenResponse = await instagramApiClient.GetShortLivedAccessTokenAsync(code, cancellationToken);
@@ -48,10 +52,6 @@ public class InstagramIntegrationService(
         var targetPage = accountsResponse?.Data.FirstOrDefault(p => p.InstagramBusinessAccount != null)
             ?? throw new Exception("No Instagram Business account connected to user's Facebook pages.");
 
-        logger.LogInformation("Successfully connected Instagram Business Account {InstagramUsername} with ID {InstagramId}",
-            targetPage.InstagramBusinessAccount?.Username,
-            targetPage.InstagramBusinessAccount?.Id);
-
         logger.LogInformation("Long-Lived User Access Token: {AccessToken}", longLivedTokenResponse);
 
         var tokenExpiresAt = DateTime.UtcNow.AddSeconds(
@@ -61,7 +61,7 @@ public class InstagramIntegrationService(
 
         var socialAccount = new SocialAccount
         {
-            ProjectId = projectId,
+            ProjectId = state.ProjectId,
             Username = targetPage.InstagramBusinessAccount?.Username ?? "Unknown",
             Provider = SocialProvider.Instagram,
             TokenExpiresAt = tokenExpiresAt
@@ -82,18 +82,24 @@ public class InstagramIntegrationService(
         dbContext.SocialAccounts.Add(socialAccount);
         await dbContext.SaveChangesAsync(cancellationToken);
 
-        return true;
+        var result = new ConnectionResult(socialAccount.Id, frontendOptions.Value.ConnectionsPath);
+
+        logger.LogInformation("Successfully connected Instagram Business Account {InstagramUsername} with ID {InstagramId}",
+            targetPage.InstagramBusinessAccount?.Username,
+            targetPage.InstagramBusinessAccount?.Id);
+
+        return result;
     }
 
-    public Task<InstagramAuthUrl> GetAuthUrlAsync(Guid projectId, CancellationToken cancellationToken)
+    public Task<AuthUrlResponse> GetAuthUrlAsync(Guid projectId, CancellationToken cancellationToken)
     {
         var appId = instOptions.Value.AppId;
         var redirectUri = instOptions.Value.RedirectUri;
         var scope = string.Join(',', _scopesForPublishing);
 
-        var state = new IntegrationState(projectId);
+        var state = new ConnectionState(projectId, SocialProvider.Instagram);
         var stateBytes = Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(state));
-        var encodedState = Convert.ToBase64String(stateBytes);
+        var encodedState = WebEncoders.Base64UrlEncode(stateBytes);
 
         var url = new Url("https://www.facebook.com/v18.0/dialog/oauth")
             .SetQueryParam("client_id", appId)
@@ -102,6 +108,6 @@ public class InstagramIntegrationService(
             .SetQueryParam("response_type", "code")
             .SetQueryParam("state", encodedState);
 
-        return Task.FromResult(new InstagramAuthUrl(url));
+        return Task.FromResult(new AuthUrlResponse(url));
     }
 }
