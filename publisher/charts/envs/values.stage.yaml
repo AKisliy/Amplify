@@ -43,3 +43,6 @@ appConfig:
     AllowedOrigins:
       - "http://localhost:3000"
     DefaultPolicyName: DevelopmentCorsPolicy
+  Frontend:
+    BaseUrl: "http://localhost:3000"
+    ConnectionsPath: "/connections"

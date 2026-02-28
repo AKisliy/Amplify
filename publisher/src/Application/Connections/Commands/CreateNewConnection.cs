@@ -6,12 +6,12 @@ using Publisher.Application.Common.Models;
 
 namespace Publisher.Application.Connections.Commands;
 
-public record CreateNewConnection(string State, string Code) : IRequest;
+public record CreateNewConnection(string State, string Code) : IRequest<ConnectionResult>;
 
 internal class CreateNewConnectionHandler(IConnectionServiceFactory integrationServiceFactory)
-    : IRequestHandler<CreateNewConnection>
+    : IRequestHandler<CreateNewConnection, ConnectionResult>
 {
-    public async Task Handle(CreateNewConnection request, CancellationToken cancellationToken)
+    public async Task<ConnectionResult> Handle(CreateNewConnection request, CancellationToken cancellationToken)
     {
         Guard.Against.NullOrEmpty(request.State);
         Guard.Against.NullOrEmpty(request.Code);
@@ -24,5 +24,7 @@ internal class CreateNewConnectionHandler(IConnectionServiceFactory integrationS
         var integrationsService = integrationServiceFactory.GetConnectionService(integrationState.Provider);
 
         await integrationsService.ConnectAccountAsync(request.Code, integrationState, cancellationToken);
+
+        return new ConnectionResult("/connections");
     }
 }

@@ -77,6 +77,7 @@ public static class DependencyInjection
         services.AddOptionsWithFluentValidation<JwtOptions>(JwtOptions.ConfigurationSection);
         services.AddOptionsWithFluentValidation<CorsOptions>(CorsOptions.SectionName);
         services.AddOptionsWithFluentValidation<TikTokApiOptions>(TikTokApiOptions.ConfigurationSection);
+        services.AddOptionsWithFluentValidation<FrontendOptions>(FrontendOptions.ConfigurationSection);
     }
 
     private static void AddDatabaseConnection(this IHostApplicationBuilder builder)

@@ -7,6 +7,7 @@ using Newtonsoft.Json;
 using Publisher.Application.Common.Interfaces;
 using Publisher.Application.Common.Models;
 using Publisher.Application.Common.Models.Dto;
+using Publisher.Application.Connections.Commands;
 using Publisher.Domain.Entities;
 using Publisher.Domain.Enums;
 using Publisher.Infrastructure.Configuration.Options;
@@ -18,6 +19,7 @@ internal class TikTokConnectionService(
     IOptions<TikTokApiOptions> tikTokOptions,
     IApplicationDbContext dbContext,
     ILogger<TikTokConnectionService> logger,
+    IOptions<FrontendOptions> frontendOptions,
     TikTokApiClient apiClient)
     : IConnectionService
 {
@@ -49,7 +51,7 @@ internal class TikTokConnectionService(
         return Task.FromResult(new AuthUrlResponse(url));
     }
 
-    public async Task<bool> ConnectAccountAsync(
+    public async Task<ConnectionResult> ConnectAccountAsync(
         string code,
         ConnectionState state,
         CancellationToken cancellationToken)
@@ -85,6 +87,7 @@ internal class TikTokConnectionService(
         logger.LogInformation("Successfully connected TikTok account with OpenID {OpenId} for project {ProjectId}",
             tokenResponse.OpenId, projectId);
 
-        return true;
+        var result = new ConnectionResult(socialAccount.Id, frontendOptions.Value.ConnectionsPath);
+        return result;
     }
 }

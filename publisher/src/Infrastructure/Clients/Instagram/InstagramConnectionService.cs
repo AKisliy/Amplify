@@ -7,6 +7,7 @@ using Newtonsoft.Json;
 using Publisher.Application.Common.Interfaces;
 using Publisher.Application.Common.Models;
 using Publisher.Application.Common.Models.Dto;
+using Publisher.Application.Connections.Commands;
 using Publisher.Domain.Entities;
 using Publisher.Domain.Enums;
 using Publisher.Infrastructure.Configuration.Options;
@@ -17,6 +18,7 @@ internal class InstagramConnectionService(
     IOptions<InstagramApiOptions> instOptions,
     InstagramApiClient instagramApiClient,
     IApplicationDbContext dbContext,
+    IOptions<FrontendOptions> frontendOptions,
     ILogger<InstagramConnectionService> logger)
     : IConnectionService
 {
@@ -32,7 +34,7 @@ internal class InstagramConnectionService(
 
     public SocialProvider SocialProvider => SocialProvider.Instagram;
 
-    public async Task<bool> ConnectAccountAsync(
+    public async Task<ConnectionResult> ConnectAccountAsync(
         string code,
         ConnectionState state,
         CancellationToken cancellationToken)
@@ -49,10 +51,6 @@ internal class InstagramConnectionService(
 
         var targetPage = accountsResponse?.Data.FirstOrDefault(p => p.InstagramBusinessAccount != null)
             ?? throw new Exception("No Instagram Business account connected to user's Facebook pages.");
-
-        logger.LogInformation("Successfully connected Instagram Business Account {InstagramUsername} with ID {InstagramId}",
-            targetPage.InstagramBusinessAccount?.Username,
-            targetPage.InstagramBusinessAccount?.Id);
 
         logger.LogInformation("Long-Lived User Access Token: {AccessToken}", longLivedTokenResponse);
 
@@ -84,7 +82,13 @@ internal class InstagramConnectionService(
         dbContext.SocialAccounts.Add(socialAccount);
         await dbContext.SaveChangesAsync(cancellationToken);
 
-        return true;
+        var result = new ConnectionResult(socialAccount.Id, frontendOptions.Value.ConnectionsPath);
+
+        logger.LogInformation("Successfully connected Instagram Business Account {InstagramUsername} with ID {InstagramId}",
+            targetPage.InstagramBusinessAccount?.Username,
+            targetPage.InstagramBusinessAccount?.Id);
+
+        return result;
     }
 
     public Task<AuthUrlResponse> GetAuthUrlAsync(Guid projectId, CancellationToken cancellationToken)
