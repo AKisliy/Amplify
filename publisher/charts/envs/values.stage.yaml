@@ -50,7 +50,7 @@ appConfig:
   Frontend:
     BaseUrl: "http://localhost:3000"
     ConnectionsPath: "/connections"
-  TikTokApiOptions:
+  TikTokApi:
     ClientKey: ""
     ClientSecret: ""
     RedirectUri: "http://host.minikube.internal:6001/auth/tiktok/callback"
