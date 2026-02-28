@@ -9,16 +9,18 @@ internal static class TikTokDependencyInjection
     public static IHostApplicationBuilder AddTikTokConnection(this IHostApplicationBuilder builder)
     {
         var services = builder.Services;
-        var environment = builder.Environment;
 
         services.AddScoped<IConnectionService, TikTokConnectionService>();
+        services.AddScoped<TikTokApiClient>();
+        services.AddTikTokHttpClient();
+
 
         return builder;
     }
 
     private static IServiceCollection AddTikTokHttpClient(this IServiceCollection services)
     {
-        services.AddHttpClient<TikTokConnectionService>(c => c.Timeout = Timeout.InfiniteTimeSpan);
+        services.AddHttpClient<TikTokApiClient>(c => c.Timeout = Timeout.InfiniteTimeSpan);
         return services;
     }
 }

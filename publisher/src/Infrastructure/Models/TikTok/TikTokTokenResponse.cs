@@ -1,21 +1,40 @@
-using System.Text.Json.Serialization;
+using FluentValidation;
+using Newtonsoft.Json;
 
 namespace Publisher.Infrastructure.Models.TikTok;
 
 public class TikTokTokenResponse
 {
-    [JsonPropertyName("access_token")]
-    public string AccessToken { get; set; } = string.Empty;
+    [JsonProperty("access_token")]
+    public string? AccessToken { get; set; }
 
-    [JsonPropertyName("expires_in")]
+    [JsonProperty("expires_in")]
     public int ExpiresIn { get; set; }
 
-    [JsonPropertyName("refresh_token")]
-    public string RefreshToken { get; set; } = string.Empty;
+    [JsonProperty("refresh_token")]
+    public string? RefreshToken { get; set; }
 
-    [JsonPropertyName("refresh_expires_in")]
+    [JsonProperty("refresh_expires_in")]
     public int RefreshExpiresIn { get; set; }
 
-    [JsonPropertyName("open_id")]
-    public string OpenId { get; set; } = string.Empty;
+    [JsonProperty("open_id")]
+    public string? OpenId { get; set; }
+
+    [JsonProperty("scope")]
+    public string? Scope { get; set; }
+
+    [JsonProperty("token_type")]
+    public string? TokenType { get; set; }
+}
+
+public class TikTokResponseValidator : AbstractValidator<TikTokTokenResponse>
+{
+    public TikTokResponseValidator()
+    {
+        RuleFor(x => x.AccessToken).NotEmpty();
+        RuleFor(x => x.ExpiresIn).GreaterThan(0);
+        RuleFor(x => x.RefreshToken).NotEmpty();
+        RuleFor(x => x.RefreshExpiresIn).GreaterThan(0);
+        RuleFor(x => x.OpenId).NotEmpty();
+    }
 }

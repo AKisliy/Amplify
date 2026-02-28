@@ -4,6 +4,8 @@ namespace Publisher.Infrastructure.Configuration.Options;
 
 public class TikTokApiOptions
 {
+    public const string ConfigurationSection = "TikTokApi";
+
     public required string ClientKey { get; set; }
 
     public required string ClientSecret { get; set; }

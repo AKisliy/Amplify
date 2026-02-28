@@ -1,4 +1,5 @@
 using System.Text;
+using FluentValidation;
 using Flurl;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
@@ -15,9 +16,9 @@ namespace Publisher.Infrastructure.Clients.TikTok;
 
 internal class TikTokConnectionService(
     IOptions<TikTokApiOptions> tikTokOptions,
-    HttpClient httpClient,
     IApplicationDbContext dbContext,
-    ILogger<TikTokConnectionService> logger)
+    ILogger<TikTokConnectionService> logger,
+    TikTokApiClient apiClient)
     : IConnectionService
 {
     private readonly IReadOnlyList<string> _scopes = [
@@ -53,47 +54,27 @@ internal class TikTokConnectionService(
         ConnectionState state,
         CancellationToken cancellationToken)
     {
-        var requestBody = new Dictionary<string, string>
-        {
-            ["client_key"] = tikTokOptions.Value.ClientKey,
-            ["client_secret"] = tikTokOptions.Value.ClientSecret,
-            ["code"] = code,
-            ["grant_type"] = "authorization_code",
-            ["redirect_uri"] = tikTokOptions.Value.RedirectUri
-        };
+        logger.LogInformation("Starting TikTok account connection process for project {ProjectId}", state.ProjectId);
 
-        var request = new HttpRequestMessage(HttpMethod.Post, "https://open.tiktokapis.com/v2/oauth/token/")
-        {
-            Content = new FormUrlEncodedContent(requestBody)
-        };
+        var tokenResponse = await apiClient.ExchangeCodeForTokenAsync(code, cancellationToken);
 
-        var response = await httpClient.SendAsync(request);
-        var content = await response.Content.ReadAsStringAsync();
+        Guard.Against.Null(tokenResponse.AccessToken);
+        Guard.Against.Null(tokenResponse.RefreshToken);
 
-        if (!response.IsSuccessStatusCode)
-        {
-            throw new Exception($"TikTok OAuth Error: {content}");
-        }
-
-        var tokenResponse = JsonConvert.DeserializeObject<TikTokTokenResponse>(content);
-
-        if (tokenResponse == null)
-        {
-            throw new Exception("Failed to deserialize TikTok token response.");
-        }
+        var user = await apiClient.GetTikTokUserAsync(tokenResponse.AccessToken, cancellationToken);
 
         var credentials = new TikTokCredentials
         {
-            AccessToken = tokenResponse.AccessToken,
-            RefreshToken = tokenResponse.RefreshToken,
-            OpenId = tokenResponse.OpenId
+            AccessToken = tokenResponse.AccessToken!,
+            RefreshToken = tokenResponse.RefreshToken!,
+            OpenId = tokenResponse.OpenId!
         };
 
         var projectId = state.ProjectId;
         var socialAccount = new SocialAccount
         {
             ProjectId = projectId,
-            Username = $"TikTokUser_{tokenResponse.OpenId}",
+            Username = user.DisplayName ?? "TikTok",
             Provider = SocialProvider.TikTok,
             TokenExpiresAt = DateTime.UtcNow.AddSeconds(tokenResponse.ExpiresIn),
             Credentials = JsonConvert.SerializeObject(credentials)
@@ -103,6 +84,7 @@ internal class TikTokConnectionService(
         await dbContext.SaveChangesAsync(cancellationToken);
         logger.LogInformation("Successfully connected TikTok account with OpenID {OpenId} for project {ProjectId}",
             tokenResponse.OpenId, projectId);
+
         return true;
     }
 }
