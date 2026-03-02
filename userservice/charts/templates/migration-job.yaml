@@ -15,9 +15,11 @@ spec:
           env:
             - name: ASPNETCORE_ENVIRONMENT
               value: "{{ .Values.environment }}"
-          envFrom:
-            - secretRef:
-                name: userservice-k8s-secret
+            - name: ConnectionStrings__UserServiceDb
+              valueFrom:
+                secretKeyRef:
+                  name: userservice-k8s-secret
+                  key: CONNECTION_STRING
           {{- with .Values.volumeMounts }}
           volumeMounts:
             {{- toYaml . | nindent 12 }}
