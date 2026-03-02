@@ -12,11 +12,8 @@ spec:
       containers:
         - name: ef-bundle
           image: "{{ .Values.image.repository }}-migrations:{{ .Values.image.tag }}"
-          env:
-            - name: ConnectionStrings__DefaultConnection
-              valueFrom:
-                secretKeyRef:
-                  name: {{ .Values.secret.name }}
-                  key: ConnectionStrings__Default
+          envFrom:
+            - secretRef:
+                name: {{ .Values.secret.name }}
       restartPolicy: Never
   backoffLimit: 1
