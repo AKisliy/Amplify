@@ -38,6 +38,7 @@ jobs:
             app_label: "userservice"
             image_tag_var_name: "USERSERVICE_IMAGE_TAG"
             env_name: "stage"
+            with_migrations: true
         secrets: inherit
 
     deploy-publisher:
@@ -49,6 +50,7 @@ jobs:
             app_label: "publisher"
             image_tag_var_name: "PUBLISHER_IMAGE_TAG"
             env_name: "stage"
+            with_migrations: true
         secrets: inherit
 
     deploy-media-ingest:
@@ -60,6 +62,7 @@ jobs:
             app_label: "media-ingest"
             image_tag_var_name: "MEDIA_INGEST_IMAGE_TAG"
             env_name: "stage"
+            with_migrations: true
         secrets: inherit
 
     deploy-websocket-gateway:
