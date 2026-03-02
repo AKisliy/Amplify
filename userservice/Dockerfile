@@ -4,21 +4,19 @@ WORKDIR /src
 RUN dotnet tool install --global dotnet-ef
 ENV PATH="$PATH:/root/.dotnet/tools"
 
-COPY ["Directory.Packages.props", "."]
-COPY ["Directory.Build.props", "."]
+COPY Directory.Packages.props .
+COPY Directory.Build.props .
+COPY src/Web/Web.csproj src/Web/
+COPY src/Application/Application.csproj src/Application/
+COPY src/Domain/Domain.csproj src/Domain/
+COPY src/Infrastructure/Infrastructure.csproj src/Infrastructure/
+COPY src/Contracts/Contracts.csproj src/Contracts/
 
-COPY ["src/Web/Web.csproj", "Web/"]
-COPY ["src/Application/Application.csproj", "Application/"]
-COPY ["src/Domain/Domain.csproj", "Domain/"]
-COPY ["src/Infrastructure/Infrastructure.csproj", "Infrastructure/"]
+RUN dotnet restore src/Web/Web.csproj
+COPY src ./src
+WORKDIR /src/src/Web
 
-RUN dotnet restore "Web/Web.csproj"
-
-COPY . ../
-
-WORKDIR "/src/Web"
-
-RUN dotnet build "Web.csproj" -c Release -o /app/build --no-restore
+RUN dotnet build Web.csproj -c Release --no-restore
 
 FROM build AS publish
 RUN dotnet publish "Web.csproj" -c Release -o /app/publish /p:UseAppHost=false --no-restore
