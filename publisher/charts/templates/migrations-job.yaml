@@ -12,8 +12,18 @@ spec:
       containers:
         - name: ef-bundle
           image: "{{ .Values.image.repository }}-migrations:{{ .Values.image.tag }}"
+          env:
+            - name: ASPNETCORE_ENVIRONMENT
+              value: "{{ .Values.environment }}"
           envFrom:
             - secretRef:
                 name: {{ .Values.secret.name }}
+          volumeMounts:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+      {{- with .Values.volumes }}
+      volumes:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
       restartPolicy: Never
   backoffLimit: 1
