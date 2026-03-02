@@ -78,6 +78,16 @@ jobs:
             - name: Set up Docker Buildx
               uses: docker/setup-buildx-action@v3
 
+            - name: Build and Push Migrations Image
+              uses: docker/build-push-action@v6
+              with:
+                  context: ./${{ inputs.service_folder }}
+                  file: ./${{ inputs.service_folder }}/Dockerfile.migrations
+                  push: true
+                  tags: ${{ env.IMAGE_NAME }}-migrations:${{ env.IMAGE_TAG }}
+                  cache-from: type=gha
+                  cache-to: type=gha,mode=max
+
             - name: Build and Push Docker Image
               uses: docker/build-push-action@v6
               with:
