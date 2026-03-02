@@ -22,13 +22,10 @@ WORKDIR /src/src/Web
 RUN dotnet build Web.csproj -c Release --no-restore
 
 RUN dotnet ef migrations bundle \
-    --no-build \
-    --project ../Infrastructure/Infrastructure.csproj \
-    --startup-project Web.csproj \
-    --configuration Release \
+    -s Web.csproj \
+    --context ApplicationDbContext \
     --self-contained \
     -o /app/efbundle \
-    -p:EFBundle=true \
     --verbose
 
 FROM mcr.microsoft.com/dotnet/runtime-deps:9.0
