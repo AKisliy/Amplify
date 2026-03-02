@@ -10,7 +10,6 @@ COPY src/Web/Web.csproj src/Web/
 COPY src/Application/Application.csproj src/Application/
 COPY src/Domain/Domain.csproj src/Domain/
 COPY src/Infrastructure/Infrastructure.csproj src/Infrastructure/
-COPY src/Contracts/Contracts.csproj src/Contracts/
 
 RUN dotnet restore src/Web/Web.csproj
 COPY src ./src
