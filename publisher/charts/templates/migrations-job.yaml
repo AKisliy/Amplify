@@ -18,6 +18,7 @@ spec:
           envFrom:
             - secretRef:
                 name: {{ .Values.secret.name }}
+          {{- with .Values.volumeMounts }}
           volumeMounts:
             {{- toYaml . | nindent 12 }}
           {{- end }}
