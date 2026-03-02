@@ -11,6 +11,10 @@ secrets:
     key: tiktok-client-key-sandbox
   tikTokClientSecret:
     key: tiktok-client-secret-sandbox
+  instagramAppId:
+    key: instagram-app-id
+  instagramAppSecret:
+    key: instagram-app-secret
 
 volumeMounts:
   - name: config-volume
@@ -28,7 +32,7 @@ appConfig:
   InstagramApiOptions:
     AppId: "instagram_app_id"
     AppSecret: "instagram_app_secret"
-    RedirectUri: "http://host.minikube.internal:6001/auth/instagram/callback"
+    RedirectUri: "http://localhost:5252/api/instagram/callback"
     ApiVersion: "v22.0"
     DailyLimit: 200
     BaseGraphHostUrl: "https://graph.facebook.com/"
