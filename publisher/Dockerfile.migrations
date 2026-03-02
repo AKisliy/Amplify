@@ -1,0 +1,36 @@
+FROM mcr.microsoft.com/dotnet/sdk:9.0 AS build
+WORKDIR /src
+
+RUN dotnet tool install --global dotnet-ef
+ENV PATH="$PATH:/root/.dotnet/tools"
+
+COPY ["Directory.Packages.props", "."]
+COPY ["Directory.Build.props", "."]
+COPY ["src/Web/Web.csproj", "Web/"]
+COPY ["src/Application/Application.csproj", "Application/"]
+COPY ["src/Domain/Domain.csproj", "Domain/"]
+COPY ["src/Infrastructure/Infrastructure.csproj", "Infrastructure/"]
+COPY ["src/Contracts/Contracts.csproj", "Contracts/"]
+
+RUN dotnet restore "Web/Web.csproj"
+
+COPY . ../
+WORKDIR "/src/Web"
+
+RUN dotnet ef migrations bundle \
+    --project ../Infrastructure/Infrastructure.csproj \
+    --startup-project Web.csproj \
+    --configuration Release \
+    --runtime linux-x64 \
+    --self-contained \
+    -o /app/efbundle
+
+FROM mcr.microsoft.com/dotnet/runtime-deps:9.0
+WORKDIR /app
+
+RUN adduser --disabled-password --gecos "" appuser && chown -R appuser /app
+USER appuser
+
+COPY --from=build /app/efbundle .
+
+ENTRYPOINT ["./efbundle"]
