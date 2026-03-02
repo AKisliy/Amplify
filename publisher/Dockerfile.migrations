@@ -18,11 +18,12 @@ COPY . ../
 WORKDIR "/src/Web"
 
 RUN dotnet ef migrations bundle \
-    -s Web.csproj \
+    --project ../Infrastructure/Infrastructure.csproj \
+    --startup-project Web.csproj \
     --configuration Release \
     --self-contained \
-    --context ApplicationDbContext \
-    -o /app/efbundle --verbose
+    -o /app/efbundle --verbose \
+    -- -p:ManagePackageVersionsCentrally=false
 
 FROM mcr.microsoft.com/dotnet/runtime-deps:9.0
 WORKDIR /app
