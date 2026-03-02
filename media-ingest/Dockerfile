@@ -23,7 +23,7 @@ RUN dotnet publish "Web.csproj" -c Release -o /app/publish /p:UseAppHost=false -
 FROM build AS bundle
 RUN dotnet ef migrations bundle -s Web.csproj --context ApplicationDbContext --configuration Release --self-contained -o /app/efbundle --verbose
 
-FROM mcr.microsoft.com/dotnet/aspnet:9.0 AS final
+FROM mcr.microsoft.com/dotnet/aspnet:9.0 AS final-api
 WORKDIR /app
 
 USER root
