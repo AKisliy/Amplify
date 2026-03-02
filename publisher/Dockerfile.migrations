@@ -22,8 +22,7 @@ RUN dotnet ef migrations bundle \
     --startup-project Web.csproj \
     --configuration Release \
     --self-contained \
-    -o /app/efbundle --verbose \
-    -- -p:ManagePackageVersionsCentrally=false
+    -o /app/efbundle --verbose
 
 FROM mcr.microsoft.com/dotnet/runtime-deps:9.0
 WORKDIR /app
