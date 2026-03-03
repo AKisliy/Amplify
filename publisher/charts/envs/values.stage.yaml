@@ -32,7 +32,7 @@ appConfig:
   InstagramApiOptions:
     AppId: ""
     AppSecret: ""
-    RedirectUri: "https://staging.alexeykiselev.tech"
+    RedirectUri: "https://staging.alexeykiselev.tech/facebook/callback"
     ApiVersion: "v22.0"
     DailyLimit: 200
     BaseGraphHostUrl: "https://graph.facebook.com/"
