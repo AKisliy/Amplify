@@ -30,9 +30,9 @@ appConfig:
   MediaService:
     BaseUrl: "http://mediaingest.test-env.svc.cluster.local"
   InstagramApiOptions:
-    AppId: "instagram_app_id"
-    AppSecret: "instagram_app_secret"
-    RedirectUri: "http://localhost:5252/api/instagram/callback"
+    AppId: ""
+    AppSecret: ""
+    RedirectUri: "https://staging.alexeykiselev.tech/facebook/callback"
     ApiVersion: "v22.0"
     DailyLimit: 200
     BaseGraphHostUrl: "https://graph.facebook.com/"
