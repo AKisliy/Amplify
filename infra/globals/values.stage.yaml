@@ -1,5 +1,5 @@
 global:
-  appDomain: amplify.34.40.73.43.nip.io
+  appDomain: staging.alexeykiselev.tech
   gateway:
     name: amplify-gateway
   secretStore:

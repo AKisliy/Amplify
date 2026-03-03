@@ -30,8 +30,8 @@ appConfig:
   MediaService:
     BaseUrl: "http://mediaingest.test-env.svc.cluster.local"
   InstagramApiOptions:
-    AppId: "instagram_app_id"
-    AppSecret: "instagram_app_secret"
+    AppId: ""
+    AppSecret: ""
     RedirectUri: "http://localhost:5252/api/instagram/callback"
     ApiVersion: "v22.0"
     DailyLimit: 200
