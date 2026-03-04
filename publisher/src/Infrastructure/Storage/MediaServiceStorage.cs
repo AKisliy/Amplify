@@ -17,4 +17,12 @@ public class MediaServiceStorage(
         response.EnsureSuccessStatusCode();
         return await response.Content.ReadAsStringAsync();
     }
+
+    public async Task<string> GetPublicUrlAsync(Guid fileId)
+    {
+        _logger.LogInformation("Getting public URL for file ID: {FileId}", fileId);
+        var response = await httpClient.GetAsync($"/media/public/{fileId}");
+        response.EnsureSuccessStatusCode();
+        return await response.Content.ReadAsStringAsync();
+    }
 }

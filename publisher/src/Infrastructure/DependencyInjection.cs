@@ -27,6 +27,7 @@ using Microsoft.Extensions.Configuration;
 using Publisher.Infrastructure.Auth;
 using Publisher.Infrastructure.Broker;
 using Microsoft.EntityFrameworkCore.Migrations;
+using Publisher.Infrastructure.Publishers;
 
 namespace Microsoft.Extensions.DependencyInjection;
 
@@ -52,6 +53,7 @@ public static class DependencyInjection
         services.AddScoped<IFileStorage, MediaServiceStorage>();
 
         services.AddScoped<IPublicationStatusNotifier, PublicationStatusNotifier>();
+        services.AddScoped<IPublicationService, PublicationService>();
 
         services.AddScoped<ISocialMediaPublisherFactory, SocialMediaPublisherFactory>();
         services.AddScoped<IConnectionServiceFactory, ConnectionServiceFactory>();

@@ -19,7 +19,7 @@ public class InstagramPublisher(
 {
     public SocialProvider SocialMedia => SocialProvider.Instagram;
 
-    public async Task<PublicationResult> PostVideoAsync(SocialMediaPostConfig postConfig)
+    public async Task<PublicationResult> PostVideoAsync(SocialMediaPostConfig postConfig, CancellationToken cancellationToken)
     {
         var instPreset = postConfig.PublicationSettings.Instagram ?? new InstagramSettings();
 
@@ -28,12 +28,12 @@ public class InstagramPublisher(
         var coverKey = postConfig.CoverFileId;
         var credentials = await GetCredentialsAsync(postConfig.AccountId);
 
-        var videoUrl = await fileStorage.GetPresignedUrlAsync(videoKey);
+        var videoUrl = await fileStorage.GetPublicUrlAsync(videoKey);
         var coverUrl = string.Empty;
 
         if (coverKey != null)
         {
-            coverUrl = await fileStorage.GetPresignedUrlAsync(coverKey.Value);
+            coverUrl = await fileStorage.GetPublicUrlAsync(coverKey.Value);
         }
 
 
@@ -52,12 +52,12 @@ public class InstagramPublisher(
             return PublicationResult.Failed("Failed to create reel container");
         }
 
-        var uploadCompletionResponse = await instagramApiClient.WaitForContainerUploadAsync(creationId, credentials.AccessToken);
-        if (uploadCompletionResponse.StatusCode != InstagramApi.UploadStatus.Finished)
-        {
-            await HandleErrorResponse(uploadCompletionResponse);
-            return PublicationResult.Failed("Upload did not finish successfully");
-        }
+        // var uploadCompletionResponse = await instagramApiClient.WaitForContainerUploadAsync(creationId, credentials.AccessToken);
+        // if (uploadCompletionResponse.StatusCode != InstagramApi.UploadStatus.Finished)
+        // {
+        //     await HandleErrorResponse(uploadCompletionResponse);
+        //     return PublicationResult.Failed("Upload did not finish successfully");
+        // }
 
         var publishResponse = await instagramApiClient.PublishAsync(credentials, creationId);
         if (publishResponse.Id == null)

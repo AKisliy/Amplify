@@ -11,7 +11,7 @@ public class DummyInstagramPublisher(ILogger<DummyInstagramPublisher> logger) : 
 
     public SocialProvider SocialMedia => SocialProvider.Instagram;
 
-    public async Task<PublicationResult> PostVideoAsync(SocialMediaPostConfig video)
+    public async Task<PublicationResult> PostVideoAsync(SocialMediaPostConfig video, CancellationToken cancellationToken)
     {
         logger.LogInformation("Dummy publishing video {PostFileId} to Instagram account {AccountId}",
             video.PostFileId, video.AccountId);

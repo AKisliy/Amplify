@@ -6,5 +6,5 @@ namespace Publisher.Application.Common.Interfaces;
 public interface ISocialMediaPublisher
 {
     SocialProvider SocialMedia { get; }
-    Task<PublicationResult> PostVideoAsync(SocialMediaPostConfig video);
+    Task<PublicationResult> PostVideoAsync(SocialMediaPostConfig video, CancellationToken cancellationToken = default);
 }

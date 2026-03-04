@@ -38,4 +38,10 @@ public class Media : EndpointGroupBase
         await sender.Send(new DeleteMediaCommand(mediaId));
         return TypedResults.NoContent();
     }
+
+    public async Task<string> GetPublicUrlById(ISender sender, Guid mediaId, TimeSpan validFor)
+    {
+        var mediaDto = await sender.Send(new GetMediaQuery(mediaId));
+        return mediaDto.MediaPath;
+    }
 }
