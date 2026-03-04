@@ -15,7 +15,7 @@ volumeMounts:
 
 appConfig:
   S3:
-    Host: "media.alexeykiselev.tech"
+    Host: "storage.googleapis.com"
     AccessKey: ""
     SecretKey: ""
     BucketName: "amplify-media-test"
