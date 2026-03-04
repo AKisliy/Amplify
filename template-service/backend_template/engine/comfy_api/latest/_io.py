@@ -4,22 +4,10 @@ from collections import Counter
 from dataclasses import asdict, dataclass, field
 from enum import Enum
 from typing import Any, TypeVar, TypedDict, Literal
-from typing_extensions import final
+from typing import final
 
-from ._util import (copy_class, prune_dict, _NodeOutputInternal, is_class, shallow_clone_class, first_real_override, classproperty, ExecutionBlocker)
+from comfy_api.internal import (copy_class, prune_dict, _NodeOutputInternal, is_class, shallow_clone_class, first_real_override, classproperty, ExecutionBlocker)
 
-
-class FolderType(str, Enum):
-    input = "input"
-    output = "output"
-    temp = "temp"
-
-
-class UploadType(str, Enum):
-    image = "image_upload"
-    audio = "audio_upload"
-    video = "video_upload"
-    model = "file_upload"
 
 class RemoteOptions:
     def __init__(self, route: str, refresh_button: bool, control_after_refresh: Literal["first", "last"]="first",
@@ -333,6 +321,10 @@ class Combo(ComfyTypeIO):
             super().__init__(id, display_name, tooltip)
             self.options = options if options is not None else []
 
+@comfytype(io_type="IMAGE")
+class Image(ComfyTypeIO):
+    Type = str
+    
 class V3Data(TypedDict):
     hidden_inputs: dict[str, Any]
     'Dictionary where the keys are the hidden input ids and the values are the values of the hidden inputs.'
@@ -720,5 +712,3 @@ class _UIOutput(ABC):
     @abstractmethod
     def as_dict(self) -> dict:
         ...
-
-                             
