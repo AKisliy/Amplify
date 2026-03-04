@@ -12,7 +12,7 @@ volumeMounts:
   - name: config-volume
     mountPath: /app/appsettings.Staging.json
     subPath: appsettings_override.json
-
+ 
 appConfig:
   S3:
     Host: "storage.googleapis.com"
