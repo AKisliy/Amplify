@@ -67,6 +67,7 @@ public static class DependencyInjection
         builder.AddSchedulerServices();
 
         builder.AddSocialMediaConnections();
+        builder.AddHttpClients();
     }
 
     private static void AddInfrastructureOptionsWithFluentValidation(this IServiceCollection services)
