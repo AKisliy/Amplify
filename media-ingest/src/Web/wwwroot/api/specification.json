@@ -206,6 +206,47 @@
           }
         }
       }
+    },
+    "/api/media/{mediaId}/link": {
+      "get": {
+        "tags": [
+          "media"
+        ],
+        "operationId": "GetApiMediaLink",
+        "parameters": [
+          {
+            "name": "mediaId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "guid"
+            },
+            "x-position": 1
+          },
+          {
+            "name": "linkType",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/LinkType"
+            },
+            "x-position": 2
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GetLinkByIdResponse"
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
@@ -234,7 +275,7 @@
         }
       },
       "MediaType": {
-        "type": "integer",
+        "type": "string",
         "description": "",
         "x-enumNames": [
           "Video",
@@ -242,9 +283,32 @@
           "VideoAudio"
         ],
         "enum": [
-          0,
-          1,
-          2
+          "Video",
+          "Audio",
+          "VideoAudio"
+        ]
+      },
+      "GetLinkByIdResponse": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "mediaId": {
+            "type": "string",
+            "format": "guid"
+          },
+          "link": {
+            "type": "string"
+          }
+        }
+      },
+      "LinkType": {
+        "type": "string",
+        "description": "",
+        "x-enumNames": [
+          "GoogleCloudStorage"
+        ],
+        "enum": [
+          "GoogleCloudStorage"
         ]
       }
     },

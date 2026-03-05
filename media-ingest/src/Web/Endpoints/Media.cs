@@ -1,5 +1,6 @@
 using MediaIngest.Application.Media.Commands.DeleteMedia;
 using MediaIngest.Application.Media.Commands.Upload;
+using MediaIngest.Application.Media.Queries.GetLinkById;
 using MediaIngest.Application.Media.Queries.GetMedia;
 using MediaIngest.Domain.Enums;
 using Microsoft.AspNetCore.Http.HttpResults;
@@ -15,7 +16,7 @@ public class Media : EndpointGroupBase
         groupBuilder.MapPost(UploadFromLink);
 
         groupBuilder.MapGet("/{mediaId:guid}", GetMediaById).RequireAuthorization();
-        groupBuilder.MapGet("/public/{mediaId:guid}", GetPublicUrlById);
+        groupBuilder.MapGet("/{mediaId:guid}/link", GetLinkById); // TODO: Add authorization 
 
         groupBuilder.MapDelete("/{mediaId:guid}", DeleteMediaById)
             .WithDescription("ONLY for internal use. Don't call from client apps.");
@@ -40,9 +41,10 @@ public class Media : EndpointGroupBase
         return TypedResults.NoContent();
     }
 
-    public async Task<string> GetPublicUrlById(ISender sender, Guid mediaId)
+    public async Task<GetLinkByIdResponse> GetLinkById(ISender sender, Guid mediaId, LinkType linkType)
     {
-        var mediaDto = await sender.Send(new GetMediaQuery(mediaId));
-        return mediaDto.MediaPath;
+        var query = new GetLinkByIdQuery(mediaId, linkType);
+        var response = await sender.Send(query);
+        return response;
     }
 }
