@@ -39,7 +39,7 @@ appConfig:
     Username: ""
     Password: ""
   ExternalUrls:
-    MediaServiceApi: "http://mediaingest.test-env.svc.cluster.local"
+    MediaServiceApi: "http://mediaingest.test-env.svc.cluster.local/"
   Jwt:
     Issuer: "http://userservice.test-env.svc.cluster.local/userservice/api/auth"
     Audience: "MyAppDevelopmentUsers"

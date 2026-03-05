@@ -50,8 +50,6 @@ public static class DependencyInjection
         builder.AddAuth();
         builder.AddCorsUsage();
 
-        services.AddScoped<IFileStorage, MediaServiceStorage>();
-
         services.AddScoped<IPublicationStatusNotifier, PublicationStatusNotifier>();
         services.AddScoped<IPublicationService, PublicationService>();
 
@@ -176,7 +174,7 @@ public static class DependencyInjection
         var options = new ExternalUrlsOptions();
         builder.Configuration.GetSection(ExternalUrlsOptions.SectionName).Bind(options);
 
-        builder.Services.AddHttpClient<MediaServiceStorage>(client =>
+        builder.Services.AddHttpClient<IFileStorage, MediaServiceStorage>(client =>
         {
             client.BaseAddress = new Uri(options.MediaServiceApi);
         });
