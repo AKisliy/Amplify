@@ -28,7 +28,6 @@ public static class DependencyInjection
     private static IServiceCollection AddApplicationOptions(this IServiceCollection services)
     {
         services.AddOptionsWithFluentValidation<ExternalUrlsOptions>(ExternalUrlsOptions.SectionName);
-
         return services;
     }
 }
