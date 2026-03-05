@@ -169,5 +169,16 @@ public static class DependencyInjection
         builder.AddInstagramConnection();
         builder.AddTikTokConnection();
     }
+
+    private static void AddHttpClients(this IHostApplicationBuilder builder)
+    {
+        var options = new ExternalUrlsOptions();
+        builder.Configuration.GetSection(ExternalUrlsOptions.SectionName).Bind(options);
+
+        builder.Services.AddHttpClient<MediaServiceStorage>(client =>
+        {
+            client.BaseAddress = new Uri(options.MediaServiceApi);
+        });
+    }
 }
 
