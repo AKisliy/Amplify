@@ -5,26 +5,10 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 public class EncryptedConverter : ValueConverter<string, string>
 {
-    public EncryptedConverter(string keyName)
+    public EncryptedConverter(IDataProtector protector)
         : base(
-            v => Encrypt(v, keyName),
-            v => Decrypt(v, keyName))
+            v => protector.Protect(v),
+            v => protector.Unprotect(v))
     {
-    }
-
-    private static string Encrypt(string value, string key)
-    {
-        var provider = DataProtectionProvider.Create("PublisherApp");
-        var protector = provider.CreateProtector(key);
-
-        return protector.Protect(value);
-    }
-
-    private static string Decrypt(string value, string key)
-    {
-        var provider = DataProtectionProvider.Create("PublisherApp");
-        var protector = provider.CreateProtector(key);
-
-        return protector.Unprotect(value);
     }
 }
