@@ -47,6 +47,9 @@ virtualService:
 
 gateway:
   name: amplify-gateway
+
+secret:
+  name: userservice-k8s-secret
   
 # определяется в файлах окружений
 appConfig: {}

@@ -55,7 +55,7 @@ public static class DependencyInjection
 
         builder.Services.AddScoped<ApplicationDbContextInitialiser>();
 
-        if (builder.Environment.IsDevelopment() || builder.Environment.IsStaging())
+        if (builder.Environment.IsDevelopment())
         {
             builder.Services.AddTransient<IEmailService, DummyEmailSender>();
         }

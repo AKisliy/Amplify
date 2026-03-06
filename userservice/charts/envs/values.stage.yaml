@@ -1,7 +1,10 @@
 environment: "Staging"
 
 secrets:
-  connectionStringKey: userservice-db-conn 
+  connectionString:
+    key: userservice-db-conn 
+  mailApiKey:
+    key: resend-api-key-test
 
 volumeMounts:
   - name: config-volume
