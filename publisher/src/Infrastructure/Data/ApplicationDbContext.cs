@@ -2,6 +2,7 @@
 using Publisher.Application.Common.Interfaces;
 using Publisher.Domain.Entities;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.DataProtection.EntityFrameworkCore;
 using Publisher.Infrastructure.Data.Converters;
 
@@ -11,9 +12,14 @@ public class ApplicationDbContext : DbContext, IApplicationDbContext, IDataProte
 {
     public const string DefaultSchemaName = "publisher";
 
-    public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options)
+    private readonly IDataProtectionProvider _dataProtectionProvider;
+
+    public ApplicationDbContext(
+        DbContextOptions<ApplicationDbContext> options,
+        IDataProtectionProvider dataProtectionProvider)
         : base(options)
     {
+        _dataProtectionProvider = dataProtectionProvider;
     }
 
     // TODO: отследить связи других сущностей с Project
@@ -37,7 +43,7 @@ public class ApplicationDbContext : DbContext, IApplicationDbContext, IDataProte
         builder.HasDefaultSchema(DefaultSchemaName);
         builder.ApplyConfigurationsFromAssembly(Assembly.GetExecutingAssembly());
 
-        var encryptionConverter = new EncryptedConverter("SocialCredsKey");
+        var encryptionConverter = new EncryptedConverter(_dataProtectionProvider.CreateProtector("SocialCredsKey"));
 
         builder.Entity<SocialAccount>()
             .Property(sa => sa.Credentials)

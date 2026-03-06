@@ -22,14 +22,14 @@ internal static class InstagramDependencyInjection
         services.AddScoped<IConnectionService, InstagramConnectionService>();
         services.AddInstagramHttpClient();
 
-        if (environment.IsDevelopment() || environment.IsStaging())
-        {
-            services.AddScoped<ISocialMediaPublisher, DummyInstagramPublisher>();
-        }
-        else
-        {
-            services.AddScoped<ISocialMediaPublisher, InstagramPublisher>();
-        }
+        // if (environment.IsDevelopment() || environment.IsStaging())
+        // {
+        //     services.AddScoped<ISocialMediaPublisher, DummyInstagramPublisher>();
+        // }
+        // else
+        // {
+        services.AddScoped<ISocialMediaPublisher, InstagramPublisher>();
+        //}
 
         return builder;
     }

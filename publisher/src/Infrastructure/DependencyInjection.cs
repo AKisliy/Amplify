@@ -27,6 +27,7 @@ using Microsoft.Extensions.Configuration;
 using Publisher.Infrastructure.Auth;
 using Publisher.Infrastructure.Broker;
 using Microsoft.EntityFrameworkCore.Migrations;
+using Publisher.Infrastructure.Publishers;
 
 namespace Microsoft.Extensions.DependencyInjection;
 
@@ -49,9 +50,8 @@ public static class DependencyInjection
         builder.AddAuth();
         builder.AddCorsUsage();
 
-        services.AddScoped<IFileStorage, MediaServiceStorage>();
-
         services.AddScoped<IPublicationStatusNotifier, PublicationStatusNotifier>();
+        services.AddScoped<IPublicationService, PublicationService>();
 
         services.AddScoped<ISocialMediaPublisherFactory, SocialMediaPublisherFactory>();
         services.AddScoped<IConnectionServiceFactory, ConnectionServiceFactory>();
@@ -65,6 +65,7 @@ public static class DependencyInjection
         builder.AddSchedulerServices();
 
         builder.AddSocialMediaConnections();
+        builder.AddHttpClients();
     }
 
     private static void AddInfrastructureOptionsWithFluentValidation(this IServiceCollection services)
@@ -166,6 +167,17 @@ public static class DependencyInjection
     {
         builder.AddInstagramConnection();
         builder.AddTikTokConnection();
+    }
+
+    private static void AddHttpClients(this IHostApplicationBuilder builder)
+    {
+        var options = new ExternalUrlsOptions();
+        builder.Configuration.GetSection(ExternalUrlsOptions.SectionName).Bind(options);
+
+        builder.Services.AddHttpClient<IFileStorage, MediaServiceStorage>(client =>
+        {
+            client.BaseAddress = new Uri(options.MediaServiceApi);
+        });
     }
 }
 

@@ -15,6 +15,7 @@ public class Media : EndpointGroupBase
         groupBuilder.MapPost(UploadFromLink);
 
         groupBuilder.MapGet("/{mediaId:guid}", GetMediaById).RequireAuthorization();
+        groupBuilder.MapGet("/public/{mediaId:guid}", GetPublicUrlById);
 
         groupBuilder.MapDelete("/{mediaId:guid}", DeleteMediaById)
             .WithDescription("ONLY for internal use. Don't call from client apps.");
@@ -37,5 +38,11 @@ public class Media : EndpointGroupBase
     {
         await sender.Send(new DeleteMediaCommand(mediaId));
         return TypedResults.NoContent();
+    }
+
+    public async Task<string> GetPublicUrlById(ISender sender, Guid mediaId)
+    {
+        var mediaDto = await sender.Send(new GetMediaQuery(mediaId));
+        return mediaDto.MediaPath;
     }
 }

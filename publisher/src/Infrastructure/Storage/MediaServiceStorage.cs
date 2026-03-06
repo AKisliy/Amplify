@@ -13,7 +13,15 @@ public class MediaServiceStorage(
     {
         // TODO: заменить на реальный вызов медиа-сервиса
         _logger.LogInformation("Getting presigned URL for file ID: {FileId}", fileId);
-        var response = await httpClient.GetAsync($"/media/internal/{fileId}");
+        var response = await httpClient.GetAsync($"media/internal/{fileId}");
+        response.EnsureSuccessStatusCode();
+        return await response.Content.ReadAsStringAsync();
+    }
+
+    public async Task<string> GetPublicUrlAsync(Guid fileId)
+    {
+        _logger.LogInformation("Getting public URL for file ID: {FileId}", fileId);
+        var response = await httpClient.GetAsync($"media/public/{fileId}");
         response.EnsureSuccessStatusCode();
         return await response.Content.ReadAsStringAsync();
     }

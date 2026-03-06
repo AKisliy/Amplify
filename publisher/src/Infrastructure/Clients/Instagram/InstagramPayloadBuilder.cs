@@ -12,7 +12,6 @@ public class InstagramPayloadBuilder
         {
                 { PayloadFieldName.MediaType, MediaType.Reels },
                 { PayloadFieldName.VideoUrl, reelData.PostUrl },
-                { PayloadFieldName.UploadType, UploadType.Resumable },
                 { PayloadFieldName.AccessToken, credentials.AccessToken },
                 { PayloadFieldName.ShareToFeed, reelData.ShareToFeed.ToString().ToLower() }
         };

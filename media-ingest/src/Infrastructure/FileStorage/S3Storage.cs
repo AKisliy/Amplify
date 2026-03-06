@@ -25,19 +25,21 @@ public class S3Storage(
         await minio.RemoveObjectAsync(removeObjectArgs, cancellationToken);
     }
 
-    public async Task<string> GetPublicUrlAsync(MediaFile mediaFile, TimeSpan validFor, CancellationToken cancellationToken = default)
+    public Task<string> GetPublicUrlAsync(MediaFile mediaFile, TimeSpan validFor, CancellationToken cancellationToken = default)
     {
-        var args = new PresignedGetObjectArgs()
-            .WithBucket(_options.BucketName)
-            .WithObject(mediaFile.FileKey)
-            .WithExpiry(1000)
-            .WithHeaders(new Dictionary<string, string>
-            {
-                { "Content-Disposition", $"inline; filename=\"{mediaFile.OriginalFileName}\"" },
-                { "Content-Type", mediaFile.ContentType }
-            });
+        var publicUrl = "https://media.alexeykiselev.tech/" + mediaFile.FileKey;
+        return Task.FromResult(publicUrl);
+        // var args = new PresignedGetObjectArgs()
+        //     .WithBucket(_options.BucketName)
+        //     .WithObject(mediaFile.FileKey)
+        //     .WithExpiry(1000)
+        //     .WithHeaders(new Dictionary<string, string>
+        //     {
+        //         { "Content-Disposition", $"inline; filename=\"{mediaFile.OriginalFileName}\"" },
+        //         { "Content-Type", mediaFile.ContentType }
+        //     });
 
-        return await minio.PresignedGetObjectAsync(args);
+        // return await minio.PresignedGetObjectAsync(args);
     }
 
     public async Task<Stream> OpenFileAsync(string fileKey, CancellationToken cancellationToken = default)

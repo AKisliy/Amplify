@@ -1,9 +1,10 @@
-using System.Runtime.Serialization;
-
 namespace Publisher.Infrastructure.Models.Exceptions;
 
 public class TikTokException : Exception
 {
+    public string? ErrorCode { get; }
+    public string? LogId { get; }
+
     public TikTokException()
     {
     }
@@ -14,5 +15,12 @@ public class TikTokException : Exception
 
     public TikTokException(string? message, Exception? innerException) : base(message, innerException)
     {
+    }
+
+    public TikTokException(string? errorCode, string? message, string? logId)
+        : base(message)
+    {
+        ErrorCode = errorCode;
+        LogId = logId;
     }
 }
