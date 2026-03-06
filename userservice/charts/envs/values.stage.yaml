@@ -19,6 +19,7 @@ appConfig:
 
   MailOptions:
     ApiKey: "API_KEY"
+    FromEmail: dev@mail.alexeykiselev.tech
 
   Jwt:
     Key: "DevelopmentSecretKeyForJwtTokenGeneration"
