@@ -23,7 +23,7 @@ public class ImportAvatarJob(
         }
 
         var importUrl = new Url()
-            .AppendPathSegment("api/internal/media/import-url")
+            .AppendPathSegment("internal/media/import-url")
             .SetQueryParam("url", avatarUrl);
 
         var response = await httpClient.PostAsync(importUrl, null, cancellationToken);
