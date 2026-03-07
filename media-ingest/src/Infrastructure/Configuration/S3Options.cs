@@ -6,6 +6,8 @@ public class S3Options
 
     public string BucketName { get; set; } = string.Empty;
 
+    public string PublicBucketUrl { get; set; } = string.Empty;
+
     public string AccessKey { get; set; } = string.Empty;
 
     public string SecretKey { get; set; } = string.Empty;
@@ -30,5 +32,9 @@ public sealed class S3OptionsValidator : AbstractValidator<S3Options>
 
         RuleFor(x => x.Host)
             .NotEmpty();
+
+        RuleFor(x => x.PublicBucketUrl)
+            .NotEmpty()
+            .Must(uri => Uri.IsWellFormedUriString(uri, UriKind.Absolute));
     }
 }

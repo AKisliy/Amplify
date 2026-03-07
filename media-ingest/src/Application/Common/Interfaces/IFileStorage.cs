@@ -12,5 +12,7 @@ public interface IFileStorage
 
     Task DeleteFileAsync(string path, CancellationToken cancellationToken = default);
 
-    Task<string> GetPublicUrlAsync(MediaFile mediaFile, TimeSpan validFor, CancellationToken cancellationToken = default);
+    Task<string> GetPresignedUrlAsync(MediaFile mediaFile, TimeSpan validFor, CancellationToken cancellationToken = default);
+
+    Task<string> GetPublicUrlAsync(MediaFile mediaFile, CancellationToken cancellationToken = default);
 }

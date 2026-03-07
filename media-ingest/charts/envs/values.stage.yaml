@@ -20,6 +20,7 @@ appConfig:
     SecretKey: ""
     BucketName: "amplify-media-test"
     UseSsl: true
+    PublicBucketUrl: "https://media.alexeykiselev.tech/"
   YtDlp:
     YoutubeDlPath: "/opt/homebrew/bin/yt-dlp"
   MediaIngest:
