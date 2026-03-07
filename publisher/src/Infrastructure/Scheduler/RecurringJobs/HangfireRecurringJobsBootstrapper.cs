@@ -10,10 +10,8 @@ public class HangfireRecurringJobsBootstrapper(
 {
     public Task StartAsync(CancellationToken cancellationToken)
     {
-        if (recurringJobsOptions.Value.AutoListJobEnabled)
-            AddAutoListPublicationJob();
-        if (recurringJobsOptions.Value.TokenRefreshJobEnabled)
-            AddTokenRefreshCheckJob();
+        AddAutoListPublicationJob();
+        AddTokenRefreshCheckJob();
         return Task.CompletedTask;
     }
 
@@ -24,17 +22,31 @@ public class HangfireRecurringJobsBootstrapper(
 
     private void AddAutoListPublicationJob()
     {
-        recurringJobManager.AddOrUpdate<AutoListPublicationJob>(
-            AutoListPublicationJob.JobName,
-            job => job.CheckNewScheduledPosts(CancellationToken.None),
-            Cron.Minutely());
+        if (recurringJobsOptions.Value.AutoListJobEnabled)
+        {
+            recurringJobManager.AddOrUpdate<AutoListPublicationJob>(
+                AutoListPublicationJob.JobName,
+                job => job.CheckNewScheduledPosts(CancellationToken.None),
+                Cron.Minutely());
+        }
+        else
+        {
+            recurringJobManager.RemoveIfExists(AutoListPublicationJob.JobName);
+        }
     }
 
     private void AddTokenRefreshCheckJob()
     {
-        recurringJobManager.AddOrUpdate<TokenRefreshCheckJob>(
-            TokenRefreshCheckJob.JobName,
-            job => job.CheckExpiringTokensAsync(CancellationToken.None),
-            Cron.Daily());
+        if (recurringJobsOptions.Value.TokenRefreshJobEnabled)
+        {
+            recurringJobManager.AddOrUpdate<TokenRefreshCheckJob>(
+                TokenRefreshCheckJob.JobName,
+                job => job.CheckExpiringTokensAsync(CancellationToken.None),
+                Cron.Daily());
+        }
+        else
+        {
+            recurringJobManager.RemoveIfExists(TokenRefreshCheckJob.JobName);
+        }
     }
 }
