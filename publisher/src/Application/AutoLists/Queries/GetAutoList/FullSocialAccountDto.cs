@@ -15,7 +15,8 @@ public class FullSocialAccountDto
     {
         public Mapping()
         {
-            CreateMap<SocialAccount, FullSocialAccountDto>();
+            CreateMap<SocialAccount, FullSocialAccountDto>()
+                .ForMember(d => d.SocialProvider, o => o.MapFrom(s => s.Provider));
         }
     }
 }

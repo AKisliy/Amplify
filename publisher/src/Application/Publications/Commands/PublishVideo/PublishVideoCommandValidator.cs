@@ -21,13 +21,13 @@ public class PublishVideoCommandValidator : AbstractValidator<PublishVideoComman
             .NotEmpty().WithMessage("At least one account must be specified.")
             .Must(ids => ids.Distinct().Count() == ids.Count).WithMessage("Account IDs must be unique.")
             .Must(ids => ids.All(id => id != Guid.Empty)).WithMessage("Account IDs must not contain empty GUIDs.")
-            .MustAsync(AccountIdsExist).WithMessage("One or more account IDs do not exist.");
+            .MustAsync((cmd, ids, ct) => AccountIdsExist(cmd, ids, ct)).WithMessage("One or more account IDs do not exist or are not connected to the project.");
     }
 
-    private async Task<bool> AccountIdsExist(IReadOnlyList<Guid> list, CancellationToken token)
+    private async Task<bool> AccountIdsExist(PublishVideoCommand cmd, IReadOnlyList<Guid> list, CancellationToken token)
     {
         var existingCount = await _dbContext.SocialAccounts
-            .Where(acc => list.Contains(acc.Id))
+            .Where(acc => list.Contains(acc.Id) && acc.Projects.Any(p => p.Id == cmd.ProjectId))
             .CountAsync(token);
         return existingCount == list.Count;
     }
