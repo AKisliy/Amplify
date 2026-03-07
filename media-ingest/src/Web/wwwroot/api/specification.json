@@ -529,10 +529,12 @@
         "type": "string",
         "description": "",
         "x-enumNames": [
-          "GoogleCloudStorage"
+          "GoogleCloudStorage",
+          "Public"
         ],
         "enum": [
-          "GoogleCloudStorage"
+          "GoogleCloudStorage",
+          "Public"
         ]
       },
       "ImportFromUrlDto": {
