@@ -80,7 +80,7 @@ public class InstagramUrlBuilder(IOptions<InstagramApiOptions> config)
     public string GetUrlForFacebookAccounts(string accessToken)
     {
         var url = new Url("https://graph.facebook.com/v18.0/me/accounts")
-            .SetQueryParam("fields", "instagram_business_account{id,username},name", isEncoded: true)
+            .SetQueryParam("fields", "instagram_business_account{id,username,profile_picture_url},name", isEncoded: true)
             .SetQueryParam("access_token", accessToken);
 
         return url;

@@ -22,6 +22,7 @@ using Microsoft.Extensions.Logging;
 using Publisher.Application.Common.Interfaces.Factory;
 using Publisher.Infrastructure.Factory;
 using Publisher.Infrastructure.Scheduler;
+using Publisher.Infrastructure.Scheduler.BackgroundJobs;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.Configuration;
 using Publisher.Infrastructure.Auth;
@@ -178,6 +179,8 @@ public static class DependencyInjection
         {
             client.BaseAddress = new Uri(options.MediaServiceApi);
         });
+
+        builder.Services.AddHttpClient<ImportAvatarJob>(client => client.BaseAddress = new Uri(options.MediaServiceApi));
     }
 }
 

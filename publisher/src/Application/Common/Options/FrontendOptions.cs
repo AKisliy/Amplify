@@ -1,6 +1,4 @@
-using FluentValidation;
-
-namespace Publisher.Infrastructure.Configuration.Options;
+namespace Publisher.Application.Common.Options;
 
 public class FrontendOptions
 {
@@ -9,6 +7,8 @@ public class FrontendOptions
     public required string BaseUrl { get; set; }
 
     public required string ConnectionsPath { get; set; }
+
+    public required string MediaServiceUrl { get; set; }
 }
 
 public class FrontendOptionsValidator : AbstractValidator<FrontendOptions>
@@ -24,5 +24,10 @@ public class FrontendOptionsValidator : AbstractValidator<FrontendOptions>
             .NotEmpty()
             .Must(path => path.StartsWith("/"))
             .WithMessage("ConnectionsPath must start with a '/'");
+
+        RuleFor(x => x.MediaServiceUrl)
+            .NotEmpty()
+            .Must(uri => Uri.IsWellFormedUriString(uri, UriKind.Absolute))
+            .WithMessage("MediaServiceUrl must be a valid absolute URI");
     }
 }
