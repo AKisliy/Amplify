@@ -10,11 +10,12 @@ public class GetProjectIntegrationsQueryHandler(IApplicationDbContext context, I
 {
     public async Task<ConnectionsVm> Handle(GetProjectIntegrationsQuery request, CancellationToken cancellationToken)
     {
-        var integrations = await context.SocialAccounts
-            .Where(x => x.ProjectId == request.ProjectId)
+        var connections = await context.Projects
+            .Where(p => p.Id == request.ProjectId)
+            .SelectMany(p => p.SocialAccounts)
             .ProjectTo<FullSocialAccountDto>(mapper.ConfigurationProvider)
             .ToListAsync(cancellationToken);
 
-        return new ConnectionsVm { Connections = integrations.AsReadOnly() };
+        return new ConnectionsVm { Connections = connections.AsReadOnly() };
     }
 }

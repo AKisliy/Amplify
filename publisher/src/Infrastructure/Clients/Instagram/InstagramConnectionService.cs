@@ -1,6 +1,8 @@
 using System.Text;
+using Ardalis.GuardClauses;
 using Flurl;
 using Microsoft.AspNetCore.WebUtilities;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Newtonsoft.Json;
@@ -59,14 +61,6 @@ internal class InstagramConnectionService(
             longLivedTokenResponse.ExpiresIn :
             60 * 60 * 24 * DefaultExpirationDays);
 
-        var socialAccount = new SocialAccount
-        {
-            ProjectId = state.ProjectId,
-            Username = targetPage.InstagramBusinessAccount?.Username ?? "Unknown",
-            Provider = SocialProvider.Instagram,
-            TokenExpiresAt = tokenExpiresAt
-        };
-
         var instagramCredentials = new InstagramCredentials
         {
             InstagramBusinessAccountId = targetPage.InstagramBusinessAccount!.Id,
@@ -75,11 +69,38 @@ internal class InstagramConnectionService(
             AccessToken = longLivedTokenResponse.AccessToken,
         };
 
-        var instagramCreds = JsonConvert.SerializeObject(instagramCredentials);
+        var serializedCredentials = JsonConvert.SerializeObject(instagramCredentials);
+        var providerUserId = targetPage.InstagramBusinessAccount.Id;
 
-        socialAccount.Credentials = instagramCreds;
+        var socialAccount = await dbContext.SocialAccounts
+            .Include(sa => sa.Projects)
+            .FirstOrDefaultAsync(sa => sa.Provider == SocialProvider.Instagram && sa.ProviderUserId == providerUserId, cancellationToken);
 
-        dbContext.SocialAccounts.Add(socialAccount);
+        if (socialAccount is null)
+        {
+            socialAccount = new SocialAccount
+            {
+                ProviderUserId = providerUserId,
+                Username = targetPage.InstagramBusinessAccount.Username ?? "Unknown",
+                Provider = SocialProvider.Instagram,
+            };
+            dbContext.SocialAccounts.Add(socialAccount);
+        }
+        else
+        {
+            socialAccount.Username = targetPage.InstagramBusinessAccount.Username ?? socialAccount.Username;
+        }
+
+        socialAccount.Credentials = serializedCredentials;
+        socialAccount.TokenExpiresAt = tokenExpiresAt;
+
+        if (!socialAccount.Projects.Any(p => p.Id == state.ProjectId))
+        {
+            var project = await dbContext.Projects.FindAsync([state.ProjectId], cancellationToken);
+            Guard.Against.NotFound(state.ProjectId, project);
+            socialAccount.Projects.Add(project);
+        }
+
         await dbContext.SaveChangesAsync(cancellationToken);
 
         var result = new ConnectionResult(socialAccount.Id, frontendOptions.Value.ConnectionsPath);

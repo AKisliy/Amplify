@@ -41,7 +41,7 @@ public class CreateAutoListCommandValidator : AbstractValidator<CreateAutoListCo
     {
         var accountIds = accounts.Select(x => x.Id);
         var ownedByActorAccountsCount = await _context.SocialAccounts
-            .Where(x => accountIds.Contains(x.Id) && x.ProjectId == projectId)
+            .Where(x => accountIds.Contains(x.Id) && x.Projects.Any(p => p.Id == projectId))
             .Distinct()
             .CountAsync(cancellationToken);
 

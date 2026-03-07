@@ -1,6 +1,8 @@
 using System.Text;
+using Ardalis.GuardClauses;
 using FluentValidation;
 using Flurl;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Newtonsoft.Json;
@@ -72,20 +74,42 @@ internal class TikTokConnectionService(
             OpenId = tokenResponse.OpenId!
         };
 
+        var serializedCredentials = JsonConvert.SerializeObject(credentials);
+        var providerUserId = tokenResponse.OpenId!;
         var projectId = state.ProjectId;
-        var socialAccount = new SocialAccount
-        {
-            ProjectId = projectId,
-            Username = user.DisplayName ?? "TikTok",
-            Provider = SocialProvider.TikTok,
-            TokenExpiresAt = DateTime.UtcNow.AddSeconds(tokenResponse.ExpiresIn),
-            Credentials = JsonConvert.SerializeObject(credentials)
-        };
 
-        dbContext.SocialAccounts.Add(socialAccount);
+        var socialAccount = await dbContext.SocialAccounts
+            .Include(sa => sa.Projects)
+            .FirstOrDefaultAsync(sa => sa.Provider == SocialProvider.TikTok && sa.ProviderUserId == providerUserId, cancellationToken);
+
+        if (socialAccount is null)
+        {
+            socialAccount = new SocialAccount
+            {
+                ProviderUserId = providerUserId,
+                Username = user.DisplayName ?? "TikTok",
+                Provider = SocialProvider.TikTok,
+            };
+            dbContext.SocialAccounts.Add(socialAccount);
+        }
+        else
+        {
+            socialAccount.Username = user.DisplayName ?? socialAccount.Username;
+        }
+
+        socialAccount.Credentials = serializedCredentials;
+        socialAccount.TokenExpiresAt = DateTime.UtcNow.AddSeconds(tokenResponse.ExpiresIn);
+
+        if (!socialAccount.Projects.Any(p => p.Id == projectId))
+        {
+            var project = await dbContext.Projects.FindAsync([projectId], cancellationToken);
+            Guard.Against.NotFound(projectId, project);
+            socialAccount.Projects.Add(project);
+        }
+
         await dbContext.SaveChangesAsync(cancellationToken);
         logger.LogInformation("Successfully connected TikTok account with OpenID {OpenId} for project {ProjectId}",
-            tokenResponse.OpenId, projectId);
+            providerUserId, projectId);
 
         var result = new ConnectionResult(socialAccount.Id, frontendOptions.Value.ConnectionsPath);
         return result;
