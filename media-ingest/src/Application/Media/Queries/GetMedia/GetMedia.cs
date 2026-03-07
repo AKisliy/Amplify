@@ -5,7 +5,7 @@ namespace MediaIngest.Application.Media.Queries.GetMedia;
 
 public record GetMediaQuery(Guid MediaId) : IRequest<MediaFileDto>;
 
-public class GetMediaQueryHandler(IApplicationDbContext dbContext, IFileStorage fileStorage)
+internal class GetMediaQueryHandler(IApplicationDbContext dbContext, IFileStorage fileStorage)
     : IRequestHandler<GetMediaQuery, MediaFileDto>
 {
     public async Task<MediaFileDto> Handle(GetMediaQuery request, CancellationToken cancellationToken)
@@ -16,7 +16,7 @@ public class GetMediaQueryHandler(IApplicationDbContext dbContext, IFileStorage 
 
         Guard.Against.NotFound(request.MediaId, mediaFile, nameof(MediaFile));
 
-        var publicUrl = await fileStorage.GetPublicUrlAsync(mediaFile, TimeSpan.FromHours(1), cancellationToken);
+        var publicUrl = await fileStorage.GetPresignedUrlAsync(mediaFile, TimeSpan.FromHours(1), cancellationToken);
 
         return new MediaFileDto
         {

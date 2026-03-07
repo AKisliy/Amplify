@@ -3,7 +3,7 @@ using MediaIngest.Domain.Entities;
 
 namespace MediaIngest.Application.Media.Commands.UploadFromFile;
 
-public record UploadFromFileCommand(Stream FileStream, string FileName, string ContentType)
+public record UploadFromFileCommand(Stream FileStream, string FileName, string ContentType, long FileSize)
     : IRequest<UploadFileDto>;
 
 public class UploadFromFileCommandHandler(IFileStorage fileStorage, IApplicationDbContext dbContext)
@@ -19,18 +19,19 @@ public class UploadFromFileCommandHandler(IFileStorage fileStorage, IApplication
             FileKey = fileKey,
             OriginalFileName = request.FileName,
             ContentType = request.ContentType,
-            FileSize = request.FileStream.Length
+            FileSize = request.FileSize
         };
 
         dbContext.MediaFiles.Add(mediaFile);
 
         await dbContext.SaveChangesAsync(cancellationToken);
 
-        var publicUrl = await fileStorage.GetPublicUrlAsync(mediaFile, TimeSpan.FromHours(1), cancellationToken);
+        var publicUrl = await fileStorage.GetPresignedUrlAsync(mediaFile, TimeSpan.FromHours(1), cancellationToken);
         return new UploadFileDto
         {
             MediaId = mediaFile.Id,
-            MediaPath = publicUrl
+            MediaPath = publicUrl,
+            ContentType = mediaFile.ContentType
         };
     }
 }

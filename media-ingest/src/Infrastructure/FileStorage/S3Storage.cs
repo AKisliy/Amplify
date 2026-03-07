@@ -1,3 +1,4 @@
+using Flurl;
 using MediaIngest.Application.Common.Interfaces;
 using MediaIngest.Domain.Entities;
 using MediaIngest.Infrastructure.Configuration;
@@ -25,21 +26,26 @@ public class S3Storage(
         await minio.RemoveObjectAsync(removeObjectArgs, cancellationToken);
     }
 
-    public Task<string> GetPublicUrlAsync(MediaFile mediaFile, TimeSpan validFor, CancellationToken cancellationToken = default)
+    public async Task<string> GetPresignedUrlAsync(MediaFile mediaFile, TimeSpan validFor, CancellationToken cancellationToken = default)
     {
-        var publicUrl = "https://media.alexeykiselev.tech/" + mediaFile.FileKey;
-        return Task.FromResult(publicUrl);
-        // var args = new PresignedGetObjectArgs()
-        //     .WithBucket(_options.BucketName)
-        //     .WithObject(mediaFile.FileKey)
-        //     .WithExpiry(1000)
-        //     .WithHeaders(new Dictionary<string, string>
-        //     {
-        //         { "Content-Disposition", $"inline; filename=\"{mediaFile.OriginalFileName}\"" },
-        //         { "Content-Type", mediaFile.ContentType }
-        //     });
+        var expiry = validFor.TotalSeconds;
+        var args = new PresignedGetObjectArgs()
+            .WithBucket(_options.BucketName)
+            .WithObject(mediaFile.FileKey)
+            .WithExpiry((int)expiry)
+            .WithHeaders(new Dictionary<string, string>
+            {
+                { "Content-Disposition", $"inline; filename=\"{mediaFile.OriginalFileName}\"" },
+                { "Content-Type", mediaFile.ContentType ?? "application/octet-stream" }
+            });
 
-        // return await minio.PresignedGetObjectAsync(args);
+        return await minio.PresignedGetObjectAsync(args);
+    }
+
+    public Task<string> GetPublicUrlAsync(MediaFile mediaFile, CancellationToken cancellationToken = default)
+    {
+        var publicUrl = new Url(_options.PublicBucketUrl).AppendPathSegment(mediaFile.FileKey).ToString();
+        return Task.FromResult(publicUrl);
     }
 
     public async Task<Stream> OpenFileAsync(string fileKey, CancellationToken cancellationToken = default)

@@ -17,6 +17,8 @@
         "tags": [
           "images"
         ],
+        "summary": "Upload an image",
+        "description": "Accepts JPEG, PNG, WebP, GIF. Max size: 10 MB. Returns the assigned mediaId and public URL.",
         "operationId": "UploadFromFile",
         "requestBody": {
           "content": {
@@ -50,6 +52,26 @@
                 }
               }
             }
+          },
+          "400": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
           }
         },
         "security": [
@@ -64,6 +86,8 @@
         "tags": [
           "images"
         ],
+        "summary": "Import an image from URL",
+        "description": "Downloads an image from an external URL and stores it. Not yet implemented.",
         "operationId": "PostApiImagesImport",
         "parameters": [
           {
@@ -92,6 +116,26 @@
                 }
               }
             }
+          },
+          "401": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "501": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
           }
         },
         "security": [
@@ -101,32 +145,30 @@
         ]
       }
     },
-    "/api/media": {
+    "/api/internal/media": {
       "post": {
         "tags": [
-          "media"
+          "internal/media"
         ],
-        "operationId": "UploadFromLink",
-        "parameters": [
-          {
-            "name": "link",
-            "in": "query",
-            "required": true,
-            "schema": {
-              "type": "string"
-            },
-            "x-position": 1
-          },
-          {
-            "name": "mediaType",
-            "in": "query",
-            "required": true,
-            "schema": {
-              "$ref": "#/components/schemas/MediaType"
-            },
-            "x-position": 2
+        "summary": "Upload a file (internal)",
+        "description": "Service-to-service only. Stores any file type without auth. Returns mediaId for use in subsequent requests.",
+        "operationId": "PostApiInternalMedia",
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "file": {
+                    "type": "string",
+                    "format": "binary",
+                    "nullable": true
+                  }
+                }
+              }
+            }
           }
-        ],
+        },
         "responses": {
           "200": {
             "description": "OK",
@@ -139,7 +181,17 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/UploadFileDto2"
+                  "$ref": "#/components/schemas/UploadFileDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
                 }
               }
             }
@@ -147,12 +199,14 @@
         }
       }
     },
-    "/api/media/{mediaId}": {
+    "/api/internal/media/{mediaId}/stream": {
       "get": {
         "tags": [
-          "media"
+          "internal/media"
         ],
-        "operationId": "GetApiMedia",
+        "summary": "Stream file content (internal)",
+        "description": "Service-to-service only. Returns raw file bytes with the stored Content-Type header.",
+        "operationId": "GetApiInternalMediaStream",
         "parameters": [
           {
             "name": "mediaId",
@@ -168,20 +222,28 @@
         "responses": {
           "200": {
             "description": ""
+          },
+          "404": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
           }
-        },
-        "security": [
-          {
-            "JWT": []
-          }
-        ]
-      },
+        }
+      }
+    },
+    "/api/internal/media/{mediaId}": {
       "delete": {
         "tags": [
-          "media"
+          "internal/media"
         ],
-        "description": "ONLY for internal use. Don't call from client apps.",
-        "operationId": "DeleteApiMedia",
+        "summary": "Delete media (internal)",
+        "description": "Service-to-service only. Permanently deletes the file from storage and removes the database record.",
+        "operationId": "DeleteApiInternalMedia",
         "parameters": [
           {
             "name": "mediaId",
@@ -203,16 +265,28 @@
           },
           "204": {
             "description": ""
+          },
+          "404": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
           }
         }
       }
     },
-    "/api/media/{mediaId}/link": {
+    "/api/internal/media/{mediaId}/link": {
       "get": {
         "tags": [
-          "media"
+          "internal/media"
         ],
-        "operationId": "GetApiMediaLink",
+        "summary": "Get media URL (internal)",
+        "description": "Service-to-service only. Returns a URL for the media file based on the requested link type.",
+        "operationId": "GetApiInternalMediaLink",
         "parameters": [
           {
             "name": "mediaId",
@@ -244,8 +318,76 @@
                 }
               }
             }
+          },
+          "404": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
           }
         }
+      }
+    },
+    "/api/media/{mediaId}": {
+      "get": {
+        "tags": [
+          "media"
+        ],
+        "summary": "Get media by ID",
+        "description": "Redirects to the CDN URL of the media file. Use the URL directly in <img src> or <video src>.",
+        "operationId": "GetApiMedia",
+        "parameters": [
+          {
+            "name": "mediaId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "guid"
+            },
+            "x-position": 1
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {}
+            }
+          },
+          "302": {
+            "description": ""
+          },
+          "404": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "JWT": []
+          }
+        ]
       }
     }
   },
@@ -261,32 +403,64 @@
           },
           "mediaPath": {
             "type": "string"
+          },
+          "contentType": {
+            "type": "string"
           }
         }
       },
-      "UploadFileDto2": {
-        "type": "object",
-        "additionalProperties": false,
-        "properties": {
-          "uploadId": {
-            "type": "string",
-            "format": "guid"
+      "HttpValidationProblemDetails": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/ProblemDetails"
+          },
+          {
+            "type": "object",
+            "additionalProperties": {
+              "nullable": true
+            },
+            "properties": {
+              "errors": {
+                "type": "object",
+                "additionalProperties": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
           }
-        }
-      },
-      "MediaType": {
-        "type": "string",
-        "description": "",
-        "x-enumNames": [
-          "Video",
-          "Audio",
-          "VideoAudio"
-        ],
-        "enum": [
-          "Video",
-          "Audio",
-          "VideoAudio"
         ]
+      },
+      "ProblemDetails": {
+        "type": "object",
+        "additionalProperties": {
+          "nullable": true
+        },
+        "properties": {
+          "type": {
+            "type": "string",
+            "nullable": true
+          },
+          "title": {
+            "type": "string",
+            "nullable": true
+          },
+          "status": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "detail": {
+            "type": "string",
+            "nullable": true
+          },
+          "instance": {
+            "type": "string",
+            "nullable": true
+          }
+        }
       },
       "GetLinkByIdResponse": {
         "type": "object",
