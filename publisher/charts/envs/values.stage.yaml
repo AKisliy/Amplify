@@ -54,3 +54,6 @@ appConfig:
     ClientKey: ""
     ClientSecret: ""
     RedirectUri: "http://amplify.34.40.73.43.nip.io/userservice/api"
+  RecurringJobs:
+    AutoListJobEnabled: false
+    TokenRefreshJobEnabled: false

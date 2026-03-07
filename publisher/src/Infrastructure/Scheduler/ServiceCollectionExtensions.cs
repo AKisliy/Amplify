@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Publisher.Application.Common.Options;
 using Publisher.Infrastructure.Scheduler.RecurringJobs;
 
 namespace Publisher.Infrastructure.Scheduler;
@@ -29,6 +30,8 @@ internal static class ServiceCollectionExtensions
                     PrepareSchemaIfNecessary = true
                 });
         });
+
+        builder.Services.AddOptionsWithFluentValidation<RecurringJobsOptions>(RecurringJobsOptions.ConfigurationSection);
 
         builder.Services.AddHangfireServer();
 

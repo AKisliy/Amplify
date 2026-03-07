@@ -1,14 +1,19 @@
 using Hangfire;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Options;
 
 namespace Publisher.Infrastructure.Scheduler.RecurringJobs;
 
-public class HangfireRecurringJobsBootstrapper(IRecurringJobManager recurringJobManager) : IHostedService
+public class HangfireRecurringJobsBootstrapper(
+    IRecurringJobManager recurringJobManager,
+    IOptions<RecurringJobsOptions> recurringJobsOptions) : IHostedService
 {
     public Task StartAsync(CancellationToken cancellationToken)
     {
-        AddAutoListPublicationJob();
-        AddTokenRefreshCheckJob();
+        if (recurringJobsOptions.Value.AutoListJobEnabled)
+            AddAutoListPublicationJob();
+        if (recurringJobsOptions.Value.TokenRefreshJobEnabled)
+            AddTokenRefreshCheckJob();
         return Task.CompletedTask;
     }
 
