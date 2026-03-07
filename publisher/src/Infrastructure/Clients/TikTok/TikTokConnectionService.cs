@@ -90,4 +90,22 @@ internal class TikTokConnectionService(
         var result = new ConnectionResult(socialAccount.Id, frontendOptions.Value.ConnectionsPath);
         return result;
     }
+
+    public async Task RefreshAccessTokenAsync(SocialAccount account, CancellationToken cancellationToken = default)
+    {
+        var credentials = JsonConvert.DeserializeObject<TikTokCredentials>(account.Credentials)
+            ?? throw new InvalidOperationException($"Cannot deserialize TikTok credentials for account {account.Id}");
+
+        var tokenResponse = await apiClient.RefreshTokenAsync(credentials.RefreshToken, cancellationToken);
+
+        credentials.AccessToken = tokenResponse.AccessToken!;
+        credentials.RefreshToken = tokenResponse.RefreshToken!;
+        account.Credentials = JsonConvert.SerializeObject(credentials);
+        account.TokenExpiresAt = DateTime.UtcNow.AddSeconds(tokenResponse.ExpiresIn);
+
+        await dbContext.SaveChangesAsync(cancellationToken);
+
+        logger.LogInformation("Refreshed TikTok token for account {AccountId}, new expiry: {ExpiresAt}",
+            account.Id, account.TokenExpiresAt);
+    }
 }

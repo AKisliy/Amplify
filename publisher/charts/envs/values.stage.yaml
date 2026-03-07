@@ -34,10 +34,8 @@ appConfig:
     ApiVersion: "v22.0"
     DailyLimit: 200
     BaseGraphHostUrl: "https://graph.facebook.com/"
-  RabbitMQOptions:
-    Host: ""
-    Username: ""
-    Password: ""
+  RabbitMQ:
+    Url: ""
   ExternalUrls:
     MediaServiceApi: "http://mediaingest.test-env.svc.cluster.local/media/api/"
   Jwt:
@@ -56,3 +54,6 @@ appConfig:
     ClientKey: ""
     ClientSecret: ""
     RedirectUri: "http://amplify.34.40.73.43.nip.io/userservice/api"
+  RecurringJobs:
+    AutoListJobEnabled: false
+    TokenRefreshJobEnabled: false

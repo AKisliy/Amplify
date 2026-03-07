@@ -56,6 +56,35 @@ public class TikTokApiClient(
         return tokenResponse;
     }
 
+    public async Task<TikTokTokenResponse> RefreshTokenAsync(string refreshToken, CancellationToken cancellationToken)
+    {
+        var requestBody = new Dictionary<string, string>
+        {
+            ["client_key"] = tikTokOptions.Value.ClientKey,
+            ["client_secret"] = tikTokOptions.Value.ClientSecret,
+            ["grant_type"] = "refresh_token",
+            ["refresh_token"] = refreshToken
+        };
+
+        var request = new HttpRequestMessage(HttpMethod.Post, "https://open.tiktokapis.com/v2/oauth/token/")
+        {
+            Content = new FormUrlEncodedContent(requestBody)
+        };
+
+        var response = await httpClient.SendAsync(request, cancellationToken);
+        var content = await response.Content.ReadAsStringAsync(cancellationToken);
+
+        if (!response.IsSuccessStatusCode)
+            throw new Exception($"TikTok token refresh error: {content}");
+
+        var tokenResponse = JsonConvert.DeserializeObject<TikTokTokenResponse>(content)
+            ?? throw new Exception("Failed to deserialize TikTok refresh token response.");
+
+        await responseValidator.ValidateAndThrowAsync(tokenResponse, cancellationToken);
+
+        return tokenResponse;
+    }
+
     public async Task<TikTokUser> GetTikTokUserAsync(string accessToken, CancellationToken cancellationToken)
     {
         string[] fields = ["open_id", "union_id", "avatar_url", "display_name"];
