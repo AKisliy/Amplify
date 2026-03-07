@@ -50,6 +50,7 @@ appConfig:
   Frontend:
     BaseUrl: "http://localhost:3000"
     ConnectionsPath: "/connections"
+    MediaServiceUrl: "https://staging.alexeykiselev.tech/media/api/"
   TikTokApi:
     ClientKey: ""
     ClientSecret: ""

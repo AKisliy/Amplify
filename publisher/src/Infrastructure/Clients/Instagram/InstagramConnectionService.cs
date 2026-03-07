@@ -1,6 +1,7 @@
 using System.Text;
 using Ardalis.GuardClauses;
 using Flurl;
+using Hangfire;
 using Microsoft.AspNetCore.WebUtilities;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
@@ -9,10 +10,12 @@ using Newtonsoft.Json;
 using Publisher.Application.Common.Interfaces;
 using Publisher.Application.Common.Models;
 using Publisher.Application.Common.Models.Dto;
+using Publisher.Application.Common.Options;
 using Publisher.Application.Connections.Commands;
 using Publisher.Domain.Entities;
 using Publisher.Domain.Enums;
 using Publisher.Infrastructure.Configuration.Options;
+using Publisher.Infrastructure.Scheduler.BackgroundJobs;
 
 namespace Publisher.Infrastructure.Clients.Instagram;
 
@@ -21,6 +24,7 @@ internal class InstagramConnectionService(
     InstagramApiClient instagramApiClient,
     IApplicationDbContext dbContext,
     IOptions<FrontendOptions> frontendOptions,
+    IBackgroundJobClient backgroundJobClient,
     ILogger<InstagramConnectionService> logger)
     : IConnectionService
 {
@@ -102,6 +106,10 @@ internal class InstagramConnectionService(
         }
 
         await dbContext.SaveChangesAsync(cancellationToken);
+
+        var profilePictureUrl = targetPage.InstagramBusinessAccount.ProfilePictureUrl;
+        if (!string.IsNullOrEmpty(profilePictureUrl))
+            backgroundJobClient.Enqueue<ImportAvatarJob>(j => j.ImportAsync(socialAccount.Id, profilePictureUrl, CancellationToken.None));
 
         var result = new ConnectionResult(socialAccount.Id, frontendOptions.Value.ConnectionsPath);
 

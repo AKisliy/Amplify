@@ -7,6 +7,7 @@ public class SocialAccount : BaseEntity
     public SocialProvider Provider { get; set; }
     public string Credentials { get; set; } = null!;
     public DateTime TokenExpiresAt { get; set; }
+    public Guid? AvatarMediaId { get; set; }
 
     public virtual ICollection<Project> Projects { get; set; } = [];
     public virtual ICollection<AutoList> AutoLists { get; set; } = [];

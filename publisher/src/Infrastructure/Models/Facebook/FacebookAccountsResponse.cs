@@ -27,4 +27,7 @@ public class InstagramAccountInfo
 
     [JsonPropertyName("username")]
     public string Username { get; set; } = string.Empty;
+
+    [JsonPropertyName("profile_picture_url")]
+    public string? ProfilePictureUrl { get; set; }
 }

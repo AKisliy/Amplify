@@ -1,8 +1,10 @@
 using MediaIngest.Application.Media.Commands.DeleteMedia;
+using MediaIngest.Application.Media.Commands.ImportFromUrl;
 using MediaIngest.Application.Media.Commands.UploadFromFile;
 using MediaIngest.Application.Media.Queries.GetLinkById;
 using MediaIngest.Application.Media.Queries.GetMediaStream;
 using MediaIngest.Domain.Enums;
+using MediaIngest.Web.Endpoints.Models;
 using Microsoft.AspNetCore.Http.HttpResults;
 
 namespace MediaIngest.Web.Endpoints;
@@ -42,6 +44,12 @@ public class Internal : EndpointGroupBase
             .WithDescription("Service-to-service only. Returns a URL for the media file based on the requested link type.")
             .Produces<GetLinkByIdResponse>(StatusCodes.Status200OK)
             .ProducesProblem(StatusCodes.Status404NotFound);
+
+        groupBuilder.MapPost("/import-url", ImportFromUrl)
+            .WithSummary("Import file from external URL (internal)")
+            .WithDescription("Service-to-service only. Downloads file from an external URL and stores it in S3. Returns mediaId.")
+            .Produces<ImportFromUrlDto>(StatusCodes.Status201Created)
+            .ProducesProblem(StatusCodes.Status400BadRequest);
     }
 
     public async Task<Created<UploadFileDto>> Upload(ISender sender, IFormFile file)
@@ -74,4 +82,11 @@ public class Internal : EndpointGroupBase
         var response = await sender.Send(query);
         return response;
     }
+
+    public async Task<Created<ImportFromUrlDto>> ImportFromUrl(ISender sender, [AsParameters] ImportFromUrlRequest request)
+    {
+        var result = await sender.Send(new ImportFromUrlCommand(request.Url));
+        return TypedResults.Created($"/api/internal/media/{result.MediaId}/stream", result);
+    }
 }
+

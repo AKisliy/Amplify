@@ -1,7 +1,9 @@
 using System.Text;
+using System.Transactions;
 using Ardalis.GuardClauses;
 using FluentValidation;
 using Flurl;
+using Hangfire;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
@@ -9,11 +11,13 @@ using Newtonsoft.Json;
 using Publisher.Application.Common.Interfaces;
 using Publisher.Application.Common.Models;
 using Publisher.Application.Common.Models.Dto;
+using Publisher.Application.Common.Options;
 using Publisher.Application.Connections.Commands;
 using Publisher.Domain.Entities;
 using Publisher.Domain.Enums;
 using Publisher.Infrastructure.Configuration.Options;
 using Publisher.Infrastructure.Models.TikTok;
+using Publisher.Infrastructure.Scheduler.BackgroundJobs;
 
 namespace Publisher.Infrastructure.Clients.TikTok;
 
@@ -22,6 +26,7 @@ internal class TikTokConnectionService(
     IApplicationDbContext dbContext,
     ILogger<TikTokConnectionService> logger,
     IOptions<FrontendOptions> frontendOptions,
+    IBackgroundJobClient backgroundJobClient,
     TikTokApiClient apiClient)
     : IConnectionService
 {
@@ -107,9 +112,20 @@ internal class TikTokConnectionService(
             socialAccount.Projects.Add(project);
         }
 
-        await dbContext.SaveChangesAsync(cancellationToken);
-        logger.LogInformation("Successfully connected TikTok account with OpenID {OpenId} for project {ProjectId}",
-            providerUserId, projectId);
+        using var transaction = new TransactionScope(TransactionScopeAsyncFlowOption.Enabled);
+        {
+            await dbContext.SaveChangesAsync(cancellationToken);
+
+            if (!string.IsNullOrEmpty(user.AvatarUrl))
+                backgroundJobClient.Enqueue<ImportAvatarJob>(j => j.ImportAsync(socialAccount.Id, user.AvatarUrl, CancellationToken.None));
+
+            transaction.Complete();
+        }
+
+        logger.LogInformation(
+            "Successfully connected TikTok account with OpenID {OpenId} for project {ProjectId}",
+            providerUserId,
+            projectId);
 
         var result = new ConnectionResult(socialAccount.Id, frontendOptions.Value.ConnectionsPath);
         return result;
