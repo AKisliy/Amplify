@@ -110,4 +110,22 @@ internal class InstagramConnectionService(
 
         return Task.FromResult(new AuthUrlResponse(url));
     }
+
+    public async Task RefreshAccessTokenAsync(SocialAccount account, CancellationToken cancellationToken = default)
+    {
+        var credentials = JsonConvert.DeserializeObject<InstagramCredentials>(account.Credentials)
+            ?? throw new InvalidOperationException($"Cannot deserialize Instagram credentials for account {account.Id}");
+
+        var tokenResponse = await instagramApiClient.RefreshLongLivedTokenAsync(credentials.AccessToken, cancellationToken);
+
+        credentials.AccessToken = tokenResponse.AccessToken;
+        account.Credentials = JsonConvert.SerializeObject(credentials);
+        account.TokenExpiresAt = DateTime.UtcNow.AddSeconds(
+            tokenResponse.ExpiresIn > 0 ? tokenResponse.ExpiresIn : 60 * 60 * 24 * DefaultExpirationDays);
+
+        await dbContext.SaveChangesAsync(cancellationToken);
+
+        logger.LogInformation("Refreshed Instagram token for account {AccountId}, new expiry: {ExpiresAt}",
+            account.Id, account.TokenExpiresAt);
+    }
 }

@@ -1,6 +1,7 @@
 using Publisher.Application.Common.Models;
 using Publisher.Application.Common.Models.Dto;
 using Publisher.Application.Connections.Commands;
+using Publisher.Domain.Entities;
 using Publisher.Domain.Enums;
 
 namespace Publisher.Application.Common.Interfaces;
@@ -15,4 +16,6 @@ public interface IConnectionService
         CancellationToken cancellationToken = default);
 
     Task<AuthUrlResponse> GetAuthUrlAsync(Guid projectId, CancellationToken cancellationToken = default);
+
+    Task RefreshAccessTokenAsync(SocialAccount account, CancellationToken cancellationToken = default);
 }

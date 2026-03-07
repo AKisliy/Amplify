@@ -8,6 +8,7 @@ public class HangfireRecurringJobsBootstrapper(IRecurringJobManager recurringJob
     public Task StartAsync(CancellationToken cancellationToken)
     {
         AddAutoListPublicationJob();
+        AddTokenRefreshCheckJob();
         return Task.CompletedTask;
     }
 
@@ -18,11 +19,17 @@ public class HangfireRecurringJobsBootstrapper(IRecurringJobManager recurringJob
 
     private void AddAutoListPublicationJob()
     {
-        var interval = Cron.Minutely();
-
         recurringJobManager.AddOrUpdate<AutoListPublicationJob>(
             AutoListPublicationJob.JobName,
             job => job.CheckNewScheduledPosts(CancellationToken.None),
-            interval);
+            Cron.Minutely());
+    }
+
+    private void AddTokenRefreshCheckJob()
+    {
+        recurringJobManager.AddOrUpdate<TokenRefreshCheckJob>(
+            TokenRefreshCheckJob.JobName,
+            job => job.CheckExpiringTokensAsync(CancellationToken.None),
+            Cron.Daily());
     }
 }

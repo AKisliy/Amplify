@@ -1,4 +1,5 @@
 using System.Net.Http.Json;
+using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using Polly.Registry;
 using Publisher.Domain.Entities;
@@ -12,9 +13,9 @@ namespace Publisher.Infrastructure.Clients.Instagram;
 
 public class InstagramApiClient(
     HttpClient httpClient,
+    ILogger<InstagramApiClient> logger,
     InstagramUrlBuilder urlBuilder,
     InstagramPayloadBuilder payloadBuilder,
-    InstagramHeaderBuilder headerBuilder,
     ResiliencePipelineProvider<string> pipelineProvider)
 {
     public async Task<InstagramApiResponse> CreateReelContainerAsync(InstagramReelData reelData, InstagramCredentials credentials)
@@ -35,14 +36,6 @@ public class InstagramApiClient(
         if (transformedRespose.ShortCode == null)
             throw new InstagramException("Instagram returned empty shortcode", transformedRespose.Error ?? new());
         return urlBuilder.FormPostLink(transformedRespose.ShortCode);
-    }
-
-    public async Task<InstagramApiResponse> UploadVideoToContainerAsync(string videoPath, string accessToken, string creationId)
-    {
-        var uploadRequest = await GetUploadRequestMessageAsync(videoPath, accessToken, creationId);
-
-        var uploadResponse = await httpClient.SendAsync(uploadRequest);
-        return await HandleInstagramResponseAsync(uploadResponse);
     }
 
     public async Task<InstagramApiResponse> WaitForContainerUploadAsync(string creationId, string accessToken, CancellationToken cancellationToken = default)
@@ -103,6 +96,14 @@ public class InstagramApiClient(
         return response;
     }
 
+    public async Task<FacebookTokenResponse> RefreshLongLivedTokenAsync(string accessToken, CancellationToken cancellationToken = default)
+    {
+        var url = urlBuilder.GetUrlForTokenRefresh(accessToken);
+        var response = await httpClient.GetFromJsonAsync<FacebookTokenResponse>(url, cancellationToken)
+            ?? throw new InstagramException("Failed to refresh long-lived token");
+        return response;
+    }
+
     public async Task<FacebookAccountsResponse> GetFacebookAccountsAsync(string accessToken, CancellationToken cancellationToken = default)
     {
         var url = urlBuilder.GetUrlForFacebookAccounts(accessToken);
@@ -117,33 +118,23 @@ public class InstagramApiClient(
         return accountsResponse;
     }
 
-    private async Task<HttpRequestMessage> GetUploadRequestMessageAsync(string videoPath, string accessToken, string creationId)
-    {
-        // var uploadUrl = urlBuilder.GetMediaResumableUploadUrl(creationId);
-
-        // var fileStream = fileStorage.OpenFile(videoPath);
-
-        // var uploadRequest = new HttpRequestMessage(HttpMethod.Post, uploadUrl)
-        // {
-        //     Content = new StreamContent(fileStream)
-        // };
-
-        // headerBuilder.AddResumableUploadHeaders(uploadRequest, accessToken, fileSize);
-
-        // return uploadRequest;
-        throw new NotImplementedException();
-    }
-
     private async Task<InstagramApiResponse> HandleInstagramResponseAsync(HttpResponseMessage response)
     {
         var responseContent = await response.Content.ReadAsStringAsync();
         try
         {
-            return JsonConvert.DeserializeObject<InstagramApiResponse>(responseContent) ??
+            var instagramResponse = JsonConvert.DeserializeObject<InstagramApiResponse>(responseContent) ??
                 throw new InstagramException("Couldn't unparse response");
+
+            if (!response.IsSuccessStatusCode)
+            {
+                logger.LogError("Instagram API returned error. Status code: {StatusCode}, Response: {ResponseContent}", response.StatusCode, responseContent);
+            }
+            return instagramResponse;
         }
         catch (JsonReaderException ex)
         {
+            logger.LogError(ex, "Error occurred while parsing Instagram API response");
             throw new InstagramException(ex.Message);
         }
     }

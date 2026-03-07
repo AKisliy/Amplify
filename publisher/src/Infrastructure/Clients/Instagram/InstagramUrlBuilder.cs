@@ -86,6 +86,13 @@ public class InstagramUrlBuilder(IOptions<InstagramApiOptions> config)
         return url;
     }
 
+    public string GetUrlForTokenRefresh(string longLivedAccessToken)
+    {
+        return new Url("https://graph.instagram.com/refresh_access_token")
+            .SetQueryParam("grant_type", "ig_refresh_token")
+            .SetQueryParam("access_token", longLivedAccessToken);
+    }
+
     public string FormPostLink(string shortcode)
     {
         return $"https://instagram.com/p/{shortcode}";
