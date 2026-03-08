@@ -13,7 +13,6 @@ public class MediaServiceStorage(
 
     public async Task<string> GetPresignedUrlAsync(Guid fileId)
     {
-        // TODO: заменить на реальный вызов медиа-сервиса
         _logger.LogInformation("Getting presigned URL for file ID: {FileId}", fileId);
         var response = await httpClient.GetFromJsonAsync<GetLinkResponse>($"internal/media/{fileId}/link?linkType=Presigned");
 

@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Http.HttpResults;
 using Publisher.Application.Common.Models.Dto;
 using Publisher.Domain.Enums;
+using Publisher.Application.Connections.Commands.DisconnectAccount;
 using Publisher.Application.Connections.Queries.GetProjectConnections;
 using Publisher.Application.Connections.Queries;
 using Publisher.Application.Connections.Commands;
@@ -17,6 +18,7 @@ public class Connections : EndpointGroupBase
         groupBuilder.MapPost(Connection);
 
         groupBuilder.MapGet("{projectId}", GetProjectIntegrations);
+        groupBuilder.MapDelete("{projectId}/accounts/{accountId}", DisconnectAccount);
     }
 
     public async Task<Ok<AuthUrlResponse>> GetAuthUrl(ISender sender, Guid projectId, SocialProvider provider)
@@ -36,8 +38,13 @@ public class Connections : EndpointGroupBase
     public async Task<Ok<ConnectionsVm>> GetProjectIntegrations(ISender sender, Guid projectId)
     {
         var query = new GetProjectIntegrationsQuery(projectId);
-
         var result = await sender.Send(query);
         return TypedResults.Ok(result);
+    }
+
+    public async Task<NoContent> DisconnectAccount(ISender sender, Guid projectId, Guid accountId)
+    {
+        await sender.Send(new DisconnectAccountCommand(accountId, projectId));
+        return TypedResults.NoContent();
     }
 }
