@@ -52,12 +52,12 @@ public class InstagramPublisher(
             return PublicationResult.Failed("Failed to create reel container");
         }
 
-        // var uploadCompletionResponse = await instagramApiClient.WaitForContainerUploadAsync(creationId, credentials.AccessToken);
-        // if (uploadCompletionResponse.StatusCode != InstagramApi.UploadStatus.Finished)
-        // {
-        //     await HandleErrorResponse(uploadCompletionResponse);
-        //     return PublicationResult.Failed("Upload did not finish successfully");
-        // }
+        var uploadCompletionResponse = await instagramApiClient.WaitForContainerUploadAsync(creationId, credentials.AccessToken);
+        if (uploadCompletionResponse.StatusCode != InstagramApi.UploadStatus.Finished)
+        {
+            await HandleErrorResponse(uploadCompletionResponse);
+            return PublicationResult.Failed("Upload did not finish successfully");
+        }
 
         var publishResponse = await instagramApiClient.PublishAsync(credentials, creationId);
         if (publishResponse.Id == null)
