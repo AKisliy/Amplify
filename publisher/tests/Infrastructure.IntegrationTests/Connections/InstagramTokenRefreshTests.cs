@@ -6,6 +6,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Publisher.Application.Common.Interfaces;
 using Publisher.Infrastructure.Clients.Instagram;
+using Publisher.Application.Common.Options;
 using Publisher.Infrastructure.Configuration.Options;
 using Publisher.Infrastructure.Data;
 using Shouldly;

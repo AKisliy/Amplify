@@ -25,6 +25,9 @@ public class InstagramApiClient(
     {
         var creationUrl = urlBuilder.GetMediaCreationUrl(credentials.InstagramUserId);
         var creationPayload = payloadBuilder.BuildReelCreationPayload(reelData, credentials);
+
+        logger.LogInformation("Creating Instagram reel container. UserId: {UserId}, VideoUrl: {VideoUrl}, CoverUrl: {CoverUrl}",
+            credentials.InstagramUserId, reelData.PostUrl, reelData.CoverUrl);
         var creationResponse = await httpClient.PostAsync(creationUrl, creationPayload);
         return await HandleInstagramResponseAsync(creationResponse);
     }
