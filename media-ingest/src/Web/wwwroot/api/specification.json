@@ -332,6 +332,56 @@
         }
       }
     },
+    "/api/internal/media/import-url": {
+      "post": {
+        "tags": [
+          "internal/media"
+        ],
+        "summary": "Import file from external URL (internal)",
+        "description": "Service-to-service only. Downloads file from an external URL and stores it in S3. Returns mediaId.",
+        "operationId": "PostApiInternalMediaImportUrl",
+        "parameters": [
+          {
+            "name": "Url",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "nullable": true
+            },
+            "x-position": 1
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {}
+            }
+          },
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ImportFromUrlDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/media/{mediaId}": {
       "get": {
         "tags": [
@@ -479,11 +529,23 @@
         "type": "string",
         "description": "",
         "x-enumNames": [
-          "GoogleCloudStorage"
+          "GoogleCloudStorage",
+          "Public"
         ],
         "enum": [
-          "GoogleCloudStorage"
+          "GoogleCloudStorage",
+          "Public"
         ]
+      },
+      "ImportFromUrlDto": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "mediaId": {
+            "type": "string",
+            "format": "guid"
+          }
+        }
       }
     },
     "securitySchemes": {

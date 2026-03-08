@@ -30,10 +30,10 @@ appConfig:
   InstagramApiOptions:
     AppId: ""
     AppSecret: ""
-    RedirectUri: "https://staging.alexeykiselev.tech/facebook/callback"
+    RedirectUri: "https://staging.alexeykiselev.tech/publisher/api/connections"
     ApiVersion: "v22.0"
     DailyLimit: 200
-    BaseGraphHostUrl: "https://graph.facebook.com/"
+    BaseGraphHostUrl: "https://graph.instagram.com"
   RabbitMQ:
     Url: ""
   ExternalUrls:
@@ -50,6 +50,7 @@ appConfig:
   Frontend:
     BaseUrl: "http://localhost:3000"
     ConnectionsPath: "/connections"
+    MediaServiceUrl: "https://staging.alexeykiselev.tech/media/api/"
   TikTokApi:
     ClientKey: ""
     ClientSecret: ""

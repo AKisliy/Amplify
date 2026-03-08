@@ -1,3 +1,4 @@
+using Publisher.Application.Common.Mappings;
 using Publisher.Domain.Entities;
 using Publisher.Domain.Enums;
 
@@ -11,12 +12,15 @@ public class FullSocialAccountDto
 
     public string Username { get; set; } = null!;
 
+    public string? AvatarUrl { get; set; }
+
     private class Mapping : Profile
     {
         public Mapping()
         {
             CreateMap<SocialAccount, FullSocialAccountDto>()
-                .ForMember(d => d.SocialProvider, o => o.MapFrom(s => s.Provider));
+                .ForMember(d => d.SocialProvider, o => o.MapFrom(s => s.Provider))
+                .ForMember(d => d.AvatarUrl, o => o.MapFrom<ImageUrlResolver, Guid?>(s => s.AvatarMediaId));
         }
     }
 }

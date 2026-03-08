@@ -9,6 +9,7 @@ using Npgsql;
 using Publisher.Application.Common.Interfaces;
 using Publisher.Domain.Enums;
 using Publisher.Infrastructure.Clients.TikTok;
+using Publisher.Application.Common.Options;
 using Publisher.Infrastructure.Configuration.Options;
 using Publisher.Infrastructure.Data;
 using Shouldly;

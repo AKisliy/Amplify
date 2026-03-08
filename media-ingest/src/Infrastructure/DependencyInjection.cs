@@ -42,6 +42,7 @@ public static class DependencyInjection
 
         builder.Services.AddTransient<ILinkGeneratorFactory, LinkGeneratorFactory>();
         builder.Services.AddTransient<ILinkGenerator, GoogleStorageLinkGenerator>();
+        builder.Services.AddTransient<ILinkGenerator, PublicLinkGenerator>();
 
         builder.Services.AddS3Storage(builder.Configuration);
         builder.Services.AddScoped<IFileStorage, S3Storage>();

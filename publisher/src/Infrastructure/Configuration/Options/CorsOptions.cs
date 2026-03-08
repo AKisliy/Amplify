@@ -21,6 +21,5 @@ public class CorsOptionsValidator : AbstractValidator<CorsOptions>
         RuleFor(x => x.AllowedOrigins)
             .NotEmpty()
             .WithMessage("Allowed orgins weren't provided");
-
     }
 }

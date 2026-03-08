@@ -8,16 +8,16 @@ namespace Publisher.Application.Common.Mappings;
 /// Resolves image URL from a given source object.
 /// <usepara>The source member is expected to be a Guid representing the image identifier.</usepara>
 /// </summary>
-public class ImageUrlResolver(IOptions<ExternalUrlsOptions> options)
+public class ImageUrlResolver(IOptions<FrontendOptions> options)
     : IMemberValueResolver<object, object, Guid?, string?>, IMemberValueResolver<object, object, Guid, string>
 {
     public string? Resolve(object source, object destination, Guid? sourceMember, string? destMember, ResolutionContext context)
     {
-        var baseUrl = options.Value.MediaServiceApi;
+        var baseUrl = options.Value.MediaServiceUrl;
 
         if (sourceMember is not null && sourceMember != Guid.Empty)
         {
-            return Url.Combine(baseUrl, "media", sourceMember.ToString());
+            return new Url(baseUrl).AppendPathSegment("media").AppendPathSegment(sourceMember.ToString()).ToString();
         }
 
         return null;
@@ -25,9 +25,8 @@ public class ImageUrlResolver(IOptions<ExternalUrlsOptions> options)
 
     public string Resolve(object source, object destination, Guid sourceMember, string destMember, ResolutionContext context)
     {
-        var baseUrl = options.Value.MediaServiceApi;
+        var baseUrl = options.Value.BaseUrl;
 
-        return Url.Combine(baseUrl, "media", sourceMember.ToString());
-
+        return new Url(baseUrl).AppendPathSegment("media").AppendPathSegment(sourceMember.ToString()).ToString();
     }
 }

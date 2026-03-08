@@ -12,8 +12,8 @@ public class InstagramApiOptions
 
     public string ApiVersion { get; init; } = "v22.0";
     public int DailyLimit { get; init; } = 50;
-    public string BaseGraphHostUrl { get; init; } = "https://graph.facebook.com";
-    public string ResumableUploadHostUrl { get; init; } = "https://rupload.facebook.com";
+    public string BaseGraphHostUrl { get; init; } = "https://graph.instagram.com";
+    public string ResumableUploadHostUrl { get; init; } = "https://rupload.instagram.com";
 
     public class ContainerStatusQuerying
     {
