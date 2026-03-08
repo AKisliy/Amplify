@@ -1,9 +1,15 @@
 using MediaIngest.Application.Common.Interfaces;
 using MediaIngest.Domain.Entities;
+using MediaIngest.Domain.Enums;
 
 namespace MediaIngest.Application.Media.Commands.UploadFromFile;
 
-public record UploadFromFileCommand(Stream FileStream, string FileName, string ContentType, long FileSize)
+public record UploadFromFileCommand(
+    Stream FileStream,
+    string FileName,
+    string ContentType,
+    long FileSize,
+    FileType FileType)
     : IRequest<UploadFileDto>;
 
 public class UploadFromFileCommandHandler(IFileStorage fileStorage, IApplicationDbContext dbContext)

@@ -1,12 +1,13 @@
+
 using MediaIngest.Application.Media.Commands.UploadFromFile;
 using MediaIngest.Domain.Enums;
 using Microsoft.AspNetCore.Http.HttpResults;
 
 namespace MediaIngest.Web.Endpoints;
 
-public class Images : EndpointGroupBase
+public class Videos : EndpointGroupBase
 {
-    public override string? GroupName => "images";
+    public override string? GroupName => "videos";
 
     public override void Map(RouteGroupBuilder groupBuilder)
     {
@@ -14,19 +15,11 @@ public class Images : EndpointGroupBase
             .Accepts<IFormFile>("multipart/form-data")
             .DisableAntiforgery()
             .RequireAuthorization()
-            .WithSummary("Upload an image")
-            .WithDescription("Accepts JPEG, PNG, WebP, GIF. Max size: 10 MB. Returns the assigned mediaId and public URL.")
+            .WithSummary("Upload a video")
+            .WithDescription("Accepts MP4 and WebM. Max size: 100 MB. Returns the assigned mediaId and presigned URL.")
             .Produces<UploadFileDto>(StatusCodes.Status201Created)
             .ProducesValidationProblem()
             .ProducesProblem(StatusCodes.Status401Unauthorized);
-
-        groupBuilder.MapPost("/import", UploadFromLink)
-            .RequireAuthorization()
-            .WithSummary("Import an image from URL")
-            .WithDescription("Downloads an image from an external URL and stores it. Not yet implemented.")
-            .Produces<UploadFileDto>(StatusCodes.Status201Created)
-            .ProducesProblem(StatusCodes.Status401Unauthorized)
-            .ProducesProblem(StatusCodes.Status501NotImplemented);
     }
 
     public async Task<Created<UploadFileDto>> UploadFromFile(ISender sender, IFormFile file)
@@ -36,14 +29,9 @@ public class Images : EndpointGroupBase
             file.FileName,
             file.ContentType,
             file.Length,
-            FileType.Image);
+            FileType.Video);
 
         var result = await sender.Send(command);
         return TypedResults.Created($"/media/{result.MediaId}", result);
-    }
-
-    public Task<Created<UploadFileDto>> UploadFromLink(ISender sender, string link)
-    {
-        throw new NotImplementedException();
     }
 }
