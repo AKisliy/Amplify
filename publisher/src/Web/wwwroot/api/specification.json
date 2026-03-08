@@ -385,6 +385,41 @@
         }
       }
     },
+    "/api/connections/{projectId}/accounts/{accountId}": {
+      "delete": {
+        "tags": [
+          "connections"
+        ],
+        "operationId": "DeleteApiConnectionsAccounts",
+        "parameters": [
+          {
+            "name": "projectId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "guid"
+            },
+            "x-position": 1
+          },
+          {
+            "name": "accountId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "guid"
+            },
+            "x-position": 2
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        }
+      }
+    },
     "/api/publications/video": {
       "post": {
         "tags": [
@@ -575,6 +610,10 @@
           },
           "username": {
             "type": "string"
+          },
+          "avatarUrl": {
+            "type": "string",
+            "nullable": true
           }
         }
       },
