@@ -8,6 +8,10 @@ from enum import Enum
 from fnmatch import fnmatch
 from typing import Literal
 
+import google.auth.transport.requests
+from google.oauth2 import service_account
+
+from pydantic import BaseModel
 from comfy_api.latest import IO
 from comfy_api_nodes.apis.gemini import (
     GeminiContent,
@@ -31,9 +35,25 @@ from comfy_api_nodes.util import (
     validate_string,
 )
 
-from config import gemini_config 
+from config import gemini_config, media_ingest_config
 
-GEMINI_BASE_ENDPOINT = "https://aiplatform.googleapis.com/v1/publishers/google/models"
+GEMINI_BASE_ENDPOINT = f"https://{gemini_config.location}-aiplatform.googleapis.com/v1/projects/{gemini_config.project_id}/locations/{gemini_config.location}/publishers/google/models"
+
+_gcp_credentials = None
+
+def get_vertex_ai_access_token() -> str:
+    global _gcp_credentials
+    if _gcp_credentials is None:
+        _gcp_credentials = service_account.Credentials.from_service_account_file(
+            gemini_config.service_account_key_file,
+            scopes=["https://www.googleapis.com/auth/cloud-platform"]
+        )
+    
+    if not _gcp_credentials.valid:
+        request = google.auth.transport.requests.Request()
+        _gcp_credentials.refresh(request)
+        
+    return _gcp_credentials.token
 
 class GeminiModel(str, Enum):
     """
@@ -54,6 +74,66 @@ class GeminiImageModel(str, Enum):
 
     gemini_2_5_flash_image_preview = "gemini-2.5-flash-image-preview"
     gemini_2_5_flash_image = "gemini-2.5-flash-image"
+
+class GetLinkByIdResponse(BaseModel):
+    mediaId: str | None = None
+    link: str | None = None
+
+async def fetch_media_uri_from_ingest(
+    cls: type[IO.ComfyNode],
+    media_id: str,
+) -> str:
+    """Fetches the cloud storage URI for a media file from the Media Ingest API."""
+    
+    full_url = f"{media_ingest_config.media_ingest_url}/internal/media/{media_id}/link"
+    
+    # Pass the endpoint with the full URL and query_params 
+    response = await sync_op(
+        cls,
+        endpoint=ApiEndpoint(path=full_url, method="GET", query_params={"linkType": 0}),
+        response_model=GetLinkByIdResponse,
+        wait_label="Fetching Media Link...",
+    )
+    
+    if not response.link:
+        raise ValueError(f"Media Ingest API response for UUID {media_id} did not contain a 'link'.")
+        
+    return response.link
+
+async def create_image_parts(
+    cls: type[IO.ComfyNode],
+    image_uuids: dict | None,
+) -> list[GeminiPart]:
+    image_parts: list[GeminiPart] = []
+    
+    if not image_uuids:
+        return image_parts
+
+    uuids = list(image_uuids.values())
+    if len(uuids) == 0:
+        return image_parts
+
+    # The Vertex API limits us to 10 image files per request
+    num_url_images = min(len(uuids), 10)
+    
+    for idx in range(num_url_images):
+        media_id = uuids[idx]
+        if not media_id:
+            continue
+            
+        # Fetch the actual GS URI from the Media Ingest API
+        reference_image_url = await fetch_media_uri_from_ingest(cls, media_id)
+        # We assume image/png by default, but you could add logic to guess from the URL extension
+        image_parts.append(
+            GeminiPart(
+                fileData=GeminiFileData(
+                    mimeType=GeminiMimeType.image_png,
+                    fileUri=reference_image_url,
+                )
+            )
+        )
+        
+    return image_parts
 
 
 def _mime_matches(mime: GeminiMimeType | None, pattern: str) -> bool:
@@ -120,7 +200,7 @@ def get_text_from_response(response: GeminiGenerateContentResponse) -> str:
     return "\n".join([part.text for part in parts])
 
 
-class GeminiNode(IO.ComfyNode):
+class GeminiNodeAmplify(IO.ComfyNode):
     """
     Node to generate text responses from a Gemini model.
 
@@ -132,9 +212,15 @@ class GeminiNode(IO.ComfyNode):
 
     @classmethod
     def define_schema(cls):
+        autogrow_template = IO.Autogrow.TemplatePrefix(
+            input=IO.String.Input("image_uuid", optional=True, tooltip="A Media Ingest API UUID representing an uploaded image"),
+            prefix="image_uuid",
+            min=1,
+            max=10
+        )
         return IO.Schema(
-            node_id="GeminiNode",
-            display_name="Google Gemini",
+            node_id="GeminiNodeAmplify",
+            display_name="Google Gemini Amplify",
             category="api node/text/Gemini",
             description="Generate text responses with Google's Gemini AI model. "
             "You can provide multiple types of inputs (text, images, audio, video) "
@@ -153,18 +239,6 @@ class GeminiNode(IO.ComfyNode):
                     default=GeminiModel.gemini_2_5_pro,
                     tooltip="The Gemini model to use for generating responses.",
                 ),
-                IO.Int.Input(
-                    "seed",
-                    default=42,
-                    min=0,
-                    max=0xFFFFFFFFFFFFFFFF,
-                    control_after_generate=True,
-                    tooltip="When seed is fixed to a specific value, the model makes a best effort to provide "
-                    "the same response for repeated requests. Deterministic output isn't guaranteed. "
-                    "Also, changing the model or parameter settings, such as the temperature, "
-                    "can cause variations in the response even when you use the same seed value. "
-                    "By default, a random seed value is used.",
-                ),
                 IO.String.Input(
                     "system_prompt",
                     multiline=True,
@@ -172,6 +246,18 @@ class GeminiNode(IO.ComfyNode):
                     optional=True,
                     tooltip="Foundational instructions that dictate an AI's behavior.",
                     advanced=True,
+                ),
+                IO.Autogrow.Input(
+                    "images",
+                    template=autogrow_template,
+                    optional=True,
+                    tooltip="Optional image UUIDs to use as context for the model.",
+                ),
+                IO.String.Input(
+                    "video_uuid",
+                    force_input=True,
+                    optional=True,
+                    tooltip="Optional video UUID to use as context for the model.",
                 ),
             ],
             outputs=[
@@ -185,19 +271,44 @@ class GeminiNode(IO.ComfyNode):
         prompt: str,
         model: str,
         system_prompt: str = "",
+        images: IO.Autogrow.Type | None = None,
+        video_uuid: str = "",
     ) -> IO.NodeOutput:
         prompt = validate_string(prompt, strip_whitespace=True)
 
         # Create parts list with text prompt as the first part
         parts: list[GeminiPart] = [GeminiPart(text=prompt)]
 
+        # Add image modal parts
+        if images is not None:
+            parts.extend(await create_image_parts(cls, images))
+            
+        # Add video modal part
+        video_uuid = video_uuid.strip()
+        if video_uuid:
+            video_uri = await fetch_media_uri_from_ingest(cls, video_uuid)
+            parts.append(
+                GeminiPart(
+                    fileData=GeminiFileData(
+                        mimeType=GeminiMimeType.video_mp4,
+                        fileUri=video_uri,
+                    )
+                )
+            )
+        
         gemini_system_prompt = None
         if system_prompt:
             gemini_system_prompt = GeminiSystemInstructionContent(parts=[GeminiTextPart(text=system_prompt)], role=None)
 
+        token = get_vertex_ai_access_token()
+        
         response = await sync_op(
             cls,
-            endpoint=ApiEndpoint(path=f"{GEMINI_BASE_ENDPOINT}/{model}:generateContent", method="POST", query_params={"key": gemini_config.gemini_api_key}),
+            endpoint=ApiEndpoint(
+                path=f"{GEMINI_BASE_ENDPOINT}/{model}:generateContent", 
+                method="POST", 
+                headers={"Authorization": f"Bearer {token}"}
+            ),
             data=GeminiGenerateContentRequest(
                 contents=[
                     GeminiContent(
