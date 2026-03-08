@@ -33,7 +33,7 @@ appConfig:
     RedirectUri: "https://staging.alexeykiselev.tech/facebook/callback"
     ApiVersion: "v22.0"
     DailyLimit: 200
-    BaseGraphHostUrl: "https://graph.facebook.com/"
+    BaseGraphHostUrl: "https://graph.facebook.com"
   RabbitMQ:
     Url: ""
   ExternalUrls:

@@ -56,7 +56,7 @@ public class InstagramPublisher(
         if (uploadCompletionResponse.StatusCode != InstagramApi.UploadStatus.Finished)
         {
             await HandleErrorResponse(uploadCompletionResponse);
-            return PublicationResult.Failed("Upload did not finish successfully");
+            return PublicationResult.Failed("Upload did not finish successfully. Final status: " + uploadCompletionResponse.StatusCode);
         }
 
         var publishResponse = await instagramApiClient.PublishAsync(credentials, creationId);
