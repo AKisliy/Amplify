@@ -1,5 +1,7 @@
+using System.Net.Http.Json;
 using Microsoft.Extensions.Logging;
 using Publisher.Application.Common.Interfaces;
+using Publisher.Infrastructure.Models.MediaStorage;
 
 namespace Publisher.Infrastructure.Storage;
 
@@ -13,16 +15,18 @@ public class MediaServiceStorage(
     {
         // TODO: заменить на реальный вызов медиа-сервиса
         _logger.LogInformation("Getting presigned URL for file ID: {FileId}", fileId);
-        var response = await httpClient.GetAsync($"internal/media/{fileId}/link?linkType=Presigned");
-        response.EnsureSuccessStatusCode();
-        return await response.Content.ReadAsStringAsync();
+        var response = await httpClient.GetFromJsonAsync<GetLinkResponse>($"internal/media/{fileId}/link?linkType=Presigned");
+
+        Guard.Against.Null(response, nameof(response), "Failed to get presigned URL from media service");
+        return response.Link;
     }
 
     public async Task<string> GetPublicUrlAsync(Guid fileId)
     {
         _logger.LogInformation("Getting public URL for file ID: {FileId}", fileId);
-        var response = await httpClient.GetAsync($"internal/media/{fileId}/link?linkType=Public");
-        response.EnsureSuccessStatusCode();
-        return await response.Content.ReadAsStringAsync();
+        var response = await httpClient.GetFromJsonAsync<GetLinkResponse>($"internal/media/{fileId}/link?linkType=Public");
+
+        Guard.Against.Null(response, nameof(response), "Failed to get public URL from media service");
+        return response.Link;
     }
 }
