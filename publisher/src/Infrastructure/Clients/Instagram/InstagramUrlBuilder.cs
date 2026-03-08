@@ -1,5 +1,4 @@
 using Flurl;
-using Microsoft.AspNetCore.WebUtilities;
 using Microsoft.Extensions.Options;
 using Publisher.Infrastructure.Configuration.Options;
 using static Publisher.Infrastructure.Constants.InstagramApi;
@@ -12,43 +11,50 @@ public class InstagramUrlBuilder(IOptions<InstagramApiOptions> config)
 
     public string GetMediaCreationUrl(string userId)
     {
-        return $"{_options.BaseGraphHostUrl}/{_options.ApiVersion}/{userId}/media";
+        var url = new Url(_options.BaseGraphHostUrl)
+            .AppendPathSegment(_options.ApiVersion)
+            .AppendPathSegment(userId)
+            .AppendPathSegment("media");
+        return url.ToString();
     }
 
     public string GetMediaResumableUploadUrl(string creationId)
     {
-        return $"{_options.ResumableUploadHostUrl}/ig-api-upload/{_options.ApiVersion}/{creationId}";
+        var url = new Url(_options.ResumableUploadHostUrl)
+            .AppendPathSegment("ig-api-upload")
+            .AppendPathSegment(_options.ApiVersion)
+            .AppendPathSegment(creationId);
+        return url.ToString();
     }
 
     public string GetStatusUrl(string creationId, string accessToken)
     {
-        string baseUrl = $"{_options.BaseGraphHostUrl}/{_options.ApiVersion}/{creationId}";
-
-        var queryParams = new Dictionary<string, string?>
-        {
-            { "fields", PayloadFieldName.StatusCode },
-            { "access_token", accessToken }
-        };
-
-        return QueryHelpers.AddQueryString(baseUrl, queryParams);
+        var url = new Url(_options.BaseGraphHostUrl)
+            .AppendPathSegment(_options.ApiVersion)
+            .AppendPathSegment(creationId)
+            .AppendQueryParam("fields", PayloadFieldName.StatusCode)
+            .AppendQueryParam("access_token", accessToken);
+        return url.ToString();
     }
 
     public string GetPublishUrl(string userId)
     {
-        return $"{_options.BaseGraphHostUrl}/{_options.ApiVersion}/{userId}/media_publish";
+        var url = new Url(_options.BaseGraphHostUrl)
+            .AppendPathSegment(_options.ApiVersion)
+            .AppendPathSegment(userId)
+            .AppendPathSegment("media_publish");
+        return url.ToString();
     }
 
     public string GetUrlForShortcode(string instagramMediaId, string accessToken)
     {
-        var baseUrl = $"{_options.BaseGraphHostUrl}/{_options.ApiVersion}/{instagramMediaId}";
+        var url = new Url(_options.BaseGraphHostUrl)
+            .AppendPathSegment(_options.ApiVersion)
+            .AppendPathSegment(instagramMediaId)
+            .AppendQueryParam("fields", PayloadFieldName.ShortCode)
+            .AppendQueryParam("access_token", accessToken);
 
-        var queryParams = new Dictionary<string, string?>
-        {
-            { "fields", PayloadFieldName.ShortCode},
-            { "access_token", accessToken }
-        };
-
-        return QueryHelpers.AddQueryString(baseUrl, queryParams);
+        return url.ToString();
     }
 
     public string GetUrlForShortLivedToken(string code)
