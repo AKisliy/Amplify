@@ -11,7 +11,7 @@ public class Videos : EndpointGroupBase
 
     public override void Map(RouteGroupBuilder groupBuilder)
     {
-        groupBuilder.MapPost(UploadFromFile)
+        groupBuilder.MapPost("/", UploadFromFile)
             .Accepts<IFormFile>("multipart/form-data")
             .DisableAntiforgery()
             .RequireAuthorization()

@@ -1,6 +1,7 @@
 using MediaIngest.Application.Common.Interfaces;
 using MediaIngest.Domain.Entities;
 using MediaIngest.Domain.Enums;
+using MediaIngest.Domain.Events;
 
 namespace MediaIngest.Application.Media.Commands.UploadFromFile;
 
@@ -15,7 +16,6 @@ public record UploadFromFileCommand(
 public class UploadFromFileCommandHandler(IFileStorage fileStorage, IApplicationDbContext dbContext)
     : IRequestHandler<UploadFromFileCommand, UploadFileDto>
 {
-
     public async Task<UploadFileDto> Handle(UploadFromFileCommand request, CancellationToken cancellationToken)
     {
         var fileKey = await fileStorage.SaveFileAsync(request.FileStream, request.FileName, cancellationToken);
@@ -27,6 +27,9 @@ public class UploadFromFileCommandHandler(IFileStorage fileStorage, IApplication
             ContentType = request.ContentType,
             FileSize = request.FileSize
         };
+
+        if (request.FileType == FileType.Video)
+            mediaFile.AddDomainEvent(new VideoFileCreatedEvent(mediaFile.Id));
 
         dbContext.MediaFiles.Add(mediaFile);
 

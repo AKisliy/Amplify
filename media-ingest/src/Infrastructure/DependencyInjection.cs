@@ -4,6 +4,7 @@ using MediaIngest.Application.Common.Options;
 using MediaIngest.Application.Media.Commands.Upload;
 using MediaIngest.Domain.Enums;
 using MediaIngest.Infrastructure.Auth;
+using MediaIngest.Infrastructure.Broker;
 using MediaIngest.Infrastructure.Configuration;
 using MediaIngest.Infrastructure.Data;
 using MediaIngest.Infrastructure.Data.Interceptors;
@@ -49,6 +50,12 @@ public static class DependencyInjection
 
         builder.Services.AddHttpClients();
 
+        builder.Services.AddBrokerConnection();
+        builder.Services.AddMediatR(cfg =>
+        {
+            cfg.RegisterServicesFromAssembly(Assembly.GetExecutingAssembly());
+        });
+
         builder.AddAuth();
     }
 
@@ -59,16 +66,11 @@ public static class DependencyInjection
             var dbOptions = sp.GetRequiredService<IOptions<DbConnectionOptions>>().Value;
 
             var dataSourceBuilder = new NpgsqlDataSourceBuilder(dbOptions.Default);
-            dataSourceBuilder
-                .MapEnum<FileType>()
-                .MapEnum<MediaType>();
             var dataSource = dataSourceBuilder.Build();
 
             options.UseNpgsql(
                 dataSource,
                 o => o
-                    .MapEnum<FileType>()
-                    .MapEnum<MediaType>()
                     .EnableRetryOnFailure(4)
                     .MigrationsHistoryTable(HistoryRepository.DefaultTableName, ApplicationDbContext.DefaultSchemaName)
                 );
@@ -88,6 +90,7 @@ public static class DependencyInjection
         services.AddOptionsWithFluentValidation<YtDlpOptions>(YtDlpOptions.ConfigurationSection);
         services.AddOptionsWithFluentValidation<DbConnectionOptions>(DbConnectionOptions.ConfigurationSection);
         services.AddOptionsWithFluentValidation<MediaIngestOptions>(MediaIngestOptions.SectionName);
+        services.AddOptionsWithFluentValidation<RabbitMQOptions>(RabbitMQOptions.ConfigurationSection);
     }
 
     private static void AddHttpClients(this IServiceCollection services)
