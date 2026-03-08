@@ -1,8 +1,10 @@
 using System.Net.Http.Json;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using Newtonsoft.Json;
 using Polly.Registry;
 using Publisher.Domain.Entities;
+using Publisher.Infrastructure.Configuration.Options;
 using Publisher.Infrastructure.Constants;
 using Publisher.Infrastructure.Models.Exceptions;
 using Publisher.Infrastructure.Models.Facebook;
@@ -16,11 +18,12 @@ public class InstagramApiClient(
     ILogger<InstagramApiClient> logger,
     InstagramUrlBuilder urlBuilder,
     InstagramPayloadBuilder payloadBuilder,
+    IOptions<InstagramApiOptions> options,
     ResiliencePipelineProvider<string> pipelineProvider)
 {
     public async Task<InstagramApiResponse> CreateReelContainerAsync(InstagramReelData reelData, InstagramCredentials credentials)
     {
-        var creationUrl = urlBuilder.GetMediaCreationUrl(credentials.InstagramBusinessAccountId);
+        var creationUrl = urlBuilder.GetMediaCreationUrl(credentials.InstagramUserId);
         var creationPayload = payloadBuilder.BuildReelCreationPayload(reelData, credentials);
         var creationResponse = await httpClient.PostAsync(creationUrl, creationPayload);
         return await HandleInstagramResponseAsync(creationResponse);
@@ -29,13 +32,11 @@ public class InstagramApiClient(
     public async Task<string> GetPostLink(string instagramMediaId, string accessToken)
     {
         var url = urlBuilder.GetUrlForShortcode(instagramMediaId, accessToken);
-        var request = new HttpRequestMessage(HttpMethod.Get, url);
-
-        var response = await httpClient.SendAsync(request);
-        var transformedRespose = await HandleInstagramResponseAsync(response);
-        if (transformedRespose.ShortCode == null)
-            throw new InstagramException("Instagram returned empty shortcode", transformedRespose.Error ?? new());
-        return urlBuilder.FormPostLink(transformedRespose.ShortCode);
+        var response = await httpClient.GetAsync(url);
+        var transformedResponse = await HandleInstagramResponseAsync(response);
+        if (transformedResponse.ShortCode == null)
+            throw new InstagramException("Instagram returned empty shortcode", transformedResponse.Error ?? new());
+        return urlBuilder.FormPostLink(transformedResponse.ShortCode);
     }
 
     public async Task<InstagramApiResponse> WaitForContainerUploadAsync(string creationId, string accessToken, CancellationToken cancellationToken = default)
@@ -66,32 +67,64 @@ public class InstagramApiClient(
 
     public async Task<InstagramApiResponse> PublishAsync(InstagramCredentials credentials, string creationId)
     {
-        var userId = credentials.InstagramBusinessAccountId;
-        var accessToken = credentials.AccessToken;
-
-        var publishUrl = urlBuilder.GetPublishUrl(userId);
-        var publishPayload = payloadBuilder.BuildPublishPayload(creationId, accessToken);
+        var publishUrl = urlBuilder.GetPublishUrl(credentials.InstagramUserId);
+        var publishPayload = payloadBuilder.BuildPublishPayload(creationId, credentials.AccessToken);
         var apiResponse = await httpClient.PostAsync(publishUrl, publishPayload);
-
-        var proccessedResponse = await HandleInstagramResponseAsync(apiResponse);
-        return proccessedResponse;
+        return await HandleInstagramResponseAsync(apiResponse);
     }
 
-    public async Task<FacebookTokenResponse> GetShortLivedAccessTokenAsync(string code, CancellationToken cancellationToken = default)
+    /// <summary>
+    /// Instagram Login API: exchanges authorization code for a short-lived token.
+    /// POST https://api.instagram.com/oauth/access_token
+    /// </summary>
+    public async Task<InstagramShortLivedTokenResponse> GetShortLivedAccessTokenAsync(string code, CancellationToken cancellationToken = default)
     {
-        var url = urlBuilder.GetUrlForShortLivedToken(code);
+        var instOptions = options.Value;
+        var body = new FormUrlEncodedContent(new Dictionary<string, string>
+        {
+            ["client_id"] = instOptions.AppId,
+            ["client_secret"] = instOptions.AppSecret,
+            ["grant_type"] = "authorization_code",
+            ["redirect_uri"] = instOptions.RedirectUri,
+            ["code"] = code
+        });
 
-        var response = await httpClient.GetFromJsonAsync<FacebookTokenResponse>(url, cancellationToken) ??
-            throw new InstagramException("Failed to get short-lived token");
+        var response = await httpClient.PostAsync("https://api.instagram.com/oauth/access_token", body, cancellationToken);
+        var content = await response.Content.ReadAsStringAsync(cancellationToken);
+
+        if (!response.IsSuccessStatusCode)
+            throw new InstagramException($"Failed to get short-lived token: {content}");
+
+        var parsed = System.Text.Json.JsonSerializer.Deserialize<InstagramShortLivedTokenResponse>(content)
+            ?? throw new InstagramException("Failed to deserialize short-lived token response");
+
+        return parsed ?? throw new InstagramException("Short-lived token response contained no data");
+    }
+
+    /// <summary>
+    /// Instagram Login API: exchanges short-lived token for long-lived token (60 days).
+    /// GET https://graph.instagram.com/access_token?grant_type=ig_exchange_token&...
+    /// </summary>
+    public async Task<FacebookTokenResponse> GetLongLivedAccessTokenAsync(string shortLivedToken, CancellationToken cancellationToken = default)
+    {
+        var url = urlBuilder.GetUrlForLongLivedTokenExchange(shortLivedToken);
+
+        var response = await httpClient.GetFromJsonAsync<FacebookTokenResponse>(url, cancellationToken)
+            ?? throw new InstagramException("Failed to get long-lived token");
+
         return response;
     }
 
-    public async Task<FacebookTokenResponse> GetLongLivedAccessTokenAsync(string shortLivedAccessToken, CancellationToken cancellationToken = default)
+    /// <summary>
+    /// Get Instagram user info (user_id, username, profile_picture_url).
+    /// GET https://graph.instagram.com/v22.0/me?fields=...
+    /// </summary>
+    public async Task<InstagramUserInfo> GetInstagramUserAsync(string accessToken, CancellationToken cancellationToken = default)
     {
-        var url = urlBuilder.GetUrlForLongLivedToken(shortLivedAccessToken);
+        var url = urlBuilder.GetUrlForUserInfo(accessToken, ["id", "username", "profile_picture_url"]);
 
-        var response = await httpClient.GetFromJsonAsync<FacebookTokenResponse>(url, cancellationToken) ??
-            throw new InstagramException("Failed to get long-lived token");
+        var response = await httpClient.GetFromJsonAsync<InstagramUserInfo>(url, cancellationToken)
+            ?? throw new InstagramException("Failed to get Instagram user info");
 
         return response;
     }
@@ -99,23 +132,11 @@ public class InstagramApiClient(
     public async Task<FacebookTokenResponse> RefreshLongLivedTokenAsync(string accessToken, CancellationToken cancellationToken = default)
     {
         var url = urlBuilder.GetUrlForTokenRefresh(accessToken);
+
         var response = await httpClient.GetFromJsonAsync<FacebookTokenResponse>(url, cancellationToken)
             ?? throw new InstagramException("Failed to refresh long-lived token");
+
         return response;
-    }
-
-    public async Task<FacebookAccountsResponse> GetFacebookAccountsAsync(string accessToken, CancellationToken cancellationToken = default)
-    {
-        var url = urlBuilder.GetUrlForFacebookAccounts(accessToken);
-
-        var accountsResponse = await httpClient.GetFromJsonAsync<FacebookAccountsResponse>(
-            url,
-            cancellationToken);
-
-        if (accountsResponse == null)
-            throw new InstagramException("Failed to get facebook accounts");
-
-        return accountsResponse;
     }
 
     private async Task<InstagramApiResponse> HandleInstagramResponseAsync(HttpResponseMessage response)
@@ -127,9 +148,8 @@ public class InstagramApiClient(
                 throw new InstagramException("Couldn't unparse response");
 
             if (!response.IsSuccessStatusCode)
-            {
                 logger.LogError("Instagram API returned error. Status code: {StatusCode}, Response: {ResponseContent}", response.StatusCode, responseContent);
-            }
+
             return instagramResponse;
         }
         catch (JsonReaderException ex)

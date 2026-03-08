@@ -1,6 +1,4 @@
 using System.Text;
-using Ardalis.GuardClauses;
-using Flurl;
 using Hangfire;
 using Microsoft.AspNetCore.WebUtilities;
 using Microsoft.EntityFrameworkCore;
@@ -10,17 +8,16 @@ using Newtonsoft.Json;
 using Publisher.Application.Common.Interfaces;
 using Publisher.Application.Common.Models;
 using Publisher.Application.Common.Models.Dto;
-using Publisher.Application.Common.Options;
 using Publisher.Application.Connections.Commands;
 using Publisher.Domain.Entities;
 using Publisher.Domain.Enums;
-using Publisher.Infrastructure.Configuration.Options;
+using Publisher.Application.Common.Options;
 using Publisher.Infrastructure.Scheduler.BackgroundJobs;
 
 namespace Publisher.Infrastructure.Clients.Instagram;
 
 internal class InstagramConnectionService(
-    IOptions<InstagramApiOptions> instOptions,
+    InstagramUrlBuilder urlBuilder,
     InstagramApiClient instagramApiClient,
     IApplicationDbContext dbContext,
     IOptions<FrontendOptions> frontendOptions,
@@ -29,13 +26,11 @@ internal class InstagramConnectionService(
     : IConnectionService
 {
     private const int DefaultExpirationDays = 60;
+
+    // Instagram Business Login API scopes
     private readonly IReadOnlyList<string> _scopesForPublishing = [
-        "instagram_basic",
-        "instagram_content_publish",
-        "pages_show_list",
-        "pages_read_engagement",
-        "ads_management",
-        "business_management"
+        "instagram_business_basic",
+        "instagram_business_content_publish"
     ];
 
     public SocialProvider SocialProvider => SocialProvider.Instagram;
@@ -45,54 +40,52 @@ internal class InstagramConnectionService(
         ConnectionState state,
         CancellationToken cancellationToken)
     {
-        var shortLivedTokenResponse = await instagramApiClient.GetShortLivedAccessTokenAsync(code, cancellationToken);
+        var shortLivedToken = await instagramApiClient.GetShortLivedAccessTokenAsync(code, cancellationToken);
+        var instagramUserId = shortLivedToken.UserId;
 
-        var longLivedTokenResponse = await instagramApiClient.GetLongLivedAccessTokenAsync(
-            shortLivedTokenResponse.AccessToken,
+        var longLivedToken = await instagramApiClient.GetLongLivedAccessTokenAsync(
+            shortLivedToken.AccessToken,
             cancellationToken);
 
-        var accountsResponse = await instagramApiClient.GetFacebookAccountsAsync(
-            longLivedTokenResponse.AccessToken,
-            cancellationToken);
+        var userInfo = await instagramApiClient.GetInstagramUserAsync(longLivedToken.AccessToken, cancellationToken);
 
-        var targetPage = accountsResponse?.Data.FirstOrDefault(p => p.InstagramBusinessAccount != null)
-            ?? throw new Exception("No Instagram Business account connected to user's Facebook pages.");
-
-        logger.LogInformation("Long-Lived User Access Token: {AccessToken}", longLivedTokenResponse);
+        logger.LogInformation("Instagram Business Login: connected user {Username} ({UserId})", userInfo.Username, instagramUserId);
 
         var tokenExpiresAt = DateTime.UtcNow.AddSeconds(
-            longLivedTokenResponse.ExpiresIn > 0 ?
-            longLivedTokenResponse.ExpiresIn :
-            60 * 60 * 24 * DefaultExpirationDays);
+            longLivedToken.ExpiresIn > 0
+                ? longLivedToken.ExpiresIn
+                : 60 * 60 * 24 * DefaultExpirationDays);
+
+        var stringId = instagramUserId.ToString();
 
         var instagramCredentials = new InstagramCredentials
         {
-            InstagramBusinessAccountId = targetPage.InstagramBusinessAccount!.Id,
-            InstagramUsername = targetPage.InstagramBusinessAccount.Username,
-            FacebookPageId = targetPage.Id,
-            AccessToken = longLivedTokenResponse.AccessToken,
+            InstagramUserId = stringId,
+            InstagramUsername = userInfo.Username,
+            AccessToken = longLivedToken.AccessToken,
         };
 
         var serializedCredentials = JsonConvert.SerializeObject(instagramCredentials);
-        var providerUserId = targetPage.InstagramBusinessAccount.Id;
 
         var socialAccount = await dbContext.SocialAccounts
             .Include(sa => sa.Projects)
-            .FirstOrDefaultAsync(sa => sa.Provider == SocialProvider.Instagram && sa.ProviderUserId == providerUserId, cancellationToken);
+            .FirstOrDefaultAsync(
+                sa => sa.Provider == SocialProvider.Instagram && sa.ProviderUserId == stringId,
+                cancellationToken);
 
         if (socialAccount is null)
         {
             socialAccount = new SocialAccount
             {
-                ProviderUserId = providerUserId,
-                Username = targetPage.InstagramBusinessAccount.Username ?? "Unknown",
+                ProviderUserId = stringId,
+                Username = userInfo.Username,
                 Provider = SocialProvider.Instagram,
             };
             dbContext.SocialAccounts.Add(socialAccount);
         }
         else
         {
-            socialAccount.Username = targetPage.InstagramBusinessAccount.Username ?? socialAccount.Username;
+            socialAccount.Username = userInfo.Username;
         }
 
         socialAccount.Credentials = serializedCredentials;
@@ -107,35 +100,20 @@ internal class InstagramConnectionService(
 
         await dbContext.SaveChangesAsync(cancellationToken);
 
-        var profilePictureUrl = targetPage.InstagramBusinessAccount.ProfilePictureUrl;
-        if (!string.IsNullOrEmpty(profilePictureUrl))
-            backgroundJobClient.Enqueue<ImportAvatarJob>(j => j.ImportAsync(socialAccount.Id, profilePictureUrl, CancellationToken.None));
+        if (!string.IsNullOrEmpty(userInfo.ProfilePictureUrl))
+            backgroundJobClient.Enqueue<ImportAvatarJob>(j =>
+                j.ImportAsync(socialAccount.Id, userInfo.ProfilePictureUrl, CancellationToken.None));
 
-        var result = new ConnectionResult(socialAccount.Id, frontendOptions.Value.ConnectionsPath);
-
-        logger.LogInformation("Successfully connected Instagram Business Account {InstagramUsername} with ID {InstagramId}",
-            targetPage.InstagramBusinessAccount?.Username,
-            targetPage.InstagramBusinessAccount?.Id);
-
-        return result;
+        return new ConnectionResult(socialAccount.Id, frontendOptions.Value.ConnectionsPath);
     }
 
     public Task<AuthUrlResponse> GetAuthUrlAsync(Guid projectId, CancellationToken cancellationToken)
     {
-        var appId = instOptions.Value.AppId;
-        var redirectUri = instOptions.Value.RedirectUri;
-        var scope = string.Join(',', _scopesForPublishing);
-
         var state = new ConnectionState(projectId, SocialProvider.Instagram);
         var stateBytes = Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(state));
         var encodedState = WebEncoders.Base64UrlEncode(stateBytes);
 
-        var url = new Url("https://www.facebook.com/v18.0/dialog/oauth")
-            .SetQueryParam("client_id", appId)
-            .SetQueryParam("redirect_uri", redirectUri)
-            .SetQueryParam("scope", scope)
-            .SetQueryParam("response_type", "code")
-            .SetQueryParam("state", encodedState);
+        var url = urlBuilder.GetUrlForLogin(_scopesForPublishing, encodedState);
 
         return Task.FromResult(new AuthUrlResponse(url));
     }
