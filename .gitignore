@@ -308,6 +308,8 @@ eggs/
 .eggs/
 lib/
 lib64/
+
+!frontend/**/lib/
 parts/
 sdist/
 var/

@@ -11,7 +11,7 @@ public class Publications : EndpointGroupBase
 
     public override void Map(RouteGroupBuilder groupBuilder)
     {
-        groupBuilder.MapPost("video", PublishVideoAsync);
+        groupBuilder.MapPost("video", PublishVideoAsync).RequireAuthorization();
     }
 
     public async Task<Results<Created<MediaPostResponseDto>, BadRequest>> PublishVideoAsync(IMediator mediator, [FromBody] PublishVideoCommand request)

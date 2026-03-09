@@ -6,6 +6,8 @@ using Microsoft.AspNetCore.Mvc;
 
 using NSwag;
 using NSwag.Generation.Processors.Security;
+using System.Text.Json.Serialization;
+using Newtonsoft.Json.Converters;
 
 namespace Microsoft.Extensions.DependencyInjection;
 
@@ -29,6 +31,11 @@ public static class DependencyInjection
             options.SuppressModelStateInvalidFilter = true);
 
         builder.Services.AddEndpointsApiExplorer();
+
+        builder.Services.ConfigureHttpJsonOptions(options =>
+        {
+            options.SerializerOptions.Converters.Add(new JsonStringEnumConverter());
+        });
 
         builder.Services.AddOpenApiDocument((configure, sp) =>
         {

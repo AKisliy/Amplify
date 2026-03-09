@@ -6,20 +6,21 @@ on:
             service_folder:
                 required: true
                 type: string
-                description: "Folder name (e.g. userservice)"
             app_label:
                 required: true
                 type: string
-                description: "Helmfile label (e.g. userservice)"
             env_name:
                 required: false
                 type: string
                 default: "stage"
-                description: "Environment (stage/prod)"
             image_tag_var_name:
                 required: true
                 type: string
-                description: "Env var name for Helmfile (e.g. USERSERVICE_IMAGE_TAG)"
+            with_migrations:
+                required: false
+                type: boolean
+                default: false
+                description: "Set to true if the service has an EF Core migrations bundle"
         secrets:
             GCP_CREDENTIALS:
                 required: true
@@ -78,10 +79,22 @@ jobs:
             - name: Set up Docker Buildx
               uses: docker/setup-buildx-action@v3
 
+            - name: Build and Push Migrations Image
+              if: ${{ inputs.with_migrations == true }}
+              uses: docker/build-push-action@v6
+              with:
+                  context: ./${{ inputs.service_folder }}
+                  target: final-migrations
+                  push: true
+                  tags: ${{ env.IMAGE_NAME }}-migrations:${{ env.IMAGE_TAG }}
+                  cache-from: type=gha
+                  cache-to: type=gha,mode=max
+
             - name: Build and Push Docker Image
               uses: docker/build-push-action@v6
               with:
                   context: ./${{ inputs.service_folder }}
+                  target: ${{ inputs.with_migrations == true && 'final-api' || '' }}
                   push: true
                   tags: ${{ env.IMAGE_NAME }}:${{ env.IMAGE_TAG }}
                   cache-from: type=gha

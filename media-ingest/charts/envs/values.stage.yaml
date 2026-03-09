@@ -12,7 +12,7 @@ volumeMounts:
   - name: config-volume
     mountPath: /app/appsettings.Staging.json
     subPath: appsettings_override.json
-
+ 
 appConfig:
   S3:
     Host: "storage.googleapis.com"
@@ -20,6 +20,7 @@ appConfig:
     SecretKey: ""
     BucketName: "amplify-media-test"
     UseSsl: true
+    PublicBucketUrl: "https://media.alexeykiselev.tech/"
   YtDlp:
     YoutubeDlPath: "/opt/homebrew/bin/yt-dlp"
   MediaIngest:

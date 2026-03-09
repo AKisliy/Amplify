@@ -7,6 +7,14 @@ secrets:
     key: publisher-hangfire-db-conn-test
   rabbitMqConnection:
     key: rabbitmq-test
+  tikTokClientKey:
+    key: tiktok-client-key-sandbox
+  tikTokClientSecret:
+    key: tiktok-client-secret-sandbox
+  instagramAppId:
+    key: instagram-app-id
+  instagramAppSecret:
+    key: instagram-app-secret
 
 volumeMounts:
   - name: config-volume
@@ -19,23 +27,34 @@ appConfig:
       Default: "Information"
       Microsoft: "Warning"
       Microsoft.Hosting.Lifetime: "Information"
-  MediaService:
-    BaseUrl: "http://mediaingest.test-env.svc.cluster.local"
   InstagramApiOptions:
-    AppId: "instagram_app_id"
-    AppSecret: "instagram_app_secret"
-    RedirectUri: "http://host.minikube.internal:6001/auth/instagram/callback"
+    AppId: ""
+    AppSecret: ""
+    RedirectUri: "https://staging.alexeykiselev.tech/publisher/api/connections"
     ApiVersion: "v22.0"
     DailyLimit: 200
-    BaseGraphHostUrl: "https://graph.facebook.com/"
-  RabbitMQOptions:
-    Host: ""
-    Username: ""
-    Password: ""
+    BaseGraphHostUrl: "https://graph.instagram.com"
+  RabbitMQ:
+    Url: ""
   ExternalUrls:
-    MediaServiceApi: "http://host.minikube.internal:6001"
+    MediaServiceApi: "http://mediaingest.test-env.svc.cluster.local/media/api/"
   Jwt:
     Issuer: "http://userservice.test-env.svc.cluster.local/userservice/api/auth"
     Audience: "MyAppDevelopmentUsers"
   PublisherOptions:
     BasePath: /publisher
+  CorsOptions:
+    AllowedOrigins:
+      - "http://localhost:3000"
+    DefaultPolicyName: DevelopmentCorsPolicy
+  Frontend:
+    BaseUrl: "http://localhost:3000"
+    ConnectionsPath: "/connections"
+    MediaServiceUrl: "https://staging.alexeykiselev.tech/media/api/"
+  TikTokApi:
+    ClientKey: ""
+    ClientSecret: ""
+    RedirectUri: "http://amplify.34.40.73.43.nip.io/userservice/api"
+  RecurringJobs:
+    AutoListJobEnabled: false
+    TokenRefreshJobEnabled: false

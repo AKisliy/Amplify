@@ -1,10 +1,8 @@
 using Microsoft.Extensions.Logging;
 using Publisher.Application.Common.Interfaces;
-using Publisher.Application.Common.Interfaces.Factory;
-using Publisher.Application.Common.Models;
 using Publisher.Domain.Entities;
-using Publisher.Domain.Entities.PublicationSetup;
 using Publisher.Domain.Enums;
+using Publisher.Domain.Events;
 
 namespace Publisher.Application.Publications.Commands.PublishNextPostInAutoList;
 
@@ -12,11 +10,9 @@ public record PublishNextPostInAutoListCommand(
     Guid AutoListEntryId,
     DateTimeOffset RequestedPublicationTime) : IRequest;
 
-// TOMORROW: continue here
 public class PublishNextPostInAutoListCommandHandler(
     ILogger<PublishNextPostInAutoListCommandHandler> logger,
-    IApplicationDbContext dbContext,
-    ISocialMediaPublisherFactory socialMediaPublisherFactory) : IRequestHandler<PublishNextPostInAutoListCommand>
+    IApplicationDbContext dbContext) : IRequestHandler<PublishNextPostInAutoListCommand>
 {
     public async Task Handle(PublishNextPostInAutoListCommand request, CancellationToken cancellationToken)
     {
@@ -45,24 +41,26 @@ public class PublishNextPostInAutoListCommandHandler(
 
         foreach (var account in autoListEntry.AutoList.Accounts)
         {
-            var postConfig = new SocialMediaPostConfig(
-                post.Id,
-                post.Description,
-                post.CoverMediaId,
-                account.Id,
-                publicationSettings
-            );
-            var publisher = socialMediaPublisherFactory.GetSocialMediaPublisher(account.Provider);
-            await publisher.PostVideoAsync(postConfig);
+            var publicationRecord = new PublicationRecord()
+            {
+                MediaPostId = post.Id,
+                SocialAccountId = account.Id,
+                Status = PublicationStatus.Scheduled,
+                Provider = account.Provider,
+            };
+            publicationRecord.AddDomainEvent(new PublicationRecordCreated(publicationRecord));
+            dbContext.PublicationRecords.Add(publicationRecord);
         }
+        post.ProcessedInAutoList = true;
+        dbContext.MediaPosts.Update(post);
+
+        await dbContext.SaveChangesAsync(cancellationToken);
     }
 
     private async Task<MediaPost?> RetrieveMediaForPublishingInAutoList(Guid autoListId)
     {
-        // TODO: implement logic to avoid republishing the same post
-        // previously was based on Status.Published check
         var media = await dbContext.MediaPosts
-            .Where(x => x.AutoListId == autoListId)
+            .Where(x => x.AutoListId == autoListId && !x.ProcessedInAutoList)
             .OrderBy(x => x.Created)
             .FirstOrDefaultAsync();
 

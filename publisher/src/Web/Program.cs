@@ -2,7 +2,6 @@ using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.Extensions.Options;
 using Publisher.Infrastructure.Configuration.Options;
 using Publisher.Infrastructure.Data;
-using Publisher.Infrastructure.Hubs;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -11,8 +10,6 @@ builder.AddKeyVaultIfConfigured();
 builder.AddApplicationServices();
 builder.AddInfrastructureServices();
 builder.AddWebServices();
-
-builder.Services.AddSignalR();
 
 var app = builder.Build();
 
@@ -28,7 +25,7 @@ app.UseForwardedHeaders(new ForwardedHeadersOptions
     ForwardedHeaders = ForwardedHeaders.XForwardedProto | ForwardedHeaders.XForwardedHost
 });
 
-// Configure the HTTP request pipeline.
+// Configure the HTTP request pipeline
 if (app.Environment.IsDevelopment())
 {
     await app.InitialiseDatabaseAsync();
@@ -54,6 +51,9 @@ app.UseSwaggerUi(settings =>
 app.UseAuthentication();
 app.UseAuthorization();
 
+var corsOptions = app.Services.GetRequiredService<IOptions<CorsOptions>>();
+app.UseCors(corsOptions.Value.DefaultPolicyName);
+
 app.UseExceptionHandler(options => { });
 
 app.MapGet("/", (HttpContext context) =>
@@ -65,7 +65,6 @@ app.MapGet("/", (HttpContext context) =>
 
     return Results.Redirect(redirectUrl);
 });
-app.MapHub<PublisherHub>("/hubs/publisher");
 
 app.MapEndpoints();
 

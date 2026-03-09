@@ -1,0 +1,25 @@
+environment: Staging
+
+secrets:
+  rabbitMqConnection:
+    key: rabbitmq-test
+
+volumeMounts:
+  - name: config-volume
+    mountPath: /app/appsettings.Staging.json
+    subPath: appsettings_override.json
+  
+appConfig:
+  Logging:
+    LogLevel: 
+      Default: Information
+      Microsoft.AspNetCore: Warning
+  RabbitMQ:
+    Url: ""
+  CorsOptions:
+    AllowedOrigins:
+      - "http://localhost:3000"
+    DefaultPolicyName: "StageCorsPolicy"
+  Jwt:
+    Issuer: "http://userservice.test-env.svc.cluster.local/userservice/api/auth"
+    Audience: "MyAppDevelopmentUsers"

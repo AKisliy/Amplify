@@ -4,5 +4,7 @@ namespace Publisher.Application.Common.Interfaces;
 
 public interface IPublicationStatusNotifier
 {
-    Task NotifyPublicationStatusChangedAsync(PublicationRecord publicationRecord);
+    Task NotifyPublicationStatusChangedAsync(
+        PublicationRecord publicationRecord,
+        CancellationToken cancellationToken = default);
 }

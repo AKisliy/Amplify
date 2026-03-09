@@ -11,7 +11,7 @@ To deploy publisher service locally do the following:
 3. Download it and put in `publisher/` directory.
 4. Spin up docker-compose: `docker compose up --build -d`
 
-That's it ✨ Go to http://localhost:6060/api/index.html?url=/api/specification.json - u should see swagger docs.
+That's it ✨ Go to http://localhost:7001/api/index.html?url=/api/specification.json - u should see swagger docs.
 
 ### Local testing
 By default app will seed data every time u start it in dev mode. Here are default values:
@@ -20,15 +20,23 @@ By default app will seed data every time u start it in dev mode. Here are defaul
 - Default Autolist connected to project = `8dafea28-5230-445a-84b2-04e98cebce54`
 - Also app is configured with default JWT (100 years expiry). You can find it in logs.
 
-### Testing and generating SignalR clients
-In this project we have [SignalR](https://github.com/SignalR/SignalR). It has great tooling, so there are auto-generated TypeScript clients in `./signalr-test` folder. 
+### Integrations
 
-You can test them when main app is running - just navigate to `./signalr-test` folder and run:
-```sh
-npm install
-npx tsx client.ts
-```
-Then send some requests to `/api/publications/video` endpoint (just use [swagger](https://localhost:6060/api/index.html?url=/api/specification.json#/publications/PostApiPublicationsVideo)) and watch status updates popping up in your console ✨ (P.S. dummy publication takes 7 seconds)
+This section describes how to integrate external services with the Publisher API.
+
+#### Social Media Connections
+
+To connect a social media account (e.g., Instagram, TikTok), the frontend application should follow these steps:
+
+1.  **Get the Authorization URL**: The frontend should make a `GET` request to the appropriate endpoint to obtain a unique authorization URL for the desired social media platform. For example, to connect Instagram for a specific project, you would call `/api/integrations/{projectId}/instagram/auth-url`.
+
+2.  **Redirect the User**: The frontend should redirect the user to the authorization URL returned by the backend. This URL will lead the user to the social media platform's website to approve the connection. The `redirectUrl` provided in the backend's response will point to a page on the frontend application, such as a loading or confirmation page.
+
+3.  **Handle the Callback**: After the user approves the connection, the social media platform will redirect them back to the `redirectUrl` specified in step 2. This callback URL will include `code` and `state` as query parameters.
+
+4.  **Connect the Account**: On the callback page, the frontend should extract the `code` and `state` from the query parameters and make a `POST` request to the `/api/connections` endpoint, sending these values in the request body.
+
+The backend will then process the information, finalize the connection with the social media platform, and redirect the user to an appropriate page within the application to confirm that the account has been successfully linked.
 
 
 

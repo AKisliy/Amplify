@@ -7,12 +7,10 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Diagnostics;
 using Microsoft.Extensions.Hosting;
 using Publisher.Infrastructure.Storage;
-using Publisher.Infrastructure.Clients.Instagram;
 using FluentValidation;
 using System.Reflection;
 using Publisher.Infrastructure.Configuration.Options;
 using Microsoft.AspNetCore.DataProtection;
-using Microsoft.Extensions.Options;
 using Npgsql;
 using Publisher.Domain.Enums;
 using Polly;
@@ -21,21 +19,16 @@ using Publisher.Infrastructure.Constants;
 using Polly.Retry;
 using static Publisher.Infrastructure.Constants.InstagramApi;
 using Microsoft.Extensions.Logging;
-using Publisher.Infrastructure.Extensions;
-using MassTransit;
 using Publisher.Application.Common.Interfaces.Factory;
 using Publisher.Infrastructure.Factory;
-using Publisher.Infrastructure.Workers;
-using Publisher.Infrastructure.Consumers;
 using Publisher.Infrastructure.Scheduler;
+using Publisher.Infrastructure.Scheduler.BackgroundJobs;
 using Microsoft.AspNetCore.Builder;
-using Publisher.Infrastructure.Publishers;
-using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.IdentityModel.Tokens;
-using System.Security.Claims;
-using System.Text;
 using Microsoft.Extensions.Configuration;
 using Publisher.Infrastructure.Auth;
+using Publisher.Infrastructure.Broker;
+using Microsoft.EntityFrameworkCore.Migrations;
+using Publisher.Infrastructure.Publishers;
 
 namespace Microsoft.Extensions.DependencyInjection;
 
@@ -56,32 +49,24 @@ public static class DependencyInjection
         builder.AddDatabaseConnection();
 
         builder.AddAuth();
-
-        services.AddPublishers(builder.Environment);
-        services.AddScoped<IFileStorage, MediaServiceStorage>();
-
-        services.AddScoped<InstagramApiClient>();
-        services.AddScoped<InstagramUrlBuilder>();
-        services.AddScoped<InstagramPayloadBuilder>();
-        services.AddScoped<InstagramHeaderBuilder>();
-        services.AddScoped<IInstagramIntegrationService, InstagramIntegrationService>();
+        builder.AddCorsUsage();
 
         services.AddScoped<IPublicationStatusNotifier, PublicationStatusNotifier>();
+        services.AddScoped<IPublicationService, PublicationService>();
 
-        // TODO: should be in Application layer --- IGNORE ---
-        // services.AddScoped<IAccountPickerFactory, AccountPickerFactory>();
         services.AddScoped<ISocialMediaPublisherFactory, SocialMediaPublisherFactory>();
+        services.AddScoped<IConnectionServiceFactory, ConnectionServiceFactory>();
 
         services.AddScoped<AutoListEntryRetriever>();
         services.AddSingleton(TimeProvider.System);
 
-        services.AddHostedService<AutoListSchedulerWorker>();
-
         services.AddPollyPipelines();
-        services.AddCustomHttpClients(builder.Configuration);
         services.AddBrokerConnection();
 
         builder.AddSchedulerServices();
+
+        builder.AddSocialMediaConnections();
+        builder.AddHttpClients();
     }
 
     private static void AddInfrastructureOptionsWithFluentValidation(this IServiceCollection services)
@@ -92,6 +77,9 @@ public static class DependencyInjection
         services.AddOptionsWithFluentValidation<RabbitMQOptions>(RabbitMQOptions.ConfigurationSection);
         services.AddOptionsWithFluentValidation<PublisherOptions>(PublisherOptions.ConfigurationSection);
         services.AddOptionsWithFluentValidation<JwtOptions>(JwtOptions.ConfigurationSection);
+        services.AddOptionsWithFluentValidation<CorsOptions>(CorsOptions.SectionName);
+        services.AddOptionsWithFluentValidation<TikTokApiOptions>(TikTokApiOptions.ConfigurationSection);
+        services.AddOptionsWithFluentValidation<FrontendOptions>(FrontendOptions.ConfigurationSection);
     }
 
     private static void AddDatabaseConnection(this IHostApplicationBuilder builder)
@@ -123,7 +111,7 @@ public static class DependencyInjection
                     .MapEnum<SocialProvider>(schemaName: ApplicationDbContext.DefaultSchemaName)
                     .MapEnum<PublicationStatus>(schemaName: ApplicationDbContext.DefaultSchemaName)
                     .EnableRetryOnFailure(4)
-                    .MigrationsHistoryTable("__EFMigrationsHistory", ApplicationDbContext.DefaultSchemaName)
+                    .MigrationsHistoryTable(HistoryRepository.DefaultTableName, ApplicationDbContext.DefaultSchemaName)
             );
 
             options.UseSnakeCaseNamingConvention();
@@ -132,21 +120,6 @@ public static class DependencyInjection
 
         builder.Services.AddScoped<IApplicationDbContext>(provider => provider.GetRequiredService<ApplicationDbContext>());
         builder.Services.AddScoped<ApplicationDbContextInitialiser>();
-    }
-
-    private static IServiceCollection AddPublishers(this IServiceCollection services, IHostEnvironment environment)
-    {
-        services.AddScoped<IPublicationService, PublicationService>();
-        if (environment.IsDevelopment())
-        {
-            services.AddScoped<ISocialMediaPublisher, DummyInstagramPublisher>();
-        }
-        else
-        {
-            services.AddScoped<ISocialMediaPublisher, InstagramPublisher>();
-        }
-
-        return services;
     }
 
 
@@ -172,36 +145,42 @@ public static class DependencyInjection
         return services;
     }
 
-    private static IServiceCollection AddBrokerConnection(this IServiceCollection services)
+    private static void AddCorsUsage(this IHostApplicationBuilder builder)
     {
-        services.AddMassTransit(config =>
+        var corsOptions = new CorsOptions()
         {
-            config.AddConsumer<PublishRequestedConsumer>();
-            // TODO: probably should have smth like projected created
+            DefaultPolicyName = ""
+        };
 
-            config.SetSnakeCaseEndpointNameFormatter();
+        builder.Configuration.GetSection(CorsOptions.SectionName).Bind(corsOptions);
 
+        Guard.Against.NullOrEmpty(corsOptions.DefaultPolicyName, message: "Cors policy name is not set");
 
-            config.UsingRabbitMq((context, cfg) =>
-            {
-                var options = context.GetRequiredService<IOptions<RabbitMQOptions>>().Value;
-                cfg.Host(options.Url);
-                // cfg.Host(options.Host, h =>
-                // {
-                //     h.Username(options.Username);
-                //     h.Password(options.Password);
-                // });
+        builder.Services.AddCors(options => options.AddPolicy(
+            corsOptions.DefaultPolicyName,
+            builder => builder.WithOrigins([.. corsOptions.AllowedOrigins])
+                .AllowAnyHeader()
+                .AllowAnyMethod()
+                .AllowCredentials()));
+    }
 
-                // TODO: Decide whether we start publishing based on event or direct api trigger
-                // cfg.Message<PostCreated>(x => x.SetEntityName("post-created"));
+    private static void AddSocialMediaConnections(this IHostApplicationBuilder builder)
+    {
+        builder.AddInstagramConnection();
+        builder.AddTikTokConnection();
+    }
 
-                cfg.UseInMemoryOutbox(context);
+    private static void AddHttpClients(this IHostApplicationBuilder builder)
+    {
+        var options = new ExternalUrlsOptions();
+        builder.Configuration.GetSection(ExternalUrlsOptions.SectionName).Bind(options);
 
-                cfg.ConfigureEndpoints(context);
-            });
+        builder.Services.AddHttpClient<IFileStorage, MediaServiceStorage>(client =>
+        {
+            client.BaseAddress = new Uri(options.MediaServiceApi);
         });
 
-        return services;
+        builder.Services.AddHttpClient<ImportAvatarJob>(client => client.BaseAddress = new Uri(options.MediaServiceApi));
     }
 }
 

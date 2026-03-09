@@ -2,9 +2,9 @@
 using Publisher.Application.Common.Interfaces;
 using Publisher.Domain.Entities;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.DataProtection.EntityFrameworkCore;
 using Publisher.Infrastructure.Data.Converters;
-using Microsoft.AspNetCore.DataProtection;
 
 namespace Publisher.Infrastructure.Data;
 
@@ -43,7 +43,7 @@ public class ApplicationDbContext : DbContext, IApplicationDbContext, IDataProte
         builder.HasDefaultSchema(DefaultSchemaName);
         builder.ApplyConfigurationsFromAssembly(Assembly.GetExecutingAssembly());
 
-        var encryptionConverter = new EncryptedConverter(_dataProtectionProvider, "SocialCredsKey");
+        var encryptionConverter = new EncryptedConverter(_dataProtectionProvider.CreateProtector("SocialCredsKey"));
 
         builder.Entity<SocialAccount>()
             .Property(sa => sa.Credentials)

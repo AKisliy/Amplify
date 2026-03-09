@@ -23,6 +23,29 @@ namespace UserService.Infrastructure.Data.Migrations
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
+            modelBuilder.Entity("Microsoft.AspNetCore.DataProtection.EntityFrameworkCore.DataProtectionKey", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasColumnName("id");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("FriendlyName")
+                        .HasColumnType("text")
+                        .HasColumnName("friendly_name");
+
+                    b.Property<string>("Xml")
+                        .HasColumnType("text")
+                        .HasColumnName("xml");
+
+                    b.HasKey("Id")
+                        .HasName("pk_data_protection_keys");
+
+                    b.ToTable("data_protection_keys", "userservice");
+                });
+
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRole<System.Guid>", b =>
                 {
                     b.Property<Guid>("Id")
@@ -453,7 +476,7 @@ namespace UserService.Infrastructure.Data.Migrations
             modelBuilder.Entity("UserService.Domain.Entities.Ambassador", b =>
                 {
                     b.HasOne("UserService.Domain.Entities.Project", "Project")
-                        .WithOne()
+                        .WithOne("Ambassador")
                         .HasForeignKey("UserService.Domain.Entities.Ambassador", "ProjectId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired()
@@ -480,6 +503,11 @@ namespace UserService.Infrastructure.Data.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired()
                         .HasConstraintName("fk_projects_asp_net_users_user_id");
+                });
+
+            modelBuilder.Entity("UserService.Domain.Entities.Project", b =>
+                {
+                    b.Navigation("Ambassador");
                 });
 #pragma warning restore 612, 618
         }

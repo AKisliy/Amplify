@@ -8,6 +8,7 @@ using MediaIngest.Infrastructure.Configuration;
 using MediaIngest.Infrastructure.Data;
 using MediaIngest.Infrastructure.Data.Interceptors;
 using MediaIngest.Infrastructure.FileStorage;
+using MediaIngest.Infrastructure.LinkGenerators;
 using MediaIngest.Infrastructure.MediaLinkResolvers;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Diagnostics;
@@ -38,6 +39,10 @@ public static class DependencyInjection
         builder.Services.AddScoped<IMediaLinkResolverFactory, MediaLinkResolverFactory>();
         builder.Services.AddScoped<IMediaLinkResolver, InstagramLinkResolver>();
         builder.Services.AddScoped<IMediaLinkResolver, PinterestLinkResolver>();
+
+        builder.Services.AddTransient<ILinkGeneratorFactory, LinkGeneratorFactory>();
+        builder.Services.AddTransient<ILinkGenerator, GoogleStorageLinkGenerator>();
+        builder.Services.AddTransient<ILinkGenerator, PublicLinkGenerator>();
 
         builder.Services.AddS3Storage(builder.Configuration);
         builder.Services.AddScoped<IFileStorage, S3Storage>();

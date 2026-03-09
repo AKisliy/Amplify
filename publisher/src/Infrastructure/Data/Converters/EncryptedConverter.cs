@@ -1,15 +1,14 @@
+namespace Publisher.Infrastructure.Data.Converters;
+
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
-namespace Publisher.Infrastructure.Data.Converters;
-
 public class EncryptedConverter : ValueConverter<string, string>
 {
-    public EncryptedConverter(IDataProtectionProvider provider, string keyName = "DefaultKey")
+    public EncryptedConverter(IDataProtector protector)
         : base(
-            plainText => provider.CreateProtector(keyName).Protect(plainText),
-            cipherText => provider.CreateProtector(keyName).Unprotect(cipherText)
-          )
+            v => protector.Protect(v),
+            v => protector.Unprotect(v))
     {
     }
 }

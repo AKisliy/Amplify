@@ -71,10 +71,13 @@ public class ApplicationDbContextInitialiser(
             logger.LogInformation("Default project was added to DB with ID: {ProjectId}", projectId);
         }
 
+        var project = context.Projects.Local.FirstOrDefault(p => p.Id == projectId)
+            ?? context.Projects.Find(projectId);
+
         var account = new SocialAccount
         {
             Id = accountId,
-            ProjectId = projectId,
+            ProviderUserId = "default",
             Username = "AKisliy",
             Provider = SocialProvider.Instagram,
             Credentials = "",
@@ -83,6 +86,7 @@ public class ApplicationDbContextInitialiser(
 
         if (!context.SocialAccounts.Any())
         {
+            if (project != null) account.Projects.Add(project);
             context.SocialAccounts.Add(account);
 
             logger.LogInformation("Added default account to DB with ID: {AccountId}", accountId);

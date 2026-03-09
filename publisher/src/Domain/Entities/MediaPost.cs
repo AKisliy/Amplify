@@ -19,6 +19,8 @@ public class MediaPost : BaseAuditableEntity
 
     public Guid? AutoListId { get; set; }
 
+    public bool ProcessedInAutoList { get; set; }
+
     public PublicationSettings PublicationSettings { get; set; } = new();
 
     public virtual ICollection<PublicationRecord> PublicationRecords { get; set; } = [];

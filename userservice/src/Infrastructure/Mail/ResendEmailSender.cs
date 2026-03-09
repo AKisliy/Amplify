@@ -1,10 +1,15 @@
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using Resend;
 using UserService.Application.Common.Interfaces;
+using UserService.Infrastructure.Options;
 
 namespace UserService.Infrastructure.Mail;
 
-public class ResendEmailSender(IResend resend, ILogger<ResendEmailSender> logger) : IEmailService
+public class ResendEmailSender(
+    IResend resend,
+    ILogger<ResendEmailSender> logger,
+    IOptions<MailOptions> mailOptions) : IEmailService
 {
     private const string BrandColor = "#323232";
     private const string AppName = "Amplify";
@@ -96,7 +101,7 @@ public class ResendEmailSender(IResend resend, ILogger<ResendEmailSender> logger
     {
         var resp = await resend.EmailSendAsync(new EmailMessage()
         {
-            From = "onboarding@resend.dev",
+            From = mailOptions.Value.FromEmail,
             To = toEmail,
             Subject = subject,
             HtmlBody = htmlBody,

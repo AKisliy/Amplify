@@ -68,6 +68,25 @@ namespace Publisher.Infrastructure.Data.Migrations
                     b.ToTable("data_protection_keys", "publisher");
                 });
 
+            modelBuilder.Entity("ProjectSocialAccount", b =>
+                {
+                    b.Property<Guid>("ProjectsId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("projects_id");
+
+                    b.Property<Guid>("SocialAccountsId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("social_accounts_id");
+
+                    b.HasKey("ProjectsId", "SocialAccountsId")
+                        .HasName("pk_project_social_account");
+
+                    b.HasIndex("SocialAccountsId")
+                        .HasDatabaseName("ix_project_social_account_social_accounts_id");
+
+                    b.ToTable("project_social_account", "publisher");
+                });
+
             modelBuilder.Entity("Publisher.Domain.Entities.AutoList", b =>
                 {
                     b.Property<Guid>("Id")
@@ -191,6 +210,10 @@ namespace Publisher.Infrastructure.Data.Migrations
                     b.Property<Guid>("MediaId")
                         .HasColumnType("uuid")
                         .HasColumnName("media_id");
+
+                    b.Property<bool>("ProcessedInAutoList")
+                        .HasColumnType("boolean")
+                        .HasColumnName("processed_in_auto_list");
 
                     b.Property<Guid>("ProjectId")
                         .HasColumnType("uuid")
@@ -323,18 +346,23 @@ namespace Publisher.Infrastructure.Data.Migrations
                         .HasColumnType("uuid")
                         .HasColumnName("id");
 
+                    b.Property<Guid?>("AvatarMediaId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("avatar_media_id");
+
                     b.Property<string>("Credentials")
                         .IsRequired()
                         .HasColumnType("text")
                         .HasColumnName("credentials");
 
-                    b.Property<Guid>("ProjectId")
-                        .HasColumnType("uuid")
-                        .HasColumnName("project_id");
-
                     b.Property<SocialProvider>("Provider")
                         .HasColumnType("publisher.social_provider")
                         .HasColumnName("provider");
+
+                    b.Property<string>("ProviderUserId")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("provider_user_id");
 
                     b.Property<DateTime>("TokenExpiresAt")
                         .HasColumnType("timestamp with time zone")
@@ -348,8 +376,9 @@ namespace Publisher.Infrastructure.Data.Migrations
                     b.HasKey("Id")
                         .HasName("pk_social_accounts");
 
-                    b.HasIndex("ProjectId")
-                        .HasDatabaseName("ix_social_accounts_project_id");
+                    b.HasIndex("Provider", "ProviderUserId")
+                        .IsUnique()
+                        .HasDatabaseName("ix_social_accounts_provider_provider_user_id");
 
                     b.ToTable("social_accounts", "publisher");
                 });
@@ -369,6 +398,23 @@ namespace Publisher.Infrastructure.Data.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired()
                         .HasConstraintName("fk_auto_list_social_account_auto_lists_auto_lists_id");
+                });
+
+            modelBuilder.Entity("ProjectSocialAccount", b =>
+                {
+                    b.HasOne("Publisher.Domain.Entities.Project", null)
+                        .WithMany()
+                        .HasForeignKey("ProjectsId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_project_social_account_projects_projects_id");
+
+                    b.HasOne("Publisher.Domain.Entities.SocialAccount", null)
+                        .WithMany()
+                        .HasForeignKey("SocialAccountsId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_project_social_account_social_accounts_social_accounts_id");
                 });
 
             modelBuilder.Entity("Publisher.Domain.Entities.AutoList", b =>
@@ -520,18 +566,6 @@ namespace Publisher.Infrastructure.Data.Migrations
                     b.Navigation("MediaPost");
 
                     b.Navigation("SocialAccount");
-                });
-
-            modelBuilder.Entity("Publisher.Domain.Entities.SocialAccount", b =>
-                {
-                    b.HasOne("Publisher.Domain.Entities.Project", "Project")
-                        .WithMany()
-                        .HasForeignKey("ProjectId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired()
-                        .HasConstraintName("fk_social_accounts_projects_project_id");
-
-                    b.Navigation("Project");
                 });
 
             modelBuilder.Entity("Publisher.Domain.Entities.AutoList", b =>

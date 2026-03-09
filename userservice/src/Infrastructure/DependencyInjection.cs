@@ -17,6 +17,7 @@ using UserService.Application.Common.Interfaces.Clients;
 using UserService.Infrastructure.Clients;
 using Microsoft.Extensions.Options;
 using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.HttpOverrides;
 using UserService.Infrastructure.Mail;
 using Npgsql;
@@ -40,6 +41,10 @@ public static class DependencyInjection
         builder.Services.AddScoped<ISaveChangesInterceptor, AuditableEntityInterceptor>();
         builder.Services.AddScoped<ISaveChangesInterceptor, DispatchDomainEventsInterceptor>();
 
+        builder.Services.AddDataProtection()
+            .PersistKeysToDbContext<ApplicationDbContext>()
+            .SetApplicationName("AmplifyUserService");
+
         builder.Services.AddDbContext<ApplicationDbContext>((sp, options) =>
         {
             options.AddInterceptors(sp.GetServices<ISaveChangesInterceptor>());
@@ -55,7 +60,7 @@ public static class DependencyInjection
 
         builder.Services.AddScoped<ApplicationDbContextInitialiser>();
 
-        if (builder.Environment.IsDevelopment() || builder.Environment.IsStaging())
+        if (builder.Environment.IsDevelopment())
         {
             builder.Services.AddTransient<IEmailService, DummyEmailSender>();
         }
@@ -78,6 +83,7 @@ public static class DependencyInjection
         services.AddOptions<CorsOptions>().BindConfiguration(CorsOptions.SectionName);
         services.AddOptions<InternalUrlsOptions>().BindConfiguration(InternalUrlsOptions.SectionName);
         services.AddOptions<UserserviceOptions>().BindConfiguration(UserserviceOptions.SectionName);
+        services.AddOptions<MailOptions>().BindConfiguration(MailOptions.SectionName);
     }
 
     private static void AddAuth(this IHostApplicationBuilder builder)

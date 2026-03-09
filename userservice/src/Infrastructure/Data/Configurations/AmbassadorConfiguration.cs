@@ -9,7 +9,7 @@ public class AmbassadorConfiguration : IEntityTypeConfiguration<Ambassador>
     public void Configure(EntityTypeBuilder<Ambassador> builder)
     {
         builder.HasOne(a => a.Project)
-            .WithOne()
+            .WithOne(x => x.Ambassador)
             .IsRequired()
             .OnDelete(DeleteBehavior.Cascade);
     }

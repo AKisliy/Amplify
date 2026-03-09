@@ -3,6 +3,7 @@ using UserService.Application.Common.Interfaces;
 using UserService.Domain.Entities;
 using UserService.Infrastructure.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
+using Microsoft.AspNetCore.DataProtection.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Identity;
 using UserService.Infrastructure.Extensions;
@@ -10,13 +11,14 @@ using UserService.Infrastructure.Extensions;
 namespace UserService.Infrastructure.Data;
 
 public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options)
-    : IdentityDbContext<ApplicationUser, IdentityRole<Guid>, Guid>(options), IApplicationDbContext
+    : IdentityDbContext<ApplicationUser, IdentityRole<Guid>, Guid>(options), IApplicationDbContext, IDataProtectionKeyContext
 {
     public const string DefaultSchemaName = "userservice";
 
     public DbSet<Project> Projects => Set<Project>();
     public DbSet<Ambassador> Ambassadors => Set<Ambassador>();
     public DbSet<AmbassadorImage> AmbassadorImages => Set<AmbassadorImage>();
+    public DbSet<DataProtectionKey> DataProtectionKeys => Set<DataProtectionKey>();
 
     protected override void OnModelCreating(ModelBuilder builder)
     {
