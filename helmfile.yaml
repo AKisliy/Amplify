@@ -95,3 +95,16 @@ releases:
     needs:
       - gateway
 
+  - name: video-editor
+    namespace: "{{ .Values.namespace }}"
+    chart: ./video-editor/charts
+    labels:
+      tier: backend
+      app: video-editor
+    values:
+      - ./video-editor/charts/envs/values.yaml
+      - ./video-editor/charts/envs/values.yaml.gotmpl
+      - ./video-editor/charts/envs/values.{{ .Environment.Name }}.yaml
+    needs:
+      - gateway
+

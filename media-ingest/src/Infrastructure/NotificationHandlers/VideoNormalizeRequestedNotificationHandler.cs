@@ -16,9 +16,10 @@ internal class VideoNormalizeRequestedHandler(
             "Received VideoNormalizeRequested notification for MediaId: {MediaId}.",
             notification.MediaId);
 
-        var command = new NormalizeVideoCommand()
+        var command = new NormalizeVideoCommand
         {
-            MediaId = notification.MediaId
+            MediaId = notification.MediaId,
+            FileKey = notification.FileKey
         };
 
         await bus.Publish(command, cancellationToken);

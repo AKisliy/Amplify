@@ -29,7 +29,7 @@ public class UploadFromFileCommandHandler(IFileStorage fileStorage, IApplication
         };
 
         if (request.FileType == FileType.Video)
-            mediaFile.AddDomainEvent(new VideoFileCreatedEvent(mediaFile.Id));
+            mediaFile.AddDomainEvent(new VideoFileCreatedEvent(mediaFile, fileKey));
 
         dbContext.MediaFiles.Add(mediaFile);
 

@@ -1,0 +1,31 @@
+services:
+  video-editors:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: video-editors
+    environment:
+      - PYTHONUNBUFFERED=1
+      - RABBITMQ_DEFAULT_USER=${RABBITMQ_DEFAULT_USER}
+      - RABBITMQ_DEFAULT_PASS=${RABBITMQ_DEFAULT_PASS}
+      - RABBITMQ_HOST=${RABBITMQ_HOST}
+      - RABBITMQ_PORT=${RABBITMQ_PORT}
+      - MEDIA_SAVING_PATH=/app/videos
+      - SEQ_HOST=${SEQ_HOST}
+      - SEQ_API_KEY=${SEQ_API_KEY}
+      - DB_NAME=${DB_NAME}
+      - DB_USER=${DB_USER}
+      - DB_PASSWORD=${DB_PASSWORD}
+      - DB_HOST=${DB_HOST}
+      - DB_PORT=${DB_PORT}
+      - MINIO_HOST=${MINIO_HOST}
+      - MINIO_ACCESS_KEY=${MINIO_ACCESS_KEY}
+      - MINIO_SECRET_KEY=${MINIO_SECRET_KEY}
+      - MINIO_BUCKET=${MINIO_BUCKET}
+      - MINIO_USE_SSL=${MINIO_USE_SSL}
+    volumes:
+      - ${MEDIA_SAVING_PATH}:/app/videos
+      - ${TEMP_PATH}:/app/temp-data
+    restart: unless-stopped
+    depends_on:
+      - rabbitmq

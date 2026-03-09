@@ -1,0 +1,15 @@
+secret:
+  name: video-editor-k8s-secret
+
+secrets:
+  rabbitMqConnection:
+    key: rabbitmq-test
+  s3AccessKey:
+    key: test-bucket-access-key
+  s3SecretKey:
+    key: test-bucket-secret-key
+
+minio:
+  host: "storage.googleapis.com"
+  bucket: "amplify-media-test"
+  useSsl: "true"

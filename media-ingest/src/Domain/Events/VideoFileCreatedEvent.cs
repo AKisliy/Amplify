@@ -1,8 +1,9 @@
-using MediaIngest.Domain.Common;
+using MediaIngest.Domain.Entities;
 
 namespace MediaIngest.Domain.Events;
 
-public class VideoFileCreatedEvent(Guid mediaId) : BaseEvent
+public class VideoFileCreatedEvent(MediaFile mediaFile, string fileKey) : BaseEvent
 {
-    public Guid MediaId { get; } = mediaId;
+    public MediaFile MediaFile { get; } = mediaFile;
+    public string FileKey { get; } = fileKey;
 }

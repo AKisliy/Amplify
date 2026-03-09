@@ -1,0 +1,42 @@
+replicaCount: 1
+
+image:
+  repository: ghcr.io/akisliy/amplify/video-editor
+  pullPolicy: IfNotPresent
+  tag: ""
+
+nameOverride: ""
+fullnameOverride: ""
+
+serviceAccount:
+  create: true
+  name: "video-editor-sa"
+
+resources:
+  requests:
+    cpu: 250m
+    memory: 512Mi
+  limits:
+    cpu: "2"
+    memory: 2Gi
+
+minio:
+  host: ""
+  bucket: ""
+  useSsl: "false"
+
+# определяется в файлах окружения
+secret:
+  name: ""
+
+externalSecret:
+  name: video-editor-external-secret
+  refreshInterval: 1h
+
+secrets:
+  rabbitMqConnection:
+    key: ""
+  s3AccessKey:
+    key: ""
+  s3SecretKey:
+    key: ""

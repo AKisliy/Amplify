@@ -1,0 +1,37 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "video-editor.fullname" . }}
+  labels:
+    {{- include "video-editor.labels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      {{- include "video-editor.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "video-editor.labels" . | nindent 8 }}
+    spec:
+      serviceAccountName: {{ include "video-editor.serviceAccountName" . }}
+      containers:
+        - name: {{ .Chart.Name }}
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          {{- with .Values.resources }}
+          resources:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          env:
+            - name: PYTHONUNBUFFERED
+              value: "1"
+            - name: MINIO_HOST
+              value: "{{ .Values.minio.host }}"
+            - name: MINIO_BUCKET
+              value: "{{ .Values.minio.bucket }}"
+            - name: MINIO_USE_SSL
+              value: "{{ .Values.minio.useSsl }}"
+          envFrom:
+            - secretRef:
+                name: {{ .Values.secret.name }}
