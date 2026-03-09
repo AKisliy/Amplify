@@ -50,8 +50,8 @@ function CallbackContent() {
 
                 setProjectId(pId);
 
-                // Call our backend to connect instagram
-                await integrationsApi.connectInstagram(pId, code);
+                // Call our backend to connect the integration
+                await integrationsApi.connect(code, state);
 
                 setStatus("success");
 
@@ -78,7 +78,7 @@ function CallbackContent() {
                     className="flex flex-col items-center gap-4"
                 >
                     <Loader2 className="w-16 h-16 animate-spin text-primary" />
-                    <h2 className="text-2xl font-semibold">Connecting Instagram...</h2>
+                    <h2 className="text-2xl font-semibold">Connecting Integration...</h2>
                     <p className="text-muted-foreground">Please wait while we verify your account.</p>
                 </motion.div>
             )}
@@ -93,7 +93,7 @@ function CallbackContent() {
                         <CheckCircle2 className="w-10 h-10" />
                     </div>
                     <h2 className="text-2xl font-semibold">Connected Successfully!</h2>
-                    <p className="text-muted-foreground">Your Instagram account is now linked to the project.</p>
+                    <p className="text-muted-foreground">Your account is now linked to the project.</p>
                     <p className="text-sm text-muted-foreground animate-pulse mt-2">Redirecting you back...</p>
                 </motion.div>
             )}

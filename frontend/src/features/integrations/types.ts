@@ -1,11 +1,12 @@
 export interface Integration {
     id: string;
-    socialProvider: number; // e.g. 1 for Instagram
+    socialProvider: "Instagram" | "TikTok" | "Youtube" | string;
     username: string;
+    avatarUrl?: string;
 }
 
 export interface IntegrationsResponse {
-    integrations: Integration[];
+    connections: Integration[];
 }
 
 export interface AuthUrlResponse {

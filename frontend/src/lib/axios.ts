@@ -14,8 +14,9 @@ const serviceMap: Record<string, string> = {
     users: "/userservice/api",
     projects: "/userservice/api",
     ambassadors: "/userservice/api",
-    autolist: "/publisher",
-    autolistentry: "/publisher",
+    autolists: "/publisher/api",
+    autolistentry: "/publisher/api",
+    connections: "/publisher/api",
     integrations: "/publisher/api",
     images: "/media-ingest/api",
     media: "/media-ingest/api",
@@ -31,7 +32,7 @@ api.interceptors.request.use(
             const servicePrefix = serviceMap[firstSegment] || "/userservice/api"; // Default to userservice
 
             // Extract the base host from the environment variable (strip any existing path)
-            const envUrl = process.env.NEXT_PUBLIC_API_BASE_URL || "http://amplify.34.40.73.43.nip.io";
+            const envUrl = process.env.NEXT_PUBLIC_API_BASE_URL || "https://staging.alexeykiselev.tech";
             try {
                 const urlObj = new URL(envUrl);
                 const baseHost = `${urlObj.protocol}//${urlObj.host}`;
@@ -114,7 +115,7 @@ api.interceptors.response.use(
             if (refreshToken && accessToken) {
                 try {
                     console.log("Axios Interceptor: 401 detected, attempting refresh...");
-                    const envUrl = process.env.NEXT_PUBLIC_API_BASE_URL || "http://amplify.34.40.73.43.nip.io";
+                    const envUrl = process.env.NEXT_PUBLIC_API_BASE_URL || "https://staging.alexeykiselev.tech";
                     const refreshUrl = `${envUrl}/userservice/api/auth/refresh`;
 
                     // Call refresh endpoint directly
