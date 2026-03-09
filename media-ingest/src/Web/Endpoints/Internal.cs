@@ -58,7 +58,8 @@ public class Internal : EndpointGroupBase
             file.OpenReadStream(),
             file.FileName,
             file.ContentType,
-            file.Length);
+            file.Length,
+            FileType.None);
 
         var result = await sender.Send(command);
         return TypedResults.Created($"/api/internal/media/{result.MediaId}/stream", result);

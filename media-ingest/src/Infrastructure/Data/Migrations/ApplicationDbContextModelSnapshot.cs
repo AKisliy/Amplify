@@ -21,8 +21,6 @@ namespace MediaIngest.Infrastructure.Data.Migrations
                 .HasAnnotation("ProductVersion", "9.0.0")
                 .HasAnnotation("Relational:MaxIdentifierLength", 63);
 
-            NpgsqlModelBuilderExtensions.HasPostgresEnum(modelBuilder, "file_type", new[] { "broll", "hook", "luxury_fragment", "luxury_reference", "voiceover" });
-            NpgsqlModelBuilderExtensions.HasPostgresEnum(modelBuilder, "media_type", new[] { "audio", "video", "video_audio" });
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
             modelBuilder.Entity("MediaIngest.Domain.Entities.MediaFile", b =>

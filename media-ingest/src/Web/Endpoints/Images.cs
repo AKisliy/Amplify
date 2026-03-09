@@ -1,4 +1,5 @@
 using MediaIngest.Application.Media.Commands.UploadFromFile;
+using MediaIngest.Domain.Enums;
 using Microsoft.AspNetCore.Http.HttpResults;
 
 namespace MediaIngest.Web.Endpoints;
@@ -34,7 +35,9 @@ public class Images : EndpointGroupBase
             file.OpenReadStream(),
             file.FileName,
             file.ContentType,
-            file.Length);
+            file.Length,
+            FileType.Image);
+
         var result = await sender.Send(command);
         return TypedResults.Created($"/media/{result.MediaId}", result);
     }

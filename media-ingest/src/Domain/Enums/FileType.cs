@@ -2,9 +2,7 @@ namespace MediaIngest.Domain.Enums;
 
 public enum FileType
 {
-    LuxuryFragment,
-    LuxuryReference,
-    Broll,
-    Voiceover,
-    Hook
+    None = 0,
+    Image = 1,
+    Video = 2,
 }

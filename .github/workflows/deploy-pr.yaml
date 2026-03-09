@@ -13,6 +13,7 @@ jobs:
             publisher: ${{ steps.filter.outputs.publisher }}
             media-ingest: ${{ steps.filter.outputs.media-ingest }}
             ws-gateway: ${{ steps.filter.outputs.ws-gateway }}
+            video-editor: ${{ steps.filter.outputs.video-editor }}
         steps:
             - uses: actions/checkout@v4
             - uses: dorny/paths-filter@v3
@@ -28,6 +29,8 @@ jobs:
                         - 'media-ingest/**'
                       ws-gateway:
                         - 'websocket-gateway/**'
+                      video-editor:
+                        - 'video-editor/**'
 
     deploy-userservice:
         needs: changes
@@ -73,5 +76,16 @@ jobs:
             service_folder: "websocket-gateway"
             app_label: "ws-gateway"
             image_tag_var_name: "WS_GATEWAY_IMAGE_TAG"
+            env_name: "stage"
+        secrets: inherit
+
+    deploy-video-editor:
+        needs: changes
+        if: ${{ needs.changes.outputs.video-editor == 'true' }}
+        uses: ./.github/workflows/deploy-template.yaml
+        with:
+            service_folder: "video-editor"
+            app_label: "video-editor"
+            image_tag_var_name: "VIDEO_EDITOR_IMAGE_TAG"
             env_name: "stage"
         secrets: inherit
