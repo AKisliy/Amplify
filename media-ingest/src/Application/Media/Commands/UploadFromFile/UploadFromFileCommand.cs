@@ -18,7 +18,9 @@ public class UploadFromFileCommandHandler(IFileStorage fileStorage, IApplication
 {
     public async Task<UploadFileDto> Handle(UploadFromFileCommand request, CancellationToken cancellationToken)
     {
-        var fileKey = await fileStorage.SaveFileAsync(request.FileStream, request.FileName, cancellationToken);
+        var extension = Path.GetExtension(request.FileName);
+        var uniqueKey = $"{Guid.NewGuid()}{extension}";
+        var fileKey = await fileStorage.SaveFileAsync(request.FileStream, uniqueKey, cancellationToken);
 
         var mediaFile = new MediaFile
         {
