@@ -32,6 +32,8 @@ spec:
               value: "{{ .Values.minio.bucket }}"
             - name: MINIO_USE_SSL
               value: "{{ .Values.minio.useSsl }}"
+            - name: MINIO_LOCATION
+              value: "{{ .Values.minio.location }}"
           envFrom:
             - secretRef:
                 name: {{ .Values.secret.name }}

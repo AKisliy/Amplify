@@ -13,3 +13,4 @@ minio:
   host: "storage.googleapis.com"
   bucket: "amplify-media-test"
   useSsl: "true"
+  location: "europe-west3"
