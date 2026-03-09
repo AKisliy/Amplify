@@ -6,14 +6,14 @@ from botocore.config import Config
 def get_s3_client():
     host = os.getenv("MINIO_HOST", "localhost:9000")
     use_ssl = os.getenv("MINIO_USE_SSL", "false").lower() == "true"
-    scheme = "https" if use_ssl else "http"
     return boto3.client(
         "s3",
-        endpoint_url=f"{scheme}://{host}",
+        host=host,
         aws_access_key_id=os.getenv("MINIO_ACCESS_KEY", "admin"),
         aws_secret_access_key=os.getenv("MINIO_SECRET_KEY", "password"),
         config=Config(signature_version="s3v4"),
         region_name=os.getenv("MINIO_LOCATION", "us-east-1"),
+        use_ssl=use_ssl
     )
 
 

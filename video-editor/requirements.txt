@@ -53,5 +53,5 @@ videohash2==3.2.2
 vine==5.1.0
 wcwidth==0.2.13
 yt-dlp==2025.6.30
-boto3==1.38.28
+boto3==1.42.63
 minio==7.2.15
