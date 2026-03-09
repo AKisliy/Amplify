@@ -102,14 +102,9 @@ export const resetPassword = async (
 };
 
 // =====================
-// Get current user
+// Logout
 // =====================
 
-export const getMe = async (): Promise<AuthResponse> => {
-  // Since the backend does not have a dedicated /me endpoint, 
-  // we return null or handle this differently in the provider.
-  // For now, let's just throw to signal it's not available, 
-  // or if the provider expects it to confirm session validity, 
-  // we might need to rely on token validation or a lightweight call.
-  throw new Error("Endpoint /users/me not implemented");
+export const logout = async (): Promise<void> => {
+  await api.post(`${AUTH_BASE}/logout`);
 };
