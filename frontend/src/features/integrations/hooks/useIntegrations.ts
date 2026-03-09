@@ -13,7 +13,7 @@ export function useIntegrations(projectId: string) {
         setError(null);
         try {
             const data = await integrationsApi.getIntegrations(projectId);
-            setIntegrations(data.integrations || []);
+            setIntegrations(data.connections || []);
         } catch (err: any) {
             console.error("Failed to fetch integrations:", err);
             setError(err.message || "Failed to fetch integrations");
@@ -26,26 +26,40 @@ export function useIntegrations(projectId: string) {
         fetchIntegrations();
     }, [fetchIntegrations]);
 
-    const connectInstagram = async (code: string) => {
+    const connectIntegration = async (code: string, state: string) => {
         setIsLoading(true);
         setError(null);
         try {
-            await integrationsApi.connectInstagram(projectId, code);
+            await integrationsApi.connect(code, state);
             await fetchIntegrations(); // Refresh list after connection
         } catch (err: any) {
-            setError(err.message || "Failed to connect Instagram");
+            setError(err.message || "Failed to connect integration");
             throw err;
         } finally {
             setIsLoading(false);
         }
     };
 
-    const getAuthUrl = async () => {
+    const getAuthUrl = async (provider: string) => {
         try {
-            return await integrationsApi.getAuthUrl(projectId);
+            return await integrationsApi.getAuthUrl(projectId, provider);
         } catch (err: any) {
             setError(err.message || "Failed to get auth url");
             throw err;
+        }
+    };
+
+    const disconnectAccount = async (accountId: string) => {
+        setIsLoading(true);
+        setError(null);
+        try {
+            await integrationsApi.disconnectAccount(projectId, accountId);
+            await fetchIntegrations(); // Refresh list after deletion
+        } catch (err: any) {
+            setError(err.message || "Failed to disconnect account");
+            throw err;
+        } finally {
+            setIsLoading(false);
         }
     };
 
@@ -54,7 +68,8 @@ export function useIntegrations(projectId: string) {
         isLoading,
         error,
         refetch: fetchIntegrations,
-        connectInstagram,
-        getAuthUrl
+        connectIntegration,
+        getAuthUrl,
+        disconnectAccount
     };
 }

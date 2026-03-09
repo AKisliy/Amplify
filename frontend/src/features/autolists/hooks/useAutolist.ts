@@ -61,8 +61,21 @@ export function useAutolist(autolistId?: string) {
     }
   };
 
-  const addEntry = async (entry: Omit<AutoListEntry, "id">) => {
+  const addEntry = async (entry: Omit<AutoListEntry, "id" | "autoListId">) => {
     if (!autolistId) return;
+
+    if (autolistId === "new") {
+      // Local addition for new autolist
+      const newEntry: AutoListEntry = {
+        ...entry,
+        id: crypto.randomUUID(),
+        autoListId: "new"
+      };
+      setAutolist((prev) =>
+        prev ? { ...prev, entries: [...prev.entries, newEntry] } : null
+      );
+      return;
+    }
 
     try {
       const id = await autolistApi.createEntry({
@@ -81,6 +94,21 @@ export function useAutolist(autolistId?: string) {
   };
 
   const updateEntry = async (id: string, data: Partial<AutoListEntry>) => {
+    if (autolistId === "new") {
+      // Local update for new autolist
+      setAutolist((prev) =>
+        prev
+          ? {
+            ...prev,
+            entries: prev.entries.map((e) =>
+              e.id === id ? { ...e, ...data } : e
+            ),
+          }
+          : null
+      );
+      return;
+    }
+
     try {
       await autolistApi.updateEntry(id, {
         id,
@@ -104,6 +132,16 @@ export function useAutolist(autolistId?: string) {
   };
 
   const deleteEntry = async (id: string) => {
+    if (autolistId === "new") {
+      // Local deletion for new autolist
+      setAutolist((prev) =>
+        prev
+          ? { ...prev, entries: prev.entries.filter((e) => e.id !== id) }
+          : null
+      );
+      return;
+    }
+
     try {
       await autolistApi.deleteEntry(id);
       setAutolist((prev) =>

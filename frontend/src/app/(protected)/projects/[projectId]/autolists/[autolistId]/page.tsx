@@ -42,7 +42,7 @@ export default function AutolistDetailsPage() {
   } = useAutolist(autolistId);
 
   const { integrations } = useIntegrations(projectId);
-  const instagramIntegrations = integrations.filter(i => i.socialProvider === 1);
+  const instagramIntegrations = integrations.filter(i => i.socialProvider === "Instagram");
 
   const [name, setName] = useState("");
   const [autoPublish, setAutoPublish] = useState(true);
@@ -74,9 +74,12 @@ export default function AutolistDetailsPage() {
       const nameChanged = name !== autolist.name;
       const shareToFeedChanged = shareToFeed !== (autolist.instagramSettings?.shareToFeed ?? false);
       const accountChanged = selectedAccountId !== (autolist.accounts?.[0]?.id ?? "");
-      setHasChanges(nameChanged || shareToFeedChanged || accountChanged);
+      // For NEW autolists, any entry or name counts as a change
+      const entriesChanged = autolistId === "new" ? autolist.entries.length > 0 : false;
+      
+      setHasChanges(nameChanged || shareToFeedChanged || accountChanged || entriesChanged);
     }
-  }, [name, shareToFeed, selectedAccountId, autolist]);
+  }, [name, shareToFeed, selectedAccountId, autolist, autolistId]);
 
   const handleBack = () => {
     router.push(`/projects/${projectId}/autolists`);
@@ -94,7 +97,10 @@ export default function AutolistDetailsPage() {
           projectId,
           name: name || "New Autolist",
           instagramSettings: { shareToFeed },
-          entries: [],
+          entries: autolist.entries.map(e => ({
+            dayOfWeeks: e.dayOfWeeks,
+            publicationTime: e.publicationTime
+          })),
           accounts: accountsToSave,
         });
         // Navigate to the newly created autolist
@@ -121,7 +127,6 @@ export default function AutolistDetailsPage() {
 
   const handleAddTimeSlot = () => {
     addEntry({
-      autoListId: autolistId,
       dayOfWeeks: 62, // Mon-Fri by default
       publicationTime: "12:00:00",
     });
