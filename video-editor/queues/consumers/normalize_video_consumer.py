@@ -5,7 +5,7 @@ import tempfile
 
 from models.messages.normalize_video_command import NormalizeVideoCommand
 from queues.consumers.raw_consumer import RawJsonConsumer
-from utils.storage.minio_client import get_minio_client, get_presigned_url, upload_from_file
+from utils.storage.minio_client import get_s3_client, get_presigned_url, upload_from_file
 
 EXCHANGE_NAME = "video-normalize-requested"
 QUEUE_NAME = "video-editor-normalize"
@@ -13,8 +13,7 @@ QUEUE_NAME = "video-editor-normalize"
 
 def _normalize(input_url: str, output_path: str):
     # Input is a presigned HTTP URL — ffmpeg streams it directly, no local download needed.
-    # Output goes to a temp file because -movflags +faststart requires seekable output
-    # (it rewrites the moov atom after encoding, which is impossible with a pipe).
+    # Output goes to a temp file because -movflags +faststart requires seekable output.
     cmd = [
         "ffmpeg", "-y",
         "-i", input_url,
@@ -29,7 +28,7 @@ def _normalize(input_url: str, output_path: str):
 
 def normalizeHandler(message: NormalizeVideoCommand):
     bucket = os.getenv("MINIO_BUCKET", "media")
-    client = get_minio_client()
+    client = get_s3_client()
 
     logging.info("Normalizing video — MediaId=%s FileKey=%s", message.media_id, message.file_key)
 
