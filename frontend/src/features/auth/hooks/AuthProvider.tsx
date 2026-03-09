@@ -10,8 +10,9 @@ import {
 
 import {
   login as loginService,
-  getMe,
+  logout as logoutService,
 } from "../services/auth.service";
+import { decodeJwt } from "@/lib/jwt";
 
 import { AuthUser, LoginPayload } from "../types";
 import { buildAuthState } from "@/lib/auth";
@@ -40,14 +41,29 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
       if (storedUser && storedToken) {
         try {
-          const parsedUser = JSON.parse(storedUser);
+          let parsedUser = JSON.parse(storedUser);
+          
+          // Enhanced: if user info is incomplete, reconstruct from token
+          const decoded = decodeJwt(storedToken);
+          if (decoded) {
+            const email = decoded.email || 
+                          decoded["http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress"] ||
+                          decoded.name ||
+                          parsedUser.email;
+            
+            const id = decoded.sub || 
+                       decoded.id || 
+                       decoded["http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier"] ||
+                       parsedUser.id;
+
+            if (email !== parsedUser.email || id !== parsedUser.id) {
+              parsedUser = { ...parsedUser, email, id };
+              localStorage.setItem("auth_user", JSON.stringify(parsedUser));
+            }
+          }
+          
           setUser(parsedUser);
-          // Verify session validity by checking token expiration locally if possible,
-          // or just assume valid until 401. 
-          // Since /users/me is not available, we rely on the stored user and token.
-          // The Axios interceptor will handle 401s if the token is invalid/expired.
-          setUser(parsedUser);
-          console.log("AuthProvider: Session restored from storage");
+          console.log("AuthProvider: Session restored", parsedUser.email);
         } catch (e) {
           console.log("AuthProvider: Error parsing stored user", e);
           localStorage.removeItem("auth_user");
@@ -69,14 +85,34 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     console.log("AuthProvider: Logging in...");
     const response = await loginService(payload);
 
-    const { accessToken, refreshToken, ...userData } = response;
+    // Backend LoginResponse only contains AccessToken and RefreshToken (usually PascalCase in .NET)
+    const accessToken = (response as any).accessToken || (response as any).AccessToken;
+    const refreshToken = (response as any).refreshToken || (response as any).RefreshToken;
+
+    if (!accessToken) {
+      throw new Error("Login failed: Access token missing in response");
+    }
+
+    // Decode JWT to get user info since it's not in the response body
+    const decoded = decodeJwt(accessToken);
+    if (!decoded) {
+      throw new Error("Failed to decode session token");
+    }
+
+    const email = decoded.email ||
+                  decoded["http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress"] ||
+                  decoded.name;
+    const id = decoded.sub ||
+               decoded.id ||
+               decoded["http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier"];
+
     const user: AuthUser = {
-      id: userData.id,
-      email: userData.email,
-      emailConfirmed: true // If they can login, email is confirmed or allowed
+      id: id || "unknown-id",
+      email: email || payload.email, // Fallback to login email
+      emailConfirmed: true
     };
 
-    console.log("AuthProvider: Login successful", user);
+    console.log("AuthProvider: Login successful", user.email);
 
     setUser(user);
     localStorage.setItem("auth_user", JSON.stringify(user));
@@ -85,15 +121,15 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const logout = async () => {
-    setUser(null);
-    localStorage.removeItem("auth_user");
-    localStorage.removeItem("accessToken");
-    localStorage.removeItem("refreshToken");
-    // Optional: Call backend logout if needed
     try {
-      // await api.post("/auth/logout");
+      await logoutService();
     } catch (e) {
-      // ignore
+      console.error("AuthProvider: Logout service call failed", e);
+    } finally {
+      setUser(null);
+      localStorage.removeItem("auth_user");
+      localStorage.removeItem("accessToken");
+      localStorage.removeItem("refreshToken");
     }
   };
 

@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import { FolderKanban, User, ArrowRight, Plus, Trash } from "lucide-react";
+import { UserMenu } from "@/components/UserMenu";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -62,7 +63,7 @@ export default function DashboardPage() {
               </div>
               <span className="font-semibold text-lg">Amplify</span>
             </button>
-            {/* We can add user menu here later if needed */}
+            <UserMenu />
           </div>
         </div>
       </motion.header>
