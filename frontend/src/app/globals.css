@@ -125,6 +125,11 @@
 }
 
 @layer utilities {
+  /* Cap all container elements so the UI doesn't stretch on wide monitors */
+  .container {
+    max-width: 88rem; /* 1408px */
+  }
+
   .bg-mesh {
     background-color: var(--background);
     background-image: 

@@ -53,3 +53,34 @@ export type AmbassadorImage = {
   imageUrl: string;
   imageType: number;
 };
+
+// Template types
+export type Template = {
+  id: string;
+  name: string;
+  description?: string | null;
+  projectId: string;
+  thumbnailUrl?: string | null;
+  createdAt?: string;
+};
+
+export type TemplateNode = {
+  id: string;
+  type: string;
+  position: { x: number; y: number };
+  data: Record<string, unknown>;
+};
+
+export type TemplateEdge = {
+  id: string;
+  source: string;
+  target: string;
+};
+
+export type TemplateDetail = {
+  id: string;
+  name: string;
+  projectId: string;
+  nodes: TemplateNode[];
+  edges: TemplateEdge[];
+};
