@@ -34,7 +34,14 @@ export const autolistApi = {
    * Create a new autolist
    */
   async createAutolist(data: CreateAutoListDto): Promise<string> {
-    const response = await api.post<string>("/autolists", data);
+    const payload = {
+      ...data,
+      entries: data.entries.map((e) => ({
+        ...e,
+        id: crypto.randomUUID(),
+      })),
+    };
+    const response = await api.post<string>("/autolists", payload);
     return response.data;
   },
 
@@ -56,7 +63,15 @@ export const autolistApi = {
    * Create a new autolist entry (time slot)
    */
   async createEntry(data: CreateAutoListEntryDto): Promise<string> {
-    const response = await api.post<string>("/autolistentry", data);
+    const payload = {
+      autoListId: data.autoListId,
+      entry: {
+        id: crypto.randomUUID(),
+        dayOfWeeks: data.dayOfWeeks,
+        publicationTime: data.publicationTime,
+      },
+    };
+    const response = await api.post<string>("/autolistentry", payload);
     return response.data;
   },
 
@@ -64,7 +79,12 @@ export const autolistApi = {
    * Update an autolist entry
    */
   async updateEntry(id: string, data: UpdateAutoListEntryDto): Promise<void> {
-    await api.put(`/autolistentry/${id}`, data);
+    const payload = {
+      id: id,
+      daysOfWeek: data.dayOfWeeks, // Map frontend dayOfWeeks to backend daysOfWeek for PUT
+      publicationTime: data.publicationTime,
+    };
+    await api.put(`/autolistentry/${id}`, payload);
   },
 
   /**

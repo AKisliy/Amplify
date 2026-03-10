@@ -13,8 +13,9 @@ export interface InstagramSettings {
 
 export interface SocialMediaAccount {
   id: string;
-  socialProvider?: number;
+  socialProvider?: string | number;
   username?: string;
+  avatarUrl?: string;
 }
 
 export interface AutoList {

@@ -23,7 +23,8 @@ export default function IntegrationsPage() {
             setRedirectingProvider(provider);
             const url = await getAuthUrl(provider);
             if (url) {
-                window.location.href = url;
+                window.open(url, "_blank", "noopener,noreferrer");
+                setRedirectingProvider(null);
             }
         } catch (err) {
             console.error(`Failed to get auth URL for ${provider}:`, err);

@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { motion } from "framer-motion";
-import { ArrowLeft, Plus, Instagram, Clock, Globe } from "lucide-react";
+import { ArrowLeft, Plus, Instagram, Clock, Globe, Youtube, Music } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -42,31 +42,36 @@ export default function AutolistDetailsPage() {
   } = useAutolist(autolistId);
 
   const { integrations } = useIntegrations(projectId);
-  const instagramIntegrations = integrations.filter(i => i.socialProvider === "Instagram");
+  const availableIntegrations = integrations;
 
   const [name, setName] = useState("");
-  const [autoPublish, setAutoPublish] = useState(true);
-  const [repeat, setRepeat] = useState(false);
   const [shareToFeed, setShareToFeed] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [hasChanges, setHasChanges] = useState(false);
+  const [hasInitialized, setHasInitialized] = useState(false);
 
   const [selectedAccountId, setSelectedAccountId] = useState<string>("");
 
-  // Sync local state with autolist data
+  // Re-enable sync if we navigate to a different autolist (e.g. from /new to /id)
   useEffect(() => {
-    if (autolist) {
+    setHasInitialized(false);
+  }, [autolistId]);
+
+  // Sync local state with autolist data only once on load
+  useEffect(() => {
+    if (autolist && !hasInitialized) {
       setName(autolist.name || "");
       setShareToFeed(autolist.instagramSettings?.shareToFeed ?? false);
       if (autolist.accounts && autolist.accounts.length > 0) {
         setSelectedAccountId(autolist.accounts[0].id);
-      } else if (instagramIntegrations.length > 0) {
+      } else if (availableIntegrations.length > 0) {
         // Default to first available integration if none selected
-        setSelectedAccountId(instagramIntegrations[0].id);
+        setSelectedAccountId(availableIntegrations[0].id);
       }
       setHasChanges(false);
+      setHasInitialized(true);
     }
-  }, [autolist, instagramIntegrations]);
+  }, [autolist, availableIntegrations, hasInitialized]);
 
   // Track changes
   useEffect(() => {
@@ -75,7 +80,7 @@ export default function AutolistDetailsPage() {
       const shareToFeedChanged = shareToFeed !== (autolist.instagramSettings?.shareToFeed ?? false);
       const accountChanged = selectedAccountId !== (autolist.accounts?.[0]?.id ?? "");
       // For NEW autolists, any entry or name counts as a change
-      const entriesChanged = autolistId === "new" ? autolist.entries.length > 0 : false;
+      const entriesChanged = autolistId === "new" ? (autolist.entries?.length || 0) > 0 : false;
       
       setHasChanges(nameChanged || shareToFeedChanged || accountChanged || entriesChanged);
     }
@@ -97,10 +102,10 @@ export default function AutolistDetailsPage() {
           projectId,
           name: name || "New Autolist",
           instagramSettings: { shareToFeed },
-          entries: autolist.entries.map(e => ({
+          entries: autolist.entries?.map(e => ({
             dayOfWeeks: e.dayOfWeeks,
             publicationTime: e.publicationTime
-          })),
+          })) || [],
           accounts: accountsToSave,
         });
         // Navigate to the newly created autolist
@@ -160,6 +165,25 @@ export default function AutolistDetailsPage() {
     );
   }
 
+  const selectedIntegration = integrations.find(i => i.id === selectedAccountId);
+  const provider = selectedIntegration?.socialProvider || (autolist.accounts?.[0]?.socialProvider) || "Instagram";
+
+  const getProviderIcon = () => {
+    switch (provider) {
+      case "TikTok": return <Music className="w-4 h-4" />;
+      case "Youtube": return <Youtube className="w-4 h-4" />;
+      default: return <Instagram className="w-4 h-4" />;
+    }
+  };
+
+  const getProviderStyles = () => {
+    switch (provider) {
+      case "TikTok": return "bg-gradient-to-r from-cyan-500/10 to-pink-500/10 text-slate-800 dark:text-slate-200 border-slate-200/50";
+      case "Youtube": return "bg-gradient-to-r from-red-500/10 to-red-600/10 text-red-600 border-red-200/50";
+      default: return "bg-gradient-to-r from-pink-500/10 to-purple-500/10 text-pink-600 border-pink-200/50";
+    }
+  };
+
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
@@ -193,10 +217,10 @@ export default function AutolistDetailsPage() {
             <div className="flex items-center gap-3">
               <Badge
                 variant="secondary"
-                className="gap-1.5 bg-gradient-to-r from-pink-500/10 to-purple-500/10 text-pink-600 border-pink-200/50 px-3 py-1.5"
+                className={`gap-1.5 px-3 py-1.5 ${getProviderStyles()}`}
               >
-                <Instagram className="w-4 h-4" />
-                Instagram
+                {getProviderIcon()}
+                {provider}
               </Badge>
               <Button
                 onClick={handleSave}
@@ -235,101 +259,49 @@ export default function AutolistDetailsPage() {
               <CardTitle className="text-lg font-semibold">Configuration</CardTitle>
             </CardHeader>
             <CardContent className="space-y-6">
-              {/* Toggles Row */}
-              <div className="flex flex-wrap items-center gap-8">
-                <div className="flex items-center gap-3">
-                  <Switch
-                    id="auto-publish"
-                    checked={autoPublish}
-                    onCheckedChange={setAutoPublish}
-                  />
-                  <Label htmlFor="auto-publish" className="cursor-pointer text-sm font-medium">
-                    Auto publish
-                  </Label>
-                </div>
-                <div className="flex items-center gap-3">
-                  <Switch
-                    id="repeat"
-                    checked={repeat}
-                    onCheckedChange={setRepeat}
-                  />
-                  <Label htmlFor="repeat" className="cursor-pointer text-sm font-medium">
-                    Repeat
-                  </Label>
-                </div>
-              </div>
-
-              <Separator className="bg-border/50" />
-
-              {/* Presets Section */}
+              {/* Core Settings Section */}
               <div className="space-y-4">
-                <h4 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
-                  Presets
-                </h4>
                 <div className="grid gap-4 sm:grid-cols-2">
                   <div className="space-y-2">
-                    <Label className="text-sm">Global presets</Label>
-                    <Select defaultValue="default">
-                      <SelectTrigger className="w-full">
-                        <SelectValue placeholder="Select preset" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="default">Default</SelectItem>
-                        <SelectItem value="preset1">Business Hours</SelectItem>
-                        <SelectItem value="preset2">Peak Engagement</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div className="space-y-2">
-                    <Label className="text-sm">Instagram presets</Label>
-                    <Select defaultValue="default">
-                      <SelectTrigger className="w-full">
-                        <SelectValue placeholder="Select preset" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="default">Default</SelectItem>
-                        <SelectItem value="reels">Reels Optimized</SelectItem>
-                        <SelectItem value="stories">Stories Focus</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
-                <div className="grid gap-4 sm:grid-cols-2 mt-4">
-                  <div className="space-y-2">
-                    <Label className="text-sm">Instagram Account</Label>
+                    <Label className="text-sm">Social Media Account</Label>
                     <Select
                       value={selectedAccountId}
                       onValueChange={setSelectedAccountId}
-                      disabled={instagramIntegrations.length === 0}
+                      disabled={availableIntegrations.length === 0}
                     >
                       <SelectTrigger className="w-full">
-                        <SelectValue placeholder={instagramIntegrations.length === 0 ? "No accounts linked" : "Select account"} />
+                        <SelectValue placeholder={availableIntegrations.length === 0 ? "No accounts linked" : "Select account"} />
                       </SelectTrigger>
                       <SelectContent>
-                        {instagramIntegrations.map((acc) => (
+                        {availableIntegrations.map((acc) => (
                           <SelectItem key={acc.id} value={acc.id}>
-                            @{acc.username}
+                            <div className="flex items-center gap-2">
+                              {acc.socialProvider === "TikTok" ? <Music className="w-3 h-3" /> : acc.socialProvider === "Youtube" ? <Youtube className="w-3 h-3" /> : <Instagram className="w-3 h-3" />}
+                              @{acc.username}
+                            </div>
                           </SelectItem>
                         ))}
                       </SelectContent>
                     </Select>
-                    {instagramIntegrations.length === 0 && (
+                    {availableIntegrations.length === 0 && (
                       <p className="text-xs text-muted-foreground mt-1">
-                        Connect an <a href={`/projects/${projectId}/integrations`} className="text-primary underline">Instagram account</a> to publish.
+                        Connect a <a href={`/projects/${projectId}/integrations`} className="text-primary underline">social account</a> to publish.
                       </p>
                     )}
                   </div>
                 </div>
-                <div className="flex items-center gap-3 pt-4">
-                  <Switch
-                    id="share-to-feed"
-                    checked={shareToFeed}
-                    onCheckedChange={setShareToFeed}
-                  />
-                  <Label htmlFor="share-to-feed" className="cursor-pointer text-sm">
-                    Share to feed
-                  </Label>
-                </div>
+                {provider === "Instagram" && (
+                  <div className="flex items-center gap-3 pt-4">
+                    <Switch
+                      id="share-to-feed"
+                      checked={shareToFeed}
+                      onCheckedChange={setShareToFeed}
+                    />
+                    <Label htmlFor="share-to-feed" className="cursor-pointer text-sm">
+                      Share to feed
+                    </Label>
+                  </div>
+                )}
               </div>
             </CardContent>
           </Card>
@@ -360,13 +332,13 @@ export default function AutolistDetailsPage() {
             </CardHeader>
             <CardContent className="space-y-4">
               {/* Time Slots */}
-              {autolist.entries.length === 0 ? (
+              {!(autolist.entries?.length > 0) ? (
                 <div className="text-center py-8 text-muted-foreground">
                   No time slots configured. Add one to get started.
                 </div>
               ) : (
                 <div className="space-y-3">
-                  {autolist.entries.map((entry) => (
+                  {autolist.entries?.map((entry) => (
                     <TimeSlotRow
                       key={entry.id}
                       entry={entry}

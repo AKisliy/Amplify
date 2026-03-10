@@ -87,7 +87,7 @@ export function AutolistsTable({
               </TableCell>
               <TableCell className="text-center py-4">
                 <Badge variant="outline" className="font-mono">
-                  {autolist.postsCount ?? autolist.entries.length}
+                  {autolist.postsCount ?? autolist.entries?.length ?? 0}
                 </Badge>
               </TableCell>
               <TableCell className="py-4">
