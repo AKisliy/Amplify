@@ -11,11 +11,10 @@ public class GetAmbassadorQueryHandler(IApplicationDbContext dbContext, IMapper 
     {
         var entity = await dbContext.Ambassadors
             .Where(a => a.Id == request.Id && a.CreatedBy == user.Id)
-            .ProjectTo<AmbassadorDto>(mapper.ConfigurationProvider)
             .SingleOrDefaultAsync(cancellationToken);
 
         Guard.Against.NotFound(request.Id, entity);
 
-        return entity;
+        return mapper.Map<AmbassadorDto>(entity);
     }
 }

@@ -6,7 +6,8 @@ public record UpdateAmbassadorCommand(
     Guid Id,
     string Name,
     string? Biography,
-    string? BehavioralPatterns) : IRequest;
+    string? BehavioralPatterns,
+    Guid? ProfileImageId) : IRequest;
 
 public class UpdateAmbassadorCommandHandler(IApplicationDbContext dbContext, IUser user)
     : IRequestHandler<UpdateAmbassadorCommand>

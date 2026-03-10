@@ -9,9 +9,9 @@ import { useAmbassador } from "@/features/ambassadors/hooks/useAmbassador";
 import { useProject } from "@/features/ambassadors/hooks/useProjects";
 import { useProjects } from "@/features/ambassadors/hooks/useProjects";
 import { AmbassadorView } from "@/features/ambassadors/components/AmbassadorView";
-import { ProjectSelector } from "@/features/ambassadors/components/ProjectSelector";
 import type { AmbassadorFormValues } from "@/features/ambassadors/schemas/ambassador.schema";
 import { ProjectHeader } from "@/components/ProjectHeader";
+import { uploadMedia } from "@/features/ambassadors/services/ambassador.service";
 
 export default function ProjectAmbassadorPage() {
   const params = useParams();
@@ -77,6 +77,20 @@ export default function ProjectAmbassadorPage() {
     });
   };
 
+  const handleAvatarUpload = async (blob: Blob) => {
+    if (!ambassador) return;
+    const file = new File([blob], "avatar.jpg", { type: "image/jpeg" });
+    const mediaId = await uploadMedia(file);
+    await updateAmbassador({
+      id: ambassador.id,
+      name: ambassador.name,
+      biography: ambassador.biography,
+      behavioralPatterns: ambassador.behavioralPatterns,
+      profilePictureId: mediaId,
+    });
+    refetch();
+  };
+
   const handleDeleteAmbassador = async () => {
     if (!ambassador) return;
     try {
@@ -104,6 +118,7 @@ export default function ProjectAmbassadorPage() {
           onCreateAmbassador={handleCreateAmbassador}
           onUpdateAmbassador={handleUpdateAmbassador}
           onDeleteAmbassador={handleDeleteAmbassador}
+          onAvatarUpload={handleAvatarUpload}
         />
       </main>
     </div>

@@ -25,3 +25,12 @@ export const updateAmbassador = async ({ id, ...payload }: UpdateAmbassadorPaylo
 export const deleteAmbassador = async (id: string): Promise<void> => {
   await api.delete(`${BASE_URL}/${id}`);
 };
+
+export const uploadMedia = async (file: File): Promise<string> => {
+  const formData = new FormData();
+  formData.append("file", file);
+  const { data } = await api.post<{ mediaId: string }>("/images", formData, {
+    headers: { "Content-Type": "multipart/form-data" },
+  });
+  return data.mediaId;
+};
