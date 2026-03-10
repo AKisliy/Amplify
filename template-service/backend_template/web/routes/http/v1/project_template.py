@@ -68,6 +68,22 @@ async def list_templates(
     return await service.list_templates(skip=skip, limit=limit)
 
 
+@router.get(
+    "/project/{project_id}",
+    response_model=list[ProjectTemplateResponse],
+    status_code=status.HTTP_200_OK,
+    summary="Get Templates by Project ID",
+)
+async def get_templates_by_project(
+    project_id: UUID,
+    service: Service,
+):
+    """
+    Retrieves all templates associated with a specific project ID.
+    """
+    return await service.get_templates_by_project(project_id)
+
+
 @router.patch(
     "/{template_id}",
     response_model=ProjectTemplateResponse,

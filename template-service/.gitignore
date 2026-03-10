@@ -2,6 +2,7 @@
 .env
 temp/
 agent_context/
+backend_template/engine/*.json
 
 # Do NOT ignore the example file (you want to share the template)
 !.env.example
