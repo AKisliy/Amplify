@@ -1,7 +1,8 @@
-# backend_template/repositories/project_template.py
-from typing import Annotated
+from typing import Annotated, Sequence
+from uuid import UUID
 
 from fastapi import Depends
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from backend_template.database import get_db
@@ -17,8 +18,7 @@ class ProjectTemplateRepository(BaseRepository[ProjectTemplate]):
     def __init__(self, db: Annotated[AsyncSession, Depends(get_db)]):
         super().__init__(ProjectTemplate, db)
 
-    # Future: Add custom queries here (e.g. get_by_project_id)
-    # async def get_by_project_id(self, project_id: UUID) -> list[ProjectTemplate]:
-    #     query = select(self.model).where(self.model.project_id == project_id)
-    #     result = await self.db.execute(query)
-    #     return result.scalars().all()
+    async def get_by_project_id(self, project_id: UUID) -> Sequence[ProjectTemplate]:
+        query = select(self.model).where(self.model.project_id == project_id)
+        result = await self.db.execute(query)
+        return result.scalars().all()

@@ -20,12 +20,17 @@ RUN curl -sSL https://install.python-poetry.org | python3 -
 # 4. Add Poetry to PATH so we can run 'poetry' commands
 ENV PATH="$POETRY_HOME/bin:$PATH"
 
-# --- COPY EVERYTHING AT ONCE (Standard Strategy) ---
-COPY . .
+# --- LEVERAGE DOCKER CACHE ---
+# Copy ONLY the dependency files first so Docker caches the 'poetry install' layer
+COPY pyproject.toml poetry.lock* ./
 
 # 5. Install Dependencies
-# --no-root: specific to project structure, often needed in docker
+# --no-root: specific to project structure, prevents trying to install the app itself yet
 RUN poetry install --no-interaction --no-ansi --no-root
+
+# 6. Copy the rest of the source code
+# This layer invalidates often, but now the dependencies above it are cached!
+COPY . .
 
 # Make script executable
 RUN chmod +x scripts/entrypoint.sh

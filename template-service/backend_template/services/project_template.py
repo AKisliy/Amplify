@@ -80,6 +80,18 @@ class ProjectTemplateService:
             for t in orm_templates
         ]
 
+    async def get_templates_by_project(
+        self, project_id: UUID
+    ) -> Sequence[ProjectTemplateResponse]:
+        """
+        Retrieves all templates for a specific project ID.
+        """
+        orm_templates = await self.repo.get_by_project_id(project_id)
+        return [
+            ProjectTemplateResponse.model_validate(t) 
+            for t in orm_templates
+        ]
+
     async def update_template(
         self, template_id: UUID, payload: ProjectTemplateUpdate
     ) -> ProjectTemplateResponse:
