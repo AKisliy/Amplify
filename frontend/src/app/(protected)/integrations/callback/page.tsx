@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, Suspense } from "react";
+import React, { useEffect, useState, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { integrationsApi } from "@/features/integrations/services/api";
 import { motion } from "framer-motion";
@@ -12,10 +12,14 @@ function CallbackContent() {
     const searchParams = useSearchParams();
     const [status, setStatus] = useState<"loading" | "success" | "error">("loading");
     const [errorMsg, setErrorMsg] = useState<string>("");
+    const hasAttempted = React.useRef(false);
     const [projectId, setProjectId] = useState<string | null>(null);
 
     useEffect(() => {
         const handleCallback = async () => {
+            if (hasAttempted.current) return;
+            hasAttempted.current = true;
+
             const code = searchParams?.get("code");
             const state = searchParams?.get("state");
 
