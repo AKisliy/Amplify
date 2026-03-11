@@ -28,10 +28,10 @@ public class Connections : EndpointGroupBase
         return TypedResults.Ok(result);
     }
 
-    public async Task<RedirectHttpResult> Connection(ISender sender, CreateNewConnection command)
+    public async Task<Ok<ConnectionResult>> Connection(ISender sender, CreateNewConnection command)
     {
         var result = await sender.Send(command);
-        return TypedResults.Redirect(result.RedirectUrl);
+        return TypedResults.Ok(result);
     }
 
     public async Task<Ok<ConnectionsVm>> GetProjectIntegrations(ISender sender, Guid projectId)
