@@ -47,8 +47,7 @@ appConfig:
     PasswordResetPath: "/reset-password"
 
   ExternalUrls:
-    MediaServiceApi: "https://media.my-prod-site.com"
+    MediaServiceApi: "https://staging.alexeykiselev.tech/media/api"
     
   InternalUrls:
     MediaServiceInternalBaseUrl: "http://media-service.default.svc.cluster.local"
-
