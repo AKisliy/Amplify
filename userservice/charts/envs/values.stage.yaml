@@ -34,7 +34,7 @@ appConfig:
 
   CorsOptions:
     AllowedOrigins:
-      - "http://localhost:3000"
+      - "https://localhost:3000"
     DefaultPolicyName: DevelopmentCorsPolicy
   
   UserserviceOptions:
