@@ -18,7 +18,7 @@ export type UpdateAmbassadorPayload = {
   name: string;
   biography?: string | null;
   behavioralPatterns?: string | null;
-  profilePictureId?: string | null;
+  profileImageId?: string | null;
 };
 
 // DTO type aliases for API compatibility

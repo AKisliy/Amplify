@@ -30,6 +30,7 @@ public class UpdateAmbassadorCommandHandler(IApplicationDbContext dbContext, IUs
         ambassador.Name = request.Name;
         ambassador.Biography = request.Biography;
         ambassador.BehavioralPatterns = request.BehavioralPatterns;
+        ambassador.ProfileImageId = request.ProfileImageId;
 
         await dbContext.SaveChangesAsync(cancellationToken);
     }

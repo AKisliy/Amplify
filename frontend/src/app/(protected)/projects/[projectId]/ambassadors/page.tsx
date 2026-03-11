@@ -86,7 +86,7 @@ export default function ProjectAmbassadorPage() {
       name: ambassador.name,
       biography: ambassador.biography,
       behavioralPatterns: ambassador.behavioralPatterns,
-      profilePictureId: mediaId,
+      profileImageId: mediaId,
     });
     refetch();
   };
