@@ -6,5 +6,5 @@ public class CorsOptions
 
     public IReadOnlyList<string> AllowedOrigins { get; set; } = [];
 
-    public required string DefaultPolicyName { get; set; }
+    public string DefaultPolicyName { get; set; } = "DefaultCorsPolicy";
 }
