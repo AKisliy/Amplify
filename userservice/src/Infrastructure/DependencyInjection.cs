@@ -22,6 +22,9 @@ using Microsoft.AspNetCore.HttpOverrides;
 using UserService.Infrastructure.Mail;
 using Npgsql;
 using Microsoft.EntityFrameworkCore.Migrations;
+using UserService.Infrastructure.Broker;
+using System.Reflection;
+using FluentValidation;
 
 namespace Microsoft.Extensions.DependencyInjection;
 
@@ -29,6 +32,7 @@ public static class DependencyInjection
 {
     public static void AddInfrastructureServices(this IHostApplicationBuilder builder)
     {
+        builder.Services.AddValidatorsFromAssembly(Assembly.GetExecutingAssembly());
         var connectionString = builder.Configuration.GetConnectionString("UserServiceDb");
         Guard.Against.Null(connectionString, message: "Connection string 'UserServiceDb' not found.");
 
@@ -74,6 +78,7 @@ public static class DependencyInjection
 
         builder.Services.AddInfrastructureOptions();
         builder.AddInternalClients();
+        builder.Services.AddBrokerConnection();
     }
 
     private static void AddInfrastructureOptions(this IServiceCollection services)

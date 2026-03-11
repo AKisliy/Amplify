@@ -5,6 +5,9 @@ secrets:
     key: userservice-db-conn 
   mailApiKey:
     key: resend-api-key-test
+  rabbitMqConnection:
+    key: rabbitmq-test
+
 
 volumeMounts:
   - name: config-volume

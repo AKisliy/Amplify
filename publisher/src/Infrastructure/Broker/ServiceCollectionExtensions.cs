@@ -14,7 +14,7 @@ internal static class ServiceCollectionExtensions
         services.AddMassTransit(config =>
         {
             config.AddConsumer<PublishRequestedConsumer>();
-            // TODO: probably should have smth like projected created
+            config.AddConsumer<ProjectCreatedConsumer>();
 
             config.SetEndpointNameFormatter(new KebabCaseEndpointNameFormatter(includeNamespace: false));
 
@@ -23,6 +23,7 @@ internal static class ServiceCollectionExtensions
                 var options = context.GetRequiredService<IOptions<RabbitMQOptions>>().Value;
                 cfg.Host(options.Url);
                 cfg.Message<PublicationStatusChanged>(x => x.SetEntityName("publication-status-changed"));
+                cfg.Message<ProjectCreated>(x => x.SetEntityName("project-created"));
 
                 cfg.UseRawJsonSerializer(RawSerializerOptions.AnyMessageType, isDefault: true);
 
