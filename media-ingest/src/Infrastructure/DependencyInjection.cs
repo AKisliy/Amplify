@@ -57,6 +57,27 @@ public static class DependencyInjection
         });
 
         builder.AddAuth();
+        builder.AddCorsUsage();
+    }
+
+    private static void AddCorsUsage(this IHostApplicationBuilder builder)
+    {
+        var corsOptions = new CorsOptions { DefaultPolicyName = string.Empty };
+        builder.Configuration.GetSection(CorsOptions.SectionName).Bind(corsOptions);
+
+        if (string.IsNullOrEmpty(corsOptions.DefaultPolicyName))
+            throw new InvalidOperationException("CorsOptions:DefaultPolicyName is not configured.");
+
+        builder.Services.AddCors(options => options.AddPolicy(
+            corsOptions.DefaultPolicyName,
+            policy => policy
+                .WithOrigins([.. corsOptions.AllowedOrigins])
+                .AllowAnyHeader()
+                .AllowAnyMethod()
+                .AllowCredentials()));
+
+        builder.Services.AddOptions<CorsOptions>()
+            .BindConfiguration(CorsOptions.SectionName);
     }
 
     private static void AddApplicationDb(this IServiceCollection services)

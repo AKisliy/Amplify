@@ -18,8 +18,8 @@ const serviceMap: Record<string, string> = {
     autolistentry: "/publisher/api",
     connections: "/publisher/api",
     integrations: "/publisher/api",
-    images: "/media-ingest/api",
-    media: "/media-ingest/api",
+    images: "/media/api",
+    media: "/media/api",
 };
 
 // Request interceptor for API calls

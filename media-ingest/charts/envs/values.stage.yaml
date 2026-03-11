@@ -26,6 +26,11 @@ appConfig:
     YoutubeDlPath: "/opt/homebrew/bin/yt-dlp"
   MediaIngest:
     BasePath: "/media"
+  CorsOptions:
+    DefaultPolicyName: DefaultCorsPolicy
+    AllowedOrigins:
+      - "https://staging.alexeykiselev.tech"
+      - "http://localhost:3000"
   Jwt:
     Issuer: "http://userservice.test-env.svc.cluster.local/userservice/api/auth"
     Audience: "MyAppDevelopmentUsers"
