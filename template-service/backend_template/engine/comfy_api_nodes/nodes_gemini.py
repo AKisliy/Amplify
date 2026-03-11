@@ -3,16 +3,12 @@ API Nodes for Gemini Multimodal LLM Usage via Remote API
 See: https://cloud.google.com/vertex-ai/generative-ai/docs/model-reference/inference
 """
 
-import os
 from enum import Enum
 from fnmatch import fnmatch
 from typing import Literal
 
-import google.auth.transport.requests
-from google.oauth2 import service_account
-
-from pydantic import BaseModel
-from comfy_api.latest import IO
+from comfy_api.latest import IO, ComfyExtension
+from typing_extensions import override
 from comfy_api_nodes.apis.gemini import (
     GeminiContent,
     GeminiFileData,
@@ -28,7 +24,6 @@ from comfy_api_nodes.apis.gemini import (
     GeminiSystemInstructionContent,
     GeminiTextPart,
     Modality,
-    GetLinkByIdResponse,
 )
 from comfy_api_nodes.util import (
     ApiEndpoint,
@@ -41,23 +36,11 @@ from config import gemini_config, media_ingest_config
 import base64
 import uuid
 
+from comfy_api_nodes.util import get_vertex_ai_access_token, fetch_media_uri_from_ingest
+
+
 GEMINI_BASE_ENDPOINT = f"https://aiplatform.googleapis.com/v1/projects/{gemini_config.project_id}/locations/{gemini_config.location}/publishers/google/models"
 
-_gcp_credentials = None
-
-def get_vertex_ai_access_token() -> str:
-    global _gcp_credentials
-    if _gcp_credentials is None:
-        _gcp_credentials = service_account.Credentials.from_service_account_file(
-            gemini_config.service_account_key_file,
-            scopes=["https://www.googleapis.com/auth/cloud-platform"]
-        )
-    
-    if not _gcp_credentials.valid:
-        request = google.auth.transport.requests.Request()
-        _gcp_credentials.refresh(request)
-        
-    return _gcp_credentials.token
 
 class GeminiModel(str, Enum):
     """
@@ -79,26 +62,6 @@ class GeminiImageModel(str, Enum):
     gemini_2_5_flash_image_preview = "gemini-2.5-flash-image-preview"
     gemini_2_5_flash_image = "gemini-2.5-flash-image"
 
-async def fetch_media_uri_from_ingest(
-    cls: type[IO.ComfyNode],
-    media_id: str,
-) -> str:
-    """Fetches the cloud storage URI for a media file from the Media Ingest API."""
-    
-    full_url = f"{media_ingest_config.media_ingest_url}/internal/media/{media_id}/link"
-    
-    # Pass the endpoint with the full URL and query_params 
-    response = await sync_op(
-        cls,
-        endpoint=ApiEndpoint(path=full_url, method="GET", query_params={"linkType": 0}),
-        response_model=GetLinkByIdResponse,
-        wait_label="Fetching Media Link...",
-    )
-    
-    if not response.link:
-        raise ValueError(f"Media Ingest API response for UUID {media_id} did not contain a 'link'.")
-        
-    return response.link
 
 async def create_image_parts(
     cls: type[IO.ComfyNode],
@@ -360,7 +323,7 @@ class GeminiNode(IO.ComfyNode):
                 ),
             ],
             outputs=[
-                IO.String.Output(),
+                IO.String.Output(display_name="text"),
             ],
         )
 
@@ -476,7 +439,6 @@ class GeminiImageNode(IO.ComfyNode):
                 IO.String.Input(
                     "system_prompt",
                     multiline=True,
-                    default=GEMINI_IMAGE_SYS_PROMPT,
                     optional=True,
                     tooltip="Foundational instructions that dictate an AI's behavior.",
                     advanced=True,
@@ -591,7 +553,6 @@ class GeminiImage2Node(IO.ComfyNode):
                 IO.String.Input(
                     "system_prompt",
                     multiline=True,
-                    default=GEMINI_IMAGE_SYS_PROMPT,
                     optional=True,
                     tooltip="Foundational instructions that dictate an AI's behavior.",
                     advanced=True,
@@ -652,3 +613,17 @@ class GeminiImage2Node(IO.ComfyNode):
         )
 
         return IO.NodeOutput(await upload_images_and_get_uuids(cls, response), get_text_from_response(response))
+
+class GeminiExtension(ComfyExtension):
+    @override
+    async def get_node_list(self) -> list[type[IO.ComfyNode]]:
+        return [
+            GeminiNode,
+            GeminiImageNode,
+            GeminiImage2Node,
+        ]
+
+
+async def comfy_entrypoint() -> VeoExtension:
+    return VeoExtension()
+    

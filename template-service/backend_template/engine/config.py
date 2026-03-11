@@ -7,6 +7,7 @@ class GeminiConfig(ConfigBase):
     service_account_key_file: str
     project_id: str
     location: str
+    storage_uri: str
 
 class MediaIngestConfig(ConfigBase):
     media_ingest_url: str = "https://staging.alexeykiselev.tech/media/api"

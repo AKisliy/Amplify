@@ -68,10 +68,6 @@ class GeminiFileData(BaseModel):
 #     mediaPath: str
 #     contentType: str
 
-class GetLinkByIdResponse(BaseModel):
-    mediaId: str | None = None
-    link: str | None = None
-
 class GeminiPart(BaseModel):
     inlineData: GeminiInlineData | None = Field(None)
     fileData: GeminiFileData | None = Field(None)
