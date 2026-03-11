@@ -49,7 +49,15 @@ public static class DependencyInjection
         builder.AddDatabaseConnection();
 
         builder.AddAuth();
-        builder.AddCorsUsage();
+
+        if (builder.Environment.IsDevelopment())
+        {
+            builder.Services.AddCors(options => options.AddPolicy("Dev",
+                p => p.WithOrigins("http://localhost:3000")
+                    .AllowAnyHeader()
+                    .AllowAnyMethod()
+                    .AllowCredentials()));
+        }
 
         services.AddScoped<IPublicationStatusNotifier, PublicationStatusNotifier>();
         services.AddScoped<IPublicationService, PublicationService>();
@@ -143,25 +151,6 @@ public static class DependencyInjection
         });
 
         return services;
-    }
-
-    private static void AddCorsUsage(this IHostApplicationBuilder builder)
-    {
-        var corsOptions = new CorsOptions()
-        {
-            DefaultPolicyName = ""
-        };
-
-        builder.Configuration.GetSection(CorsOptions.SectionName).Bind(corsOptions);
-
-        Guard.Against.NullOrEmpty(corsOptions.DefaultPolicyName, message: "Cors policy name is not set");
-
-        builder.Services.AddCors(options => options.AddPolicy(
-            corsOptions.DefaultPolicyName,
-            builder => builder.WithOrigins([.. corsOptions.AllowedOrigins])
-                .AllowAnyHeader()
-                .AllowAnyMethod()
-                .AllowCredentials()));
     }
 
     private static void AddSocialMediaConnections(this IHostApplicationBuilder builder)

@@ -2,7 +2,7 @@
 
 import { useRouter, useParams, usePathname } from "next/navigation";
 import { motion } from "framer-motion";
-import { User, Calendar, Home, Link as LinkIcon } from "lucide-react";
+import { User, Calendar, Home, Link as LinkIcon, LayoutTemplate } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { UserMenu } from "@/components/UserMenu";
 import { ProjectSelector } from "@/features/ambassadors/components/ProjectSelector";
@@ -19,6 +19,7 @@ export function ProjectHeader({ projects, isLoading }: ProjectHeaderProps) {
   const pathname = usePathname();
   const projectId = params?.projectId as string;
 
+  const isOverviewPage = projectId ? pathname === `/projects/${projectId}` : false;
   const isAmbassadorPage = pathname?.includes("/ambassadors");
   const isAutolistsPage = pathname?.includes("/autolists");
   const isIntegrationsPage = pathname?.includes("/integrations");
@@ -27,9 +28,13 @@ export function ProjectHeader({ projects, isLoading }: ProjectHeaderProps) {
     router.push("/dashboard");
   };
 
-  const handleTabClick = (tab: "ambassadors" | "autolists" | "integrations") => {
+  const handleTabClick = (tab: "overview" | "ambassadors" | "autolists" | "integrations") => {
     if (!projectId) return;
-    router.push(`/projects/${projectId}/${tab}`);
+    if (tab === "overview") {
+      router.push(`/projects/${projectId}`);
+    } else {
+      router.push(`/projects/${projectId}/${tab}`);
+    }
   };
 
   return (
@@ -59,6 +64,21 @@ export function ProjectHeader({ projects, isLoading }: ProjectHeaderProps) {
               <>
                 <div className="h-6 w-px bg-border" />
                 <nav className="flex items-center gap-2">
+                  <button
+                    onClick={() => handleTabClick("overview")}
+                    className={cn(
+                      "px-4 py-2 rounded-lg text-sm font-medium transition-all",
+                      "hover:bg-muted/80",
+                      isOverviewPage
+                        ? "bg-primary/10 text-primary"
+                        : "text-muted-foreground"
+                    )}
+                  >
+                    <div className="flex items-center gap-2">
+                      <LayoutTemplate className="w-4 h-4" />
+                      Overview
+                    </div>
+                  </button>
                   <button
                     onClick={() => handleTabClick("ambassadors")}
                     className={cn(

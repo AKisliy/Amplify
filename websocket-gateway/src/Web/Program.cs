@@ -20,6 +20,9 @@ var app = builder.Build();
 
 app.UseHealthChecks("/health");
 
+if (app.Environment.IsDevelopment())
+    app.UseCors("Dev");
+
 app.UseAuthentication();
 app.UseAuthorization();
 

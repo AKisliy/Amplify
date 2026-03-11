@@ -14,33 +14,22 @@ public static class DependencyInjection
         services.AddInfrastructureOptions();
 
         builder.AddAuth();
-        builder.AddCorsUsage();
+
+        if (builder.Environment.IsDevelopment())
+        {
+            builder.Services.AddCors(options => options.AddPolicy("Dev",
+                p => p.WithOrigins("http://localhost:3000")
+                    .AllowAnyHeader()
+                    .AllowAnyMethod()
+                    .AllowCredentials()));
+        }
     }
 
     private static IServiceCollection AddInfrastructureOptions(this IServiceCollection services)
     {
-        services.AddOptionsWithFluentValidation<CorsOptions>(CorsOptions.SectionName);
         services.AddOptionsWithFluentValidation<JwtOptions>(JwtOptions.ConfigurationSection);
 
         return services;
     }
 
-    private static void AddCorsUsage(this IHostApplicationBuilder builder)
-    {
-        var corsOptions = new CorsOptions()
-        {
-            DefaultPolicyName = ""
-        };
-
-        builder.Configuration.GetSection(CorsOptions.SectionName).Bind(corsOptions);
-
-        Guard.Against.NullOrEmpty(corsOptions.DefaultPolicyName, message: "Cors policy name is not set");
-
-        builder.Services.AddCors(options => options.AddPolicy(
-            corsOptions.DefaultPolicyName,
-            builder => builder.WithOrigins([.. corsOptions.AllowedOrigins])
-                .AllowAnyHeader()
-                .AllowAnyMethod()
-                .AllowCredentials()));
-    }
 }

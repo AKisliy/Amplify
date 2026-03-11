@@ -58,24 +58,15 @@ public static class DependencyInjection
         });
 
         builder.AddAuth();
-        builder.AddCorsUsage();
-    }
 
-    private static void AddCorsUsage(this IHostApplicationBuilder builder)
-    {
-        var corsOptions = new CorsOptions();
-        builder.Configuration.GetSection(CorsOptions.SectionName).Bind(corsOptions);
-
-        builder.Services.AddCors(options => options.AddPolicy(
-            corsOptions.DefaultPolicyName,
-            policy => policy
-                .WithOrigins([.. corsOptions.AllowedOrigins])
-                .AllowAnyHeader()
-                .AllowAnyMethod()
-                .AllowCredentials()));
-
-        builder.Services.AddOptions<CorsOptions>()
-            .BindConfiguration(CorsOptions.SectionName);
+        if (builder.Environment.IsDevelopment())
+        {
+            builder.Services.AddCors(options => options.AddPolicy("Dev",
+                p => p.WithOrigins("http://localhost:3000")
+                    .AllowAnyHeader()
+                    .AllowAnyMethod()
+                    .AllowCredentials()));
+        }
     }
 
     private static void AddApplicationDb(this IServiceCollection services)

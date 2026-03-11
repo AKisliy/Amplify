@@ -51,8 +51,8 @@ app.UseSwaggerUi(settings =>
 app.UseAuthentication();
 app.UseAuthorization();
 
-var corsOptions = app.Services.GetRequiredService<IOptions<CorsOptions>>();
-app.UseCors(corsOptions.Value.DefaultPolicyName);
+if (app.Environment.IsDevelopment())
+    app.UseCors("Dev");
 
 app.UseExceptionHandler(options => { });
 
