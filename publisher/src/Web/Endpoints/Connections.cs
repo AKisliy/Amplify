@@ -15,7 +15,7 @@ public class Connections : EndpointGroupBase
     public override void Map(RouteGroupBuilder groupBuilder)
     {
         groupBuilder.MapGet("{projectId}/auth-url", GetAuthUrl);
-        groupBuilder.MapPost("/", ConnectAccount);
+        groupBuilder.MapPost(Connection);
 
         groupBuilder.MapGet("{projectId}", GetProjectIntegrations);
         groupBuilder.MapDelete("{projectId}/accounts/{accountId}", DisconnectAccount);
@@ -28,7 +28,7 @@ public class Connections : EndpointGroupBase
         return TypedResults.Ok(result);
     }
 
-    public async Task<RedirectHttpResult> ConnectAccount(ISender sender, [FromBody] CreateNewConnection command)
+    public async Task<RedirectHttpResult> Connection(ISender sender, CreateNewConnection command)
     {
         var result = await sender.Send(command);
         return TypedResults.Redirect(result.RedirectUrl);
