@@ -26,8 +26,11 @@ function CallbackContent() {
             }
 
             try {
+                // Strip Instagram's trailing hash fragment from the state if present
+                const cleanState = state.replace(/#_$/, '');
+
                 // Decode state (handling Base64 and Base64Url)
-                let base64 = state.replace(/-/g, '+').replace(/_/g, '/');
+                let base64 = cleanState.replace(/-/g, '+').replace(/_/g, '/');
                 while (base64.length % 4) {
                     base64 += '=';
                 }
@@ -51,7 +54,7 @@ function CallbackContent() {
                 setProjectId(pId);
 
                 // Call our backend to connect the integration
-                await integrationsApi.connect(code, state);
+                await integrationsApi.connect(code, cleanState);
 
                 setStatus("success");
 

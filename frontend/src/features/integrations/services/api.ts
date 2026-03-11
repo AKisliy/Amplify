@@ -10,7 +10,13 @@ export const integrationsApi = {
     },
 
     async connect(code: string, state: string): Promise<void> {
-        await api.post(`/connections?code=${encodeURIComponent(code)}&state=${encodeURIComponent(state)}`);
+        // Strip trailing hash from Instagram's state parameter to prevent backend decoding errors
+        const cleanState = state.replace(/#_$/, "");
+        
+        await api.post(`/connections`, { 
+            code, 
+            state: cleanState 
+        });
     },
 
     async getIntegrations(projectId: string): Promise<IntegrationsResponse> {
