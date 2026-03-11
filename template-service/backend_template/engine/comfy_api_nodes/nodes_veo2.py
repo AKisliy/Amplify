@@ -1,9 +1,8 @@
 import base64
-from io import BytesIO
+import asyncio
 
+from comfy_api.latest import IO, ComfyExtension
 from typing_extensions import override
-
-from comfy_api.latest import IO, ComfyExtension, Input, InputImpl
 from comfy_api_nodes.apis.veo import (
     VeoGenVidPollRequest,
     VeoGenVidPollResponse,
@@ -15,11 +14,14 @@ from comfy_api_nodes.apis.veo import (
 )
 from comfy_api_nodes.util import (
     ApiEndpoint,
-    download_url_to_video_output,
     poll_op,
     sync_op,
-    tensor_to_base64_string,
 )
+
+from comfy_api_nodes.util import get_vertex_ai_access_token, fetch_media_uri_from_ingest
+
+from config import gemini_config
+import base64
 
 AVERAGE_DURATION_VIDEO_GEN = 32
 MODELS_MAP = {
@@ -30,6 +32,26 @@ MODELS_MAP = {
     "veo-3.0-fast-generate-001": "veo-3.0-fast-generate-001",
 }
 
+GEMINI_BASE_ENDPOINT = f"https://aiplatform.googleapis.com/v1/projects/{gemini_config.project_id}/locations/{gemini_config.location}/publishers/google/models"
+
+# class MediaRegisterParameters(BaseModel):
+#     gcsUri: str = Field(...)
+#     mimeType: str = Field(...)
+
+# class MediaRegisterRequest(BaseModel):
+#     parameters: list[MediaRegisterParameters] | None = Field(None)
+
+# class MediaRegisterResponse(BaseModel):
+#     pass
+
+# full_url = f"{media_ingest_config.media_ingest_url}/internal/media/register"
+# response = await sync_op(
+#     cls,
+#     endpoint=ApiEndpoint(path=full_url, method="POST"),
+#     data=MediaRegisterRequest,
+#     response_model=MediaRegisterResponse,
+#     wait_label="Fetching Media Link...",
+# )
 
 class VeoVideoGenerationNode(IO.ComfyNode):
     """
@@ -102,10 +124,10 @@ class VeoVideoGenerationNode(IO.ComfyNode):
                     tooltip="Seed for video generation (0 for random)",
                     optional=True,
                 ),
-                IO.Image.Input(
-                    "image",
-                    tooltip="Optional reference image to guide video generation",
+                IO.String.Input(
+                    "image_uuid",
                     optional=True,
+                    tooltip="A Media Ingest API UUID representing an uploaded image"
                 ),
                 IO.Combo.Input(
                     "model",
@@ -116,18 +138,8 @@ class VeoVideoGenerationNode(IO.ComfyNode):
                 ),
             ],
             outputs=[
-                IO.Video.Output(),
+                IO.String.Output(display_name="video_uuid"),
             ],
-            hidden=[
-                IO.Hidden.auth_token_comfy_org,
-                IO.Hidden.api_key_comfy_org,
-                IO.Hidden.unique_id,
-            ],
-            is_api_node=True,
-            price_badge=IO.PriceBadge(
-                depends_on=IO.PriceBadgeDepends(widgets=["duration_seconds"]),
-                expr="""{"type":"usd","usd": 0.5 * widgets.duration_seconds}""",
-            ),
         )
     
     @classmethod
@@ -140,7 +152,7 @@ class VeoVideoGenerationNode(IO.ComfyNode):
         enhance_prompt=True,
         person_generation="ALLOW",
         seed=0,
-        image=None,
+        image_uuid=None,
         model="veo-2.0-generate-001",
         generate_audio=False,
     ):
@@ -151,11 +163,8 @@ class VeoVideoGenerationNode(IO.ComfyNode):
         instance = {"prompt": prompt}
 
         # Add image if provided
-        if image is not None:
-            # image is now a string (UUID or gs:// URI)
-            # Resolve the image UUID to its GCS URI via the MediaIngest service
-            # TODO: Implement MediaIngest service call to resolve UUID
-            gcs_uri = f"gs://media-ingest-bucket/{image}"
+        if image_uuid is not None:
+            gcs_uri = await fetch_media_uri_from_ingest(cls, image_uuid)
             instance["image"] = {"gcsUri": gcs_uri, "mimeType": "image/png"}
 
         instances.append(instance)
@@ -166,6 +175,7 @@ class VeoVideoGenerationNode(IO.ComfyNode):
             "personGeneration": person_generation,
             "durationSeconds": duration_seconds,
             "enhancePrompt": enhance_prompt,
+            "storageUri": gemini_config.storage_uri,
         }
 
         # Add optional parameters if provided
@@ -181,7 +191,11 @@ class VeoVideoGenerationNode(IO.ComfyNode):
 
         initial_response = await sync_op(
             cls,
-            ApiEndpoint(path=f"/proxy/veo/{model}/generate", method="POST"),
+            ApiEndpoint(
+                path=f"{GEMINI_BASE_ENDPOINT}/{model}:predictLongRunning", 
+                method="POST", 
+                headers={"Authorization": f"Bearer {get_vertex_ai_access_token()}"}
+            ),
             response_model=VeoGenVidResponse,
             data=VeoGenVidRequest(
                 instances=instances,
@@ -196,7 +210,11 @@ class VeoVideoGenerationNode(IO.ComfyNode):
 
         poll_response = await poll_op(
             cls,
-            ApiEndpoint(path=f"/proxy/veo/{model}/poll", method="POST"),
+            ApiEndpoint(
+                path=f"{GEMINI_BASE_ENDPOINT}/{model}:fetchPredictOperation", 
+                method="POST", 
+                headers={"Authorization": f"Bearer {get_vertex_ai_access_token()}"}
+            ),
             response_model=VeoGenVidPollResponse,
             status_extractor=status_extractor,
             data=VeoGenVidPollRequest(
@@ -238,12 +256,9 @@ class VeoVideoGenerationNode(IO.ComfyNode):
         ):
             video = poll_response.response.videos[0]
 
-            # Check if video is provided as base64 or URL
-            if hasattr(video, "bytesBase64Encoded") and video.bytesBase64Encoded:
-                return IO.NodeOutput(InputImpl.VideoFromFile(BytesIO(base64.b64decode(video.bytesBase64Encoded))))
-
             if hasattr(video, "gcsUri") and video.gcsUri:
-                return IO.NodeOutput(await download_url_to_video_output(video.gcsUri))
+                
+                return IO.NodeOutput(video.gcsUri)
 
             raise Exception("Video returned but no data or URL was provided")
         raise Exception("Video generation completed but no video was returned")
@@ -324,10 +339,10 @@ class Veo3VideoGenerationNode(VeoVideoGenerationNode):
                     tooltip="Seed for video generation (0 for random)",
                     optional=True,
                 ),
-                IO.Image.Input(
-                    "image",
-                    tooltip="Optional reference image to guide video generation",
+                IO.String.Input(
+                    "image_uuid",
                     optional=True,
+                    tooltip="A Media Ingest API UUID representing an uploaded image"
                 ),
                 IO.Combo.Input(
                     "model",
@@ -349,28 +364,8 @@ class Veo3VideoGenerationNode(VeoVideoGenerationNode):
                 ),
             ],
             outputs=[
-                IO.Video.Output(),
+                IO.String.Output(display_name="video_uuid"),
             ],
-            hidden=[
-                IO.Hidden.auth_token_comfy_org,
-                IO.Hidden.api_key_comfy_org,
-                IO.Hidden.unique_id,
-            ],
-            is_api_node=True,
-            price_badge=IO.PriceBadge(
-                depends_on=IO.PriceBadgeDepends(widgets=["model", "generate_audio"]),
-                expr="""
-                (
-                  $m := widgets.model;
-                  $a := widgets.generate_audio;
-                  ($contains($m,"veo-3.0-fast-generate-001") or $contains($m,"veo-3.1-fast-generate"))
-                    ? {"type":"usd","usd": ($a ? 1.2 : 0.8)}
-                    : ($contains($m,"veo-3.0-generate-001") or $contains($m,"veo-3.1-generate"))
-                      ? {"type":"usd","usd": ($a ? 3.2 : 1.6)}
-                      : {"type":"range_usd","min_usd":0.8,"max_usd":3.2}
-                )
-                """,
-            ),
         )
 
 
@@ -422,8 +417,14 @@ class Veo3FirstLastFrameNode(IO.ComfyNode):
                     control_after_generate=True,
                     tooltip="Seed for video generation",
                 ),
-                IO.Image.Input("first_frame", tooltip="Start frame"),
-                IO.Image.Input("last_frame", tooltip="End frame"),
+                IO.String.Input(
+                    "first_frame_uuid",
+                    tooltip="A Media Ingest API UUID representing an uploaded image"
+                ),
+                IO.String.Input(
+                    "last_frame_uuid",
+                    tooltip="A Media Ingest API UUID representing an uploaded image"
+                ),
                 IO.Combo.Input(
                     "model",
                     options=["veo-3.1-generate", "veo-3.1-fast-generate"],
@@ -436,38 +437,8 @@ class Veo3FirstLastFrameNode(IO.ComfyNode):
                 ),
             ],
             outputs=[
-                IO.Video.Output(),
+                IO.String.Output(display_name="video_uuid"),
             ],
-            hidden=[
-                IO.Hidden.auth_token_comfy_org,
-                IO.Hidden.api_key_comfy_org,
-                IO.Hidden.unique_id,
-            ],
-            is_api_node=True,
-            price_badge=IO.PriceBadge(
-                depends_on=IO.PriceBadgeDepends(widgets=["model", "generate_audio", "duration"]),
-                expr="""
-                (
-                  $prices := {
-                    "veo-3.1-fast-generate": { "audio": 0.15, "no_audio": 0.10 },
-                    "veo-3.1-generate":      { "audio": 0.40, "no_audio": 0.20 }
-                  };
-                  $m := widgets.model;
-                  $ga := (widgets.generate_audio = "true");
-                  $seconds := widgets.duration;
-                  $modelKey :=
-                    $contains($m, "veo-3.1-fast-generate") ? "veo-3.1-fast-generate" :
-                    $contains($m, "veo-3.1-generate")      ? "veo-3.1-generate" :
-                    "";
-                  $audioKey := $ga ? "audio" : "no_audio";
-                  $modelPrices := $lookup($prices, $modelKey);
-                  $pps := $lookup($modelPrices, $audioKey);
-                  ($pps != null)
-                    ? {"type":"usd","usd": $pps * $seconds}
-                    : {"type":"range_usd","min_usd": 0.4, "max_usd": 3.2}
-                )
-                """,
-            ),
         )
 
     @classmethod
@@ -479,25 +450,33 @@ class Veo3FirstLastFrameNode(IO.ComfyNode):
         aspect_ratio: str,
         duration: int,
         seed: int,
-        first_frame: Input.Image,
-        last_frame: Input.Image,
+        first_frame_uuid: str,
+        last_frame_uuid: str,
         model: str,
         generate_audio: bool,
     ):
         model = MODELS_MAP[model]
+
+        first_frame = asyncio.create_task(fetch_media_uri_from_ingest(cls, first_frame_uuid))
+        last_frame = asyncio.create_task(fetch_media_uri_from_ingest(cls, last_frame_uuid))
+        
         initial_response = await sync_op(
             cls,
-            ApiEndpoint(path=f"/proxy/veo/{model}/generate", method="POST"),
+            ApiEndpoint(
+                path=f"{GEMINI_BASE_ENDPOINT}/{model}:predictLongRunning", 
+                method="POST", 
+                headers={"Authorization": f"Bearer {get_vertex_ai_access_token()}"}
+            ),
             response_model=VeoGenVidResponse,
             data=VeoGenVidRequest(
                 instances=[
                     VeoRequestInstance(
                         prompt=prompt,
                         image=VeoRequestInstanceImage(
-                            bytesBase64Encoded=tensor_to_base64_string(first_frame), mimeType="image/png"
+                            gcsUri=await first_frame, mimeType="image/png"
                         ),
                         lastFrame=VeoRequestInstanceImage(
-                            bytesBase64Encoded=tensor_to_base64_string(last_frame), mimeType="image/png"
+                            gcsUri=await last_frame, mimeType="image/png"
                         ),
                     ),
                 ],
@@ -510,12 +489,17 @@ class Veo3FirstLastFrameNode(IO.ComfyNode):
                     generateAudio=generate_audio,
                     negativePrompt=negative_prompt,
                     resolution=resolution,
+                    storageUri=gemini_config.storage_uri
                 ),
             ),
         )
         poll_response = await poll_op(
             cls,
-            ApiEndpoint(path=f"/proxy/veo/{model}/poll", method="POST"),
+            ApiEndpoint(    
+                path=f"{GEMINI_BASE_ENDPOINT}/{model}:fetchPredictOperation", 
+                method="POST", 
+                headers={"Authorization": f"Bearer {get_vertex_ai_access_token()}"}
+            ),
             response_model=VeoGenVidPollResponse,
             status_extractor=lambda r: "completed" if r.done else "pending",
             data=VeoGenVidPollRequest(
@@ -540,13 +524,10 @@ class Veo3FirstLastFrameNode(IO.ComfyNode):
 
         if response.videos:
             video = response.videos[0]
-            if video.bytesBase64Encoded:
-                return IO.NodeOutput(InputImpl.VideoFromFile(BytesIO(base64.b64decode(video.bytesBase64Encoded))))
             if video.gcsUri:
-                return IO.NodeOutput(await download_url_to_video_output(video.gcsUri))
+                return IO.NodeOutput(video.gcsUri)
             raise Exception("Video returned but no data or URL was provided")
         raise Exception("Video generation completed but no video was returned")
-
 
 class VeoExtension(ComfyExtension):
     @override
