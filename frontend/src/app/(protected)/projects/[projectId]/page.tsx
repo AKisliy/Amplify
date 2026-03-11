@@ -98,14 +98,7 @@ export default function ProjectOverviewPage() {
     router.push(`/projects/${projectId}/templates/${templateId}`);
   };
 
-  const {
-    ambassador,
-    isLoading: ambassadorLoading,
-    createAmbassador,
-    updateAmbassador,
-    deleteAmbassador,
-    refetch,
-  } = useAmbassador(ambassadorId);
+  const { ambassador } = useAmbassador(ambassadorId);
 
   return (
     <div className="min-h-screen bg-background">
@@ -122,7 +115,7 @@ export default function ProjectOverviewPage() {
         >
           <div className="flex items-center gap-4">
             <Avatar className="w-16 h-16 border-2 border-border shadow-sm shrink-0">
-              <AvatarImage src={"mock-avatar.png"} className="object-cover" />
+              <AvatarImage src={ambassador?.profileImageUrl ?? undefined} className="object-cover" />
               <AvatarFallback className="text-xl font-semibold bg-primary/10 text-primary">
                 {getInitials(ambassador?.name || "Ambassador Name")}
               </AvatarFallback>

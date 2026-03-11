@@ -15,6 +15,15 @@ spec:
   - match:
     - uri:
         prefix: "/userservice"
+    corsPolicy:
+      allowOrigins:
+      {{- range .Values.cors.allowedOrigins }}
+      - exact: {{ . | quote }}
+      {{- end }}
+      allowMethods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"]
+      allowHeaders: ["*"]
+      allowCredentials: true
+      maxAge: "24h"
     route:
     - destination:
         host: "{{ include "user-service.fullname" . }}"

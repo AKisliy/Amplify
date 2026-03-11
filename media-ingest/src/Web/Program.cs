@@ -2,7 +2,6 @@ using MediaIngest.Infrastructure.Configuration;
 using MediaIngest.Infrastructure.Data;
 using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.Extensions.Options;
-using CorsOptions = MediaIngest.Infrastructure.Configuration.CorsOptions;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -39,8 +38,8 @@ app.UseHealthChecks("/health");
 app.UseHttpsRedirection();
 app.UseStaticFiles();
 
-var corsOptions = app.Services.GetRequiredService<IOptions<CorsOptions>>();
-app.UseCors(corsOptions.Value.DefaultPolicyName);
+if (app.Environment.IsDevelopment())
+    app.UseCors("Dev");
 
 app.UseSwaggerUi(settings =>
 {

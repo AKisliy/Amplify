@@ -7,3 +7,9 @@ gateway:
 virtualService:
   hosts:
     - {{ .Values.global.appDomain }}
+
+cors:
+  allowedOrigins:
+    - "https://{{ .Values.global.appDomain }}"
+    - "http://localhost:3000"
+    - "https://localhost:3000"
