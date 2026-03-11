@@ -28,9 +28,8 @@ public class Connections : EndpointGroupBase
         return TypedResults.Ok(result);
     }
 
-    public async Task<RedirectHttpResult> Connection(ISender sender, string state, string code)
+    public async Task<RedirectHttpResult> Connection(ISender sender, CreateNewConnection command)
     {
-        var command = new CreateNewConnection(state, code);
         var result = await sender.Send(command);
         return TypedResults.Redirect(result.RedirectUrl);
     }
