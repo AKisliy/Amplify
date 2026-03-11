@@ -47,6 +47,7 @@ public static class DependencyInjection
 
         builder.Services.AddS3Storage(builder.Configuration);
         builder.Services.AddScoped<IFileStorage, S3Storage>();
+        builder.Services.AddScoped<IGoogleStorageService, GoogleStorageService>();
 
         builder.Services.AddHttpClients();
 
