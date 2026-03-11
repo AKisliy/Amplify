@@ -1,4 +1,5 @@
 using MediaIngest.Application.Media.Commands.DeleteMedia;
+using MediaIngest.Application.Media.Commands.ImportFromGoogleStorage;
 using MediaIngest.Application.Media.Commands.ImportFromUrl;
 using MediaIngest.Application.Media.Commands.UploadFromFile;
 using MediaIngest.Application.Media.Queries.GetLinkById;
@@ -50,6 +51,12 @@ public class Internal : EndpointGroupBase
             .WithDescription("Service-to-service only. Downloads file from an external URL and stores it in S3. Returns mediaId.")
             .Produces<ImportFromUrlDto>(StatusCodes.Status201Created)
             .ProducesProblem(StatusCodes.Status400BadRequest);
+
+        groupBuilder.MapPost("/import-gs", ImportFromGoogleStorage)
+            .WithSummary("Import file from Google Storage (internal)")
+            .WithDescription("Service-to-service only. Downloads file from Google Storage and stores it in S3. Returns mediaId.")
+            .Produces<ImportFromUrlDto>(StatusCodes.Status201Created)
+            .ProducesProblem(StatusCodes.Status400BadRequest);
     }
 
     public async Task<Created<UploadFileDto>> Upload(ISender sender, IFormFile file)
@@ -88,6 +95,12 @@ public class Internal : EndpointGroupBase
     {
         var result = await sender.Send(new ImportFromUrlCommand(request.Url));
         return TypedResults.Created($"/api/internal/media/{result.MediaId}/stream", result);
+    }
+
+    public async Task<Created<ImportFromGoogleStorageResponse>> ImportFromGoogleStorage(ISender sender, ImportFromGoogleStorageCommand request)
+    {
+        var result = await sender.Send(request);
+        return TypedResults.Created($"/api/internal/media/stream", result);
     }
 }
 

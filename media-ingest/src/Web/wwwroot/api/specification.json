@@ -382,6 +382,56 @@
         }
       }
     },
+    "/api/internal/media/import-gs": {
+      "post": {
+        "tags": [
+          "internal/media"
+        ],
+        "summary": "Import file from Google Storage (internal)",
+        "description": "Service-to-service only. Downloads file from Google Storage and stores it in S3. Returns mediaId.",
+        "operationId": "PostApiInternalMediaImportGs",
+        "requestBody": {
+          "x-name": "request",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ImportFromGoogleStorageCommand"
+              }
+            }
+          },
+          "required": true,
+          "x-position": 1
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {}
+            }
+          },
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ImportFromUrlDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/media/{mediaId}": {
       "get": {
         "tags": [
@@ -421,23 +471,8 @@
                 }
               }
             }
-          },
-          "401": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              }
-            }
           }
-        },
-        "security": [
-          {
-            "JWT": []
-          }
-        ]
+        }
       }
     },
     "/api/videos": {
@@ -613,6 +648,30 @@
           "mediaId": {
             "type": "string",
             "format": "guid"
+          }
+        }
+      },
+      "ImportFromGoogleStorageCommand": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "files": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ImportFromGoogleStorageDto"
+            }
+          }
+        }
+      },
+      "ImportFromGoogleStorageDto": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "gsUri": {
+            "type": "string"
+          },
+          "contentType": {
+            "type": "string"
           }
         }
       }
