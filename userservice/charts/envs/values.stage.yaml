@@ -35,6 +35,7 @@ appConfig:
     AccessTokenCookieName: MyAppAccessToken
     RefreshTokenCookieName: MyAppRefreshToken
 
+
   CorsOptions:
     AllowedOrigins:
       - "https://localhost:3000"
