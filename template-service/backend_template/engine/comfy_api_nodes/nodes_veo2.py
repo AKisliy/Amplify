@@ -18,7 +18,7 @@ from comfy_api_nodes.util import (
     sync_op,
 )
 
-from comfy_api_nodes.util import get_vertex_ai_access_token, fetch_media_uri_from_ingest
+from comfy_api_nodes.util import get_vertex_ai_access_token, fetch_media_uri_from_ingest, register_media_uri_with_ingest
 
 from config import gemini_config
 import base64
@@ -34,24 +34,7 @@ MODELS_MAP = {
 
 GEMINI_BASE_ENDPOINT = f"https://aiplatform.googleapis.com/v1/projects/{gemini_config.project_id}/locations/{gemini_config.location}/publishers/google/models"
 
-# class MediaRegisterParameters(BaseModel):
-#     gcsUri: str = Field(...)
-#     mimeType: str = Field(...)
 
-# class MediaRegisterRequest(BaseModel):
-#     parameters: list[MediaRegisterParameters] | None = Field(None)
-
-# class MediaRegisterResponse(BaseModel):
-#     pass
-
-# full_url = f"{media_ingest_config.media_ingest_url}/internal/media/register"
-# response = await sync_op(
-#     cls,
-#     endpoint=ApiEndpoint(path=full_url, method="POST"),
-#     data=MediaRegisterRequest,
-#     response_model=MediaRegisterResponse,
-#     wait_label="Fetching Media Link...",
-# )
 
 class VeoVideoGenerationNode(IO.ComfyNode):
     """
@@ -258,7 +241,8 @@ class VeoVideoGenerationNode(IO.ComfyNode):
 
             if hasattr(video, "gcsUri") and video.gcsUri:
                 
-                return IO.NodeOutput(video.gcsUri)
+                media_id = await register_media_uri_with_ingest(cls, video.gcsUri, "video/mp4")
+                return IO.NodeOutput(media_id)
 
             raise Exception("Video returned but no data or URL was provided")
         raise Exception("Video generation completed but no video was returned")
@@ -525,7 +509,9 @@ class Veo3FirstLastFrameNode(IO.ComfyNode):
         if response.videos:
             video = response.videos[0]
             if video.gcsUri:
-                return IO.NodeOutput(video.gcsUri)
+                
+                media_id = await register_media_uri_with_ingest(cls, video.gcsUri, "video/mp4")
+                return IO.NodeOutput(media_id)
             raise Exception("Video returned but no data or URL was provided")
         raise Exception("Video generation completed but no video was returned")
 

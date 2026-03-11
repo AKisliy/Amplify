@@ -12,7 +12,8 @@ from .validation_utils import (
 
 from .request_utils import (
     get_vertex_ai_access_token,
-    fetch_media_uri_from_ingest
+    fetch_media_uri_from_ingest,
+    register_media_uri_with_ingest,
 )
 
 __all__ = [
@@ -27,7 +28,8 @@ __all__ = [
     "validate_string",
     
     # Request utilities
-    get_vertex_ai_access_token,
+    get_vertex_ai_access_token, 
     fetch_media_uri_from_ingest,
+    register_media_uri_with_ingest,
 ]
     

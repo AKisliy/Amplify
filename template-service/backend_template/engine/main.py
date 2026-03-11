@@ -9,8 +9,13 @@ from config import gemini_config, media_ingest_config
 import base64
 import uuid
 import io
+from comfy_api_nodes.util import get_vertex_ai_access_token, fetch_media_uri_from_ingest, register_media_uri_with_ingest
 
 async def main():
+    # Test register_media_uri_with_ingest
+    # media_id = await register_media_uri_with_ingest(VeoVideoGenerationNode, "gs://amplify-media-test/5519547473301993309/sample_0.mp4", "video/mp4")
+    # print(media_id)
+
     response = await Veo3FirstLastFrameNode.execute(
         prompt="generate a video of a lambo urus", 
         model="veo-3.1-fast-generate",
@@ -22,8 +27,8 @@ async def main():
         duration=4,
         seed=0,
         generate_audio=True,
-    )
-    # The output format depends on NodeOutput, typically indexable or with dictionary keys.
+    )   
+    # # The output format depends on NodeOutput, typically indexable or with dictionary keys.
     print(response.result)
     print(response[0])
 
