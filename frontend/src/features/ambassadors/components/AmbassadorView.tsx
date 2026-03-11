@@ -1,8 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef, useCallback } from "react";
 import { motion } from "framer-motion";
-import { User, Edit, Trash2, Plus } from "lucide-react";
+import { User, Edit, Trash2, Plus, Camera } from "lucide-react";
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -12,6 +12,7 @@ import { Separator } from "@/components/ui/separator";
 
 import type { Ambassador } from "../types";
 import { AmbassadorDialog } from "./AmbassadorDialog";
+import { CropAvatarDialog } from "./CropAvatarDialog";
 import type { AmbassadorFormValues } from "../schemas/ambassador.schema";
 import { Gallery } from "./gallery/Gallery";
 import { useAmbassadorImages } from "../hooks/useAmbassadorImages";
@@ -23,6 +24,7 @@ interface AmbassadorViewProps {
   onCreateAmbassador: (values: AmbassadorFormValues) => Promise<void>;
   onUpdateAmbassador: (values: AmbassadorFormValues) => Promise<void>;
   onDeleteAmbassador: () => Promise<void>;
+  onAvatarUpload?: (blob: Blob) => Promise<void>;
 }
 
 export function AmbassadorView({
@@ -32,10 +34,40 @@ export function AmbassadorView({
   onCreateAmbassador,
   onUpdateAmbassador,
   onDeleteAmbassador,
+  onAvatarUpload,
 }: AmbassadorViewProps) {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
-  
+
+  // Avatar upload state
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [cropSrc, setCropSrc] = useState<string | null>(null);
+  const [cropOpen, setCropOpen] = useState(false);
+  const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
+
+  const handleAvatarClick = () => fileInputRef.current?.click();
+
+  const handleFileChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      setCropSrc(reader.result as string);
+      setCropOpen(true);
+    };
+    reader.readAsDataURL(file);
+    // reset so the same file can be re-selected
+    e.target.value = "";
+  }, []);
+
+  const handleCropConfirm = useCallback(async (blob: Blob) => {
+    if (!onAvatarUpload) return;
+    // Optimistic preview
+    const previewUrl = URL.createObjectURL(blob);
+    setAvatarPreview(previewUrl);
+    await onAvatarUpload(blob);
+  }, [onAvatarUpload]);
+
   // Use the hook to get images if ambassador exists
   const { images, refreshImages } = useAmbassadorImages(ambassador?.id);
 
@@ -112,12 +144,36 @@ export function AmbassadorView({
           <CardHeader className="pb-4">
             <div className="flex items-start justify-between">
               <div className="flex items-center gap-4">
-                <Avatar className="w-20 h-20 border-2 border-border shadow-sm">
-                  <AvatarImage src={images && images.length > 0 ? images[0].imageUrl : undefined} className="object-cover" />
-                  <AvatarFallback className="text-2xl font-semibold bg-primary/10 text-primary">
-                    {getInitials(ambassador!.name)}
-                  </AvatarFallback>
-                </Avatar>
+                {/* Hidden file input */}
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={handleFileChange}
+                />
+
+                {/* Clickable avatar */}
+                <button
+                  type="button"
+                  onClick={handleAvatarClick}
+                  className="relative group rounded-full focus:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+                  title="Change profile photo"
+                >
+                  <Avatar className="w-20 h-20 border-2 border-border shadow-sm">
+                    <AvatarImage
+                      src={avatarPreview ?? ambassador!.profileImageUrl ?? undefined}
+                      className="object-cover"
+                    />
+                    <AvatarFallback className="text-2xl font-semibold bg-primary/10 text-primary">
+                      {getInitials(ambassador!.name)}
+                    </AvatarFallback>
+                  </Avatar>
+                  {/* Camera overlay */}
+                  <span className="absolute inset-0 rounded-full bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                    <Camera className="w-6 h-6 text-white" />
+                  </span>
+                </button>
                 <div>
                   <h1 className="text-3xl font-bold tracking-tight">
                     {ambassador!.name}
@@ -218,6 +274,15 @@ export function AmbassadorView({
         onSubmit={onUpdateAmbassador}
         ambassador={ambassador}
       />
+
+      {cropSrc && (
+        <CropAvatarDialog
+          open={cropOpen}
+          onOpenChange={setCropOpen}
+          imageSrc={cropSrc}
+          onConfirm={handleCropConfirm}
+        />
+      )}
     </>
   );
 }

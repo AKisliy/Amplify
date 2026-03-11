@@ -3,6 +3,7 @@ export type Ambassador = {
   name: string;
   biography?: string | null;
   behavioralPatterns?: string | null;
+  profileImageUrl?: string | null;
 };
 
 export type CreateAmbassadorPayload = {
@@ -17,6 +18,7 @@ export type UpdateAmbassadorPayload = {
   name: string;
   biography?: string | null;
   behavioralPatterns?: string | null;
+  profileImageId?: string | null;
 };
 
 // DTO type aliases for API compatibility
