@@ -162,7 +162,7 @@ export function AmbassadorView({
                 >
                   <Avatar className="w-20 h-20 border-2 border-border shadow-sm">
                     <AvatarImage
-                      src={avatarPreview ?? ambassador!.profilePictureUrl ?? undefined}
+                      src={avatarPreview ?? ambassador!.profileImageUrl ?? undefined}
                       className="object-cover"
                     />
                     <AvatarFallback className="text-2xl font-semibold bg-primary/10 text-primary">

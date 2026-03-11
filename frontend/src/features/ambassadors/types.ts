@@ -3,7 +3,7 @@ export type Ambassador = {
   name: string;
   biography?: string | null;
   behavioralPatterns?: string | null;
-  profilePictureUrl?: string | null;
+  profileImageUrl?: string | null;
 };
 
 export type CreateAmbassadorPayload = {
