@@ -37,6 +37,8 @@ api.interceptors.request.use(
                 const urlObj = new URL(envUrl);
                 const baseHost = `${urlObj.protocol}//${urlObj.host}`;
                 config.baseURL = baseHost + servicePrefix;
+                // Update url to cleanPath so it appends to baseURL path instead of replacing it
+                config.url = cleanPath;
             } catch (e) {
                 // Fallback if URL parsing fails
                 config.baseURL = envUrl;
