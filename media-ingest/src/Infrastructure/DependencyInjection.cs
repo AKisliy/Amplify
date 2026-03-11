@@ -62,10 +62,8 @@ public static class DependencyInjection
 
     private static void AddCorsUsage(this IHostApplicationBuilder builder)
     {
-        var corsOptions = new CorsOptions { DefaultPolicyName = string.Empty };
+        var corsOptions = new CorsOptions();
         builder.Configuration.GetSection(CorsOptions.SectionName).Bind(corsOptions);
-
-        Guard.Against.NullOrEmpty(corsOptions.DefaultPolicyName, message: "Cors policy name is not set");
 
         builder.Services.AddCors(options => options.AddPolicy(
             corsOptions.DefaultPolicyName,
