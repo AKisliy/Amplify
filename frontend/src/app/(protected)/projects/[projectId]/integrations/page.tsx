@@ -83,45 +83,67 @@ export default function IntegrationsPage() {
 
                     <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
                         {providers.map((provider) => {
-                            const integration = integrations.find(i => i.socialProvider === provider.name);
+                            const providerIntegrations = integrations.filter(i => i.socialProvider === provider.name);
                             const isRedirecting = redirectingProvider === provider.name;
-                            const isDisconnecting = integration && disconnectingId === integration.id;
 
                             return (
-                                <Card key={provider.name} className="flex flex-col">
-                                    <CardHeader className="pb-4">
-                                        <div className="flex items-center gap-3">
-                                            <div className={`w-12 h-12 rounded-xl ${provider.bgClass} flex items-center justify-center shadow-md`}>
-                                                {provider.icon}
+                                <Card key={provider.name} className="flex flex-col rounded-[24px] shadow-sm border-border">
+                                    <CardHeader className="pb-4 pt-6 px-6">
+                                        <div className="flex items-center gap-4">
+                                            <div className={`w-16 h-16 rounded-[20px] ${provider.bgClass} flex items-center justify-center shadow-md shrink-0`}>
+                                                {/* Scale up icon slightly to fit the larger box */}
+                                                <div className="scale-125">{provider.icon}</div>
                                             </div>
                                             <div>
-                                                <CardTitle>{provider.name}</CardTitle>
+                                                <CardTitle className="text-2xl font-bold">{provider.name}</CardTitle>
                                             </div>
                                         </div>
                                     </CardHeader>
                                     <CardContent className="flex-1">
-                                        {isLoading && !isRedirecting && !isDisconnecting ? (
+                                        {isLoading && !isRedirecting && !disconnectingId ? (
                                             <div className="flex items-center gap-2 text-sm text-muted-foreground">
                                                 <Loader2 className="w-4 h-4 animate-spin" />
                                                 Checking status...
                                             </div>
-                                        ) : integration ? (
-                                            <div className="flex flex-col gap-2">
-                                                <div className="flex items-center gap-2 text-sm font-medium text-green-600 bg-green-500/10 w-fit px-3 py-1 rounded-full">
+                                        ) : providerIntegrations.length > 0 ? (
+                                            <div className="flex flex-col gap-4 px-2">
+                                                <div className="flex items-center gap-2 text-[14px] font-medium text-emerald-600 bg-emerald-50 border border-emerald-100 w-fit px-3 py-1.5 rounded-full mb-1">
                                                     <CheckCircle2 className="w-4 h-4" />
-                                                    Connected
+                                                    {providerIntegrations.length} Connected
                                                 </div>
-                                                <div className="flex items-center gap-3 mt-1">
-                                                    {integration.avatarUrl && (
-                                                        <img 
-                                                            src={integration.avatarUrl} 
-                                                            alt={integration.username} 
-                                                            className="w-10 h-10 rounded-full border border-border shadow-sm object-cover"
-                                                        />
-                                                    )}
-                                                    <p className="text-sm truncate">
-                                                        <span className="font-semibold text-foreground">@{integration.username}</span>
-                                                    </p>
+                                                <div className="grid gap-3">
+                                                    {providerIntegrations.map(integration => (
+                                                        <div key={integration.id} className="flex items-center justify-between gap-2 p-2.5 rounded-[16px] border border-border bg-card shadow-sm hover:shadow-md transition-shadow overflow-hidden">
+                                                            <div className="flex items-center gap-2 overflow-hidden flex-1 min-w-0">
+                                                                {integration.avatarUrl ? (
+                                                                    <img 
+                                                                        src={integration.avatarUrl} 
+                                                                        alt={integration.username} 
+                                                                        className="w-9 h-9 rounded-full border border-border shadow-sm object-cover shrink-0"
+                                                                    />
+                                                                ) : (
+                                                                    <div className="w-9 h-9 rounded-full bg-muted border border-border flex items-center justify-center shrink-0">
+                                                                        <span className="text-muted-foreground font-medium text-sm">
+                                                                            {integration.username.charAt(0).toUpperCase()}
+                                                                        </span>
+                                                                    </div>
+                                                                )}
+                                                                <p className="text-[14px] flex-1 min-w-0">
+                                                                    <span className="font-semibold text-foreground break-words">@{integration.username}</span>
+                                                                </p>
+                                                            </div>
+                                                            <Button
+                                                                variant="ghost"
+                                                                className="text-red-600 hover:bg-red-50 hover:text-red-700 font-semibold shrink-0 px-2 sm:px-3 h-auto min-h-[32px] rounded-lg text-sm whitespace-normal text-right py-1"
+                                                                onClick={() => handleDisconnect(integration.id)}
+                                                                disabled={disconnectingId !== null || isLoading}
+                                                            >
+                                                                {disconnectingId === integration.id ? (
+                                                                    <Loader2 className="w-4 h-4 animate-spin" />
+                                                                ) : "Disconnect"}
+                                                            </Button>
+                                                        </div>
+                                                    ))}
                                                 </div>
                                             </div>
                                         ) : (
@@ -131,40 +153,25 @@ export default function IntegrationsPage() {
                                         )}
                                         {error && <p className="text-sm text-destructive mt-2">{error}</p>}
                                     </CardContent>
-                                    <CardFooter className="pt-2">
-                                        {!integration ? (
-                                            <Button
-                                                className="w-full"
-                                                onClick={() => handleConnect(provider.name)}
-                                                disabled={redirectingProvider !== null || isLoading}
-                                            >
-                                                {isRedirecting ? (
-                                                    <>
-                                                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                                                        Redirecting...
-                                                    </>
-                                                ) : (
-                                                    <>
-                                                        <LinkIcon className="w-4 h-4 mr-2" />
-                                                        Connect {provider.name}
-                                                    </>
-                                                )}
-                                            </Button>
-                                        ) : (
-                                            <Button 
-                                                variant="outline" 
-                                                className="w-full mt-2 text-destructive hover:bg-destructive/10 hover:text-destructive" 
-                                                onClick={() => handleDisconnect(integration.id)}
-                                                disabled={disconnectingId !== null || isLoading}
-                                            >
-                                                {isDisconnecting ? (
-                                                    <>
-                                                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                                                        Disconnecting...
-                                                    </>
-                                                ) : "Disconnect"}
-                                            </Button>
-                                        )}
+                                    <CardFooter className="pt-4 pb-6 px-6">
+                                        <Button
+                                            className="w-full rounded-[16px] h-auto min-h-[48px] py-2 text-[16px] font-semibold whitespace-normal h-auto leading-tight"
+                                            variant={providerIntegrations.length > 0 ? "outline" : "default"}
+                                            onClick={() => handleConnect(provider.name)}
+                                            disabled={redirectingProvider !== null || isLoading}
+                                        >
+                                            {isRedirecting ? (
+                                                <div className="flex items-center justify-center min-w-0 px-2">
+                                                    <Loader2 className="w-5 h-5 mr-2 animate-spin shrink-0" />
+                                                    <span className="break-words">Redirecting...</span>
+                                                </div>
+                                            ) : (
+                                                <div className="flex items-center justify-center min-w-0 px-2">
+                                                    <LinkIcon className="w-4 h-4 mr-2 shrink-0" />
+                                                    <span className="break-words">{providerIntegrations.length > 0 ? "Connect another account" : `Connect ${provider.name}`}</span>
+                                                </div>
+                                            )}
+                                        </Button>
                                     </CardFooter>
                                 </Card>
                             );
