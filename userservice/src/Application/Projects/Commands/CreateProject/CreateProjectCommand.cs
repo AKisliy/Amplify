@@ -13,7 +13,7 @@ public class CreateProjectCommandHandler(
 {
     public async Task<Guid> Handle(CreateProjectCommand request, CancellationToken cancellationToken)
     {
-        var userId = Guard.Against.Null(user.Id, message: "User id wasn't set");
+        var userId = Guard.Against.NullOrEmpty(user.Id, message: "User id wasn't set");
 
         var project = new Project()
         {

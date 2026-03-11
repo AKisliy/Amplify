@@ -1,6 +1,6 @@
-namespace Contracts.Events;
+namespace Contracts;
 
-public class ProjectCreated
+public class ProjectCreatedEvent
 {
     public Guid ProjectId { get; set; }
 

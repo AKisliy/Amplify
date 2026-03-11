@@ -1,7 +1,7 @@
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 
-namespace Publisher.Application.Common.Options;
+namespace UserService.Application.Common.Options;
 
 public class FluentValidateOptions<TOptions>
     : IValidateOptions<TOptions>
