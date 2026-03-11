@@ -98,7 +98,11 @@ api.interceptors.response.use(
                     failedQueue.push({ resolve, reject });
                 })
                     .then((token) => {
-                        originalRequest.headers.Authorization = `Bearer ${token}`;
+                        if (originalRequest.headers) {
+                            originalRequest.headers.Authorization = `Bearer ${token}`;
+                        } else {
+                            originalRequest.headers = { Authorization: `Bearer ${token}` };
+                        }
                         return api(originalRequest);
                     })
                     .catch((err) => {
@@ -140,7 +144,11 @@ api.interceptors.response.use(
                     }
 
                     // Update authorization header for the RETRY
-                    originalRequest.headers.Authorization = `Bearer ${newAccessToken}`;
+                    if (originalRequest.headers) {
+                        originalRequest.headers.Authorization = `Bearer ${newAccessToken}`;
+                    } else {
+                        originalRequest.headers = { Authorization: `Bearer ${newAccessToken}` };
+                    }
 
                     // Update the instance's custom headers too for future requests
                     api.defaults.headers.common["Authorization"] = `Bearer ${newAccessToken}`;
