@@ -16,7 +16,8 @@ internal class CreateNewConnectionHandler(IConnectionServiceFactory integrationS
         Guard.Against.NullOrEmpty(request.State);
         Guard.Against.NullOrEmpty(request.Code);
 
-        var decodedState = Encoding.UTF8.GetString(WebEncoders.Base64UrlDecode(request.State));
+        var cleanState = request.State.Split('#')[0];
+        var decodedState = Encoding.UTF8.GetString(WebEncoders.Base64UrlDecode(cleanState));
         var integrationState = JsonConvert.DeserializeObject<ConnectionState>(decodedState);
 
         Guard.Against.Null(integrationState);
