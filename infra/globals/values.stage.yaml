@@ -1,5 +1,5 @@
 global:
-  appDomain: staging.alexeykiselev.tech
+  appDomain: app.alexeykiselev.tech
   gateway:
     name: amplify-gateway
   secretStore:
