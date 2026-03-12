@@ -10,6 +10,7 @@ gateway:
 virtualService:
   hosts:
     - {{ .Values.global.appDomain }}
+    - {{ .Values.global.clusterDomain }}
 
 cors:
   allowedOrigins:
