@@ -15,5 +15,4 @@ To verify that everything has started correctly:
 
 ### Local testing
 By default service will create some default data for you:
-1. Default image ID: `5ee06455-ef52-453f-8cb4-33a028567c28`
-
+1. Default image ID: `5ee06455-ef52-453f-8cb4-33a028567c28
