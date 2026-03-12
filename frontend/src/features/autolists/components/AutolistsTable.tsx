@@ -14,6 +14,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import type { AutoList } from "../types";
+import { calculateNextPublishTime } from "../types";
 
 interface AutolistsTableProps {
   autolists: AutoList[];
@@ -74,7 +75,7 @@ export function AutolistsTable({
                 </div>
               </TableCell>
               <TableCell className="text-muted-foreground py-4">
-                {autolist.nextPublishTime || "Not scheduled"}
+                {autolist.nextPublishTime || calculateNextPublishTime(autolist.entries || []) || "Not scheduled"}
               </TableCell>
               <TableCell className="py-4">
                 <Badge
@@ -95,7 +96,7 @@ export function AutolistsTable({
                   variant="ghost"
                   size="icon"
                   onClick={(e) => handleDeleteClick(e, autolist.id)}
-                  className="text-muted-foreground hover:text-destructive hover:bg-destructive/10 opacity-0 group-hover:opacity-100 transition-opacity"
+                  className="text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors"
                 >
                   <Trash2 className="w-4 h-4" />
                 </Button>

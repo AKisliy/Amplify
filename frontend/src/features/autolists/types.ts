@@ -79,3 +79,56 @@ export const maskToDays = (mask: number): number[] => {
     (day) => day.value
   );
 };
+
+export const calculateNextPublishTime = (entries: AutoListEntry[]): string | undefined => {
+  if (!entries || entries.length === 0) return undefined;
+
+  const now = new Date();
+  const currentDay = now.getDay(); // 0=Sunday, 1=Monday...
+  const currentDayMask = 1 << currentDay;
+
+  let soonest: Date | null = null;
+
+  entries.forEach((entry) => {
+    const [hours, minutes, seconds] = entry.publicationTime.split(":").map(Number);
+    
+    // Check each day of the week
+    for (let i = 0; i < 7; i++) {
+        const targetDayIdx = (currentDay + i) % 7;
+        const targetDayMask = 1 << targetDayIdx;
+        
+        if ((entry.dayOfWeeks & targetDayMask) !== 0) {
+            const scheduledDate = new Date(now);
+            scheduledDate.setDate(now.getDate() + i);
+            scheduledDate.setHours(hours, minutes, seconds || 0, 0);
+
+            // If it's today but already passed, move to next week for this day
+            if (i === 0 && scheduledDate < now) {
+                // Skip today if time passed
+                continue;
+            }
+
+            if (!soonest || scheduledDate < soonest) {
+                soonest = scheduledDate;
+            }
+            
+            // Found the next occurrence for this entry, no need to check further days for this entry
+            break;
+        }
+    }
+  });
+
+  if (!soonest) return undefined;
+
+  const soonestDate = soonest as Date;
+  // Format nicely: "Tomorrow, 12:00 PM" or "Monday, 10:00 AM"
+  const diffDays = Math.floor((soonestDate.getTime() - new Date().setHours(0,0,0,0)) / (1000 * 60 * 60 * 24));
+  
+  const timeStr = soonestDate.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+  
+  if (diffDays === 0) return `Today, ${timeStr}`;
+  if (diffDays === 1) return `Tomorrow, ${timeStr}`;
+  
+  const dayName = soonestDate.toLocaleDateString([], { weekday: 'long' });
+  return `${dayName}, ${timeStr}`;
+};

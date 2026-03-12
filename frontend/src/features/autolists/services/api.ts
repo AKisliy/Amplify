@@ -8,7 +8,8 @@ import type {
 } from "../types";
 
 interface AutoListsResponse {
-  autoLists: AutoList[];
+  autoLists?: any[];
+  AutoLists?: any[];
 }
 
 // Backend response type for FullAutoListDto (PascalCase field names)
@@ -57,7 +58,25 @@ export const autolistApi = {
     const response = await api.get<AutoListsResponse>(`autolists`, {
       params: { ProjectId: projectId },
     });
-    return response.data.autoLists;
+    
+    // Support both casings from backend
+    const rawList = response.data.autoLists || response.data.AutoLists || [];
+    
+    // Map each item to fix casing and include entries for count/scheduling
+    return rawList.map(item => {
+      const id = item.id || item.Id;
+      return {
+        id: id,
+        name: item.name || item.Name,
+        entries: (item.entries || item.Entries || []).map((e: any) => ({
+          id: e.id || e.Id,
+          autoListId: id,
+          dayOfWeeks: e.dayOfWeeks || e.DayOfWeeks,
+          publicationTime: e.publicationTime || e.PublicationTime,
+        })),
+        accounts: [], // Not returned in list view for performance
+      };
+    });
   },
 
   /**
