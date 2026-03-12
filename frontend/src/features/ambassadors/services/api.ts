@@ -46,15 +46,12 @@ export const ambassadorApi = {
   },
 
   /**
-   * Upload media to ingest service
+   * Upload media to ingest service — delegates to mediaApi
    */
   async uploadMedia(file: File): Promise<string> {
-    const formData = new FormData();
-    formData.append("file", file);
-    const response = await api.post<{ mediaId: string }>("/images", formData, {
-      headers: { "Content-Type": "multipart/form-data" },
-    });
-    return response.data.mediaId;
+    const { mediaApi } = await import("@/features/media/api");
+    const result = await mediaApi.uploadImage(file);
+    return result.mediaId;
   },
 
   /**

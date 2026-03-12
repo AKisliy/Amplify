@@ -1,0 +1,111 @@
+import api from "@/lib/axios";
+
+export interface MediaUploadResult {
+  mediaId: string;
+  mediaPath: string;
+  contentType: string;
+}
+
+export type MediaType = "image" | "video";
+
+const IMAGE_TYPES = ["image/jpeg", "image/png", "image/webp", "image/gif"];
+const VIDEO_TYPES = ["video/mp4", "video/webm"];
+
+export const IMAGE_MAX_MB = 10;
+export const VIDEO_MAX_MB = 100;
+
+export function detectMediaType(file: File): MediaType {
+  if (VIDEO_TYPES.includes(file.type)) return "video";
+  return "image";
+}
+
+export function validateFile(file: File): string | null {
+  const type = detectMediaType(file);
+  if (type === "image") {
+    if (!IMAGE_TYPES.includes(file.type)) {
+      return "Unsupported image format. Use JPEG, PNG, WebP, or GIF.";
+    }
+    if (file.size > IMAGE_MAX_MB * 1024 * 1024) {
+      return `Image exceeds ${IMAGE_MAX_MB} MB limit.`;
+    }
+  } else {
+    if (!VIDEO_TYPES.includes(file.type)) {
+      return "Unsupported video format. Use MP4 or WebM.";
+    }
+    if (file.size > VIDEO_MAX_MB * 1024 * 1024) {
+      return `Video exceeds ${VIDEO_MAX_MB} MB limit.`;
+    }
+  }
+  return null;
+}
+
+export const mediaApi = {
+  /**
+   * Upload an image. POST /api/images
+   * Accepts JPEG, PNG, WebP, GIF. Max 10 MB.
+   */
+  async uploadImage(
+    file: File,
+    onProgress?: (percent: number) => void
+  ): Promise<MediaUploadResult> {
+    const formData = new FormData();
+    formData.append("file", file);
+    const response = await api.post<MediaUploadResult>("images", formData, {
+      headers: { "Content-Type": "multipart/form-data" },
+      onUploadProgress: (e) => {
+        if (onProgress && e.total) {
+          onProgress(Math.round((e.loaded * 100) / e.total));
+        }
+      },
+    });
+    return response.data;
+  },
+
+  /**
+   * Upload a video. POST /api/videos
+   * Accepts MP4, WebM. Max 100 MB.
+   */
+  async uploadVideo(
+    file: File,
+    onProgress?: (percent: number) => void
+  ): Promise<MediaUploadResult> {
+    const formData = new FormData();
+    formData.append("file", file);
+    const response = await api.post<MediaUploadResult>("videos", formData, {
+      headers: { "Content-Type": "multipart/form-data" },
+      onUploadProgress: (e) => {
+        if (onProgress && e.total) {
+          onProgress(Math.round((e.loaded * 100) / e.total));
+        }
+      },
+    });
+    return response.data;
+  },
+
+  /**
+   * Upload any media file — auto-detects type
+   */
+  async uploadFile(
+    file: File,
+    onProgress?: (percent: number) => void
+  ): Promise<MediaUploadResult & { type: MediaType }> {
+    const type = detectMediaType(file);
+    const result =
+      type === "video"
+        ? await this.uploadVideo(file, onProgress)
+        : await this.uploadImage(file, onProgress);
+    return { ...result, type };
+  },
+
+  /**
+   * Get the public CDN URL for a media item.
+   * GET /api/media/{mediaId} — returns a redirect to CDN.
+   * Use this as the src for <img> or <video> tags directly.
+   */
+  getMediaUrl(mediaId: string): string {
+    const envUrl =
+      process.env.NEXT_PUBLIC_API_BASE_URL ||
+      "https://staging.alexeykiselev.tech";
+    return `${envUrl}/media/api/media/${mediaId}`;
+  },
+};

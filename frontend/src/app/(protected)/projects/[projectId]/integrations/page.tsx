@@ -75,7 +75,7 @@ export default function IntegrationsPage() {
                     className="max-w-4xl mx-auto space-y-8"
                 >
                     <div>
-                        <h1 className="text-3xl font-bold tracking-tight">Integrations</h1>
+                        <h1 className="text-3xl font-bold tracking-tight">Connections</h1>
                         <p className="text-muted-foreground mt-2">
                             Connect your social media accounts to sync data and automate publishing.
                         </p>
