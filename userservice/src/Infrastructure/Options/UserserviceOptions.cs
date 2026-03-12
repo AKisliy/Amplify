@@ -9,10 +9,9 @@ public class UserserviceOptions
     public string BasePath { get; set; } = string.Empty;
 }
 
-public sealed class UserserviceOptionsValidator : AbstractValidator<UserserviceOptions>
+internal sealed class UserserviceOptionsValidator : AbstractValidator<UserserviceOptions>
 {
     public UserserviceOptionsValidator()
     {
-
     }
 }

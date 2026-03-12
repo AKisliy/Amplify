@@ -25,6 +25,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 using UserService.Infrastructure.Broker;
 using System.Reflection;
 using FluentValidation;
+using UserService.Application.Common.Options;
 
 namespace Microsoft.Extensions.DependencyInjection;
 
@@ -32,7 +33,6 @@ public static class DependencyInjection
 {
     public static void AddInfrastructureServices(this IHostApplicationBuilder builder)
     {
-        builder.Services.AddValidatorsFromAssembly(Assembly.GetExecutingAssembly());
         var connectionString = builder.Configuration.GetConnectionString("UserServiceDb");
         Guard.Against.Null(connectionString, message: "Connection string 'UserServiceDb' not found.");
 
@@ -83,12 +83,12 @@ public static class DependencyInjection
 
     private static void AddInfrastructureOptions(this IServiceCollection services)
     {
-        services.AddOptions<JwtOptions>().BindConfiguration(JwtOptions.SectionName);
-        services.AddOptions<MyCookiesOptions>().BindConfiguration(MyCookiesOptions.SectionName);
-        services.AddOptions<CorsOptions>().BindConfiguration(CorsOptions.SectionName);
-        services.AddOptions<InternalUrlsOptions>().BindConfiguration(InternalUrlsOptions.SectionName);
-        services.AddOptions<UserserviceOptions>().BindConfiguration(UserserviceOptions.SectionName);
-        services.AddOptions<MailOptions>().BindConfiguration(MailOptions.SectionName);
+        services.AddValidatorsFromAssembly(Assembly.GetExecutingAssembly(), includeInternalTypes: true);
+
+        services.AddOptionsWithFluentValidation<JwtOptions>(JwtOptions.SectionName);
+        services.AddOptionsWithFluentValidation<InternalUrlsOptions>(InternalUrlsOptions.SectionName);
+        services.AddOptionsWithFluentValidation<UserserviceOptions>(UserserviceOptions.SectionName);
+        services.AddOptionsWithFluentValidation<MailOptions>(MailOptions.SectionName);
     }
 
     private static void AddAuth(this IHostApplicationBuilder builder)
