@@ -11,8 +11,6 @@ public static class DependencyInjection
     {
         builder.Services.AddAutoMapper(Assembly.GetExecutingAssembly());
 
-        builder.Services.AddValidatorsFromAssembly(Assembly.GetExecutingAssembly());
-
         builder.Services.AddMediatR(cfg =>
         {
             cfg.RegisterServicesFromAssembly(Assembly.GetExecutingAssembly());
@@ -28,7 +26,9 @@ public static class DependencyInjection
 
     private static void AddApplicationOptions(this IServiceCollection services)
     {
-        services.AddOptions<FrontendOptions>().BindConfiguration(FrontendOptions.SectionName);
-        services.AddOptions<ExternalUrlsOptions>().BindConfiguration(ExternalUrlsOptions.SectionName);
+        services.AddValidatorsFromAssembly(Assembly.GetExecutingAssembly(), includeInternalTypes: true);
+
+        services.AddOptionsWithFluentValidation<FrontendOptions>(FrontendOptions.SectionName);
+        services.AddOptionsWithFluentValidation<ExternalUrlsOptions>(ExternalUrlsOptions.SectionName);
     }
 }

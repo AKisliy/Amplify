@@ -11,7 +11,7 @@ public class MailOptions
     public string FromEmail { get; set; } = null!;
 }
 
-public class MailOptionsValidator : AbstractValidator<MailOptions>
+internal sealed class MailOptionsValidator : AbstractValidator<MailOptions>
 {
     public MailOptionsValidator()
     {

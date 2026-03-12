@@ -83,7 +83,6 @@ public class Auth : EndpointGroupBase
 
     private static async Task<Ok<LoginResponse>> LoginUser(
         ISender sender,
-        IOptions<MyCookiesOptions> cookieOptions,
         LoginUserCommand command,
         HttpContext context)
     {
@@ -95,7 +94,6 @@ public class Auth : EndpointGroupBase
     private static async Task<Ok<LoginResponse>> RefreshToken(
         RefreshTokenCommand request,
         ISender sender,
-        IOptions<MyCookiesOptions> cookieOptions,
         HttpContext context)
     {
         Guard.Against.NullOrEmpty(request.AccessToken, nameof(request.AccessToken));
