@@ -1,15 +1,9 @@
-import { getSocialProviderName } from "@/features/autolists/types";
-
+// socialProvider is serialized as a string by the backend
 export interface Integration {
     id: string;
-    socialProvider: number; // numeric enum from backend: Instagram=1, TikTok=2, Youtube=4
+    socialProvider: "Instagram" | "TikTok" | "Youtube" | string;
     username: string;
     avatarUrl?: string;
-}
-
-/** Return human-readable provider name for an Integration */
-export function getIntegrationProviderName(integration: Integration): string {
-    return getSocialProviderName(integration.socialProvider);
 }
 
 export interface IntegrationsResponse {

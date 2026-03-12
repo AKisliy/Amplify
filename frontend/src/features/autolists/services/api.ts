@@ -23,7 +23,7 @@ interface FullAutoListDtoResponse {
   }>;
   accounts: Array<{
     id: string;
-    socialProvider: number;
+    socialProvider: string; // Backend serializes SocialProvider enum as string: "Instagram" | "TikTok" | "Youtube"
     username: string;
     avatarUrl?: string | null;
   }>;
