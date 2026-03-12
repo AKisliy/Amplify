@@ -30,7 +30,7 @@ appConfig:
   InstagramApiOptions:
     AppId: ""
     AppSecret: ""
-    RedirectUri: "https://staging.alexeykiselev.tech/publisher/api/connections"
+    RedirectUri: "https://localhost:3000/integrations/callback"
     ApiVersion: "v22.0"
     DailyLimit: 200
     BaseGraphHostUrl: "https://graph.instagram.com"
@@ -45,16 +45,16 @@ appConfig:
     BasePath: /publisher
   CorsOptions:
     AllowedOrigins:
-      - "http://localhost:3000"
+      - "https://localhost:3000"
     DefaultPolicyName: DevelopmentCorsPolicy
   Frontend:
-    BaseUrl: "http://localhost:3000"
+    BaseUrl: "https://localhost:3000"
     ConnectionsPath: "/connections"
     MediaServiceUrl: "https://staging.alexeykiselev.tech/media/api/"
   TikTokApi:
     ClientKey: ""
     ClientSecret: ""
-    RedirectUri: "http://amplify.34.40.73.43.nip.io/userservice/api"
+    RedirectUri: "https://localhost:3000/integrations/callback"
   RecurringJobs:
     AutoListJobEnabled: false
     TokenRefreshJobEnabled: false

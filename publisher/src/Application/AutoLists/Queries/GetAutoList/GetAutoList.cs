@@ -10,12 +10,13 @@ public class GetAutoListQueryHandler(IApplicationDbContext dbContext, IMapper ma
     public async Task<FullAutoListDto> Handle(GetAutoListQuery request, CancellationToken cancellationToken)
     {
         var autoList = await dbContext.AutoLists
+            .Include(x => x.Entries)
+            .Include(x => x.Accounts)
             .Where(x => x.Id == request.Id)
-            .ProjectTo<FullAutoListDto>(mapper.ConfigurationProvider)
             .FirstOrDefaultAsync(cancellationToken);
 
         Guard.Against.NotFound(request.Id, autoList);
 
-        return autoList;
+        return mapper.Map<FullAutoListDto>(autoList);
     }
 }

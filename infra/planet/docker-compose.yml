@@ -17,7 +17,7 @@ services:
       - CorsOptions__AllowedOrigins__0=http://172.50.50.56:5001
       - CorsOptions__AllowedOrigins__1=http://172.50.50.56:5002
       - CorsOptions__AllowedOrigins__2=http://172.50.50.56:5003
-      - CorsOptions__AllowedOrigins__3=http://localhost:3000
+      - CorsOptions__AllowedOrigins__3=https://localhost:3000
       - UserserviceOptions__BasePath=/userservice
     depends_on:
       - postgres

@@ -1,3 +1,4 @@
+// socialProvider is serialized as a string by the backend
 export interface Integration {
     id: string;
     socialProvider: "Instagram" | "TikTok" | "Youtube" | string;

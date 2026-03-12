@@ -37,6 +37,8 @@ api.interceptors.request.use(
                 const urlObj = new URL(envUrl);
                 const baseHost = `${urlObj.protocol}//${urlObj.host}`;
                 config.baseURL = baseHost + servicePrefix;
+                // Update url to cleanPath so it appends to baseURL path instead of replacing it
+                // config.url = cleanPath;
             } catch (e) {
                 // Fallback if URL parsing fails
                 config.baseURL = envUrl;
@@ -98,7 +100,11 @@ api.interceptors.response.use(
                     failedQueue.push({ resolve, reject });
                 })
                     .then((token) => {
-                        originalRequest.headers.Authorization = `Bearer ${token}`;
+                        if (originalRequest.headers) {
+                            originalRequest.headers.Authorization = `Bearer ${token}`;
+                        } else {
+                            originalRequest.headers = { Authorization: `Bearer ${token}` };
+                        }
                         return api(originalRequest);
                     })
                     .catch((err) => {
@@ -126,20 +132,31 @@ api.interceptors.response.use(
 
                     console.log("Axios Interceptor: Refresh successful");
 
+                    const newAccessToken = data.accessToken || data.AccessToken;
+                    const newRefreshToken = data.refreshToken || data.RefreshToken;
+
+                    if (!newAccessToken) {
+                        throw new Error("Refresh token response missing access token");
+                    }
+
                     // Update stored tokens
                     if (typeof window !== "undefined") {
-                        localStorage.setItem("accessToken", data.accessToken);
-                        localStorage.setItem("refreshToken", data.refreshToken);
+                        localStorage.setItem("accessToken", newAccessToken);
+                        localStorage.setItem("refreshToken", newRefreshToken);
                     }
 
                     // Update authorization header for the RETRY
-                    originalRequest.headers.Authorization = `Bearer ${data.accessToken}`;
+                    if (originalRequest.headers) {
+                        originalRequest.headers.Authorization = `Bearer ${newAccessToken}`;
+                    } else {
+                        originalRequest.headers = { Authorization: `Bearer ${newAccessToken}` };
+                    }
 
                     // Update the instance's custom headers too for future requests
-                    api.defaults.headers.common["Authorization"] = `Bearer ${data.accessToken}`;
+                    api.defaults.headers.common["Authorization"] = `Bearer ${newAccessToken}`;
 
                     // Resolve the queue and retry original request
-                    processQueue(null, data.accessToken);
+                    processQueue(null, newAccessToken);
                     return api(originalRequest);
                 } catch (refreshError) {
                     console.error("Axios Interceptor: Refresh failed", refreshError);

@@ -72,7 +72,7 @@ export function useAutolist(autolistId?: string) {
         autoListId: "new"
       };
       setAutolist((prev) =>
-        prev ? { ...prev, entries: [...prev.entries, newEntry] } : null
+        prev ? { ...prev, entries: [...(prev.entries || []), newEntry] } : null
       );
       return;
     }
@@ -85,7 +85,7 @@ export function useAutolist(autolistId?: string) {
       });
       const newEntry: AutoListEntry = { ...entry, id, autoListId: autolistId };
       setAutolist((prev) =>
-        prev ? { ...prev, entries: [...prev.entries, newEntry] } : null
+        prev ? { ...prev, entries: [...(prev.entries || []), newEntry] } : null
       );
     } catch (err: unknown) {
       console.error("Failed to add entry:", err);
@@ -100,7 +100,7 @@ export function useAutolist(autolistId?: string) {
         prev
           ? {
             ...prev,
-            entries: prev.entries.map((e) =>
+            entries: (prev.entries || []).map((e) =>
               e.id === id ? { ...e, ...data } : e
             ),
           }
@@ -110,16 +110,19 @@ export function useAutolist(autolistId?: string) {
     }
 
     try {
+      const existingEntry = autolist?.entries?.find(e => e.id === id);
+      if (!existingEntry) throw new Error("Entry not found");
+
       await autolistApi.updateEntry(id, {
         id,
-        dayOfWeeks: data.dayOfWeeks || 0,
-        publicationTime: data.publicationTime || "12:00:00",
+        dayOfWeeks: data.dayOfWeeks !== undefined ? data.dayOfWeeks : existingEntry.dayOfWeeks,
+        publicationTime: data.publicationTime !== undefined ? data.publicationTime : existingEntry.publicationTime,
       });
       setAutolist((prev) =>
         prev
           ? {
             ...prev,
-            entries: prev.entries.map((e) =>
+            entries: (prev.entries || []).map((e) =>
               e.id === id ? { ...e, ...data } : e
             ),
           }
@@ -136,7 +139,7 @@ export function useAutolist(autolistId?: string) {
       // Local deletion for new autolist
       setAutolist((prev) =>
         prev
-          ? { ...prev, entries: prev.entries.filter((e) => e.id !== id) }
+          ? { ...prev, entries: (prev.entries || []).filter((e) => e.id !== id) }
           : null
       );
       return;
@@ -146,7 +149,7 @@ export function useAutolist(autolistId?: string) {
       await autolistApi.deleteEntry(id);
       setAutolist((prev) =>
         prev
-          ? { ...prev, entries: prev.entries.filter((e) => e.id !== id) }
+          ? { ...prev, entries: (prev.entries || []).filter((e) => e.id !== id) }
           : null
       );
     } catch (err: unknown) {

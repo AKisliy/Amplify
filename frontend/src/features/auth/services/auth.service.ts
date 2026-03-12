@@ -57,11 +57,12 @@ export const login = async (payload: LoginPayload): Promise<AuthResponse> => {
 export const refreshToken = async (): Promise<AuthResponse | null> => {
   try {
     const currentRefreshToken = localStorage.getItem("refreshToken");
-    if (!currentRefreshToken) return null;
+    const currentAccessToken = localStorage.getItem("accessToken");
+    if (!currentRefreshToken || !currentAccessToken) return null;
 
     const { data } = await api.post<AuthResponse>(
       `${AUTH_BASE}/refresh`,
-      { refreshToken: currentRefreshToken }
+      { accessToken: currentAccessToken, refreshToken: currentRefreshToken }
     );
 
     return data;

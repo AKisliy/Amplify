@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, Suspense } from "react";
+import React, { useEffect, useState, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { integrationsApi } from "@/features/integrations/services/api";
 import { motion } from "framer-motion";
@@ -12,10 +12,14 @@ function CallbackContent() {
     const searchParams = useSearchParams();
     const [status, setStatus] = useState<"loading" | "success" | "error">("loading");
     const [errorMsg, setErrorMsg] = useState<string>("");
+    const hasAttempted = React.useRef(false);
     const [projectId, setProjectId] = useState<string | null>(null);
 
     useEffect(() => {
         const handleCallback = async () => {
+            if (hasAttempted.current) return;
+            hasAttempted.current = true;
+
             const code = searchParams?.get("code");
             const state = searchParams?.get("state");
 
@@ -26,8 +30,11 @@ function CallbackContent() {
             }
 
             try {
+                // Strip Instagram's trailing hash fragment from the state if present
+                const cleanState = state.replace(/#_$/, '');
+
                 // Decode state (handling Base64 and Base64Url)
-                let base64 = state.replace(/-/g, '+').replace(/_/g, '/');
+                let base64 = cleanState.replace(/-/g, '+').replace(/_/g, '/');
                 while (base64.length % 4) {
                     base64 += '=';
                 }
@@ -51,7 +58,7 @@ function CallbackContent() {
                 setProjectId(pId);
 
                 // Call our backend to connect the integration
-                await integrationsApi.connect(code, state);
+                await integrationsApi.connect(code, cleanState);
 
                 setStatus("success");
 
