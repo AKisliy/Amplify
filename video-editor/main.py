@@ -15,7 +15,6 @@ from queues.consumers.normalize_video_consumer import normalizeConsumer
 from pika.adapters.blocking_connection import BlockingChannel
 from dotenv import load_dotenv
 
-
 def setup_request_consumers(channel: BlockingChannel):
     preprocessConsumer.setup_queue(channel)
     extractLinkConsumer.setup_queue(channel)
