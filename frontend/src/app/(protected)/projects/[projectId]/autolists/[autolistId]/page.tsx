@@ -49,6 +49,7 @@ export default function AutolistDetailsPage() {
   const [isSaving, setIsSaving] = useState(false);
   const [hasChanges, setHasChanges] = useState(false);
   const [hasInitialized, setHasInitialized] = useState(false);
+  const [initialEntriesJson, setInitialEntriesJson] = useState("");
 
   const [selectedAccountId, setSelectedAccountId] = useState<string>("");
 
@@ -68,6 +69,7 @@ export default function AutolistDetailsPage() {
         // Default to first available integration if none selected
         setSelectedAccountId(availableIntegrations[0].id);
       }
+      setInitialEntriesJson(JSON.stringify(autolist.entries || []));
       setHasChanges(false);
       setHasInitialized(true);
     }
@@ -80,11 +82,14 @@ export default function AutolistDetailsPage() {
       const shareToFeedChanged = shareToFeed !== (autolist.instagramSettings?.shareToFeed ?? false);
       const currentAccountId = autolist.accounts?.[0]?.id ?? "";
       const accountChanged = selectedAccountId !== currentAccountId;
-      const entriesChanged = autolistId === "new" ? (autolist.entries?.length || 0) > 0 : false;
+      const currentEntriesJson = JSON.stringify(autolist.entries || []);
+      const entriesCreated = autolistId === "new" && (autolist.entries?.length || 0) > 0;
+      const entriesModified = autolistId !== "new" && currentEntriesJson !== initialEntriesJson;
+      const entriesChanged = entriesCreated || entriesModified;
       
       setHasChanges(nameChanged || shareToFeedChanged || accountChanged || entriesChanged);
     }
-  }, [name, shareToFeed, selectedAccountId, autolist, autolistId]);
+  }, [name, shareToFeed, selectedAccountId, autolist, autolistId, initialEntriesJson]);
 
   const handleBack = () => {
     router.push(`/projects/${projectId}/autolists`);
@@ -118,6 +123,7 @@ export default function AutolistDetailsPage() {
           accounts: accountsToSave,
         });
         setHasChanges(false);
+        handleBack();
       }
     } catch (error) {
       console.error("Save failed:", error);

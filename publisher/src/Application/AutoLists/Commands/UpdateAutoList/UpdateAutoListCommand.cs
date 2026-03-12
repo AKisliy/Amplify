@@ -17,7 +17,8 @@ public class UpdateAutoListCommandHandler(IApplicationDbContext context, IMapper
     public async Task Handle(UpdateAutoListCommand request, CancellationToken cancellationToken)
     {
         var entity = await context.AutoLists
-            .SingleAsync(x => x.Id == request.Id, cancellationToken);
+            .Include(x => x.Accounts)
+            .FirstOrDefaultAsync(x => x.Id == request.Id, cancellationToken);
 
         Guard.Against.NotFound(request.Id, entity);
 
@@ -38,16 +39,16 @@ public class UpdateAutoListCommandHandler(IApplicationDbContext context, IMapper
 
     private PublicationSettings GetUpdatedPublicationSettings(AutoList autoList, InstagramSettingsDto? instagramSettingsDto)
     {
-        var previousSettings = autoList.PublicationSettings;
+        var settings = autoList.PublicationSettings ?? new PublicationSettings();
         if (instagramSettingsDto is null)
         {
-            previousSettings.Instagram = null;
+            settings.Instagram = null;
         }
         else
         {
-            previousSettings.Instagram = mapper.Map<InstagramSettings>(instagramSettingsDto);
+            settings.Instagram = mapper.Map<InstagramSettings>(instagramSettingsDto);
         }
 
-        return previousSettings;
+        return settings;
     }
 }
