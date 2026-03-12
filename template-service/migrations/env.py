@@ -1,5 +1,6 @@
 from logging.config import fileConfig
 
+import sqlalchemy as sa
 from sqlalchemy import engine_from_config
 from sqlalchemy import pool
 
@@ -51,6 +52,10 @@ def run_migrations_online():
     )
 
     with connectable.connect() as connection:
+        if target_metadata.schema:
+            connection.execute(sa.text(f'CREATE SCHEMA IF NOT EXISTS "{target_metadata.schema}"'))
+            connection.commit()
+
         context.configure(
             connection=connection,
             target_metadata=target_metadata,

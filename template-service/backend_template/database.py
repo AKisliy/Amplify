@@ -31,8 +31,10 @@ class FixedAsyncConnection(AsyncPGConnection):
         return f"__asyncpg_{prefix}_{uuid.uuid4()}__"
 
 # 3. Modern Declarative Base
+SCHEMA = "template_service"
+
 class Base(DeclarativeBase):
-    metadata = MetaData(naming_convention=POSTGRES_NAMING_CONVENTION)
+    metadata = MetaData(schema=SCHEMA, naming_convention=POSTGRES_NAMING_CONVENTION)
 
 # 4. The Engine
 engine = create_async_engine(
