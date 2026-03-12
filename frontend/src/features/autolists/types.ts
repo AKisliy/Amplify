@@ -11,9 +11,22 @@ export interface InstagramSettings {
   shareToFeed: boolean;
 }
 
+// SocialProvider mirrors the backend enum: Instagram=1, TikTok=2, Youtube=4
+export type SocialProviderValue = 1 | 2 | 4;
+
+export const SOCIAL_PROVIDER_NAMES: Record<SocialProviderValue, string> = {
+  1: "Instagram",
+  2: "TikTok",
+  4: "Youtube",
+};
+
+export function getSocialProviderName(value: number): string {
+  return SOCIAL_PROVIDER_NAMES[value as SocialProviderValue] ?? "Unknown";
+}
+
 export interface SocialMediaAccount {
   id: string;
-  socialProvider?: string | number;
+  socialProvider: number; // numeric enum from backend
   username?: string;
   avatarUrl?: string;
 }

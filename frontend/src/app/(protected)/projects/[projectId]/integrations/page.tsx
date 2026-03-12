@@ -4,6 +4,7 @@ import { useParams } from "next/navigation";
 import { useState } from "react";
 import { motion } from "framer-motion";
 import { useIntegrations } from "@/features/integrations/hooks/useIntegrations";
+import { getIntegrationProviderName } from "@/features/integrations/types";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { ProjectHeader } from "@/components/ProjectHeader";
@@ -83,7 +84,7 @@ export default function IntegrationsPage() {
 
                     <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
                         {providers.map((provider) => {
-                            const providerIntegrations = integrations.filter(i => i.socialProvider === provider.name);
+                            const providerIntegrations = integrations.filter(i => getIntegrationProviderName(i) === provider.name);
                             const isRedirecting = redirectingProvider === provider.name;
 
                             return (

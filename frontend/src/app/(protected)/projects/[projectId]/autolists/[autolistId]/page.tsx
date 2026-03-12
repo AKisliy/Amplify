@@ -24,6 +24,7 @@ import { useAutolist } from "@/features/autolists/hooks/useAutolist";
 import { useIntegrations } from "@/features/integrations/hooks/useIntegrations";
 import { TimeSlotRow } from "@/features/autolists/components/TimeSlotRow";
 import type { AutoListEntry } from "@/features/autolists/types";
+import { getSocialProviderName } from "@/features/autolists/types";
 
 export default function AutolistDetailsPage() {
   const params = useParams();
@@ -78,8 +79,8 @@ export default function AutolistDetailsPage() {
     if (autolist) {
       const nameChanged = name !== autolist.name;
       const shareToFeedChanged = shareToFeed !== (autolist.instagramSettings?.shareToFeed ?? false);
-      const accountChanged = selectedAccountId !== (autolist.accounts?.[0]?.id ?? "");
-      // For NEW autolists, any entry or name counts as a change
+      const currentAccountId = autolist.accounts?.[0]?.id ?? "";
+      const accountChanged = selectedAccountId !== currentAccountId;
       const entriesChanged = autolistId === "new" ? (autolist.entries?.length || 0) > 0 : false;
       
       setHasChanges(nameChanged || shareToFeedChanged || accountChanged || entriesChanged);
@@ -166,7 +167,9 @@ export default function AutolistDetailsPage() {
   }
 
   const selectedIntegration = integrations.find(i => i.id === selectedAccountId);
-  const provider = selectedIntegration?.socialProvider || (autolist.accounts?.[0]?.socialProvider) || "Instagram";
+  // Provider can be numeric (from integrations) or string (legacy)
+  const providerValue = selectedIntegration?.socialProvider ?? autolist.accounts?.[0]?.socialProvider;
+  const provider = typeof providerValue === "number" ? getSocialProviderName(providerValue) : (providerValue as string) || "Instagram";
 
   const getProviderIcon = () => {
     switch (provider) {
@@ -276,7 +279,7 @@ export default function AutolistDetailsPage() {
                         {availableIntegrations.map((acc) => (
                           <SelectItem key={acc.id} value={acc.id}>
                             <div className="flex items-center gap-2">
-                              {acc.socialProvider === "TikTok" ? <Music className="w-3 h-3" /> : acc.socialProvider === "Youtube" ? <Youtube className="w-3 h-3" /> : <Instagram className="w-3 h-3" />}
+                              {acc.socialProvider === 2 ? <Music className="w-3 h-3" /> : acc.socialProvider === 4 ? <Youtube className="w-3 h-3" /> : <Instagram className="w-3 h-3" />}
                               @{acc.username}
                             </div>
                           </SelectItem>
