@@ -14,3 +14,5 @@ cors:
     - "https://{{ .Values.global.appDomain }}"
     - "http://localhost:3000"
     - "https://localhost:3000"
+  allowedOriginsRegex:
+    - "https://.*--amplify-testing\\.netlify\\.app"
