@@ -47,6 +47,19 @@ spec:
               value: "{{ .Values.config.gcpLocation }}"
             - name: STORAGE_URI
               value: "{{ .Values.config.gcpStorageUri }}"
+            - name: SERVICE_ACCOUNT_KEY_FILE
+              value: "/secrets/sa-key.json"
           envFrom:
             - secretRef:
                 name: {{ .Values.secret.name }}
+          volumeMounts:
+            - name: sa-key
+              mountPath: /secrets
+              readOnly: true
+      volumes:
+        - name: sa-key
+          secret:
+            secretName: {{ .Values.secret.name }}
+            items:
+              - key: sa-key.json
+                path: sa-key.json

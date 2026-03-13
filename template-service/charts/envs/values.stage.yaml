@@ -6,6 +6,6 @@ secrets:
 
 config:
   mediaIngestUrl: "http://mediaingest.test-env.svc.cluster.local/media/api"
-  gcpProjectId: "amplify-vkr"
-  gcpLocation: "europe-west3-a"
+  gcpProjectId: "proven-aviary-484307-c9"
+  gcpLocation: "global"
   gcpStorageUri: "gs://amplify-media-test"
