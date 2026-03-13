@@ -37,7 +37,7 @@ class Base(DeclarativeBase):
 
 # 4. The Engine
 engine = create_async_engine(
-    url=str(settings.postgres_dsn),
+    url=settings.postgres_dsn,
     echo=settings.postgres_echo, # Log SQL queries in Dev
 
     # Connection Arguments
