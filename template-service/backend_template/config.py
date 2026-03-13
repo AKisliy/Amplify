@@ -1,6 +1,6 @@
 from functools import cached_property
 
-from pydantic import PostgresDsn, field_validator, Field
+from pydantic import field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -12,8 +12,7 @@ class Config(BaseSettings):
     environment: str = "development"
 
     # Database Settings
-    # validation_alias reads "DATABASE_URL" from your .env file
-    postgres_dsn: PostgresDsn = None
+    postgres_dsn: str
     postgres_echo: bool = False
 
     # Sentry (Optional Error Tracking)
@@ -32,17 +31,14 @@ class Config(BaseSettings):
         return "DEBUG" if self.debug else "INFO"
 
     @field_validator("postgres_dsn")
-    def postgres_dsn_asyncpg_scheme(cls, value: PostgresDsn) -> PostgresDsn:
-        query = value.query
-        if query is None:
-            query = "prepared_statement_cache_size=0"
-        return PostgresDsn.build(
-            scheme="postgresql+asyncpg",
-            hosts=value.hosts(),
-            path=value.path.replace("/", ""),
-            query=query,
-            fragment=value.fragment,
-        )
+    @classmethod
+    def postgres_dsn_asyncpg_scheme(cls, value: str) -> str:
+        if "+asyncpg" not in value:
+            value = value.replace("postgresql://", "postgresql+asyncpg://", 1)
+        if "prepared_statement_cache_size" not in value:
+            separator = "&" if "?" in value else "?"
+            value = f"{value}{separator}prepared_statement_cache_size=0"
+        return value
 
 
 # Instantiate the config to be imported elsewhere

@@ -1,0 +1,65 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "template-service.fullname" . }}
+  labels:
+    {{- include "template-service.labels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      {{- include "template-service.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "template-service.labels" . | nindent 8 }}
+        {{- with .Values.podLabels }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+    spec:
+      serviceAccountName: {{ include "template-service.serviceAccountName" . }}
+      containers:
+        - name: {{ .Chart.Name }}
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          ports:
+            - name: http
+              containerPort: {{ .Values.service.port }}
+              protocol: TCP
+          {{- with .Values.livenessProbe }}
+          livenessProbe:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          {{- with .Values.readinessProbe }}
+          readinessProbe:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          {{- with .Values.resources }}
+          resources:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          env:
+            - name: MEDIA_INGEST_URL
+              value: "{{ .Values.config.mediaIngestUrl }}"
+            - name: PROJECT_ID
+              value: "{{ .Values.config.gcpProjectId }}"
+            - name: LOCATION
+              value: "{{ .Values.config.gcpLocation }}"
+            - name: STORAGE_URI
+              value: "{{ .Values.config.gcpStorageUri }}"
+            - name: SERVICE_ACCOUNT_KEY_FILE
+              value: "/secrets/sa-key.json"
+          envFrom:
+            - secretRef:
+                name: {{ .Values.secret.name }}
+          volumeMounts:
+            - name: sa-key
+              mountPath: /secrets
+              readOnly: true
+      volumes:
+        - name: sa-key
+          secret:
+            secretName: {{ .Values.secret.name }}
+            items:
+              - key: sa-key.json
+                path: sa-key.json

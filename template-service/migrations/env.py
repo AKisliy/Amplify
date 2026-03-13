@@ -31,10 +31,10 @@ target_metadata = Base.metadata
 # ... etc.
 
 def update_configs():
-    # не охота было ради одних миграций в конфиг добавлять другой тип подключения
-    url = str(settings.postgres_dsn).replace("+asyncpg", "").replace("?prepared_statement_cache_size=0", "")
-    if not url:
-        raise RuntimeError("Invalid POSTGRES DSN in migrations")
+    url = settings.postgres_dsn \
+        .replace("+asyncpg", "") \
+        .replace("&prepared_statement_cache_size=0", "") \
+        .replace("?prepared_statement_cache_size=0", "")
     config.set_main_option("sqlalchemy.url", url)
 
 
