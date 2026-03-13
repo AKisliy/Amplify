@@ -14,7 +14,7 @@ spec:
   http:
   - match:
     - uri:
-        prefix: "/template"
+        prefix: "/template/"
     rewrite:
       uri: "/"
     corsPolicy:
