@@ -12,8 +12,7 @@ class Config(BaseSettings):
     environment: str = "development"
 
     # Database Settings
-    # validation_alias reads "DATABASE_URL" from your .env file
-    postgres_dsn: PostgresDsn = None
+    postgres_dsn: PostgresDsn
     postgres_echo: bool = False
 
     # Sentry (Optional Error Tracking)

@@ -16,6 +16,5 @@ spec:
           envFrom:
             - secretRef:
                 name: {{ .Values.secret.name }}
-                optional: true
       restartPolicy: Never
   backoffLimit: 3

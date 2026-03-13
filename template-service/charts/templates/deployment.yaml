@@ -38,6 +38,15 @@ spec:
           resources:
             {{- toYaml . | nindent 12 }}
           {{- end }}
+          env:
+            - name: MEDIA_INGEST_URL
+              value: "{{ .Values.config.mediaIngestUrl }}"
+            - name: PROJECT_ID
+              value: "{{ .Values.config.gcpProjectId }}"
+            - name: LOCATION
+              value: "{{ .Values.config.gcpLocation }}"
+            - name: STORAGE_URI
+              value: "{{ .Values.config.gcpStorageUri }}"
           envFrom:
             - secretRef:
                 name: {{ .Values.secret.name }}

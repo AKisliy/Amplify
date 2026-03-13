@@ -51,3 +51,10 @@ gateway:
 
 # определяется в файлах окружений
 secrets: {}
+
+# Non-secret config, overridden per environment
+config:
+  mediaIngestUrl: ""
+  gcpProjectId: ""
+  gcpLocation: ""
+  gcpStorageUri: ""

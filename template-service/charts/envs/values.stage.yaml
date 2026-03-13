@@ -1,3 +1,11 @@
 secrets:
   postgresDsn:
     key: template-service-db-conn-test
+  serviceAccountKeyFile:
+    key: template-service-sa-key-test
+
+config:
+  mediaIngestUrl: "http://mediaingest.test-env.svc.cluster.local/media/api"
+  gcpProjectId: "amplify-vkr"
+  gcpLocation: "europe-west3-a"
+  gcpStorageUri: "gs://amplify-media-test"
