@@ -15,6 +15,9 @@ class Config(BaseSettings):
     postgres_dsn: str
     postgres_echo: bool = False
 
+    # Routing
+    root_path: str = ""
+
     # Sentry (Optional Error Tracking)
     sentry_dsn: str | None = None
 
