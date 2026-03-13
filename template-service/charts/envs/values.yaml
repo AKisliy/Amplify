@@ -1,0 +1,53 @@
+replicaCount: 1
+
+image:
+  repository: ghcr.io/akisliy/amplify/template-service
+  pullPolicy: IfNotPresent
+  tag: ""
+
+nameOverride: ""
+fullnameOverride: ""
+
+serviceAccount:
+  create: true
+  name: "template-service-sa"
+  automount: false
+
+podLabels: {}
+
+service:
+  type: ClusterIP
+  port: 8000
+
+resources: {}
+
+livenessProbe:
+  httpGet:
+    path: /health
+    port: http
+readinessProbe:
+  httpGet:
+    path: /health
+    port: http
+
+secret:
+  name: template-service-k8s-secret
+
+externalSecret:
+  name: template-service-secrets
+  refreshInterval: 1h
+
+virtualService:
+  name: template-service-vs
+  http:
+    timeout: 30s
+    retries:
+      attempts: 3
+      perTryTimeout: 10s
+      retryOn: gateway-error,connect-failure,refused-stream,5xx
+
+gateway:
+  name: amplify-gateway
+
+# определяется в файлах окружений
+secrets: {}

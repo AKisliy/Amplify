@@ -1,0 +1,3 @@
+secrets:
+  postgresDsn:
+    key: template-service-db-conn-test

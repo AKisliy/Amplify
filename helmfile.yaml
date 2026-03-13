@@ -108,3 +108,16 @@ releases:
     needs:
       - gateway
 
+  - name: template-service
+    namespace: "{{ .Values.namespace }}"
+    chart: ./template-service/charts
+    labels:
+      tier: backend
+      app: template-service
+    values:
+      - ./template-service/charts/envs/values.yaml
+      - ./template-service/charts/envs/values.yaml.gotmpl
+      - ./template-service/charts/envs/values.{{ .Environment.Name }}.yaml
+    needs:
+      - gateway
+

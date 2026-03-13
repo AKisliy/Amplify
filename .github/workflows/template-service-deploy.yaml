@@ -1,0 +1,20 @@
+name: Template Service CI/CD
+
+on:
+    push:
+        branches:
+            - main
+        paths:
+            - "template-service/**"
+            - ".github/workflows/template-service-deploy.yaml"
+    workflow_dispatch:
+
+jobs:
+    deploy:
+        uses: ./.github/workflows/deploy-template.yaml
+        with:
+            service_folder: "template-service"
+            app_label: "template-service"
+            image_tag_var_name: "TEMPLATE_SERVICE_IMAGE_TAG"
+            env_name: "stage"
+        secrets: inherit
