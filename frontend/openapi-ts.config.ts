@@ -4,7 +4,7 @@ const plugins = ["@hey-api/typescript", "@hey-api/sdk", "@hey-api/client-axios"]
 
 export default defineConfig([
   {
-    input: "https://staging.alexeykiselev.tech/template/openapi.json",
+    input: "../api-specs/template-service.json",
     output: {
       path: "src/lib/api/generated/template-service",
       postProcess: ["prettier"],
