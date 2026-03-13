@@ -37,4 +37,3 @@ RUN chmod +x scripts/entrypoint.sh
 
 # Start
 ENTRYPOINT ["./scripts/entrypoint.sh"]
-CMD ["uvicorn", "backend_template.web.app:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]

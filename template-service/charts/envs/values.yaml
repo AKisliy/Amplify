@@ -54,6 +54,7 @@ secrets: {}
 
 # Non-secret config, overridden per environment
 config:
+  rootPath: "/template"
   mediaIngestUrl: ""
   gcpProjectId: ""
   gcpLocation: ""

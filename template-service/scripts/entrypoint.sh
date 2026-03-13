@@ -9,5 +9,8 @@ echo "Running Database Migrations..."
 alembic upgrade head
 
 # 2. Start the Application
-# This passes the CMD from Dockerfile (uvicorn ...) to the shell
-exec "$@"
+exec uvicorn backend_template.web.app:app \
+    --host 0.0.0.0 \
+    --port 8000 \
+    --root-path "${ROOT_PATH:-}" \
+    --forwarded-allow-ips="*"

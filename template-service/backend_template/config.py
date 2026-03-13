@@ -38,6 +38,8 @@ class Config(BaseSettings):
         if "prepared_statement_cache_size" not in value:
             separator = "&" if "?" in value else "?"
             value = f"{value}{separator}prepared_statement_cache_size=0"
+        if "sslmode" in value:
+            value = value.replace("sslmode", "ssl")
         return value
 
 

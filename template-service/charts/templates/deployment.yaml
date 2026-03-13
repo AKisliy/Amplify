@@ -49,6 +49,8 @@ spec:
               value: "{{ .Values.config.gcpStorageUri }}"
             - name: SERVICE_ACCOUNT_KEY_FILE
               value: "/secrets/sa-key.json"
+            - name: ROOT_PATH
+              value: "{{ .Values.config.rootPath }}"
           envFrom:
             - secretRef:
                 name: {{ .Values.secret.name }}
