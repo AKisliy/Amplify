@@ -11,49 +11,9 @@ import { Separator } from "@/components/ui/separator";
 import { ProjectHeader } from "@/components/ProjectHeader";
 import { useProject } from "@/features/ambassadors/hooks/useProjects";
 import { useProjects } from "@/features/ambassadors/hooks/useProjects";
-import type { Template } from "@/features/ambassadors/types";
 import { useAmbassador } from "@/features/ambassadors/hooks/useAmbassador";
+import { useProjectTemplates } from "@/features/templates/hooks/useProjectTemplates";
 import { useEffect, useState } from "react";
-
-// ---------------------------------------------------------------------------
-// Mock data – replace with real API calls once template-service endpoint is ready
-// ---------------------------------------------------------------------------
-const MOCK_TEMPLATES: Template[] = [
-  {
-    id: "tpl-001",
-    name: "Product Showcase",
-    description: "Highlight a product with ambassador voiceover and dynamic transitions.",
-    projectId: "",
-    thumbnailUrl: undefined,
-    createdAt: "2026-01-15",
-  },
-  {
-    id: "tpl-002",
-    name: "Day-in-the-life",
-    description: "A casual vlog-style template following the ambassador through their day.",
-    projectId: "",
-    thumbnailUrl: undefined,
-    createdAt: "2026-02-03",
-  },
-  {
-    id: "tpl-003",
-    name: "Unboxing Experience",
-    description: "Energetic unboxing video with animated text overlays.",
-    projectId: "",
-    thumbnailUrl: undefined,
-    createdAt: "2026-02-20",
-  },
-  {
-    id: "tpl-004",
-    name: "Tutorial & How-To",
-    description: "Step-by-step instructional format with clear chapter splits.",
-    projectId: "",
-    thumbnailUrl: undefined,
-    createdAt: "2026-03-01",
-  },
-];
-
-// ---------------------------------------------------------------------------
 
 function getInitials(name: string) {
   return name
@@ -71,6 +31,7 @@ export default function ProjectOverviewPage() {
 
   const { project, isLoading: projectLoading } = useProject(projectId);
   const { projects, isLoading: projectsLoading } = useProjects();
+  const { templates, isLoading: templatesLoading } = useProjectTemplates(projectId);
 
   const [ambassadorId, setAmbassadorId] = useState<string | undefined>(undefined);
   
@@ -162,7 +123,19 @@ export default function ProjectOverviewPage() {
             </Button>
           </div>
 
-          {MOCK_TEMPLATES.length === 0 ? (
+          {templatesLoading ? (
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+              {Array.from({ length: 4 }).map((_, i) => (
+                <Card key={i} className="border-border/50 h-full animate-pulse">
+                  <div className="w-full aspect-video bg-muted/60 rounded-t-lg" />
+                  <CardHeader className="pt-3 pb-2 px-4">
+                    <div className="h-4 bg-muted rounded w-3/4" />
+                    <div className="h-3 bg-muted rounded w-full mt-2" />
+                  </CardHeader>
+                </Card>
+              ))}
+            </div>
+          ) : templates.length === 0 ? (
             <Card className="border-dashed">
               <CardContent className="flex flex-col items-center justify-center py-16">
                 <LayoutTemplate className="w-14 h-14 text-muted-foreground mb-4" />
@@ -174,7 +147,7 @@ export default function ProjectOverviewPage() {
             </Card>
           ) : (
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-              {MOCK_TEMPLATES.map((template, index) => (
+              {templates.map((template, index) => (
                 <motion.div
                   key={template.id}
                   initial={{ opacity: 0, y: 16 }}

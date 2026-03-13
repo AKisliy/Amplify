@@ -6,9 +6,11 @@
     "dev": "next dev --experimental-https",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "generate:api:template": "openapi-ts"
   },
   "dependencies": {
+    "@hey-api/client-axios": "^0.9.1",
     "@hookform/resolvers": "^5.2.2",
     "@radix-ui/react-avatar": "^1.1.11",
     "@radix-ui/react-dialog": "^1.1.15",
@@ -43,6 +45,7 @@
     "zod": "^4.3.5"
   },
   "devDependencies": {
+    "@hey-api/openapi-ts": "^0.94.1",
     "@tailwindcss/postcss": "^4",
     "@types/node": "^20",
     "@types/react": "^19",
