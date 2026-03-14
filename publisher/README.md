@@ -37,6 +37,3 @@ To connect a social media account (e.g., Instagram, TikTok), the frontend applic
 4.  **Connect the Account**: On the callback page, the frontend should extract the `code` and `state` from the query parameters and make a `POST` request to the `/api/connections` endpoint, sending these values in the request body.
 
 The backend will then process the information, finalize the connection with the social media platform, and redirect the user to an appropriate page within the application to confirm that the account has been successfully linked.
-
-
-

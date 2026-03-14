@@ -20,6 +20,9 @@ spec:
       {{- range .Values.cors.allowedOrigins }}
       - exact: {{ . | quote }}
       {{- end }}
+      {{- range .Values.cors.allowedOriginsRegex }}
+      - regex: {{ . | quote }}
+      {{- end }}
       allowMethods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"]
       allowHeaders: ["*"]
       allowCredentials: true

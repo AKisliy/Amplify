@@ -14,6 +14,7 @@ jobs:
             media-ingest: ${{ steps.filter.outputs.media-ingest }}
             ws-gateway: ${{ steps.filter.outputs.ws-gateway }}
             video-editor: ${{ steps.filter.outputs.video-editor }}
+            template-service: ${{ steps.filter.outputs.template-service }}
         steps:
             - uses: actions/checkout@v4
             - uses: dorny/paths-filter@v3
@@ -31,6 +32,8 @@ jobs:
                         - 'websocket-gateway/**'
                       video-editor:
                         - 'video-editor/**'
+                      template-service:
+                        - 'template-service/**'
 
     deploy-userservice:
         needs: changes
@@ -87,5 +90,16 @@ jobs:
             service_folder: "video-editor"
             app_label: "video-editor"
             image_tag_var_name: "VIDEO_EDITOR_IMAGE_TAG"
+            env_name: "stage"
+        secrets: inherit
+
+    deploy-template-service:
+        needs: changes
+        if: ${{ needs.changes.outputs.template-service == 'true' }}
+        uses: ./.github/workflows/deploy-template.yaml
+        with:
+            service_folder: "template-service"
+            app_label: "template-service"
+            image_tag_var_name: "TEMPLATE_SERVICE_IMAGE_TAG"
             env_name: "stage"
         secrets: inherit

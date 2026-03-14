@@ -1,5 +1,6 @@
 from logging.config import fileConfig
 
+import sqlalchemy as sa
 from sqlalchemy import engine_from_config
 from sqlalchemy import pool
 
@@ -30,10 +31,10 @@ target_metadata = Base.metadata
 # ... etc.
 
 def update_configs():
-    # не охота было ради одних миграций в конфиг добавлять другой тип подключения
-    url = str(settings.postgres_dsn).replace("+asyncpg", "").replace("?prepared_statement_cache_size=0", "")
-    if not url:
-        raise RuntimeError("Invalid POSTGRES DSN in migrations")
+    url = settings.postgres_dsn \
+        .replace("+asyncpg", "") \
+        .replace("&prepared_statement_cache_size=0", "") \
+        .replace("?prepared_statement_cache_size=0", "")
     config.set_main_option("sqlalchemy.url", url)
 
 
@@ -51,6 +52,10 @@ def run_migrations_online():
     )
 
     with connectable.connect() as connection:
+        if target_metadata.schema:
+            connection.execute(sa.text(f'CREATE SCHEMA IF NOT EXISTS "{target_metadata.schema}"'))
+            connection.commit()
+
         context.configure(
             connection=connection,
             target_metadata=target_metadata,

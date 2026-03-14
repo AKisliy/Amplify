@@ -10,7 +10,7 @@ class GeminiConfig(ConfigBase):
     storage_uri: str
 
 class MediaIngestConfig(ConfigBase):
-    media_ingest_url: str = "https://staging.alexeykiselev.tech/media/api"
+    media_ingest_url: str = "http://localhost:5070/media/api"
 
 gemini_config = GeminiConfig()
 media_ingest_config = MediaIngestConfig()

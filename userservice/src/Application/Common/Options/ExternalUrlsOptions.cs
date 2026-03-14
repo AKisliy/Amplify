@@ -6,3 +6,14 @@ public class ExternalUrlsOptions
 
     public required string MediaServiceApi { get; set; }
 }
+
+internal sealed class ExternalUrlsOptionsValidator : AbstractValidator<ExternalUrlsOptions>
+{
+    public ExternalUrlsOptionsValidator()
+    {
+        RuleFor(x => x.MediaServiceApi)
+            .NotEmpty()
+            .Must(uri => Uri.IsWellFormedUriString(uri, UriKind.Absolute))
+            .WithMessage("MediaServiceApi is required.");
+    }
+}

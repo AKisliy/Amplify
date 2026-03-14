@@ -1,0 +1,18 @@
+image:
+  tag: {{ env "TEMPLATE_SERVICE_IMAGE_TAG" | default "latest" }}
+
+gateway:
+  name: {{ .Values.global.gateway.name }}
+
+virtualService:
+  hosts:
+    - {{ .Values.global.appDomain }}
+    - {{ .Values.global.clusterDomain }}
+
+cors:
+  allowedOrigins:
+    - "https://{{ .Values.global.appDomain }}"
+    - "http://localhost:3000"
+    - "https://localhost:3000"
+  allowedOriginsRegex:
+    - "https://.*--amplify-testing\\.netlify\\.app"

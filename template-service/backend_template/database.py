@@ -6,13 +6,12 @@ from sqlalchemy.ext.asyncio import (
     AsyncSession,
     async_sessionmaker,
     create_async_engine,
-    
+
 )
 from sqlalchemy.orm import DeclarativeBase
 from asyncpg import Connection as AsyncPGConnection
 
-# We will create this config file next
-from backend_template.config import settings 
+from backend_template.config import settings
 
 # 1. Naming Convention (Crucial for Alembic Migrations)
 # This ensures that all constraints (PK, FK, Index) have a predictable name.
@@ -31,22 +30,24 @@ class FixedAsyncConnection(AsyncPGConnection):
         return f"__asyncpg_{prefix}_{uuid.uuid4()}__"
 
 # 3. Modern Declarative Base
+SCHEMA = "template_service"
+
 class Base(DeclarativeBase):
-    metadata = MetaData(naming_convention=POSTGRES_NAMING_CONVENTION)
+    metadata = MetaData(schema=SCHEMA, naming_convention=POSTGRES_NAMING_CONVENTION)
 
 # 4. The Engine
 engine = create_async_engine(
-    url=str(settings.postgres_dsn),
+    url=settings.postgres_dsn,
     echo=settings.postgres_echo, # Log SQL queries in Dev
-    
+
     # Connection Arguments
     connect_args={
         "connection_class": FixedAsyncConnection, # Apply the fix
     },
-    
+
     # Pool Settings (Optimized for Docker/Production)
     # pool_pre_ping: Checks if connection is alive before using it (prevents "server closed connection" errors)
-    pool_pre_ping=True, 
+    pool_pre_ping=True,
     pool_size=10,
     max_overflow=20,
 )
@@ -63,4 +64,3 @@ async_session_maker = async_sessionmaker(
 async def get_db() -> AsyncGenerator[AsyncSession, None]:
     async with async_session_maker() as session:
         yield session
-        

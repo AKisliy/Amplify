@@ -1,0 +1,11 @@
+secrets:
+  postgresDsn:
+    key: template-service-db-conn-test
+  serviceAccountKeyFile:
+    key: template-service-sa-key-test
+
+config:
+  mediaIngestUrl: "http://mediaingest.test-env.svc.cluster.local/media/api"
+  gcpProjectId: "proven-aviary-484307-c9"
+  gcpLocation: "global"
+  gcpStorageUri: "gs://amplify-media-test"
