@@ -11,6 +11,7 @@ export interface UploadedMedia {
   size: number;
   progress?: number;  // 0–100 while uploading
   error?: string;
+  contentType?: string; // MIME type e.g. "video/mp4", "image/jpeg"
 }
 
 interface UseMediaUploadOptions {

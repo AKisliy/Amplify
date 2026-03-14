@@ -58,18 +58,27 @@ export const ambassadorApi = {
    * Get ambassador images
    */
   async getAmbassadorImages(id: string): Promise<AmbassadorImage[]> {
-    const response = await api.get<AmbassadorImage[]>(`/ambassadors/${id}/images`);
-    return response.data;
+    const response = await api.get<any[]>(`/ambassadors/${id}/images`);
+    return (response.data ?? []).map((item: any) => ({
+      id: item.id ?? item.Id ?? item.imageId ?? item.ImageId ?? "",
+      imageUrl: item.imageUrl ?? item.ImageUrl ?? item.url ?? item.Url ?? "",
+      imageType: item.imageType ?? item.ImageType ?? 0,
+    }));
   },
 
   /**
-   * Link image to ambassador
+   * Link media to ambassador.
+   * imageType: 0 = image, 1 = video
    */
-  async linkAmbassadorImage(ambassadorId: string, mediaId: string): Promise<void> {
+  async linkAmbassadorImage(
+    ambassadorId: string,
+    mediaId: string,
+    imageType: 0 | 1 = 0
+  ): Promise<void> {
     await api.post(`/ambassadors/${ambassadorId}/images`, {
       ambassadorId,
       mediaId,
-      imageType: 0
+      imageType,
     });
   },
 

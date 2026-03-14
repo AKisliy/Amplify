@@ -58,7 +58,13 @@ export const mediaApi = {
         }
       },
     });
-    return response.data;
+    
+    const data = response.data as any;
+    return {
+      mediaId: data.mediaId || data.MediaId || "",
+      mediaPath: data.mediaPath || data.MediaPath || "",
+      contentType: data.contentType || data.ContentType || "",
+    };
   },
 
   /**
@@ -79,7 +85,13 @@ export const mediaApi = {
         }
       },
     });
-    return response.data;
+
+    const data = response.data as any;
+    return {
+      mediaId: data.mediaId || data.MediaId || "",
+      mediaPath: data.mediaPath || data.MediaPath || "",
+      contentType: data.contentType || data.ContentType || "",
+    };
   },
 
   /**

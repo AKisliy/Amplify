@@ -19,6 +19,7 @@ const serviceMap: Record<string, string> = {
     connections: "/publisher/api",
     integrations: "/publisher/api",
     images: "/media/api",
+    videos: "/media/api",
     media: "/media/api",
 };
 

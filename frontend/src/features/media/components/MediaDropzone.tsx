@@ -80,24 +80,17 @@ export function MediaDropzone({
         onDragLeave={handleDragLeave}
         onDrop={handleDrop}
         onClick={() => !isUploading && inputRef.current?.click()}
-        animate={{
-          borderColor: isDragging
-            ? "hsl(var(--primary))"
-            : "hsl(var(--border))",
-          backgroundColor: isDragging
-            ? "hsl(var(--primary) / 0.06)"
-            : "hsl(var(--muted) / 0.2)",
-          scale: isDragging ? 1.01 : 1,
-        }}
-        transition={{ duration: 0.15 }}
+        whileHover={!isUploading ? { scale: 1.005, backgroundColor: "rgba(0,0,0,0.02)" } : {}}
         className={cn(
-          "relative flex flex-col items-center justify-center gap-4 rounded-2xl border-2 border-dashed px-8 py-12 text-center cursor-pointer transition-all select-none",
+          "relative flex flex-col items-center justify-center gap-4 rounded-2xl border-2 border-dashed px-8 py-12 text-center cursor-pointer transition-colors select-none",
+          isDragging ? "border-primary bg-primary/5" : "border-border bg-muted/20",
           isUploading && "pointer-events-none opacity-60"
         )}
       >
         <input
           ref={inputRef}
           type="file"
+          title="Media upload"
           accept={accept}
           multiple
           className="hidden"
