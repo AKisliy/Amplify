@@ -45,7 +45,7 @@ appConfig:
     BasePath: "/userservice"
 
   Frontend:
-    Url: "http://dev.amplify-vkr.example.com"
+    Url: "https://app.alexeykiselev.tech"
     EmailConfirmedPath: "/api/index.html?url=/api/specification.json"
     EmailConfirmationPath: "/confirm-email"
     PasswordResetPath: "/reset-password"
