@@ -121,7 +121,7 @@ export function ProjectHeader({ projects, isLoading }: ProjectHeaderProps) {
                   >
                     <div className="flex items-center gap-2">
                       <LinkIcon className="w-4 h-4" />
-                      Integrations
+                      Connections
                     </div>
                   </button>
                 </nav>

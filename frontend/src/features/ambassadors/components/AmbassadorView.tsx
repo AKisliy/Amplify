@@ -164,6 +164,7 @@ export function AmbassadorView({
                     <AvatarImage
                       src={avatarPreview ?? ambassador!.profileImageUrl ?? undefined}
                       className="object-cover"
+                      alt={ambassador!.name}
                     />
                     <AvatarFallback className="text-2xl font-semibold bg-primary/10 text-primary">
                       {getInitials(ambassador!.name)}

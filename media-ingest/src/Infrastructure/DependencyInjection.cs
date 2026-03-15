@@ -62,7 +62,7 @@ public static class DependencyInjection
         if (builder.Environment.IsDevelopment())
         {
             builder.Services.AddCors(options => options.AddPolicy("Dev",
-                p => p.WithOrigins("http://localhost:3000")
+                p => p.WithOrigins("https://localhost:3000")
                     .AllowAnyHeader()
                     .AllowAnyMethod()
                     .AllowCredentials()));

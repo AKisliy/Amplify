@@ -46,33 +46,39 @@ export const ambassadorApi = {
   },
 
   /**
-   * Upload media to ingest service
+   * Upload media to ingest service — delegates to mediaApi
    */
   async uploadMedia(file: File): Promise<string> {
-    const formData = new FormData();
-    formData.append("file", file);
-    const response = await api.post<{ mediaId: string }>("/images", formData, {
-      headers: { "Content-Type": "multipart/form-data" },
-    });
-    return response.data.mediaId;
+    const { mediaApi } = await import("@/features/media/api");
+    const result = await mediaApi.uploadImage(file);
+    return result.mediaId;
   },
 
   /**
    * Get ambassador images
    */
   async getAmbassadorImages(id: string): Promise<AmbassadorImage[]> {
-    const response = await api.get<AmbassadorImage[]>(`/ambassadors/${id}/images`);
-    return response.data;
+    const response = await api.get<any[]>(`/ambassadors/${id}/images`);
+    return (response.data ?? []).map((item: any) => ({
+      id: item.id ?? item.Id ?? item.imageId ?? item.ImageId ?? "",
+      imageUrl: item.imageUrl ?? item.ImageUrl ?? item.url ?? item.Url ?? "",
+      imageType: item.imageType ?? item.ImageType ?? 0,
+    }));
   },
 
   /**
-   * Link image to ambassador
+   * Link media to ambassador.
+   * imageType: 0 = image, 1 = video
    */
-  async linkAmbassadorImage(ambassadorId: string, mediaId: string): Promise<void> {
+  async linkAmbassadorImage(
+    ambassadorId: string,
+    mediaId: string,
+    imageType: 0 | 1 = 0
+  ): Promise<void> {
     await api.post(`/ambassadors/${ambassadorId}/images`, {
       ambassadorId,
       mediaId,
-      imageType: 0
+      imageType,
     });
   },
 
