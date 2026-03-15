@@ -1,0 +1,142 @@
+{
+    "Veo3FirstLastFrameNodeAmplify": {
+        "input": {
+            "required": {
+                "prompt": [
+                    "STRING",
+                    {
+                        "tooltip": "Text description of the video",
+                        "default": "",
+                        "multiline": true
+                    }
+                ],
+                "negative_prompt": [
+                    "STRING",
+                    {
+                        "tooltip": "Negative text prompt to guide what to avoid in the video",
+                        "default": "",
+                        "multiline": true
+                    }
+                ],
+                "resolution": [
+                    "COMBO",
+                    {
+                        "multiselect": false,
+                        "options": [
+                            "720p",
+                            "1080p"
+                        ]
+                    }
+                ],
+                "aspect_ratio": [
+                    "COMBO",
+                    {
+                        "tooltip": "Aspect ratio of the output video",
+                        "default": "16:9",
+                        "multiselect": false,
+                        "options": [
+                            "16:9",
+                            "9:16"
+                        ]
+                    }
+                ],
+                "duration": [
+                    "INT",
+                    {
+                        "tooltip": "Duration of the output video in seconds",
+                        "default": 8,
+                        "min": 4,
+                        "max": 8,
+                        "step": 2,
+                        "display": "slider"
+                    }
+                ],
+                "seed": [
+                    "INT",
+                    {
+                        "tooltip": "Seed for video generation",
+                        "default": 0,
+                        "min": 0,
+                        "max": 4294967295,
+                        "step": 1,
+                        "control_after_generate": true,
+                        "display": "number"
+                    }
+                ],
+                "first_frame_uuid": [
+                    "STRING",
+                    {
+                        "tooltip": "A Media Ingest API UUID representing an uploaded image",
+                        "multiline": false
+                    }
+                ],
+                "last_frame_uuid": [
+                    "STRING",
+                    {
+                        "tooltip": "A Media Ingest API UUID representing an uploaded image",
+                        "multiline": false
+                    }
+                ],
+                "model": [
+                    "COMBO",
+                    {
+                        "default": "veo-3.1-fast-generate",
+                        "multiselect": false,
+                        "options": [
+                            "veo-3.1-generate",
+                            "veo-3.1-fast-generate"
+                        ]
+                    }
+                ],
+                "generate_audio": [
+                    "BOOLEAN",
+                    {
+                        "tooltip": "Generate audio for the video.",
+                        "default": true
+                    }
+                ]
+            }
+        },
+        "input_order": {
+            "required": [
+                "prompt",
+                "negative_prompt",
+                "resolution",
+                "aspect_ratio",
+                "duration",
+                "seed",
+                "first_frame_uuid",
+                "last_frame_uuid",
+                "model",
+                "generate_audio"
+            ]
+        },
+        "is_input_list": false,
+        "output": [
+            "STRING"
+        ],
+        "output_is_list": [
+            false
+        ],
+        "output_name": [
+            "video_uuid"
+        ],
+        "output_tooltips": [
+            null
+        ],
+        "output_matchtypes": null,
+        "name": "Veo3FirstLastFrameNodeAmplify",
+        "display_name": "Google Veo 3 First-Last-Frame to Video",
+        "description": "Generate video using prompt and first and last frames.",
+        "python_module": "comfy_api_nodes.nodes_veo2_amplify",
+        "category": "api node/video/Veo",
+        "output_node": false,
+        "deprecated": false,
+        "experimental": false,
+        "dev_only": false,
+        "api_node": false,
+        "price_badge": null,
+        "search_aliases": null,
+        "essentials_category": null
+    }
+}

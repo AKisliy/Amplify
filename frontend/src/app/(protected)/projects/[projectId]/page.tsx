@@ -14,6 +14,16 @@ import { useProjects } from "@/features/ambassadors/hooks/useProjects";
 import { useAmbassador } from "@/features/ambassadors/hooks/useAmbassador";
 import { useProjectTemplates } from "@/features/templates/hooks/useProjectTemplates";
 import { useEffect, useState } from "react";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { createTemplateV1TemplatesPost } from "@/lib/api/template-service";
 
 function getInitials(name: string) {
   return name
@@ -34,6 +44,28 @@ export default function ProjectOverviewPage() {
   const { templates, isLoading: templatesLoading } = useProjectTemplates(projectId);
 
   const [ambassadorId, setAmbassadorId] = useState<string | undefined>(undefined);
+  const [newTemplateOpen, setNewTemplateOpen] = useState(false);
+  const [newTemplateName, setNewTemplateName] = useState("");
+  const [isCreating, setIsCreating] = useState(false);
+
+  const handleCreateTemplate = async () => {
+    const name = newTemplateName.trim();
+    if (!name || !projectId) return;
+    setIsCreating(true);
+    try {
+      const { data } = await createTemplateV1TemplatesPost({
+        body: { project_id: projectId, name },
+        throwOnError: true,
+      });
+      setNewTemplateOpen(false);
+      setNewTemplateName("");
+      router.push(`/projects/${projectId}/templates/${data!.id}`);
+    } catch (err) {
+      console.error("Failed to create template:", err);
+    } finally {
+      setIsCreating(false);
+    }
+  };
   
   useEffect(() => {
     if (project) {
@@ -117,7 +149,7 @@ export default function ProjectOverviewPage() {
                 Select a template to open the canvas editor
               </p>
             </div>
-            <Button size="sm" variant="outline" disabled>
+            <Button size="sm" variant="outline" onClick={() => setNewTemplateOpen(true)}>
               <Plus className="w-4 h-4 mr-2" />
               New Template
             </Button>
@@ -201,6 +233,32 @@ export default function ProjectOverviewPage() {
           )}
         </motion.div>
       </main>
+
+      {/* New Template dialog */}
+      <Dialog open={newTemplateOpen} onOpenChange={(open) => { setNewTemplateOpen(open); if (!open) setNewTemplateName(""); }}>
+        <DialogContent className="sm:max-w-sm">
+          <DialogHeader>
+            <DialogTitle>New Template</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-2 py-1">
+            <Label htmlFor="template-name">Template name</Label>
+            <Input
+              id="template-name"
+              placeholder="e.g. YouTube Short"
+              value={newTemplateName}
+              onChange={(e) => setNewTemplateName(e.target.value)}
+              onKeyDown={(e) => { if (e.key === "Enter") handleCreateTemplate(); }}
+              autoFocus
+            />
+          </div>
+          <DialogFooter>
+            <Button variant="ghost" onClick={() => setNewTemplateOpen(false)}>Cancel</Button>
+            <Button onClick={handleCreateTemplate} disabled={!newTemplateName.trim() || isCreating}>
+              {isCreating ? "Creating…" : "Create"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

@@ -26,8 +26,13 @@ const serviceMap: Record<string, string> = {
 // Request interceptor for API calls
 api.interceptors.request.use(
     (config) => {
+        // Skip baseURL override if the client already set a custom baseURL
+        // (e.g. template-service client sets its own baseURL)
+        const instanceDefault = process.env.NEXT_PUBLIC_API_BASE_URL || "/api";
+        const hasCustomBase = config.baseURL && config.baseURL !== instanceDefault;
+
         // Determine the microservice based on the first segment of the URL
-        if (config.url) {
+        if (!hasCustomBase && config.url) {
             const cleanPath = config.url.startsWith("/") ? config.url.substring(1) : config.url;
             const firstSegment = cleanPath.split("/")[0];
             const servicePrefix = serviceMap[firstSegment] || "/userservice/api"; // Default to userservice
