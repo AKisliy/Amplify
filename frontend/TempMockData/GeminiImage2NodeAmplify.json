@@ -1,0 +1,148 @@
+{
+    "GeminiImage2NodeAmplify": {
+        "input": {
+            "required": {
+                "prompt": [
+                    "STRING",
+                    {
+                        "tooltip": "Text prompt describing the image to generate or the edits to apply. Include any constraints, styles, or details the model should follow.",
+                        "default": "",
+                        "multiline": true
+                    }
+                ],
+                "model": [
+                    "COMBO",
+                    {
+                        "multiselect": false,
+                        "options": [
+                            "gemini-3-pro-image-preview"
+                        ]
+                    }
+                ],
+                "aspect_ratio": [
+                    "COMBO",
+                    {
+                        "tooltip": "If set to 'auto', matches your input image's aspect ratio; if no image is provided, a 16:9 square is usually generated.",
+                        "default": "auto",
+                        "multiselect": false,
+                        "options": [
+                            "auto",
+                            "1:1",
+                            "2:3",
+                            "3:2",
+                            "3:4",
+                            "4:3",
+                            "4:5",
+                            "5:4",
+                            "9:16",
+                            "16:9",
+                            "21:9"
+                        ]
+                    }
+                ],
+                "resolution": [
+                    "COMBO",
+                    {
+                        "tooltip": "Target output resolution. For 2K/4K the native Gemini upscaler is used.",
+                        "multiselect": false,
+                        "options": [
+                            "1K",
+                            "2K",
+                            "4K"
+                        ]
+                    }
+                ],
+                "response_modalities": [
+                    "COMBO",
+                    {
+                        "tooltip": "Choose 'IMAGE' for image-only output, or 'IMAGE+TEXT' to return both the generated image and a text response.",
+                        "advanced": true,
+                        "multiselect": false,
+                        "options": [
+                            "IMAGE+TEXT",
+                            "IMAGE"
+                        ]
+                    }
+                ]
+            },
+            "optional": {
+                "images": [
+                    "COMFY_AUTOGROW_V3",
+                    {
+                        "tooltip": "Optional image UUIDs to use as context for the model.",
+                        "template": {
+                            "input": {
+                                "required": {},
+                                "optional": {
+                                    "image_uuid": [
+                                        "STRING",
+                                        {
+                                            "tooltip": "A Media Ingest API UUID representing an uploaded image",
+                                            "forceInput": true,
+                                            "multiline": false
+                                        }
+                                    ]
+                                }
+                            },
+                            "prefix": "image_uuid",
+                            "min": 1,
+                            "max": 14
+                        }
+                    }
+                ],
+                "system_prompt": [
+                    "STRING",
+                    {
+                        "tooltip": "Foundational instructions that dictate an AI's behavior.",
+                        "advanced": true,
+                        "multiline": true
+                    }
+                ]
+            }
+        },
+        "input_order": {
+            "required": [
+                "prompt",
+                "model",
+                "aspect_ratio",
+                "resolution",
+                "response_modalities"
+            ],
+            "optional": [
+                "images",
+                "system_prompt"
+            ]
+        },
+        "is_input_list": false,
+        "output": [
+            "STRING",
+            "STRING"
+        ],
+        "output_is_list": [
+            false,
+            false
+        ],
+        "output_name": [
+            "image_uuid",
+            "text"
+        ],
+        "output_tooltips": [
+            null,
+            null
+        ],
+        "output_matchtypes": null,
+        "name": "GeminiImage2NodeAmplify",
+        "display_name": "Nano Banana Pro (Google Gemini Image)",
+        "description": "Generate or edit images synchronously via Google Vertex API.",
+        "python_module": "comfy_api_nodes.nodes_gemini_amplify",
+        "category": "api node/image/Gemini",
+        "output_node": false,
+        "deprecated": false,
+        "experimental": false,
+        "dev_only": false,
+        "api_node": false,
+        "price_badge": null,
+        "search_aliases": null,
+        "essentials_category": null
+    }
+}

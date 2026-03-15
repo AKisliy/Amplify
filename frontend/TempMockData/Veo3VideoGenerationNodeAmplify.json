@@ -1,0 +1,153 @@
+{
+    "Veo3VideoGenerationNodeAmplify": {
+        "input": {
+            "required": {
+                "prompt": [
+                    "STRING",
+                    {
+                        "tooltip": "Text description of the video",
+                        "default": "",
+                        "multiline": true
+                    }
+                ],
+                "aspect_ratio": [
+                    "COMBO",
+                    {
+                        "tooltip": "Aspect ratio of the output video",
+                        "default": "16:9",
+                        "multiselect": false,
+                        "options": [
+                            "16:9",
+                            "9:16"
+                        ]
+                    }
+                ]
+            },
+            "optional": {
+                "negative_prompt": [
+                    "STRING",
+                    {
+                        "tooltip": "Negative text prompt to guide what to avoid in the video",
+                        "default": "",
+                        "multiline": true
+                    }
+                ],
+                "duration_seconds": [
+                    "INT",
+                    {
+                        "tooltip": "Duration of the output video in seconds (Veo 3 only supports 8 seconds)",
+                        "default": 8,
+                        "min": 8,
+                        "max": 8,
+                        "step": 1,
+                        "display": "number"
+                    }
+                ],
+                "enhance_prompt": [
+                    "BOOLEAN",
+                    {
+                        "tooltip": "This parameter is deprecated and ignored.",
+                        "advanced": true,
+                        "default": true
+                    }
+                ],
+                "person_generation": [
+                    "COMBO",
+                    {
+                        "tooltip": "Whether to allow generating people in the video",
+                        "advanced": true,
+                        "default": "ALLOW",
+                        "multiselect": false,
+                        "options": [
+                            "ALLOW",
+                            "BLOCK"
+                        ]
+                    }
+                ],
+                "seed": [
+                    "INT",
+                    {
+                        "tooltip": "Seed for video generation (0 for random)",
+                        "default": 0,
+                        "min": 0,
+                        "max": 4294967295,
+                        "step": 1,
+                        "control_after_generate": true,
+                        "display": "number"
+                    }
+                ],
+                "image_uuid": [
+                    "STRING",
+                    {
+                        "tooltip": "A Media Ingest API UUID representing an uploaded image",
+                        "multiline": false
+                    }
+                ],
+                "model": [
+                    "COMBO",
+                    {
+                        "tooltip": "Veo 3 model to use for video generation",
+                        "default": "veo-3.0-generate-001",
+                        "multiselect": false,
+                        "options": [
+                            "veo-3.1-generate",
+                            "veo-3.1-fast-generate",
+                            "veo-3.0-generate-001",
+                            "veo-3.0-fast-generate-001"
+                        ]
+                    }
+                ],
+                "generate_audio": [
+                    "BOOLEAN",
+                    {
+                        "tooltip": "Generate audio for the video. Supported by all Veo 3 models.",
+                        "default": false
+                    }
+                ]
+            }
+        },
+        "input_order": {
+            "required": [
+                "prompt",
+                "aspect_ratio"
+            ],
+            "optional": [
+                "negative_prompt",
+                "duration_seconds",
+                "enhance_prompt",
+                "person_generation",
+                "seed",
+                "image_uuid",
+                "model",
+                "generate_audio"
+            ]
+        },
+        "is_input_list": false,
+        "output": [
+            "STRING"
+        ],
+        "output_is_list": [
+            false
+        ],
+        "output_name": [
+            "video_uuid"
+        ],
+        "output_tooltips": [
+            null
+        ],
+        "output_matchtypes": null,
+        "name": "Veo3VideoGenerationNodeAmplify",
+        "display_name": "Google Veo 3 Video Generation",
+        "description": "Generates videos from text prompts using Google's Veo 3 API",
+        "python_module": "comfy_api_nodes.nodes_veo2_amplify",
+        "category": "api node/video/Veo",
+        "output_node": false,
+        "deprecated": false,
+        "experimental": false,
+        "dev_only": false,
+        "api_node": false,
+        "price_badge": null,
+        "search_aliases": null,
+        "essentials_category": null
+    }
+}
