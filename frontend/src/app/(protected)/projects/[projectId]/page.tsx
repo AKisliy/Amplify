@@ -6,7 +6,13 @@ import { User, ArrowRight, LayoutTemplate, Plus } from "lucide-react";
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { ProjectHeader } from "@/components/ProjectHeader";
 import { useProject } from "@/features/ambassadors/hooks/useProjects";
@@ -41,9 +47,12 @@ export default function ProjectOverviewPage() {
 
   const { project, isLoading: projectLoading } = useProject(projectId);
   const { projects, isLoading: projectsLoading } = useProjects();
-  const { templates, isLoading: templatesLoading } = useProjectTemplates(projectId);
+  const { templates, isLoading: templatesLoading } =
+    useProjectTemplates(projectId);
 
-  const [ambassadorId, setAmbassadorId] = useState<string | undefined>(undefined);
+  const [ambassadorId, setAmbassadorId] = useState<string | undefined>(
+    undefined,
+  );
   const [newTemplateOpen, setNewTemplateOpen] = useState(false);
   const [newTemplateName, setNewTemplateName] = useState("");
   const [isCreating, setIsCreating] = useState(false);
@@ -66,7 +75,7 @@ export default function ProjectOverviewPage() {
       setIsCreating(false);
     }
   };
-  
+
   useEffect(() => {
     if (project) {
       // Debug log to verify if backend returns ambassadorId
@@ -108,21 +117,31 @@ export default function ProjectOverviewPage() {
         >
           <div className="flex items-center gap-4">
             <Avatar className="w-16 h-16 border-2 border-border shadow-sm shrink-0">
-              <AvatarImage src={ambassador?.profileImageUrl ?? undefined} className="object-cover" />
+              <AvatarImage
+                src={ambassador?.profileImageUrl ?? undefined}
+                className="object-cover"
+              />
               <AvatarFallback className="text-xl font-semibold bg-primary/10 text-primary">
                 {getInitials(ambassador?.name || "Ambassador Name")}
               </AvatarFallback>
             </Avatar>
 
             <div>
-              <h2 className="text-xl font-semibold leading-tight">{ambassador?.name || "Ambassador Name"}</h2>
+              <h2 className="text-xl font-semibold leading-tight">
+                {ambassador?.name || "Ambassador Name"}
+              </h2>
               <p className="text-sm text-muted-foreground mt-0.5 max-w-lg line-clamp-2">
                 {ambassador?.biography || "Ambassador Biography"}
               </p>
             </div>
           </div>
 
-          <Button variant="outline" size="sm" className="shrink-0 group" onClick={handleViewAmbassador}>
+          <Button
+            variant="outline"
+            size="sm"
+            className="shrink-0 group"
+            onClick={handleViewAmbassador}
+          >
             <User className="w-4 h-4 mr-2" />
             View Ambassador
             <ArrowRight className="w-4 h-4 ml-2 group-hover:translate-x-0.5 transition-transform" />
@@ -143,13 +162,17 @@ export default function ProjectOverviewPage() {
           <div className="flex items-center justify-between">
             <div>
               <h2 className="text-2xl font-semibold">
-                {projectLoading ? "…" : project?.name ?? "Project"} Templates
+                {projectLoading ? "…" : (project?.name ?? "Project")} Templates
               </h2>
               <p className="text-sm text-muted-foreground mt-0.5">
                 Select a template to open the canvas editor
               </p>
             </div>
-            <Button size="sm" variant="outline" onClick={() => setNewTemplateOpen(true)}>
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => setNewTemplateOpen(true)}
+            >
               <Plus className="w-4 h-4 mr-2" />
               New Template
             </Button>
@@ -167,7 +190,7 @@ export default function ProjectOverviewPage() {
                 </Card>
               ))}
             </div>
-          ) : templates.length === 0 ? (
+          ) : MOCK_TEMPLATES.length === 0 ? (
             <Card className="border-dashed">
               <CardContent className="flex flex-col items-center justify-center py-16">
                 <LayoutTemplate className="w-14 h-14 text-muted-foreground mb-4" />
@@ -179,7 +202,7 @@ export default function ProjectOverviewPage() {
             </Card>
           ) : (
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-              {templates.map((template, index) => (
+              {MOCK_TEMPLATES.map((template, index) => (
                 <motion.div
                   key={template.id}
                   initial={{ opacity: 0, y: 16 }}
@@ -218,11 +241,14 @@ export default function ProjectOverviewPage() {
                     <CardContent className="px-4 pb-3">
                       <p className="text-xs text-muted-foreground/70">
                         {template.createdAt
-                          ? new Date(template.createdAt).toLocaleDateString("en-US", {
-                              month: "short",
-                              day: "numeric",
-                              year: "numeric",
-                            })
+                          ? new Date(template.createdAt).toLocaleDateString(
+                              "en-US",
+                              {
+                                month: "short",
+                                day: "numeric",
+                                year: "numeric",
+                              },
+                            )
                           : null}
                       </p>
                     </CardContent>
@@ -235,7 +261,13 @@ export default function ProjectOverviewPage() {
       </main>
 
       {/* New Template dialog */}
-      <Dialog open={newTemplateOpen} onOpenChange={(open) => { setNewTemplateOpen(open); if (!open) setNewTemplateName(""); }}>
+      <Dialog
+        open={newTemplateOpen}
+        onOpenChange={(open) => {
+          setNewTemplateOpen(open);
+          if (!open) setNewTemplateName("");
+        }}
+      >
         <DialogContent className="sm:max-w-sm">
           <DialogHeader>
             <DialogTitle>New Template</DialogTitle>
@@ -247,13 +279,20 @@ export default function ProjectOverviewPage() {
               placeholder="e.g. YouTube Short"
               value={newTemplateName}
               onChange={(e) => setNewTemplateName(e.target.value)}
-              onKeyDown={(e) => { if (e.key === "Enter") handleCreateTemplate(); }}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") handleCreateTemplate();
+              }}
               autoFocus
             />
           </div>
           <DialogFooter>
-            <Button variant="ghost" onClick={() => setNewTemplateOpen(false)}>Cancel</Button>
-            <Button onClick={handleCreateTemplate} disabled={!newTemplateName.trim() || isCreating}>
+            <Button variant="ghost" onClick={() => setNewTemplateOpen(false)}>
+              Cancel
+            </Button>
+            <Button
+              onClick={handleCreateTemplate}
+              disabled={!newTemplateName.trim() || isCreating}
+            >
               {isCreating ? "Creating…" : "Create"}
             </Button>
           </DialogFooter>
