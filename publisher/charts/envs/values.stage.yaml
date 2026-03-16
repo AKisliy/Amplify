@@ -54,7 +54,7 @@ appConfig:
   TikTokApi:
     ClientKey: ""
     ClientSecret: ""
-    RedirectUri: "https://localhost:3000/integrations/callback"
+    RedirectUri: "https://staging.alexeykiselev.tech"
   RecurringJobs:
     AutoListJobEnabled: false
     TokenRefreshJobEnabled: false
