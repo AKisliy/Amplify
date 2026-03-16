@@ -2,7 +2,7 @@
 
 import { useParams, useRouter } from "next/navigation";
 import { motion } from "framer-motion";
-import { User, ArrowRight, LayoutTemplate, Plus } from "lucide-react";
+import { User, ArrowRight, LayoutTemplate, Plus, Trash2 } from "lucide-react";
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -21,9 +21,22 @@ import {
   DialogTitle,
   DialogFooter,
 } from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { createTemplateV1TemplatesPost } from "@/lib/api/template-service";
+import {
+  createTemplateV1TemplatesPost,
+  deleteTemplateV1TemplatesTemplateIdDelete,
+} from "@/lib/api/template-service";
 
 function getInitials(name: string) {
   return name
@@ -41,12 +54,17 @@ export default function ProjectOverviewPage() {
 
   const { project, isLoading: projectLoading } = useProject(projectId);
   const { projects, isLoading: projectsLoading } = useProjects();
-  const { templates, isLoading: templatesLoading } = useProjectTemplates(projectId);
+  const { templates, isLoading: templatesLoading, refetch } = useProjectTemplates(projectId);
 
   const [ambassadorId, setAmbassadorId] = useState<string | undefined>(undefined);
   const [newTemplateOpen, setNewTemplateOpen] = useState(false);
   const [newTemplateName, setNewTemplateName] = useState("");
   const [isCreating, setIsCreating] = useState(false);
+
+  // Delete state
+  const [deleteTargetId, setDeleteTargetId] = useState<string | null>(null);
+  const [deleteTargetName, setDeleteTargetName] = useState<string>("");
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const handleCreateTemplate = async () => {
     const name = newTemplateName.trim();
@@ -66,7 +84,24 @@ export default function ProjectOverviewPage() {
       setIsCreating(false);
     }
   };
-  
+
+  const handleDeleteTemplate = async () => {
+    if (!deleteTargetId) return;
+    setIsDeleting(true);
+    try {
+      await deleteTemplateV1TemplatesTemplateIdDelete({
+        path: { template_id: deleteTargetId },
+        throwOnError: true,
+      });
+      setDeleteTargetId(null);
+      refetch?.();
+    } catch (err) {
+      console.error("Failed to delete template:", err);
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
   useEffect(() => {
     if (project) {
       // Debug log to verify if backend returns ambassadorId
@@ -99,7 +134,7 @@ export default function ProjectOverviewPage() {
 
       <main className="container mx-auto px-6 py-8 space-y-6">
         {/* ------------------------------------------------------------------ */}
-        {/* Ambassador banner (10-15% of viewport)                              */}
+        {/* Ambassador banner                                                   */}
         {/* ------------------------------------------------------------------ */}
         <motion.div
           initial={{ opacity: 0, y: -10 }}
@@ -185,12 +220,13 @@ export default function ProjectOverviewPage() {
                   initial={{ opacity: 0, y: 16 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.15 + index * 0.07 }}
+                  className="relative group/card"
                 >
                   <Card
                     className="cursor-pointer hover:shadow-md hover:border-primary/30 transition-all group border-border/50 h-full"
                     onClick={() => handleOpenTemplate(template.id)}
                   >
-                    {/* Thumbnail placeholder */}
+                    {/* Thumbnail */}
                     <div className="w-full aspect-video bg-muted/60 rounded-t-lg flex items-center justify-center overflow-hidden">
                       {template.thumbnailUrl ? (
                         // eslint-disable-next-line @next/next/no-img-element
@@ -227,6 +263,29 @@ export default function ProjectOverviewPage() {
                       </p>
                     </CardContent>
                   </Card>
+
+                  {/* Delete button — visible on card hover */}
+                  <button
+                    id={`delete-template-${template.id}`}
+                    aria-label={`Delete template ${template.name}`}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setDeleteTargetId(template.id);
+                      setDeleteTargetName(template.name);
+                    }}
+                    className="
+                      absolute top-2 right-2 z-10
+                      p-1.5 rounded-md
+                      bg-background/80 backdrop-blur-sm
+                      border border-border/50
+                      text-muted-foreground
+                      opacity-0 group-hover/card:opacity-100
+                      hover:text-destructive hover:border-destructive/40 hover:bg-destructive/10
+                      transition-all duration-150
+                    "
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                  </button>
                 </motion.div>
               ))}
             </div>
@@ -234,8 +293,14 @@ export default function ProjectOverviewPage() {
         </motion.div>
       </main>
 
-      {/* New Template dialog */}
-      <Dialog open={newTemplateOpen} onOpenChange={(open) => { setNewTemplateOpen(open); if (!open) setNewTemplateName(""); }}>
+      {/* ── New Template dialog ─────────────────────────────────────────────── */}
+      <Dialog
+        open={newTemplateOpen}
+        onOpenChange={(open) => {
+          setNewTemplateOpen(open);
+          if (!open) setNewTemplateName("");
+        }}
+      >
         <DialogContent className="sm:max-w-sm">
           <DialogHeader>
             <DialogTitle>New Template</DialogTitle>
@@ -247,18 +312,53 @@ export default function ProjectOverviewPage() {
               placeholder="e.g. YouTube Short"
               value={newTemplateName}
               onChange={(e) => setNewTemplateName(e.target.value)}
-              onKeyDown={(e) => { if (e.key === "Enter") handleCreateTemplate(); }}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") handleCreateTemplate();
+              }}
               autoFocus
             />
           </div>
           <DialogFooter>
-            <Button variant="ghost" onClick={() => setNewTemplateOpen(false)}>Cancel</Button>
-            <Button onClick={handleCreateTemplate} disabled={!newTemplateName.trim() || isCreating}>
+            <Button variant="ghost" onClick={() => setNewTemplateOpen(false)}>
+              Cancel
+            </Button>
+            <Button
+              onClick={handleCreateTemplate}
+              disabled={!newTemplateName.trim() || isCreating}
+            >
               {isCreating ? "Creating…" : "Create"}
             </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* ── Delete Template confirmation ────────────────────────────────────── */}
+      <AlertDialog
+        open={!!deleteTargetId}
+        onOpenChange={(open) => {
+          if (!open) setDeleteTargetId(null);
+        }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete template?</AlertDialogTitle>
+            <AlertDialogDescription>
+              <strong>&ldquo;{deleteTargetName}&rdquo;</strong> will be permanently deleted along
+              with all its canvas data. This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isDeleting}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDeleteTemplate}
+              disabled={isDeleting}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {isDeleting ? "Deleting…" : "Delete"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

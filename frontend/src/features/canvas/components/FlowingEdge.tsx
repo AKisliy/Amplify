@@ -95,6 +95,17 @@ export function FlowingEdge({
 
   return (
     <>
+      {/* Wide invisible hit area — makes the edge easy to click/select */}
+      <path
+        d={edgePath}
+        style={{
+          stroke: "transparent",
+          strokeWidth: 20,
+          fill: "none",
+          cursor: "pointer",
+        }}
+      />
+
       {/* Base path — always rendered */}
       <BaseEdge path={edgePath} style={baseStyle} />
 

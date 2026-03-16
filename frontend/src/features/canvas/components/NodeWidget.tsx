@@ -77,7 +77,11 @@ export function NodeWidget({ port, value, onChange, disabled }: NodeWidgetProps)
 
     case "COMBO": {
       const cfg = port.config as ComboInputConfig;
-      const currentValue = (value as string) ?? cfg.default ?? cfg.options[0];
+      // Use || instead of ?? so that empty string also falls back to default.
+      // Radix UI Select uses value internally as a key — an empty string ("")
+      // causes the "duplicate key" React warning.
+      const rawVal = value as string | undefined;
+      const currentValue = rawVal || cfg.default || cfg.options[0] || " ";
       return (
         <WidgetRow label={label} tooltip={port.tooltip}>
           <Select
@@ -95,9 +99,9 @@ export function NodeWidget({ port, value, onChange, disabled }: NodeWidgetProps)
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              {cfg.options.map((opt) => (
-                <SelectItem key={opt} value={opt} className="text-xs">
-                  {opt}
+              {cfg.options.map((opt, i) => (
+                <SelectItem key={`${i}-${opt}`} value={opt || ` `} className="text-xs">
+                  {opt || "(empty)"}
                 </SelectItem>
               ))}
             </SelectContent>
