@@ -326,29 +326,28 @@
           "connections"
         ],
         "operationId": "Connection",
-        "parameters": [
-          {
-            "name": "state",
-            "in": "query",
-            "required": true,
-            "schema": {
-              "type": "string"
-            },
-            "x-position": 1
+        "requestBody": {
+          "x-name": "command",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateNewConnection"
+              }
+            }
           },
-          {
-            "name": "code",
-            "in": "query",
-            "required": true,
-            "schema": {
-              "type": "string"
-            },
-            "x-position": 2
-          }
-        ],
+          "required": true,
+          "x-position": 1
+        },
         "responses": {
           "200": {
-            "description": ""
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ConnectionResult"
+                }
+              }
+            }
           }
         }
       }
@@ -653,6 +652,12 @@
           },
           "name": {
             "type": "string"
+          },
+          "entries": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AutoListEntryDto"
+            }
           }
         }
       },
@@ -688,6 +693,31 @@
         "additionalProperties": false,
         "properties": {
           "authUrl": {
+            "type": "string"
+          }
+        }
+      },
+      "ConnectionResult": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "connectionId": {
+            "type": "string",
+            "format": "guid"
+          },
+          "redirectUrl": {
+            "type": "string"
+          }
+        }
+      },
+      "CreateNewConnection": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "state": {
+            "type": "string"
+          },
+          "code": {
             "type": "string"
           }
         }
