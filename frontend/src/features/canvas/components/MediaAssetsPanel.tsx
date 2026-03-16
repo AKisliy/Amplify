@@ -248,9 +248,22 @@ function AssetCard({
     >
       {/* Thumbnail */}
       {isVideo ? (
-        <div className="w-full h-full flex flex-col items-center justify-center gap-1 bg-red-500/10">
-          <VideoIcon className="w-6 h-6 text-red-400/60" />
-          <span className="text-[9px] text-red-400/50 font-medium">VIDEO</span>
+        <div className="relative w-full h-full bg-black">
+          {/* Real video thumbnail — browser loads first frame from metadata */}
+          <video
+            src={asset.imageUrl}
+            className="w-full h-full object-cover"
+            muted
+            playsInline
+            preload="metadata"
+            // Seek to 0.1s so browsers that start at 0 show a frame
+            onLoadedMetadata={(e) => { (e.target as HTMLVideoElement).currentTime = 0.1; }}
+          />
+          {/* Badge */}
+          <div className="absolute bottom-1 left-1 flex items-center gap-0.5 bg-black/60 rounded px-1 py-0.5">
+            <VideoIcon className="w-2.5 h-2.5 text-red-400" />
+            <span className="text-[8px] text-red-300 font-medium leading-none">VIDEO</span>
+          </div>
         </div>
       ) : imgError ? (
         <div className="w-full h-full flex items-center justify-center">

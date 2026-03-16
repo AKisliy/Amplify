@@ -65,11 +65,31 @@ export interface MediaLightboxProps {
 
 // ─── Canvas helper ─────────────────────────────────────────────────────────────
 
+/**
+ * Fetches the image through our own server proxy so the canvas isn't tainted.
+ * Pre-signed GCS URLs don't serve CORS headers, so direct crossOrigin loads
+ * fail. Server-to-server fetch has no CORS restriction, and our proxy adds
+ * Access-Control-Allow-Origin: * to the response.
+ */
+async function fetchImageForCanvas(src: string): Promise<HTMLImageElement> {
+  const proxyUrl = `/api/media-proxy?url=${encodeURIComponent(src)}`;
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.crossOrigin = "anonymous"; // safe now — our proxy adds CORS headers
+    img.onload = () => resolve(img);
+    img.onerror = () => reject(new Error("Failed to load image for canvas"));
+    img.src = proxyUrl;
+  });
+}
+
 async function applyEditsToCanvas(
   img: HTMLImageElement,
   rotation: number,
   cropBox: CropBox | null
 ): Promise<Blob> {
+  // Re-fetch through proxy so canvas.toBlob() doesn't throw a SecurityError
+  const corsImg = await fetchImageForCanvas(img.src);
+
   return new Promise((resolve, reject) => {
     const canvas = document.createElement("canvas");
     const ctx = canvas.getContext("2d");
@@ -79,8 +99,8 @@ async function applyEditsToCanvas(
     const sin = Math.abs(Math.sin(rad));
     const cos = Math.abs(Math.cos(rad));
 
-    const fullW = img.naturalWidth * cos + img.naturalHeight * sin;
-    const fullH = img.naturalWidth * sin + img.naturalHeight * cos;
+    const fullW = corsImg.naturalWidth * cos + corsImg.naturalHeight * sin;
+    const fullH = corsImg.naturalWidth * sin + corsImg.naturalHeight * cos;
 
     let outW = fullW, outH = fullH, cropX = 0, cropY = 0;
 
@@ -98,7 +118,7 @@ async function applyEditsToCanvas(
     ctx.translate(-cropX, -cropY);
     ctx.translate(fullW / 2, fullH / 2);
     ctx.rotate(rad);
-    ctx.drawImage(img, -img.naturalWidth / 2, -img.naturalHeight / 2);
+    ctx.drawImage(corsImg, -corsImg.naturalWidth / 2, -corsImg.naturalHeight / 2);
     ctx.restore();
 
     canvas.toBlob(
@@ -279,7 +299,6 @@ function ImageEditor({ media, onReplaceMedia, onSaved }: ImageEditorProps) {
             ref={imgRef}
             src={media.url}
             alt={media.name || "Media"}
-            crossOrigin="anonymous"
             className="max-w-[74vw] max-h-[58vh] rounded-2xl object-contain shadow-[0_8px_80px_rgba(0,0,0,0.9)] block"
             draggable={false}
           />

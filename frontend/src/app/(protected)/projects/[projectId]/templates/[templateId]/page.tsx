@@ -12,10 +12,13 @@ import {
   BackgroundVariant,
   type NodeTypes,
   type EdgeTypes,
+  type Connection,
+  type IsValidConnection,
 } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
 
 import { Button } from "@/components/ui/button";
+import { useToast } from "@/hooks/use-toast";
 import { useProjects } from "@/features/ambassadors/hooks/useProjects";
 import { ProjectHeader } from "@/components/ProjectHeader";
 import { useTheme } from "next-themes";
@@ -35,7 +38,7 @@ import { useCanvasStore } from "@/features/canvas/hooks/useCanvasStore";
 import { NODE_REGISTRY, getNodesByCategory } from "@/features/canvas/registry";
 import { nodeDefToCanvasNode } from "@/features/canvas/lib/schemaMapper";
 import { PREVIEW_SCHEMA_NAMES } from "@/features/canvas/registry/preview-schemas";
-import type { CanvasNode } from "@/features/canvas/types";
+import type { CanvasNode, CanvasEdge } from "@/features/canvas/types";
 import { getTemplateV1TemplatesTemplateIdGet } from "@/lib/api/template-service";
 
 // ---------------------------------------------------------------------------
@@ -66,9 +69,7 @@ function buildSeedNodes(): CanvasNode[] {
 }
 
 const SEED_NODES = buildSeedNodes();
-const SEED_EDGES = SEED_NODES.length >= 2
-  ? [{ id: "e-gemini-veo3", source: "node-gemini", sourceHandle: "text", target: "node-veo3", targetHandle: "prompt", type: "status" as const, data: { flowing: false, error: false } }]
-  : [];
+const SEED_EDGES: CanvasEdge[] = []; // start empty — user wires their own connections
 
 const NODE_LIBRARY = getNodesByCategory();
 
@@ -324,6 +325,86 @@ export default function TemplateCanvasPage() {
     await submitWorkflow(crypto.randomUUID());
   }, [submitWorkflow]);
 
+  // ── Port-type compatibility ────────────────────────────────────────────────
+  // Defines which source port types can connect to which target port types.
+  // COMFY_AUTOGROW_V3 is a wildcard slot that accepts any type.
+  const CONNECTION_COMPAT: Record<string, string[]> = {
+    STRING:            ["STRING", "COMFY_AUTOGROW_V3"],
+    INT:               ["INT",    "COMFY_AUTOGROW_V3"],
+    FLOAT:             ["FLOAT",  "INT", "COMFY_AUTOGROW_V3"],
+    BOOLEAN:           ["BOOLEAN","COMFY_AUTOGROW_V3"],
+    COMBO:             ["COMBO",  "STRING", "COMFY_AUTOGROW_V3"],
+    IMAGE:             ["IMAGE",  "COMFY_AUTOGROW_V3"],
+    VIDEO:             ["VIDEO",  "COMFY_AUTOGROW_V3"],
+    COMFY_AUTOGROW_V3: ["STRING","INT","FLOAT","BOOLEAN","COMBO","IMAGE","VIDEO","COMFY_AUTOGROW_V3"],
+  };
+
+  /** Look up a port's type string given its node-id and handle-id */
+  const getPortType = useCallback(
+    (nodeId: string | null, handleId: string | null): string | null => {
+      if (!nodeId || !handleId) return null;
+      const node = nodes.find((n) => n.id === nodeId);
+      if (!node) return null;
+      const port = node.data.ports.find((p) => p.id === handleId);
+      return port?.portType ?? null;
+    },
+    [nodes]
+  );
+
+  const { toast } = useToast();
+
+  const isValidConnection: IsValidConnection<CanvasEdge> = useCallback(
+    (connection) => {
+      const srcType = getPortType(connection.source, connection.sourceHandle ?? null);
+      const tgtType = getPortType(connection.target, connection.targetHandle ?? null);
+      // Unknown port type → allow (safe fallback for custom node types)
+      if (!srcType || !tgtType) return true;
+      const allowed = CONNECTION_COMPAT[srcType] ?? [];
+      return allowed.includes(tgtType);
+    },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [getPortType]
+  );
+
+  // Track the source type during drag so onConnectEnd can report the mismatch
+  const dragSourceRef = useRef<{ srcType: string | null }>({ srcType: null });
+
+  const handleConnectStart = useCallback(
+    (_: unknown, { nodeId, handleId }: { nodeId: string | null; handleId: string | null }) => {
+      dragSourceRef.current.srcType = getPortType(nodeId, handleId);
+    },
+    [getPortType]
+  );
+
+  const handleConnectEnd = useCallback(
+    (event: MouseEvent | TouchEvent) => {
+      const target = (event as MouseEvent).target as HTMLElement | null;
+      const droppedOnHandle = target?.closest(".react-flow__handle");
+      if (!droppedOnHandle) return; // dropped on canvas → not an invalid connection attempt
+
+      const tgtNodeEl   = droppedOnHandle.closest("[data-id]");
+      const tgtNodeId   = tgtNodeEl?.getAttribute("data-id") ?? null;
+      const tgtHandleId = droppedOnHandle.getAttribute("data-handleid");
+      const srcType = dragSourceRef.current.srcType;
+      const tgtType = getPortType(tgtNodeId, tgtHandleId);
+
+      if (srcType && tgtType) {
+        const allowed = CONNECTION_COMPAT[srcType] ?? [];
+        if (!allowed.includes(tgtType)) {
+          toast({
+            variant: "destructive",
+            title: "Incompatible port types",
+            description: `Cannot connect ${srcType} → ${tgtType}`,
+            duration: 3000,
+          });
+        }
+      }
+      dragSourceRef.current.srcType = null;
+    },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [getPortType, toast]
+  );
+
   return (
     <div className="h-screen bg-background flex flex-col overflow-hidden">
       <ProjectHeader projects={projects} isLoading={projectsLoading} />
@@ -439,6 +520,9 @@ export default function TemplateCanvasPage() {
             onNodesChange={onNodesChange}
             onEdgesChange={onEdgesChange}
             onConnect={onConnect}
+            isValidConnection={isValidConnection}
+            onConnectStart={handleConnectStart as any}
+            onConnectEnd={handleConnectEnd as any}
             nodeTypes={nodeTypes}
             edgeTypes={edgeTypes}
             onInit={(instance) => { rfInstanceRef.current = instance; }}
@@ -451,7 +535,7 @@ export default function TemplateCanvasPage() {
             fitViewOptions={{ padding: 0.18 }}
             proOptions={{ hideAttribution: true }}
             colorMode={resolvedTheme === "dark" ? "dark" : "light"}
-            deleteKeyCode="Delete"
+            deleteKeyCode={["Delete", "Backspace"]}
           >
             <Background variant={BackgroundVariant.Dots} gap={22} size={1} color="rgba(255,255,255,0.07)" />
             <Controls className="!bg-card/60 !border-border/40 !backdrop-blur-sm !rounded-lg" />

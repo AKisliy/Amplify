@@ -2,7 +2,7 @@
 
 import { AnimatePresence, motion } from "framer-motion";
 import { useToast } from "@/hooks/use-toast";
-import { useCallback, useState, useEffect } from "react";
+import { useCallback, useRef, useState, useEffect } from "react";
 import { ambassadorApi } from "../../services/api";
 import type { AmbassadorImage } from "../../types";
 import { mediaApi, type MediaType } from "@/features/media/api";
@@ -19,11 +19,16 @@ interface GalleryProps {
 }
 
 /**
- * Extract mediaId from a URL like …/api/media/{guid}.
- * Used as a reliable delete/identity key when the backend's AmbassadorImage.id is null.
+ * Extract a UUID from any URL — matches /api/media/{uuid} but also any
+ * path segment that looks like a UUID (e.g. GCS storage paths).
  */
 function extractMediaId(url: string): string {
-  return url?.match(/\/api\/media\/([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})/i)?.[1] ?? "";
+  // Prefer /api/media/{uuid} pattern first
+  const apiMatch = url?.match(/\/api\/media\/([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})/i)?.[1];
+  if (apiMatch) return apiMatch;
+  // Fall back to any UUID-shaped path segment (covers GCS URLs)
+  const anyMatch = url?.match(/\/([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})/i)?.[1];
+  return anyMatch ?? "";
 }
 
 /** Map backend imageType number to MediaType */
@@ -44,19 +49,34 @@ export function Gallery({ ambassadorId, images, onImagesChange }: GalleryProps) 
   const [lightboxOpen, setLightboxOpen] = useState(false);
   const [lightboxIndex, setLightboxIndex] = useState(0);
 
+  /**
+   * Maps the display-item id → the backend link-record id used for DELETE.
+   * Kept in a ref so handleDelete always sees the latest value without
+   * creating stale closure problems.
+   */
+  const linkIdMapRef = useRef<Map<string, string>>(new Map());
+
   // ── Sync committed images → display items ──────────────────────────────────
 
   useEffect(() => {
-    const committedItems: UploadedMedia[] = images.map((img, i) => ({
-      id: img.id || extractMediaId(img.imageUrl) || `persist-${i}-${img.imageUrl?.slice(-8)}`,
-      url: img.imageUrl,
-      type: resolveType(img),
-      name: "Ambassador media",
-      size: 0,
-      progress: 100,
-      // Store imageType as contentType hint for the lightbox
-      contentType: img.imageType === 1 ? "video/mp4" : "image/jpeg",
-    }));
+    const committedItems: UploadedMedia[] = images.map((img, i) => {
+      const displayId = img.id || extractMediaId(img.imageUrl) || `persist-${i}-${img.imageUrl?.slice(-8)}`;
+
+      // Always record the backend's own id for the DELETE call.
+      // Priority: img.id (link-record id) → mediaId from URL → GCS UUID from URL
+      const backendId = img.id || extractMediaId(img.imageUrl) || displayId;
+      linkIdMapRef.current.set(displayId, backendId);
+
+      return {
+        id: displayId,
+        url: img.imageUrl,
+        type: resolveType(img),
+        name: "Ambassador media",
+        size: 0,
+        progress: 100,
+        contentType: img.imageType === 1 ? "video/mp4" : "image/jpeg",
+      };
+    });
 
     setDisplayItems((prev) => {
       // Keep items still uploading (progress < 100 and no error)
@@ -231,18 +251,38 @@ export function Gallery({ ambassadorId, images, onImagesChange }: GalleryProps) 
       try {
         const isTemp = id.startsWith("temp-");
         if (!isTemp) {
-          await ambassadorApi.deleteAmbassadorImage(ambassadorId, id);
+          // Use the backend link-record id stored in the ref map, fallback to display id
+          const backendId = linkIdMapRef.current.get(id) || id;
+          try {
+            await ambassadorApi.deleteAmbassadorImage(ambassadorId, backendId);
+          } catch (firstErr: any) {
+            // If the link-record id failed, try the media UUID extracted from the URL
+            const status = firstErr?.response?.status;
+            if (status === 500 || status === 404 || status === 400) {
+              const item = displayItems.find((i) => i.id === id);
+              const mediaIdFromUrl = item ? extractMediaId(item.url) : "";
+              if (mediaIdFromUrl && mediaIdFromUrl !== backendId) {
+                await ambassadorApi.deleteAmbassadorImage(ambassadorId, mediaIdFromUrl);
+              } else {
+                throw firstErr;
+              }
+            } else {
+              throw firstErr;
+            }
+          }
+          linkIdMapRef.current.delete(id);
         }
         setDisplayItems((prev) => prev.filter((item) => item.id !== id));
         if (!isTemp) {
           onImagesChange();
           toast({ title: "Deleted", description: "Media removed from gallery." });
         }
-      } catch {
-        toast({ variant: "destructive", title: "Delete failed", description: "Please try again." });
+      } catch (err: any) {
+        const msg = err?.response?.data?.detail || err?.message || "Please try again.";
+        toast({ variant: "destructive", title: "Delete failed", description: msg });
       }
     },
-    [ambassadorId, onImagesChange, toast]
+    [ambassadorId, displayItems, onImagesChange, toast]
   );
 
   // Items that can appear in the lightbox (fully uploaded, no error)
