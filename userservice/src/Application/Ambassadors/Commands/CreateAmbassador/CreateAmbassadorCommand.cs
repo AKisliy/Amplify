@@ -24,6 +24,11 @@ public class CreateAmbassadorCommandHandler(IApplicationDbContext dbContext, IUs
             throw new UnauthorizedAccessException("Resource access denied");
         }
 
+        if (project.Ambassador != null)
+        {
+            throw new InvalidOperationException("Project already has an ambassador");
+        }
+
         var ambassador = new Ambassador
         {
             Name = request.Name,
