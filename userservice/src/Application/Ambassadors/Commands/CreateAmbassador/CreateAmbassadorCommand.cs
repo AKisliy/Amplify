@@ -15,7 +15,10 @@ public class CreateAmbassadorCommandHandler(IApplicationDbContext dbContext, IUs
 {
     public async Task<Guid> Handle(CreateAmbassadorCommand request, CancellationToken cancellationToken)
     {
-        var project = await dbContext.Projects.FindAsync(request.ProjectId, cancellationToken);
+        var project = await dbContext.Projects
+            .Where(p => p.Id == request.ProjectId)
+            .Include(p => p.Ambassador)
+            .SingleOrDefaultAsync(cancellationToken);
 
         Guard.Against.NotFound(request.ProjectId, project, "Project");
 
