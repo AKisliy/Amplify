@@ -7,6 +7,7 @@ public record CreateAmbassadorCommand(
     string Name,
     string? Biography,
     string? BehavioralPatterns,
+    string? VoiceDescription,
     Guid ProjectId) : IRequest<Guid>;
 
 public class CreateAmbassadorCommandHandler(IApplicationDbContext dbContext, IUser user)
@@ -28,7 +29,8 @@ public class CreateAmbassadorCommandHandler(IApplicationDbContext dbContext, IUs
             Name = request.Name,
             Biography = request.Biography,
             BehavioralPatterns = request.BehavioralPatterns,
-            ProjectId = request.ProjectId
+            ProjectId = request.ProjectId,
+            VoiceDescription = request.VoiceDescription
         };
 
         dbContext.Ambassadors.Add(ambassador);
