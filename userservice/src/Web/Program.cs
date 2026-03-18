@@ -48,6 +48,7 @@ app.UseSwaggerUi(settings =>
 
 app.UseAuthentication();
 app.UseAuthorization();
+app.UseCurrentUser();
 
 if (app.Environment.IsDevelopment())
     app.UseCors("Dev");
