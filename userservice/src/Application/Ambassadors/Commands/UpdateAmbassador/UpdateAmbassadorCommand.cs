@@ -7,6 +7,7 @@ public record UpdateAmbassadorCommand(
     string Name,
     string? Biography,
     string? BehavioralPatterns,
+    string? VoiceDescription,
     Guid? ProfileImageId) : IRequest;
 
 public class UpdateAmbassadorCommandHandler(IApplicationDbContext dbContext, IUser user)
@@ -31,6 +32,7 @@ public class UpdateAmbassadorCommandHandler(IApplicationDbContext dbContext, IUs
         ambassador.Biography = request.Biography;
         ambassador.BehavioralPatterns = request.BehavioralPatterns;
         ambassador.ProfileImageId = request.ProfileImageId;
+        ambassador.VoiceDescription = request.VoiceDescription;
 
         await dbContext.SaveChangesAsync(cancellationToken);
     }

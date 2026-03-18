@@ -700,6 +700,10 @@
             "type": "string",
             "nullable": true
           },
+          "voiceDescription": {
+            "type": "string",
+            "nullable": true
+          },
           "projectId": {
             "type": "string",
             "format": "guid"
@@ -724,6 +728,15 @@
           "behavioralPatterns": {
             "type": "string",
             "nullable": true
+          },
+          "voiceDescription": {
+            "type": "string",
+            "nullable": true
+          },
+          "profileImageId": {
+            "type": "string",
+            "format": "guid",
+            "nullable": true
           }
         }
       },
@@ -743,6 +756,14 @@
             "nullable": true
           },
           "behavioralPatterns": {
+            "type": "string",
+            "nullable": true
+          },
+          "profileImageUrl": {
+            "type": "string",
+            "nullable": true
+          },
+          "voiceDescription": {
             "type": "string",
             "nullable": true
           }

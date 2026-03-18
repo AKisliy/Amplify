@@ -7,6 +7,7 @@ public record CreateAmbassadorCommand(
     string Name,
     string? Biography,
     string? BehavioralPatterns,
+    string? VoiceDescription,
     Guid ProjectId) : IRequest<Guid>;
 
 public class CreateAmbassadorCommandHandler(IApplicationDbContext dbContext, IUser user)
@@ -14,7 +15,10 @@ public class CreateAmbassadorCommandHandler(IApplicationDbContext dbContext, IUs
 {
     public async Task<Guid> Handle(CreateAmbassadorCommand request, CancellationToken cancellationToken)
     {
-        var project = await dbContext.Projects.FindAsync(request.ProjectId, cancellationToken);
+        var project = await dbContext.Projects
+            .Where(p => p.Id == request.ProjectId)
+            .Include(p => p.Ambassador)
+            .SingleOrDefaultAsync(cancellationToken);
 
         Guard.Against.NotFound(request.ProjectId, project, "Project");
 
@@ -23,12 +27,18 @@ public class CreateAmbassadorCommandHandler(IApplicationDbContext dbContext, IUs
             throw new UnauthorizedAccessException("Resource access denied");
         }
 
+        if (project.Ambassador != null)
+        {
+            throw new InvalidOperationException("Project already has an ambassador");
+        }
+
         var ambassador = new Ambassador
         {
             Name = request.Name,
             Biography = request.Biography,
             BehavioralPatterns = request.BehavioralPatterns,
-            ProjectId = request.ProjectId
+            ProjectId = request.ProjectId,
+            VoiceDescription = request.VoiceDescription
         };
 
         dbContext.Ambassadors.Add(ambassador);

@@ -8,6 +8,8 @@ public class Ambassador : BaseAuditableEntity
 
     public string? BehavioralPatterns { get; set; }
 
+    public string? VoiceDescription { get; set; }
+
     public Guid? ProfileImageId { get; set; }
 
     public Guid ProjectId { get; set; }

@@ -15,6 +15,8 @@ public class AmbassadorDto
 
     public string? ProfileImageUrl { get; set; }
 
+    public string? VoiceDescription { get; set; }
+
     private class Mapping : Profile
     {
         public Mapping()
