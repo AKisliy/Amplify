@@ -551,7 +551,7 @@
             "name": "lifetime",
             "in": "query",
             "schema": {
-              "default": 1,
+              "default": "Permanent",
               "oneOf": [
                 {
                   "$ref": "#/components/schemas/AssetLifetime"
@@ -853,7 +853,7 @@
         }
       },
       "ImageType": {
-        "type": "integer",
+        "type": "string",
         "description": "",
         "x-enumNames": [
           "Other",
@@ -861,9 +861,9 @@
           "Portrait"
         ],
         "enum": [
-          0,
-          1,
-          2
+          "Other",
+          "FullBody",
+          "Portrait"
         ]
       },
       "AddAmbassadorImageCommand": {
@@ -986,15 +986,15 @@
         }
       },
       "AssetLifetime": {
-        "type": "integer",
+        "type": "string",
         "description": "",
         "x-enumNames": [
           "Intermediate",
           "Permanent"
         ],
         "enum": [
-          0,
-          1
+          "Intermediate",
+          "Permanent"
         ]
       },
       "CreateProjectCommand": {
