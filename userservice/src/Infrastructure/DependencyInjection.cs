@@ -33,36 +33,10 @@ public static class DependencyInjection
 {
     public static void AddInfrastructureServices(this IHostApplicationBuilder builder)
     {
-        var connectionString = builder.Configuration.GetConnectionString("UserServiceDb");
-        Guard.Against.Null(connectionString, message: "Connection string 'UserServiceDb' not found.");
-
-        var connectionBuilder = new NpgsqlConnectionStringBuilder(connectionString);
-        connectionString = connectionBuilder.ToString();
-
         builder.Services.AddScoped<ITokenService, TokenService>();
         builder.Services.AddSingleton<IJwtTokenGenerator, JwtTokenGenerator>();
 
-        builder.Services.AddScoped<ISaveChangesInterceptor, AuditableEntityInterceptor>();
-        builder.Services.AddScoped<ISaveChangesInterceptor, DispatchDomainEventsInterceptor>();
-
-        builder.Services.AddDataProtection()
-            .PersistKeysToDbContext<ApplicationDbContext>()
-            .SetApplicationName("AmplifyUserService");
-
-        builder.Services.AddDbContext<ApplicationDbContext>((sp, options) =>
-        {
-            options.AddInterceptors(sp.GetServices<ISaveChangesInterceptor>());
-            options.UseNpgsql(
-                connectionString,
-                npgsqlOptions => npgsqlOptions.MigrationsHistoryTable(HistoryRepository.DefaultTableName, ApplicationDbContext.DefaultSchemaName));
-            options.UseSnakeCaseNamingConvention();
-            options.ConfigureWarnings(warnings => warnings.Ignore(RelationalEventId.PendingModelChangesWarning));
-        });
-
-
-        builder.Services.AddScoped<IApplicationDbContext>(provider => provider.GetRequiredService<ApplicationDbContext>());
-
-        builder.Services.AddScoped<ApplicationDbContextInitialiser>();
+        builder.AddPersistence();
 
         if (builder.Environment.IsDevelopment())
         {

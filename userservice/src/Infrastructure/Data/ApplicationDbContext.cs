@@ -18,6 +18,7 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
     public DbSet<Project> Projects => Set<Project>();
     public DbSet<Ambassador> Ambassadors => Set<Ambassador>();
     public DbSet<AmbassadorImage> AmbassadorImages => Set<AmbassadorImage>();
+    public DbSet<ProjectAsset> ProjectAssets => Set<ProjectAsset>();
     public DbSet<DataProtectionKey> DataProtectionKeys => Set<DataProtectionKey>();
 
     protected override void OnModelCreating(ModelBuilder builder)

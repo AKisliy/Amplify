@@ -1,0 +1,22 @@
+@startuml Final Asset Saving
+
+participant "template-service /\nvideo-editor" as GEN
+participant "media-ingest\n(MinIO)" as MI
+participant "RabbitMQ" as RMQ
+participant "userservice" as US
+participant "publisher" as PUB
+participant "Frontend" as FE
+
+GEN -> MI: upload final video/image
+MI --> GEN: mediaId
+
+GEN -> RMQ: AssetGenerated {mediaId, projectId, userId, type=final}
+RMQ -> US: consume event
+US -> US: CREATE GeneratedAsset (type=final)
+
+note over FE,PUB: Пользователь решает опубликовать
+FE -> PUB: POST /publications {assetId, ...}
+PUB -> PUB: CREATE PublicationRecord {assetId}
+note over PUB: assetId — просто ссылка,\nPUB не владеет ассетом
+
+@enduml

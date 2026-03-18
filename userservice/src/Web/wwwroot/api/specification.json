@@ -510,6 +510,76 @@
         }
       }
     },
+    "/api/project-assets/{id}": {
+      "get": {
+        "tags": [
+          "project-assets"
+        ],
+        "operationId": "GetProjectAssets",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "guid"
+            },
+            "x-position": 1
+          },
+          {
+            "name": "cursor",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date-time",
+              "nullable": true
+            },
+            "x-position": 2
+          },
+          {
+            "name": "pageSize",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 20
+            },
+            "x-position": 3
+          },
+          {
+            "name": "lifetime",
+            "in": "query",
+            "schema": {
+              "default": "Permanent",
+              "oneOf": [
+                {
+                  "$ref": "#/components/schemas/AssetLifetime"
+                }
+              ]
+            },
+            "x-position": 4
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CursorPagedListOfProjectAssetDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "JWT": []
+          }
+        ]
+      }
+    },
     "/api/projects": {
       "post": {
         "tags": [
@@ -783,7 +853,7 @@
         }
       },
       "ImageType": {
-        "type": "integer",
+        "type": "string",
         "description": "",
         "x-enumNames": [
           "Other",
@@ -791,9 +861,9 @@
           "Portrait"
         ],
         "enum": [
-          0,
-          1,
-          2
+          "Other",
+          "FullBody",
+          "Portrait"
         ]
       },
       "AddAmbassadorImageCommand": {
@@ -884,6 +954,48 @@
             "type": "string"
           }
         }
+      },
+      "CursorPagedListOfProjectAssetDto": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ProjectAssetDto"
+            }
+          },
+          "nextCursor": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          }
+        }
+      },
+      "ProjectAssetDto": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "mediaUrl": {
+            "type": "string"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "AssetLifetime": {
+        "type": "string",
+        "description": "",
+        "x-enumNames": [
+          "Intermediate",
+          "Permanent"
+        ],
+        "enum": [
+          "Intermediate",
+          "Permanent"
+        ]
       },
       "CreateProjectCommand": {
         "type": "object",

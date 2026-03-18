@@ -1,0 +1,18 @@
+@startuml Intermediate Asset Saving
+
+participant "template-service" as GEN
+participant "MinIO" as MI
+participant "Frontend" as FE
+participant "userservice" as US
+
+GEN -> MI: upload intermediate photo + TTL (24-72h)
+note over MI: Файл живёт временно,\nметаданные нигде не хранятся
+
+note over FE: Пользователь видит результат шага\nи решает сохранить
+FE -> US: POST /assets/save {mediaId, projectId}
+US -> MI: remove TTL → persist file
+US -> US: CREATE GeneratedAsset (type=intermediate)
+
+note over MI,US: Если пользователь не сохранил —\nфайл удаляется по TTL автоматически
+
+@enduml
