@@ -12,22 +12,25 @@ namespace UserService.Application.Common.Mappings;
 public class ImageUrlResolver(
     IOptions<ExternalUrlsOptions> options,
     ILogger<ImageUrlResolver> logger)
-    : IMemberValueResolver<object, object, Guid?, string?>
+    : IMemberValueResolver<object, object, Guid?, string?>, IMemberValueResolver<object, object, Guid, string>
 {
     public string? Resolve(object source, object destination, Guid? sourceMember, string? destMember, ResolutionContext context)
     {
-        var baseUrl = options.Value.MediaServiceApi;
-
-
         if (sourceMember is not null && sourceMember != Guid.Empty)
-        {
-            logger.LogInformation("Resolving image URL for image ID {ImageId} using base URL {BaseUrl}", sourceMember, baseUrl);
-            return new Url(baseUrl)
-                .AppendPathSegment("media")
-                .AppendPathSegment(sourceMember.ToString())
-                .ToString();
-        }
+            return Resolve(source, destination, sourceMember.Value, destMember ?? string.Empty, context);
 
         return null;
+    }
+
+    public string Resolve(object source, object destination, Guid sourceMember, string destMember, ResolutionContext context)
+    {
+        var baseUrl = options.Value.MediaServiceApi;
+
+        logger.LogDebug("Resolving image URL for MediaId: {MediaId} using base URL: {BaseUrl}", sourceMember, baseUrl);
+
+        return new Url(baseUrl)
+            .AppendPathSegment("media")
+            .AppendPathSegment(sourceMember.ToString())
+            .ToString();
     }
 }
