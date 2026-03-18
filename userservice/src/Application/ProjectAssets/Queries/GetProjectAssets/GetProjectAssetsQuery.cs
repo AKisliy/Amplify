@@ -1,10 +1,15 @@
 using UserService.Application.Common.Interfaces;
 using UserService.Application.Common.Models;
 using UserService.Application.ProjectAssets.Dto;
+using UserService.Domain.Enums;
 
 namespace UserService.Application.ProjectAssets.Queries.GetProjectAssets;
 
-public record GetProjectAssetsQuery(Guid ProjectId, DateTimeOffset? Cursor = null, int PageSize = 20)
+public record GetProjectAssetsQuery(
+    Guid ProjectId,
+    AssetLifetime Lifetime,
+    DateTimeOffset? Cursor = null,
+    int PageSize = 20)
     : IRequest<CursorPagedList<ProjectAssetDto>>;
 
 public class GetProjectAssetsQueryHandler(IApplicationDbContext dbContext, IMapper mapper)
@@ -13,7 +18,7 @@ public class GetProjectAssetsQueryHandler(IApplicationDbContext dbContext, IMapp
     public async Task<CursorPagedList<ProjectAssetDto>> Handle(GetProjectAssetsQuery request, CancellationToken cancellationToken)
     {
         var query = dbContext.ProjectAssets
-            .Where(pa => pa.ProjectId == request.ProjectId);
+            .Where(pa => pa.ProjectId == request.ProjectId && pa.Lifetime == request.Lifetime);
 
         if (request.Cursor.HasValue)
             query = query.Where(pa => pa.Created < request.Cursor.Value);

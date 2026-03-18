@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Http.HttpResults;
 using UserService.Application.Common.Models;
 using UserService.Application.ProjectAssets.Dto;
 using UserService.Application.ProjectAssets.Queries.GetProjectAssets;
+using UserService.Domain.Enums;
 
 namespace UserService.Web.Endpoints;
 
@@ -15,9 +16,18 @@ public class ProjectAssets : EndpointGroupBase
     }
 
     public async Task<Ok<CursorPagedList<ProjectAssetDto>>> GetProjectAssets(
-        ISender sender, Guid id, DateTimeOffset? cursor = null, int pageSize = 20)
+        ISender sender,
+        Guid id,
+        DateTimeOffset? cursor = null,
+        int pageSize = 20,
+        AssetLifetime lifetime = AssetLifetime.Permanent,
+        CancellationToken cancellationToken = default)
     {
-        var result = await sender.Send(new GetProjectAssetsQuery(id, cursor, pageSize));
+        var result = await sender.Send(new GetProjectAssetsQuery(
+            id,
+            lifetime,
+            cursor,
+            pageSize));
         return TypedResults.Ok(result);
     }
 }

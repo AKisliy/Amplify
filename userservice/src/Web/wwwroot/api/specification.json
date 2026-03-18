@@ -546,6 +546,19 @@
               "default": 20
             },
             "x-position": 3
+          },
+          {
+            "name": "lifetime",
+            "in": "query",
+            "schema": {
+              "default": 1,
+              "oneOf": [
+                {
+                  "$ref": "#/components/schemas/AssetLifetime"
+                }
+              ]
+            },
+            "x-position": 4
           }
         ],
         "responses": {
@@ -971,6 +984,18 @@
             "format": "date-time"
           }
         }
+      },
+      "AssetLifetime": {
+        "type": "integer",
+        "description": "",
+        "x-enumNames": [
+          "Intermediate",
+          "Permanent"
+        ],
+        "enum": [
+          0,
+          1
+        ]
       },
       "CreateProjectCommand": {
         "type": "object",
