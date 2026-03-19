@@ -2,7 +2,7 @@
 
 public interface IUser
 {
-    Guid? Id { get; }
-    List<string>? Roles { get; }
+    Guid? Id { get; set; }
+    List<string>? Roles { get; set; }
 
 }

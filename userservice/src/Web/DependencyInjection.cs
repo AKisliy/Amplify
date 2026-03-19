@@ -1,7 +1,5 @@
 ﻿using Azure.Identity;
-using UserService.Application.Common.Interfaces;
 using UserService.Infrastructure.Data;
-using UserService.Web.Services;
 using Microsoft.AspNetCore.Mvc;
 using NSwag;
 using NSwag.Generation.Processors.Security;
@@ -14,8 +12,6 @@ public static class DependencyInjection
     public static void AddWebServices(this IHostApplicationBuilder builder)
     {
         builder.Services.AddDatabaseDeveloperPageExceptionFilter();
-
-        builder.Services.AddScoped<IUser, CurrentUser>();
 
         builder.Services.AddHttpContextAccessor();
         builder.Services.AddHealthChecks()

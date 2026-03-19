@@ -143,6 +143,9 @@ public static class DependencyInjection
             options.KnownNetworks.Clear();
             options.KnownProxies.Clear();
         });
+
+        builder.Services.AddScoped<IUser, UserContext>();
+        builder.Services.AddScoped<UserContext>();
     }
 
     private static void AddMailSender(this IHostApplicationBuilder builder)
