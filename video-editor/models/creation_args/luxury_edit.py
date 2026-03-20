@@ -1,8 +1,10 @@
 import os
+from typing import Literal
 from pydantic import BaseModel, Field
 
 
 class LuxuryEditArgs(BaseModel):
+    format_type: Literal["luxury-edit"]
     fragments_path: list[str] = Field(alias="fragments_path")
     audio_path: str = Field(alias="audio_path")
     scene_changes: list[float] = Field(alias="scene_changes")
@@ -12,6 +14,7 @@ class LuxuryEditArgs(BaseModel):
 
     def with_absolute_paths(self, base_path: str) -> 'LuxuryEditArgs':
         return LuxuryEditArgs(
+            format_type=self.format_type,
             fragments_path=[os.path.join(base_path, p) for p in self.fragments_path],
             audio_path=os.path.join(base_path, self.audio_path),
             scene_changes=self.scene_changes,

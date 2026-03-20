@@ -1,0 +1,53 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "video-editor.fullname" . }}-worker
+  labels:
+    {{- include "video-editor.labels" . | nindent 4 }}
+    app.kubernetes.io/component: worker
+spec:
+  replicas: {{ .Values.worker.replicaCount }}
+  selector:
+    matchLabels:
+      {{- include "video-editor.selectorLabels" . | nindent 6 }}
+      app.kubernetes.io/component: worker
+  template:
+    metadata:
+      labels:
+        {{- include "video-editor.labels" . | nindent 8 }}
+        app.kubernetes.io/component: worker
+    spec:
+      serviceAccountName: {{ include "video-editor.serviceAccountName" . }}
+      containers:
+        - name: {{ .Chart.Name }}-worker
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          command:
+            - celery
+            - -A
+            - celery_app
+            - worker
+            - --concurrency={{ .Values.worker.concurrency }}
+            - --loglevel=info
+          {{- with .Values.worker.resources }}
+          resources:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          env:
+            - name: PYTHONUNBUFFERED
+              value: "1"
+            - name: PYTHONPATH
+              value: "/app"
+            - name: MINIO_HOST
+              value: "{{ .Values.minio.host }}"
+            - name: MINIO_BUCKET
+              value: "{{ .Values.minio.bucket }}"
+            - name: MINIO_USE_SSL
+              value: "{{ .Values.minio.useSsl }}"
+            - name: MINIO_LOCATION
+              value: "{{ .Values.minio.location }}"
+            - name: MEDIA_SAVING_PATH
+              value: "{{ .Values.worker.mediaSavingPath }}"
+          envFrom:
+            - secretRef:
+                name: {{ .Values.secret.name }}
