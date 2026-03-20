@@ -1,5 +1,13 @@
 from . import _io_public as io
+from comfy_api.internal import ComfyAPIBase
 from abc import ABC, abstractmethod
+
+class ComfyAPI_latest(ComfyAPIBase):
+    VERSION = "latest"
+    STABLE = False
+
+    def __init__(self):
+        super().__init__()
 
 class ComfyExtension(ABC):
     async def on_load(self) -> None:
@@ -14,10 +22,13 @@ class ComfyExtension(ABC):
         Returns a list of nodes that this extension provides.
         """
 
+ComfyAPI = ComfyAPI_latest
+
 IO = io
 
 __all__ = [
-    "io",
+    "ComfyAPI",
+    "io",   
     "IO",
     "ComfyExtension",
 ]

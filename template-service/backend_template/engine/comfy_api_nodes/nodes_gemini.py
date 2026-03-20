@@ -624,6 +624,6 @@ class GeminiExtension(ComfyExtension):
         ]
 
 
-async def comfy_entrypoint() -> VeoExtension:
-    return VeoExtension()
+async def comfy_entrypoint() -> GeminiExtension:
+    return GeminiExtension()
     

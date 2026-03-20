@@ -1,36 +1,79 @@
+import os
+import folder_paths
+from app.logger import setup_logger
+import logging
+import sys
+
+from config import engine_config
+
+setup_logger(log_level=engine_config.log_level)
+
+# Main code
 import asyncio
-from comfy_api_nodes.nodes_gemini import GeminiImageNode, GeminiImage2Node, GeminiNode
-from comfy_api_nodes.nodes_veo2 import VeoVideoGenerationNode, Veo3FirstLastFrameNode
-from comfy_api_nodes.util.client import sync_op
-from comfy_api_nodes.util import ApiEndpoint
-from comfy_api_nodes.apis.gemini import GeminiPart, GeminiInlineData, GeminiImageGenerateContentRequest, GeminiContent
-from comfy_api.latest import IO
-from config import gemini_config, media_ingest_config
-import base64
-import uuid
-import io
-from comfy_api_nodes.util import get_vertex_ai_access_token, fetch_media_uri_from_ingest, register_media_uri_with_ingest
+import shutil
 
-async def main():
-    # Test register_media_uri_with_ingest
-    # media_id = await register_media_uri_with_ingest(VeoVideoGenerationNode, "gs://amplify-media-test/5519547473301993309/sample_0.mp4", "video/mp4")
-    # print(media_id)
+import server
+import nodes
+import app.logger
 
-    response = await Veo3FirstLastFrameNode.execute(
-        prompt="generate a video of a lambo urus", 
-        model="veo-3.1-fast-generate",
-        resolution="1080p",
-        first_frame_uuid="019cdcf2-7327-7577-9061-2074fb03797b",
-        last_frame_uuid="019cdcf2-f636-7275-aee2-8037ac70b564",
-        negative_prompt="",
-        aspect_ratio="9:16",
-        duration=4,
-        seed=0,
-        generate_audio=True,
-    )   
-    # # The output format depends on NodeOutput, typically indexable or with dictionary keys.
-    print(response.result)
-    print(response[0])
+
+async def run(server_instance, address='', port=8188, verbose=True, call_on_start=None):
+    addresses = []
+    for addr in address.split(","):
+        addresses.append((addr, port))
+    await server_instance.start_multi_address(addresses, call_on_start, verbose)
+    await asyncio.Event().wait()
+    # await asyncio.gather(
+    #     server_instance.start_multi_address(addresses, call_on_start, verbose), server_instance.publish_loop()
+    # )
+
+def cleanup_temp():
+    temp_dir = folder_paths.get_temp_directory()
+    if os.path.exists(temp_dir):
+        shutil.rmtree(temp_dir, ignore_errors=True)
+
+def start_comfyui(asyncio_loop=None):
+    """
+    Starts the ComfyUI server using the provided asyncio event loop or creates a new one.
+    Returns the event loop, server instance, and a function to start the server asynchronously.
+    """
+    if engine_config.temp_directory:
+        temp_dir = os.path.join(os.path.abspath(engine_config.temp_directory), "temp")
+        logging.info(f"Setting temp directory to: {temp_dir}")
+        folder_paths.set_temp_directory(temp_dir)
+    cleanup_temp()
+
+    if not asyncio_loop:
+        asyncio_loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(asyncio_loop)
+    prompt_server = server.PromptServer(asyncio_loop)
+
+    asyncio_loop.run_until_complete(nodes.init_extra_nodes())
+
+    prompt_server.add_routes()
+
+    os.makedirs(folder_paths.get_temp_directory(), exist_ok=True)
+
+    async def start_all():
+        await prompt_server.setup()
+        await run(prompt_server, address=engine_config.listen, port=engine_config.port, verbose=engine_config.verbose, call_on_start=None)
+ 
+    # Returning these so that other code can integrate with the ComfyUI loop and server
+    return asyncio_loop, prompt_server, start_all
+
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    # Running directly, just start ComfyUI.
+    logging.info("Python version: {}".format(sys.version))
+
+    if sys.version_info.major == 3 and sys.version_info.minor < 10:
+        logging.warning("WARNING: You are using a python version older than 3.10, please upgrade to a newer one. 3.12 and above is recommended.")
+
+    event_loop, _, start_all_func = start_comfyui()
+    try:
+        x = start_all_func()
+        event_loop.run_until_complete(x)
+    except KeyboardInterrupt:
+        logging.info("\nStopped server")
+
+    cleanup_temp()
