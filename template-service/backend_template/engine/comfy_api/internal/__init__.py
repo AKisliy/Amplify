@@ -1,3 +1,9 @@
+from .api_registry import (
+    ComfyAPIBase as ComfyAPIBase,
+    ComfyAPIWithVersion as ComfyAPIWithVersion,
+    register_versions as register_versions,
+    get_all_versions as get_all_versions,
+)
 
 from typing import Callable, Optional
 
@@ -24,6 +30,14 @@ def first_real_override(cls: type, name: str, *, base: type=None) -> Optional[Ca
             if func is not base_func:         # real override
                 return getattr(cls, name)     # bound to *cls*
     return None
+
+class _ComfyNodeInternal:
+    """Class that all V3-based APIs inherit from for ComfyNode.
+
+    This is intended to only be referenced within execution.py, as it has to handle all V3 APIs going forward."""
+    @classmethod
+    def GET_NODE_INFO_V1(cls):
+        ...
 
 class _NodeOutputInternal:
     """Class that all V3-based APIs inherit from for NodeOutput.

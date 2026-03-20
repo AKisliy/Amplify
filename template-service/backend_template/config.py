@@ -11,6 +11,9 @@ class Config(BaseSettings):
     description: str = "Generative AI Workflow Template Management"
     environment: str = "development"
 
+    # Engine Settings
+    engine_base_url: str = "http://localhost:8188"
+
     # Database Settings
     postgres_dsn: str
     postgres_echo: bool = False

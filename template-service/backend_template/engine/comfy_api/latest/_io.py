@@ -1,12 +1,14 @@
+from __future__ import annotations
+import copy
 import inspect
 from abc import ABC, abstractmethod
 from collections import Counter
 from dataclasses import asdict, dataclass, field
 from enum import Enum
-from typing import Any, TypeVar, TypedDict, Literal
-from typing import final
+from typing import Any, TypeVar, TypedDict, Literal, Callable
+from typing_extensions import final
 
-from comfy_api.internal import (copy_class, prune_dict, _NodeOutputInternal, is_class, shallow_clone_class, first_real_override, classproperty, ExecutionBlocker)
+from comfy_api.internal import (copy_class, prune_dict, _NodeOutputInternal, is_class, shallow_clone_class, first_real_override, classproperty, ExecutionBlocker, _ComfyNodeInternal)
 
 
 class RemoteOptions:
@@ -138,9 +140,10 @@ class WidgetInput(Input):
     '''
     Base class for a V3 Input with widget.
     '''
-    def __init__(self, id: str, display_name: str=None, optional=False, tooltip: str=None, default: Any=None,
-                 socketless: bool=None, widget_type: str=None, force_input: bool=None, extra_dict=None, advanced: bool=None):
-        super().__init__(id, display_name, optional, tooltip, extra_dict, advanced)
+    def __init__(self, id: str, display_name: str=None, optional=False, tooltip: str=None, lazy: bool=None,
+                 default: Any=None, socketless: bool=None, widget_type: str=None, force_input: bool=None,
+                 extra_dict=None, raw_link: bool=None, advanced: bool=None):
+        super().__init__(id, display_name, optional, tooltip, lazy, extra_dict, raw_link, advanced)
         self.default = default
         self.socketless = socketless
         self.widget_type = widget_type
@@ -159,16 +162,18 @@ class WidgetInput(Input):
 
 
 class Output(_IO_V3):
-    def __init__(self, id: str=None, display_name: str=None, tooltip: str=None):
+    def __init__(self, id: str=None, display_name: str=None, tooltip: str=None, is_output_list: bool=False):
         self.id = id
         self.display_name = display_name if display_name else id
         self.tooltip = tooltip
+        self.is_output_list = is_output_list
 
     def as_dict(self):
         display_name = self.display_name if self.display_name else self.id
         return prune_dict({
             "display_name": display_name,
             "tooltip": self.tooltip,
+            "is_output_list": self.is_output_list,
         })
 
     def get_io_type(self):
@@ -193,7 +198,7 @@ class Boolean(ComfyTypeIO):
         '''Boolean input.'''
         def __init__(self, id: str, display_name: str=None, optional=False, tooltip: str=None, default: bool=None, label_on: str=None, label_off: str=None,
                     socketless: bool=None, force_input: bool=None, extra_dict=None, advanced: bool=None):
-            super().__init__(id, display_name, optional, tooltip, default, socketless, None, force_input, extra_dict, advanced)
+            super().__init__(id, display_name, optional, tooltip, None, default, socketless, None, force_input, extra_dict, None, advanced)
             self.label_on = label_on
             self.label_off = label_off
             self.default: bool
@@ -213,7 +218,7 @@ class Int(ComfyTypeIO):
         def __init__(self, id: str, display_name: str=None, optional=False, tooltip: str=None,
                     default: int=None, min: int=None, max: int=None, step: int=None, control_after_generate: bool=None,
                     display_mode: NumberDisplay=None, socketless: bool=None, force_input: bool=None, extra_dict=None, advanced: bool=None):
-            super().__init__(id, display_name, optional, tooltip, default, socketless, None, force_input, extra_dict, advanced)
+            super().__init__(id, display_name, optional, tooltip, None, default, socketless, None, force_input, extra_dict, None, advanced)
             self.min = min
             self.max = max
             self.step = step
@@ -265,7 +270,7 @@ class String(ComfyTypeIO):
         def __init__(self, id: str, display_name: str=None, optional=False, tooltip: str=None,
                     multiline=False, placeholder: str=None, default: str=None, dynamic_prompts: bool=None,
                     socketless: bool=None, force_input: bool=None, extra_dict=None, advanced: bool=None):
-            super().__init__(id, display_name, optional, tooltip, default, socketless, None, force_input, extra_dict, advanced)
+            super().__init__(id, display_name, optional, tooltip, None, default, socketless, None, force_input, extra_dict, None, advanced)
             self.multiline = multiline
             self.placeholder = placeholder
             self.dynamic_prompts = dynamic_prompts
@@ -301,7 +306,7 @@ class Combo(ComfyTypeIO):
                 options = [v.value for v in options]
             if isinstance(default, Enum):
                 default = default.value
-            super().__init__(id, display_name, optional, tooltip, default, socketless, None, None, extra_dict, advanced)
+            super().__init__(id, display_name, optional, tooltip, None, default, socketless, None, None, extra_dict, None, advanced)
             self.multiselect = False
             self.options = options
             self.remote = remote
@@ -311,8 +316,6 @@ class Combo(ComfyTypeIO):
             return super().as_dict() | prune_dict({
                 "multiselect": self.multiselect,
                 "options": self.options,
-                **({self.upload.value: True} if self.upload is not None else {}),
-                "image_folder": self.image_folder.value if self.image_folder else None,
                 "remote": self.remote.as_dict() if self.remote else None,
             })
 
@@ -324,7 +327,186 @@ class Combo(ComfyTypeIO):
 @comfytype(io_type="IMAGE")
 class Image(ComfyTypeIO):
     Type = str
+
+class DynamicInput(Input, ABC):
+    '''
+    Abstract class for dynamic input registration.
+    '''
+    pass
+
+
+class DynamicOutput(Output, ABC):
+    '''
+    Abstract class for dynamic output registration.
+    '''
+    pass
+
+def handle_prefix(prefix_list: list[str] | None, id: str | None = None) -> list[str]:
+    if prefix_list is None:
+        prefix_list = []
+    if id is not None:
+        prefix_list = prefix_list + [id]
+    return prefix_list
+
+def finalize_prefix(prefix_list: list[str] | None, id: str | None = None) -> str:
+    assert not (prefix_list is None and id is None)
+    if prefix_list is None:
+        return id
+    elif id is not None:
+        prefix_list = prefix_list + [id]
+    return ".".join(prefix_list)
+
+@comfytype(io_type="COMFY_AUTOGROW_V3")
+class Autogrow(ComfyTypeI):
+    Type = dict[str, Any]
+    _MaxNames = 100  # NOTE: max 100 names for sanity
+
+    class _AutogrowTemplate:
+        def __init__(self, input: Input):
+            # dynamic inputs are not allowed as the template input
+            assert(not isinstance(input, DynamicInput))
+            self.input = copy.copy(input)
+            if isinstance(self.input, WidgetInput):
+                self.input.force_input = True
+            self.names: list[str] = []
+            self.cached_inputs = {}
+
+        def _create_input(self, input: Input, name: str):
+            new_input = copy.copy(self.input)
+            new_input.id = name
+            return new_input
+
+        def _create_cached_inputs(self):
+            for name in self.names:
+                self.cached_inputs[name] = self._create_input(self.input, name)
+
+        def get_all(self) -> list[Input]:
+            return list(self.cached_inputs.values())
+
+        def as_dict(self):
+            return prune_dict({
+                "input": create_input_dict_v1([self.input]),
+            })
+
+        def validate(self):
+            self.input.validate()
+
+    class TemplatePrefix(_AutogrowTemplate):
+        def __init__(self, input: Input, prefix: str, min: int=1, max: int=10):
+            super().__init__(input)
+            self.prefix = prefix
+            assert(min >= 0)
+            assert(max >= 1)
+            assert(max <= Autogrow._MaxNames)
+            self.min = min
+            self.max = max
+            self.names = [f"{self.prefix}{i}" for i in range(self.max)]
+            self._create_cached_inputs()
+
+        def as_dict(self):
+            return super().as_dict() | prune_dict({
+                "prefix": self.prefix,
+                "min": self.min,
+                "max": self.max,
+            })
+
+    class TemplateNames(_AutogrowTemplate):
+        def __init__(self, input: Input, names: list[str], min: int=1):
+            super().__init__(input)
+            self.names = names[:Autogrow._MaxNames]
+            assert(min >= 0)
+            self.min = min
+            self._create_cached_inputs()
+
+        def as_dict(self):
+            return super().as_dict() | prune_dict({
+                "names": self.names,
+                "min": self.min,
+            })
+
+    class Input(DynamicInput):
+        def __init__(self, id: str, template: Autogrow.TemplatePrefix | Autogrow.TemplateNames,
+                     display_name: str=None, optional=False, tooltip: str=None, lazy: bool=None, extra_dict=None):
+            super().__init__(id, display_name, optional, tooltip, lazy, extra_dict)
+            self.template = template
+
+        def as_dict(self):
+            return super().as_dict() | prune_dict({
+                "template": self.template.as_dict(),
+            })
+
+        def get_all(self) -> list[Input]:
+            return [self] + self.template.get_all()
+
+        def validate(self):
+            self.template.validate()
+
+    @staticmethod
+    def _expand_schema_for_dynamic(out_dict: dict[str, Any], live_inputs: dict[str, Any], value: tuple[str, dict[str, Any]], input_type: str, curr_prefix: list[str] | None):
+        # NOTE: purposely do not include self in out_dict; instead use only the template inputs
+        # need to figure out names based on template type
+        is_names = ("names" in value[1]["template"])
+        is_prefix = ("prefix" in value[1]["template"])
+        input = value[1]["template"]["input"]
+        if is_names:
+            min = value[1]["template"]["min"]
+            names = value[1]["template"]["names"]
+            max = len(names)
+        elif is_prefix:
+            prefix = value[1]["template"]["prefix"]
+            min = value[1]["template"]["min"]
+            max = value[1]["template"]["max"]
+            names = [f"{prefix}{i}" for i in range(max)]
+        # need to create a new input based on the contents of input
+        template_input = None
+        template_required = True
+        for _input_type, dict_input in input.items():
+            # for now, get just the first value from dict_input; if not required, min can be ignored
+            if len(dict_input) == 0:
+                continue
+            template_input = list(dict_input.values())[0]
+            template_required = _input_type == "required"
+            break
+        if template_input is None:
+            raise Exception("template_input could not be determined from required or optional; this should never happen.")
+        new_dict = {}
+        new_dict_added_to = False
+        # first, add possible inputs into out_dict
+        for i, name in enumerate(names):
+            expected_id = finalize_prefix(curr_prefix, name)
+            # required
+            if i < min and template_required:
+                out_dict["required"][expected_id] = template_input
+                type_dict = new_dict.setdefault("required", {})
+            # optional
+            else:
+                out_dict["optional"][expected_id] = template_input
+                type_dict = new_dict.setdefault("optional", {})
+            if expected_id in live_inputs:
+                # NOTE: prefix gets added in parse_class_inputs
+                type_dict[name] = template_input
+                new_dict_added_to = True
+        # account for the edge case that all inputs are optional and no values are received
+        if not new_dict_added_to:
+            finalized_prefix = finalize_prefix(curr_prefix)
+            out_dict["dynamic_paths"][finalized_prefix] = finalized_prefix
+            out_dict["dynamic_paths_default_value"][finalized_prefix] = DynamicPathsDefaultValue.EMPTY_DICT
+        parse_class_inputs(out_dict, live_inputs, new_dict, curr_prefix)
+
+DYNAMIC_INPUT_LOOKUP: dict[str, Callable[[dict[str, Any], dict[str, Any], tuple[str, dict[str, Any]], str, list[str] | None], None]] = {}
+def register_dynamic_input_func(io_type: str, func: Callable[[dict[str, Any], dict[str, Any], tuple[str, dict[str, Any]], str, list[str] | None], None]):
+    DYNAMIC_INPUT_LOOKUP[io_type] = func
+
+def get_dynamic_input_func(io_type: str) -> Callable[[dict[str, Any], dict[str, Any], tuple[str, dict[str, Any]], str, list[str] | None], None]:
+    return DYNAMIC_INPUT_LOOKUP[io_type]
+
+def setup_dynamic_input_funcs():
+    # Autogrow.Input
+    register_dynamic_input_func(Autogrow.io_type, Autogrow._expand_schema_for_dynamic)
     
+if len(DYNAMIC_INPUT_LOOKUP) == 0:
+    setup_dynamic_input_funcs()
+
 class V3Data(TypedDict):
     hidden_inputs: dict[str, Any]
     'Dictionary where the keys are the hidden input ids and the values are the values of the hidden inputs.'
@@ -363,6 +545,30 @@ class Hidden(str, Enum):
     """UNIQUE_ID is the unique identifier of the node, and matches the id property of the node on the client side. It is commonly used in client-server communications (see messages)."""
     prompt = "PROMPT"
     """PROMPT is the complete prompt sent by the client to the server. See the prompt object for a full description."""
+
+@dataclass
+class NodeInfoV1:
+    input: dict=None
+    input_order: dict[str, list[str]]=None
+    is_input_list: bool=None
+    output: list[str]=None
+    output_is_list: list[bool]=None
+    output_name: list[str]=None
+    output_tooltips: list[str]=None
+    output_matchtypes: list[str]=None
+    name: str=None
+    display_name: str=None
+    description: str=None
+    python_module: Any=None
+    category: str=None
+    output_node: bool=None
+    deprecated: bool=None
+    experimental: bool=None
+    dev_only: bool=None
+    api_node: bool=None
+    price_badge: dict | None = None
+    search_aliases: list[str]=None
+    essentials_category: str=None
 
 @dataclass
 class NodeInfoV3:
@@ -440,10 +646,18 @@ class Schema:
     outputs: list[Output] = field(default_factory=list)
     hidden: list[Hidden] = field(default_factory=list)
     description: str=""
+    search_aliases: list[str] = field(default_factory=list)
+    is_input_list: bool = False
     is_output_node: bool=False
-
+    is_deprecated: bool=False
+    is_experimental: bool=False
+    is_dev_only: bool=False
     is_api_node: bool=False
     price_badge: PriceBadge | None = None
+    not_idempotent: bool=False
+    enable_expand: bool=False
+    accept_all_inputs: bool=False
+    essentials_category: str | None = None
 
     def validate(self):
         '''Validate the schema:
@@ -496,6 +710,61 @@ class Schema:
             if output.id is None:
                 output.id = f"_{i}_{output.io_type}_"
 
+    def get_v1_info(self, cls) -> NodeInfoV1:
+        # get V1 inputs
+        input = create_input_dict_v1(self.inputs)
+        if self.hidden:
+            for hidden in self.hidden:
+                input.setdefault("hidden", {})[hidden.name] = (hidden.value,)
+        # create separate lists from output fields
+        output = []
+        output_is_list = []
+        output_name = []
+        output_tooltips = []
+        output_matchtypes = []
+        any_matchtypes = False
+        if self.outputs:
+            for o in self.outputs:
+                output.append(o.io_type)
+                output_is_list.append(o.is_output_list)
+                output_name.append(o.display_name if o.display_name else o.io_type)
+                output_tooltips.append(o.tooltip if o.tooltip else None)
+                # # special handling for MatchType
+                # if isinstance(o, MatchType.Output):
+                #     output_matchtypes.append(o.template.template_id)
+                #     any_matchtypes = True
+                # else:
+                #     output_matchtypes.append(None)
+
+        # clear out lists that are all None
+        if not any_matchtypes:
+            output_matchtypes = None
+
+        info = NodeInfoV1(
+            input=input,
+            input_order={key: list(value.keys()) for (key, value) in input.items()},
+            is_input_list=self.is_input_list,
+            output=output,
+            output_is_list=output_is_list,
+            output_name=output_name,
+            output_tooltips=output_tooltips,
+            output_matchtypes=output_matchtypes,
+            name=self.node_id,
+            display_name=self.display_name,
+            category=self.category,
+            description=self.description,
+            output_node=self.is_output_node,
+            deprecated=self.is_deprecated,
+            experimental=self.is_experimental,
+            dev_only=self.is_dev_only,
+            api_node=self.is_api_node,
+            python_module=getattr(cls, "RELATIVE_PYTHON_MODULE", "nodes"),
+            price_badge=self.price_badge.as_dict(self.inputs) if self.price_badge is not None else None,
+            search_aliases=self.search_aliases if self.search_aliases else None,
+            essentials_category=self.essentials_category,
+        )
+        return info
+
     def get_v3_info(self) -> NodeInfoV3:
         input_dict = {}
         output_dict = {}
@@ -524,13 +793,45 @@ class Schema:
             price_badge=self.price_badge.as_dict(self.inputs) if self.price_badge is not None else None,
         )
         return info 
-    
+
+def parse_class_inputs(out_dict: dict[str, Any], live_inputs: dict[str, Any], curr_dict: dict[str, Any], curr_prefix: list[str] | None=None) -> None:
+    for input_type, inner_d in curr_dict.items():
+        for id, value in inner_d.items():
+            io_type = value[0]
+            if io_type in DYNAMIC_INPUT_LOOKUP:
+                # dynamic inputs need to be handled with lookup functions
+                dynamic_input_func = get_dynamic_input_func(io_type)
+                new_prefix = handle_prefix(curr_prefix, id)
+                dynamic_input_func(out_dict, live_inputs, value, input_type, new_prefix)
+            else:
+                # non-dynamic inputs get directly transferred
+                finalized_id = finalize_prefix(curr_prefix, id)
+                out_dict[input_type][finalized_id] = value
+                if curr_prefix:
+                    out_dict["dynamic_paths"][finalized_id] = finalized_id
+
+def create_input_dict_v1(inputs: list[Input]) -> dict:
+    input = {
+        "required": {}
+    }
+    for i in inputs:
+        add_to_dict_v1(i, input)
+    return input
+
+def add_to_dict_v1(i: Input, d: dict):
+    key = "optional" if i.optional else "required"
+    as_dict = i.as_dict()
+    # for v1, we don't want to include the optional key
+    as_dict.pop("optional", None)
+    d.setdefault(key, {})[i.id] = (i.get_io_type(), as_dict)
+
 def add_to_dict_v3(io: Input | Output, d: dict):
     d[io.id] = (io.get_io_type(), io.as_dict())           
 
-class _ComfyNodeBaseInternal():
+class _ComfyNodeBaseInternal(_ComfyNodeInternal):
     """Common base class for storing internal methods and properties; DO NOT USE for defining nodes."""
 
+    RELATIVE_PYTHON_MODULE = None
     SCHEMA = None
 
     # filled in during execution
@@ -623,13 +924,135 @@ class _ComfyNodeBaseInternal():
         type_clone.hidden = HiddenHolder.from_v3_data(v3_data)
         return type_clone
 
+    #############################################
+    # V1 Backwards Compatibility code
+    #--------------------------------------------
     @final
     @classmethod
-    def GET_NODE_INFO_V3(cls) -> dict[str, Any]:
+    def GET_NODE_INFO_V1(cls) -> dict[str, Any]:
         schema = cls.GET_SCHEMA()
-        info = schema.get_v3_info(cls)
+        info = schema.get_v1_info(cls)
         return asdict(info)
-    
+
+    _DESCRIPTION = None
+    @final
+    @classproperty
+    def DESCRIPTION(cls):  # noqa
+        if cls._DESCRIPTION is None:
+            cls.GET_SCHEMA()
+        return cls._DESCRIPTION
+
+    _CATEGORY = None
+    @final
+    @classproperty
+    def CATEGORY(cls):  # noqa
+        if cls._CATEGORY is None:
+            cls.GET_SCHEMA()
+        return cls._CATEGORY
+
+    _EXPERIMENTAL = None
+    @final
+    @classproperty
+    def EXPERIMENTAL(cls):  # noqa
+        if cls._EXPERIMENTAL is None:
+            cls.GET_SCHEMA()
+        return cls._EXPERIMENTAL
+
+    _DEPRECATED = None
+    @final
+    @classproperty
+    def DEPRECATED(cls):  # noqa
+        if cls._DEPRECATED is None:
+            cls.GET_SCHEMA()
+        return cls._DEPRECATED
+
+    _DEV_ONLY = None
+    @final
+    @classproperty
+    def DEV_ONLY(cls):  # noqa
+        if cls._DEV_ONLY is None:
+            cls.GET_SCHEMA()
+        return cls._DEV_ONLY
+
+    _API_NODE = None
+    @final
+    @classproperty
+    def API_NODE(cls):  # noqa
+        if cls._API_NODE is None:
+            cls.GET_SCHEMA()
+        return cls._API_NODE
+
+    _OUTPUT_NODE = None
+    @final
+    @classproperty
+    def OUTPUT_NODE(cls):  # noqa
+        if cls._OUTPUT_NODE is None:
+            cls.GET_SCHEMA()
+        return cls._OUTPUT_NODE
+
+    _INPUT_IS_LIST = None
+    @final
+    @classproperty
+    def INPUT_IS_LIST(cls):  # noqa
+        if cls._INPUT_IS_LIST is None:
+            cls.GET_SCHEMA()
+        return cls._INPUT_IS_LIST
+    _OUTPUT_IS_LIST = None
+
+    @final
+    @classproperty
+    def OUTPUT_IS_LIST(cls):  # noqa
+        if cls._OUTPUT_IS_LIST is None:
+            cls.GET_SCHEMA()
+        return cls._OUTPUT_IS_LIST
+
+    _RETURN_TYPES = None
+    @final
+    @classproperty
+    def RETURN_TYPES(cls):  # noqa
+        if cls._RETURN_TYPES is None:
+            cls.GET_SCHEMA()
+        return cls._RETURN_TYPES
+
+    _RETURN_NAMES = None
+    @final
+    @classproperty
+    def RETURN_NAMES(cls):  # noqa
+        if cls._RETURN_NAMES is None:
+            cls.GET_SCHEMA()
+        return cls._RETURN_NAMES
+
+    _OUTPUT_TOOLTIPS = None
+    @final
+    @classproperty
+    def OUTPUT_TOOLTIPS(cls):  # noqa
+        if cls._OUTPUT_TOOLTIPS is None:
+            cls.GET_SCHEMA()
+        return cls._OUTPUT_TOOLTIPS
+
+    _NOT_IDEMPOTENT = None
+    @final
+    @classproperty
+    def NOT_IDEMPOTENT(cls):  # noqa
+        if cls._NOT_IDEMPOTENT is None:
+            cls.GET_SCHEMA()
+        return cls._NOT_IDEMPOTENT
+
+    _ACCEPT_ALL_INPUTS = None
+    @final
+    @classproperty
+    def ACCEPT_ALL_INPUTS(cls):  # noqa
+        if cls._ACCEPT_ALL_INPUTS is None:
+            cls.GET_SCHEMA()
+        return cls._ACCEPT_ALL_INPUTS
+
+    @final
+    @classmethod
+    def INPUT_TYPES(cls) -> dict[str, dict]:
+        schema = cls.FINALIZE_SCHEMA()
+        info = schema.get_v1_info(cls)
+        return info.input
+
     @final
     @classmethod
     def FINALIZE_SCHEMA(cls):
@@ -637,7 +1060,7 @@ class _ComfyNodeBaseInternal():
         schema = cls.define_schema()
         schema.finalize()
         return schema
-    
+
     @final
     @classmethod
     def GET_SCHEMA(cls) -> Schema:
@@ -645,9 +1068,47 @@ class _ComfyNodeBaseInternal():
         cls.VALIDATE_CLASS()
         schema = cls.FINALIZE_SCHEMA()
         schema.validate()
-        
+        if cls._DESCRIPTION is None:
+            cls._DESCRIPTION = schema.description
+        if cls._CATEGORY is None:
+            cls._CATEGORY = schema.category
+        if cls._EXPERIMENTAL is None:
+            cls._EXPERIMENTAL = schema.is_experimental
+        if cls._DEPRECATED is None:
+            cls._DEPRECATED = schema.is_deprecated
+        if cls._DEV_ONLY is None:
+            cls._DEV_ONLY = schema.is_dev_only
+        if cls._API_NODE is None:
+            cls._API_NODE = schema.is_api_node
+        if cls._OUTPUT_NODE is None:
+            cls._OUTPUT_NODE = schema.is_output_node
+        if cls._INPUT_IS_LIST is None:
+            cls._INPUT_IS_LIST = schema.is_input_list
+        if cls._NOT_IDEMPOTENT is None:
+            cls._NOT_IDEMPOTENT = schema.not_idempotent
+        if cls._ACCEPT_ALL_INPUTS is None:
+            cls._ACCEPT_ALL_INPUTS = schema.accept_all_inputs
+
+        if cls._RETURN_TYPES is None:
+            output = []
+            output_name = []
+            output_is_list = []
+            output_tooltips = []
+            if schema.outputs:
+                for o in schema.outputs:
+                    output.append(o.io_type)
+                    output_name.append(o.display_name if o.display_name else o.io_type)
+                    output_is_list.append(o.is_output_list)
+                    output_tooltips.append(o.tooltip if o.tooltip else None)
+
+            cls._RETURN_TYPES = output
+            cls._RETURN_NAMES = output_name
+            cls._OUTPUT_IS_LIST = output_is_list
+            cls._OUTPUT_TOOLTIPS = output_tooltips
         cls.SCHEMA = schema
         return schema
+    #--------------------------------------------
+    #############################################
 
 class ComfyNode(_ComfyNodeBaseInternal):
     """Common base class for all V3 nodes."""
