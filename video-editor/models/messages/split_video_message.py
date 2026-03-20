@@ -1,6 +1,5 @@
-from typing import List
-from pydantic import BaseModel, Field
+from models.broker_model import BrokerModel
 
 
-class SplitVideoMessage(BaseModel):
-    video_path: str = Field(alias="video_path")
+class SplitVideoMessage(BrokerModel):
+    video_path: str

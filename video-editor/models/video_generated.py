@@ -1,7 +1,8 @@
-from pydantic import BaseModel, Field
+from models.broker_model import BrokerModel
 
-class VideoGenerated(BaseModel):
-    video_id: str = Field(alias="video_id")
-    status: str = Field(alias="status")
-    output_path: str = Field("output_path")
-    error: str = Field("error")
+
+class VideoGenerated(BrokerModel):
+    video_id: str
+    status: str
+    output_path: str
+    error: str

@@ -1,5 +1,5 @@
-from pydantic import BaseModel, Field
+from models.broker_model import BrokerModel
 
 
-class ProcesedFileResponse(BaseModel):
-    processed_file_path : str = Field(alias="processed_file_path")
+class ProcesedFileResponse(BrokerModel):
+    processed_file_path: str

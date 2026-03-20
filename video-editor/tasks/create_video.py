@@ -52,8 +52,8 @@ def create_video(self, payload: dict) -> dict:
         output_path=output_path,
         error="",
     )
-    _publish(result.model_dump(), RESPONSE_EXCHANGE_NAME, broker_url)
-    return result.model_dump()
+    _publish(result.model_dump(by_alias=True), RESPONSE_EXCHANGE_NAME, broker_url)
+    return result.model_dump(by_alias=True)
 
 
 def _make_progress_callback(message: BaseCreateVideoMessage, broker_url: str):
@@ -66,7 +66,7 @@ def _make_progress_callback(message: BaseCreateVideoMessage, broker_url: str):
             status=status,
             error=error,
         )
-        _publish(event.model_dump(), PROGRESS_EXCHANGE_NAME, broker_url)
+        _publish(event.model_dump(by_alias=True), PROGRESS_EXCHANGE_NAME, broker_url)
 
     return callback
 

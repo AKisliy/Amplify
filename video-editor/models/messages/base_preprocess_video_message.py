@@ -1,7 +1,7 @@
-from pydantic import BaseModel, Field
+from models.broker_model import BrokerModel
 from models.enum.file_type import FileType
 
 
-class BasePrepocessVideoMessage(BaseModel):
-    file_path: str = Field(alias="file_path")
-    file_type: FileType = Field(alias="file_type")
+class BasePrepocessVideoMessage(BrokerModel):
+    file_path: str
+    file_type: FileType

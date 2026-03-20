@@ -1,5 +1,5 @@
-from pydantic import BaseModel, Field
+from models.broker_model import BrokerModel
 
 
-class CalculateVideoHashMessage(BaseModel):
-    video_path: str = Field(alias = "video_path")
+class CalculateVideoHashMessage(BrokerModel):
+    video_path: str

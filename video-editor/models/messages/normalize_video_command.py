@@ -1,9 +1,7 @@
 from uuid import UUID
-from pydantic import BaseModel, Field
+from models.broker_model import BrokerModel
 
 
-class NormalizeVideoCommand(BaseModel):
-    model_config = {"populate_by_name": True}
-
-    media_id: UUID = Field(alias="mediaId")
-    file_key: str = Field(alias="fileKey")
+class NormalizeVideoCommand(BrokerModel):
+    media_id: UUID
+    file_key: str

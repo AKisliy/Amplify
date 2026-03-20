@@ -1,22 +1,24 @@
 from typing import List, Literal, Optional
-from pydantic import BaseModel, Field, model_validator
+from pydantic import Field, model_validator
+
+from models.broker_model import BrokerModel
 
 
-class CaptionsSettings(BaseModel):
+class CaptionsSettings(BrokerModel):
     font: str
     font_size: int
 
 
-class VoiceoverSettings(BaseModel):
+class VoiceoverSettings(BrokerModel):
     voice_id: str
 
 
-class MusicSettings(BaseModel):
+class MusicSettings(BrokerModel):
     music_id: str
     volume: float
 
 
-class BaseUgcArgs(BaseModel):
+class BaseUgcArgs(BrokerModel):
     format_type: Literal["base-ugc"]
     media_files: List[str] = Field(min_length=1)
     remove_silence: bool = False

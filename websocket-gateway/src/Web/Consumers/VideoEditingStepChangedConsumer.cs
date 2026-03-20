@@ -19,6 +19,13 @@ public class VideoEditingStepChangedConsumer(
             "Video editing step changed: VideoId={VideoId} NodeId={NodeId} Step={Step} Status={Status}",
             message.VideoId, message.NodeId, message.Step, message.Status);
 
+
+        if (!Guid.TryParse(message.UserId, out var _))
+        {
+            logger.LogWarning("Invalid UserId in message: {UserId}", message.UserId);
+            return;
+        }
+
         await hubContext.Clients.User(message.UserId).OnVideoEditingStepChanged(
             message.VideoId,
             message.NodeId,

@@ -1,5 +1,5 @@
-from pydantic import BaseModel, Field
+from models.broker_model import BrokerModel
 
 
-class DirectDownloadLinkExtracted(BaseModel):
-    direct_download_link : str = Field(alias="direct_download_link")
+class DirectDownloadLinkExtracted(BrokerModel):
+    direct_download_link: str

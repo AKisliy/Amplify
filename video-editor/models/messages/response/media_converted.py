@@ -1,4 +1,5 @@
-from pydantic import BaseModel, Field
+from models.broker_model import BrokerModel
 
-class MediaConverted(BaseModel):
-    output_path: str = Field(alias="output_path")
+
+class MediaConverted(BrokerModel):
+    output_path: str

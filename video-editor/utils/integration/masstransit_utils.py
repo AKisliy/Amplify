@@ -17,7 +17,7 @@ def createMassTransitResponse(result: BaseModel, requestBody: Envelope, message_
         'messageType': [
             message_type
         ],     
-	    'message': result.model_dump()
+        'message': result.model_dump(by_alias=True)
     }
 
     return json.dumps(response)

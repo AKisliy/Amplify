@@ -26,6 +26,15 @@ async function run() {
                 URL: publicUrl || "N/A",
                 Error: error || "None"
             });
+        },
+        onVideoEditingStepChanged: async (videoId, nodeId, step, status) => {
+            console.log("\n⚡ [EVENT RECEIVED] onVideoEditingStepChanged");
+            console.table({
+                VideoId: videoId,
+                NodeId: nodeId,
+                Step: step,
+                Status: status
+            });
         }
     };
 
