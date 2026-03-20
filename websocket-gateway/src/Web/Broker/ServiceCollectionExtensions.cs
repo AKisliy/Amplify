@@ -1,6 +1,7 @@
 using MassTransit;
 using Microsoft.Extensions.Options;
 using WebSocketGateway.Contracts.Publisher;
+using WebSocketGateway.Contracts.VideoEditor;
 using WebSocketGateway.Web.Configuration;
 using WebSocketGateway.Web.Consumers;
 
@@ -16,6 +17,7 @@ internal static class ServiceCollectionExtensions
         {
             // TODO: fix to auto-scan all consumers from assembly
             config.AddConsumer<PublicationStatusChangedConsumer>();
+            config.AddConsumer<VideoEditingStepChangedConsumer>();
 
             config.SetEndpointNameFormatter(new KebabCaseEndpointNameFormatter(includeNamespace: false));
 
@@ -29,6 +31,7 @@ internal static class ServiceCollectionExtensions
                 //     h.Password(options.Password);
                 // });
                 cfg.Message<PublicationStatusChanged>(x => x.SetEntityName("publication-status-changed"));
+                cfg.Message<VideoEditingStepChanged>(x => x.SetEntityName("video-editing-step-changed"));
 
                 cfg.UseRawJsonSerializer(RawSerializerOptions.AnyMessageType, isDefault: true);
 
