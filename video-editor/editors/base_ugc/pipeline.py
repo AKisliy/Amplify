@@ -24,6 +24,6 @@ class EditingPipeline:
             logger.info(f"[{ctx.video_id}] Step '{step.name}' completed")
             self.on_step(step.name, "completed", None)
 
-        if ctx.output_path is None:
-            raise RuntimeError("Pipeline completed but output_path was not set")
-        return ctx.output_path
+        if ctx.output_media_id is None:
+            raise RuntimeError("Pipeline completed but output_media_id was not set")
+        return ctx.output_media_id

@@ -10,7 +10,7 @@ from models.creation_args.base_ugc import BaseUgcArgs
 def test_concatenate_two_clips(make_context, sample_video):
     args = BaseUgcArgs(format_type="base-ugc", media_files=["f1.mp4", "f2.mp4"])
     ctx = make_context(args)
-    ctx.local_media_paths = [sample_video, sample_video]
+    ctx.media_urls = [sample_video, sample_video]
 
     ConcatenateStep().execute(ctx)
 
@@ -27,7 +27,7 @@ def test_concatenate_two_clips(make_context, sample_video):
 def test_concatenate_single_clip(make_context, sample_video):
     args = BaseUgcArgs(format_type="base-ugc", media_files=["f.mp4"])
     ctx = make_context(args)
-    ctx.local_media_paths = [sample_video]
+    ctx.media_urls = [sample_video]
 
     ConcatenateStep().execute(ctx)
 

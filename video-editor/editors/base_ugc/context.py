@@ -9,6 +9,6 @@ class EditingContext:
     video_id: str
     args: BaseUgcArgs
     workspace: EditingWorkspace
-    local_media_paths: list[str] = field(default_factory=list) 
+    media_urls: list[str] = field(default_factory=list)
     current_video_path: str | None = None 
-    output_path: str | None = None                
+    output_media_id: str | None = None

@@ -24,10 +24,9 @@ RESPONSE_EXCHANGE_NAME = "video-generated"
     soft_time_limit=1800,
 )
 def create_video(self, payload: dict) -> dict:
-    saving_path = os.getenv("MEDIA_SAVING_PATH")
-    if not saving_path:
-        raise ValueError("MEDIA_SAVING_PATH variable is not specified")
+    workspace_base = os.getenv("WORKSPACE_BASE_PATH", "/tmp/video-editor")
 
+    logger.info(f"Using {workspace_base} as workspace base path")
     message = BaseCreateVideoMessage.model_validate(payload)
     broker_url = os.getenv("AMQP_URL", "amqp://guest:guest@localhost:5672//")
 
@@ -36,9 +35,9 @@ def create_video(self, payload: dict) -> dict:
         editor = factory.get_editor(message.creation_args)
 
         progress_cb = _make_progress_callback(message, broker_url)
-        output_path = editor.edit_video(
+        output_media_id = editor.edit_video(
             message.creation_args,
-            saving_path,
+            workspace_base,
             video_id=message.video_id,
             progress_cb=progress_cb,
         )
@@ -49,7 +48,7 @@ def create_video(self, payload: dict) -> dict:
     result = VideoGenerated(
         video_id=message.video_id,
         status="Success",
-        output_path=output_path,
+        output_media_id=output_media_id,
         error="",
     )
     _publish(result.model_dump(by_alias=True), RESPONSE_EXCHANGE_NAME, broker_url)

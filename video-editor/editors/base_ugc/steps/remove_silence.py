@@ -1,3 +1,4 @@
+import logging
 import re
 import subprocess
 
@@ -9,6 +10,7 @@ from editors.base_ugc.steps.base_step import PipelineStep
 SILENCE_NOISE_DB = -35
 SILENCE_MIN_DURATION = 0.5
 
+logger = logging.getLogger(__name__)
 
 class RemoveSilenceStep(PipelineStep):
     name = "Removing silence"
@@ -28,9 +30,18 @@ class RemoveSilenceStep(PipelineStep):
             return
 
         subclips = [clip.subclipped(start, end) for start, end in non_silent]
+
         output_path = ctx.workspace.get_temp_path("mp4")
+        
+        logger.info(f"Removing silence from {input_path} into {output_path}...")
         final = concatenate_videoclips(subclips)
-        final.write_videofile(output_path, codec="libx264", audio_codec="aac", logger=None)
+        final.write_videofile(
+            output_path, 
+            codec="libx264", 
+            audio_codec="aac", 
+            logger=None,
+            temp_audiofile_path=ctx.workspace.base_path
+        )
 
         clip.close()
         final.close()

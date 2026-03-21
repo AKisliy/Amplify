@@ -11,7 +11,9 @@ from editors.base_ugc.steps.add_music import AddMusicStep
 from editors.base_ugc.steps.export_upload import ExportAndUploadStep
 from models.creation_args.base_ugc import BaseUgcArgs
 from utils.editing_workspace import WorkspaceManager
+import logging
 
+logger = logging.getLogger(__name__)
 
 class BaseUgcEditor(BaseEditor):
     def edit_video(
@@ -22,6 +24,8 @@ class BaseUgcEditor(BaseEditor):
         progress_cb: ProgressCallback | None = None,
     ) -> str:
         workspace = WorkspaceManager().create_workspace(base_path)
+        logger.info(f"Created workspace at {workspace.base_path}")
+
         ctx = EditingContext(video_id=video_id, args=args, workspace=workspace)
         pipeline = EditingPipeline(
             steps=self._build_steps(args),
