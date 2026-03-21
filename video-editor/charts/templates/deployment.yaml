@@ -34,6 +34,8 @@ spec:
               value: "{{ .Values.minio.useSsl }}"
             - name: MINIO_LOCATION
               value: "{{ .Values.minio.location }}"
+            - name: MEDIA_INGEST_URL
+              value: "{{ .Values.internalServices.mediaIngest.url }}"
           envFrom:
             - secretRef:
                 name: {{ .Values.secret.name }}

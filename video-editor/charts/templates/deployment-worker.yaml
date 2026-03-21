@@ -48,6 +48,8 @@ spec:
               value: "{{ .Values.minio.location }}"
             - name: MEDIA_SAVING_PATH
               value: "{{ .Values.worker.mediaSavingPath }}"
+            - name: MEDIA_INGEST_URL
+              value: "{{ .Values.internalServices.mediaIngest.url }}"
           envFrom:
             - secretRef:
                 name: {{ .Values.secret.name }}
