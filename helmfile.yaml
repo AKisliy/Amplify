@@ -13,7 +13,18 @@ environments:
 repositories:
   - name: bitnami
     url: https://charts.bitnami.com/bitnami
+  - name: open-telemetry
+    url: https://open-telemetry.github.io/opentelemetry-helm-charts
 releases:
+  - name: otel-operator
+    namespace: opentelemetry-operator-system
+    chart: open-telemetry/opentelemetry-operator
+    createNamespace: true
+    labels:
+      tier: infra
+    set:
+      - name: manager.collectorImage.repository
+        value: otel/opentelemetry-collector-contrib
   - name: gateway
     namespace: "{{ .Values.namespace }}"
     chart: ./infra/

@@ -1,0 +1,17 @@
+apiVersion: opentelemetry.io/v1alpha1
+kind: Instrumentation
+metadata:
+  name: dotnet-instrumentation
+spec:
+  exporter:
+    endpoint: http://{{ .Values.observability.collector.name }}-collector:4318
+  propagators:
+    - tracecontext
+    - baggage
+  sampler:
+    type: parentbased_traceidratio
+    argument: "1"
+  dotnet:
+    env:
+      - name: OTEL_DOTNET_AUTO_LOG_DIRECTORY
+        value: /var/log/opentelemetry/dotnet
