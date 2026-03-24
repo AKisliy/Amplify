@@ -13,5 +13,7 @@ spec:
     argument: "1"
   dotnet:
     env:
-      - name: OTEL_DOTNET_AUTO_LOG_DIRECTORY
-        value: /var/log/opentelemetry/dotnet
+      - name: OTEL_LOGS_EXPORTER
+        value: otlp
+      - name: OTEL_DOTNET_AUTO_LOGS_INCLUDE_FORMATTED_MESSAGE
+        value: "true"
