@@ -24,6 +24,25 @@ minio:
   host: ""
   bucket: ""
   useSsl: "false"
+  location: "us-east-1"
+
+worker:
+  replicaCount: 1
+  concurrency: 1
+  mediaSavingPath: "/tmp/video-editor"
+  resources:
+    requests:
+      cpu: "1"
+      memory: 2Gi
+    limits:
+      cpu: "4"
+      memory: 8Gi
+  keda:
+    enabled: false
+    minReplicas: 1
+    maxReplicas: 5
+    queueName: "celery"       # Celery default queue name в RabbitMQ
+    targetQueueLength: "3"    # 1 новый под на каждые 3 задачи в очереди
 
 # определяется в файлах окружения
 secret:
@@ -32,6 +51,10 @@ secret:
 externalSecret:
   name: video-editor-external-secret
   refreshInterval: 1h
+
+internalServices:
+  mediaIngest:
+    url: "http://media-service.default.svc.cluster.local/media"
 
 secrets:
   rabbitMqConnection:

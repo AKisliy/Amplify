@@ -1,0 +1,32 @@
+{{- if .Values.worker.keda.enabled }}
+apiVersion: keda.sh/v1alpha1
+kind: ScaledObject
+metadata:
+  name: {{ include "video-editor.fullname" . }}-worker
+  labels:
+    {{- include "video-editor.labels" . | nindent 4 }}
+spec:
+  scaleTargetRef:
+    name: {{ include "video-editor.fullname" . }}-worker
+  minReplicaCount: {{ .Values.worker.keda.minReplicas }}
+  maxReplicaCount: {{ .Values.worker.keda.maxReplicas }}
+  triggers:
+    - type: rabbitmq
+      metadata:
+        protocol: amqp
+        queueName: {{ .Values.worker.keda.queueName }}
+        mode: QueueLength
+        value: "{{ .Values.worker.keda.targetQueueLength }}"
+      authenticationRef:
+        name: {{ include "video-editor.fullname" . }}-keda-auth
+---
+apiVersion: keda.sh/v1alpha1
+kind: TriggerAuthentication
+metadata:
+  name: {{ include "video-editor.fullname" . }}-keda-auth
+spec:
+  secretTargetRef:
+    - parameter: host
+      name: {{ .Values.secret.name }}
+      key: AMQP_URL
+{{- end }}

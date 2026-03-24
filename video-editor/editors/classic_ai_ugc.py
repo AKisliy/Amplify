@@ -1,4 +1,3 @@
-from typing import Any, Dict
 from moviepy import CompositeVideoClip, VideoFileClip, AudioFileClip, concatenate_videoclips, TextClip
 from moviepy.video.tools.subtitles import SubtitlesClip
 
@@ -8,8 +7,8 @@ from utils.formatter import format_clip
 
 
 class ClassicAiUgcEditor(BaseEditor):
-    def edit_video(self, args: Dict[str, Any], base_path: str) -> str:
-        video_args = AiUgcArgs(**args).with_absolute_paths(base_path)
+    def edit_video(self, args: AiUgcArgs, base_path: str) -> str:
+        video_args = args.with_absolute_paths(base_path)
         target_resolution = (1080, 1920)  
         target_fps = 30
 

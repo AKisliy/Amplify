@@ -1,6 +1,6 @@
-from pydantic import BaseModel, Field
+from models.broker_model import BrokerModel
 
 
-class SceneChangesDetected(BaseModel):
-    file_path: str = Field(alias="file_path")
-    scene_changes: list[float] = Field(alias="scene_changes")
+class SceneChangesDetected(BrokerModel):
+    file_path: str
+    scene_changes: list[float]

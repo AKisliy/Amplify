@@ -4,7 +4,6 @@ import sys
 import pika
 
 from queues.create_video_queue import setup_create_video_queue
-from queues.consumers.extract_download_link_consumer import extractLinkConsumer
 from queues.consumers.convert_file_consumer import convertConsumer
 from queues.consumers.preprocess_consumer import preprocessConsumer
 from queues.consumers.scene_changes_consumer import detectScenesConsumer
@@ -17,7 +16,6 @@ from dotenv import load_dotenv
 
 def setup_request_consumers(channel: BlockingChannel):
     preprocessConsumer.setup_queue(channel)
-    extractLinkConsumer.setup_queue(channel)
     detectScenesConsumer.setup_queue(channel)
     mediaDurationConsumer.setup_queue(channel)
     convertConsumer.setup_queue(channel)

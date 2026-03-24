@@ -1,5 +1,5 @@
 import logging
-from typing import Any, Dict, List
+from typing import List
 from moviepy import VideoFileClip
 
 from editors.base_editor import BaseEditor
@@ -18,8 +18,8 @@ class LuxuryEditFfmpeg(BaseEditor):
         self.executor = command_executor or FFmpegCommandExecutor()
         self.workspace_manager = workspace_manager or WorkspaceManager()
 
-    def edit_video(self, args: Dict[str, Any], base_path: str) -> str:
-        video_args = LuxuryEditArgs(**args).with_absolute_paths(base_path)
+    def edit_video(self, args: LuxuryEditArgs, base_path: str) -> str:
+        video_args = args.with_absolute_paths(base_path)
         self._verify_input(video_args)
         self.workspace = self.workspace_manager.create_workspace(base_path)
 

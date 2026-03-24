@@ -6,7 +6,7 @@ from pydantic import BaseModel
 
 from models.request_consumer_setup import RequestConsumerSetup
 from utils.integration.masstransit_utils import createMassTransitResponse, getExchangeName
-from utils.parser import parse_message
+from utils.parser import parse_envelope
 
 TMessage = TypeVar("TMessage")
 
@@ -33,7 +33,7 @@ class BaseConsumer(Generic[TMessage]):
         logging.info(f"Message received - CorrelationId={props.correlation_id}")
         logging.debug(f"Message contents:\n'{body}'")
 
-        envelope = parse_message(body, self.message_type)
+        envelope = parse_envelope(body, self.message_type)
         exchange = getExchangeName(envelope)
         logging.debug(f"Exchange extracted: '{exchange}'")
 

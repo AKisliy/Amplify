@@ -1,8 +1,8 @@
 from typing import List
-from pydantic import BaseModel, Field
+from models.broker_model import BrokerModel
 
 
-class VideoHashCalculated(BaseModel):
-    similar_file_id: str | None = Field(alias="similar_file_id")
-    frame_hashes: List[str] = Field(alias="frame_hashes")
-    frame_numbers : List[int] = Field(alias="frame_numbers")
+class VideoHashCalculated(BrokerModel):
+    similar_file_id: str | None
+    frame_hashes: List[str]
+    frame_numbers: List[int]

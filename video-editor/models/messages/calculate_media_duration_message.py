@@ -1,4 +1,5 @@
-from pydantic import BaseModel, Field
+from models.broker_model import BrokerModel
 
-class CalculateMediaDurationMessage(BaseModel):
-    media_path: str = Field(alias = "media_path")
+
+class CalculateMediaDurationMessage(BrokerModel):
+    media_path: str

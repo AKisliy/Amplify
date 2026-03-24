@@ -12,7 +12,11 @@ class EditingWorkspace:
     """Управляет временными файлами и директориями для одного сеанса редактирования."""
     def __init__(self, base_path: str):
         self.editing_uid = uuid4()
+
         self.base_path = base_path
+        if not os.path.exists(self.base_path):
+            os.makedirs(self.base_path)
+        
         self._temp_files = []
 
     def get_temp_path(self, extension: str) -> str:

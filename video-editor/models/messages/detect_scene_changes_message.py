@@ -1,5 +1,5 @@
-from pydantic import BaseModel, Field
+from models.broker_model import BrokerModel
 
 
-class DetectSceneChangesMessage(BaseModel):
-    file_path: str = Field(alias="file_path")
+class DetectSceneChangesMessage(BrokerModel):
+    file_path: str

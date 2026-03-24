@@ -13,5 +13,14 @@ export type IClientReceiver = {
     * @returns Transpiled from System.Threading.Tasks.Task
     */
     onPublicationStatusChanged(publicationRecordId: string, status: string, publicUrl: string, error: string): Promise<void>;
+    /**
+    * @param videoId Transpiled from string
+    * @param nodeId Transpiled from string
+    * @param step Transpiled from string
+    * @param status Transpiled from string
+    * @param error Transpiled from string?
+    * @returns Transpiled from System.Threading.Tasks.Task
+    */
+    onVideoEditingStepChanged(videoId: string, nodeId: string, step: string, status: string, error: string): Promise<void>;
 }
 

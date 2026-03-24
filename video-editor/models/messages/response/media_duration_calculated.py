@@ -1,6 +1,6 @@
-from pydantic import BaseModel, Field
+from models.broker_model import BrokerModel
 
 
-class MediaDurationCalculated(BaseModel):
-    media_path: str = Field(alias = "media_path")
-    duration: float = Field(alias = "duration")
+class MediaDurationCalculated(BrokerModel):
+    media_path: str
+    duration: float

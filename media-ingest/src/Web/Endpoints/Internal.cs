@@ -1,3 +1,4 @@
+using MediaIngest.Application.Media.Commands.CreateUploadPresignedUrl;
 using MediaIngest.Application.Media.Commands.DeleteMedia;
 using MediaIngest.Application.Media.Commands.ImportFromGoogleStorage;
 using MediaIngest.Application.Media.Commands.ImportFromUrl;
@@ -52,6 +53,11 @@ public class Internal : EndpointGroupBase
             .Produces<ImportFromUrlDto>(StatusCodes.Status201Created)
             .ProducesProblem(StatusCodes.Status400BadRequest);
 
+        groupBuilder.MapPost("/presigned-upload", CreatePresignedUpload)
+            .WithSummary("Create presigned upload URL (internal)")
+            .WithDescription("Service-to-service only. Registers a new media record and returns a presigned PUT URL for direct S3 upload.")
+            .Produces<CreateUploadPresignedUrlDto>(StatusCodes.Status201Created);
+
         groupBuilder.MapPost("/import-gs", ImportFromGoogleStorage)
             .WithSummary("Import file from Google Storage (internal)")
             .WithDescription("Service-to-service only. Downloads file from Google Storage and stores it in S3. Returns mediaId.")
@@ -95,6 +101,14 @@ public class Internal : EndpointGroupBase
     {
         var result = await sender.Send(new ImportFromUrlCommand(request.Url));
         return TypedResults.Created($"/api/internal/media/{result.MediaId}/stream", result);
+    }
+
+    public async Task<Created<CreateUploadPresignedUrlDto>> CreatePresignedUpload(
+        ISender sender,
+        CreateUploadPresignedUrlCommand command)
+    {
+        var result = await sender.Send(command);
+        return TypedResults.Created($"/api/internal/media/{result.MediaId}/link", result);
     }
 
     public async Task<Created<ImportFromGoogleStorageResponse>> ImportFromGoogleStorage(ISender sender, ImportFromGoogleStorageCommand request)
