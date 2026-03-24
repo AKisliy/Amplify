@@ -1,0 +1,88 @@
+apiVersion: opentelemetry.io/v1beta1
+kind: OpenTelemetryCollector
+metadata:
+  name: {{ .Values.observability.collector.name }}
+spec:
+  image: otel/opentelemetry-collector-contrib:0.91.0
+
+  env:
+    - name: GRAFANA_CLOUD_INSTANCE_ID
+      valueFrom:
+        secretKeyRef:
+          name: grafana-cloud-secret
+          key: GRAFANA_CLOUD_INSTANCE_ID
+    - name: GRAFANA_CLOUD_API_KEY
+      valueFrom:
+        secretKeyRef:
+          name: grafana-cloud-secret
+          key: GRAFANA_CLOUD_API_KEY
+
+  ports:
+    - name: grpc-otlp
+      port: 4317
+      protocol: TCP
+      targetPort: 4317
+    - name: http-otlp
+      port: 4318
+      protocol: TCP
+      targetPort: 4318
+
+  config:
+    receivers:
+      otlp:
+        protocols:
+          grpc:
+            endpoint: 0.0.0.0:4317
+          http:
+            endpoint: 0.0.0.0:4318
+    
+    extensions:
+      basicauth/grafana_cloud:
+        client_auth:
+          username: "${env:GRAFANA_CLOUD_INSTANCE_ID}"
+          password: "${env:GRAFANA_CLOUD_API_KEY}"
+
+    processors:
+      batch:
+        timeout: 1s
+        send_batch_size: 1024
+      memory_limiter:
+        check_interval: 1s
+        limit_percentage: 65
+        spike_limit_percentage: 20
+      resourcedetection/gcp:
+        detectors: [gcp]
+        timeout: 10s
+      k8sattributes:
+        passthrough: false
+        extract:
+          metadata:
+            - k8s.namespace.name
+            - k8s.pod.name
+            - k8s.node.name
+            - k8s.container.name
+
+    exporters:
+      otlphttp/grafana:
+        endpoint: "{{ .Values.observability.grafana.otlpEndpoint }}"
+        auth:
+          authenticator: basicauth/grafana_cloud
+
+    service:
+      extensions: [basicauth/grafana_cloud]
+
+      pipelines:
+        traces:
+          receivers: [otlp]
+          processors: [memory_limiter, resourcedetection/gcp, k8sattributes, batch]
+          exporters: [otlphttp/grafana]
+
+        metrics:
+          receivers: [otlp]
+          processors: [memory_limiter, resourcedetection/gcp, k8sattributes, batch]
+          exporters: [otlphttp/grafana]
+
+        logs:
+          receivers: [otlp]
+          processors: [memory_limiter, resourcedetection/gcp, k8sattributes, batch]
+          exporters: [otlphttp/grafana]

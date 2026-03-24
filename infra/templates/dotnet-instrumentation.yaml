@@ -1,0 +1,23 @@
+apiVersion: opentelemetry.io/v1alpha1
+kind: Instrumentation
+metadata:
+  name: dotnet-instrumentation
+spec:
+  exporter:
+    endpoint: http://{{ .Values.observability.collector.name }}-collector:4318
+  propagators:
+    - tracecontext
+    - baggage
+  sampler:
+    type: parentbased_traceidratio
+    argument: "1"
+  dotnet:
+    env:
+      - name: OTEL_LOG_LEVEL
+        value: "debug"
+      - name: OTEL_EXPORTER_OTLP_LOGS_ENDPOINT                                                                                                    
+        value: http://{{ .Values.observability.collector.name }}-collector:4318/v1/logs 
+      - name: OTEL_DOTNET_AUTO_LOGS_INCLUDE_FORMATTED_MESSAGE
+        value: "true"
+      - name: ASPNETCORE_HOSTINGSTARTUPASSEMBLIES
+        value: "OpenTelemetry.AutoInstrumentation.AspNetCoreBootstrapper"

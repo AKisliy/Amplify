@@ -6,4 +6,11 @@ gateway:
       name: http
       protocol: HTTP
     hosts:
-    - {{ .Values.global.appDomain }}
+    - {{ .Values.global.clusterDomain }}
+observability:
+  collector:
+    name: otel
+  grafana:
+    otlpEndpoint: "https://otlp-gateway-prod-eu-north-0.grafana.net/otlp"
+    secretKey: "grafana-cloud-otlp-token"
+    instanceIdKey: "grafana-cloud-instance-id"
