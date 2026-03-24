@@ -15,7 +15,23 @@ repositories:
     url: https://charts.bitnami.com/bitnami
   - name: open-telemetry
     url: https://open-telemetry.github.io/opentelemetry-helm-charts
+  - name: jetstack
+    url: https://charts.jetstack.io
 releases:
+  - name: cert-manager
+    namespace: cert-manager
+    chart: jetstack/cert-manager
+    createNamespace: true
+    labels:
+      tier: infra
+    set:
+      - name: installCRDs
+        value: true
+      - name: global.leaderElection.namespace
+        value: cert-manager
+      - name: extraArgs[0]
+        value: "--issuer-ambient-credentials=true"
+
   - name: otel-operator
     namespace: opentelemetry-operator-system
     chart: open-telemetry/opentelemetry-operator
@@ -25,6 +41,9 @@ releases:
     set:
       - name: manager.collectorImage.repository
         value: otel/opentelemetry-collector-contrib
+    needs:
+      - cert-manager/cert-manager
+
   - name: gateway
     namespace: "{{ .Values.namespace }}"
     chart: ./infra/
@@ -92,7 +111,7 @@ releases:
       - ./media-ingest/charts/envs/values.{{ .Environment.Name }}.yaml
     needs:
       - gateway
-  
+
   - name: ws-gateway
     namespace: "{{ .Values.namespace }}"
     chart: ./websocket-gateway/charts
@@ -131,4 +150,3 @@ releases:
       - ./template-service/charts/envs/values.{{ .Environment.Name }}.yaml
     needs:
       - gateway
-

@@ -46,6 +46,13 @@ spec:
       batch:
         timeout: 1s
         send_batch_size: 1024
+      memory_limiter:
+        check_interval: 1s
+        limit_percentage: 65
+        spike_limit_percentage: 20
+      resourcedetection/gcp:
+        detectors: [gcp]
+        timeout: 10s
       k8sattributes:
         passthrough: false
         extract:
@@ -62,23 +69,20 @@ spec:
           authenticator: basicauth/grafana_cloud
 
     service:
-      extensions:
-      [
-        basicauth/grafana_cloud,
-      ]
+      extensions: [basicauth/grafana_cloud]
 
       pipelines:
         traces:
           receivers: [otlp]
-          processors: [k8sattributes, batch]
+          processors: [memory_limiter, resourcedetection/gcp, k8sattributes, batch]
           exporters: [otlphttp/grafana]
 
         metrics:
           receivers: [otlp]
-          processors: [k8sattributes, batch]
+          processors: [memory_limiter, resourcedetection/gcp, k8sattributes, batch]
           exporters: [otlphttp/grafana]
 
         logs:
           receivers: [otlp]
-          processors: [k8sattributes, batch]
+          processors: [memory_limiter, resourcedetection/gcp, k8sattributes, batch]
           exporters: [otlphttp/grafana]
