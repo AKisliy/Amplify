@@ -1,4 +1,5 @@
 using System.Security.Claims;
+using UserService.Application.Common.Interfaces;
 using UserService.Infrastructure.Identity;
 
 namespace UserService.Web.Infrastructure;
@@ -9,7 +10,7 @@ public static class CurrentUserMiddleware
     {
         app.Use(async (context, next) =>
         {
-            var userContext = context.RequestServices.GetRequiredService<UserContext>();
+            var userContext = context.RequestServices.GetRequiredService<IUser>();
             var idClaim = context.User.FindFirstValue(ClaimTypes.NameIdentifier);
             if (Guid.TryParse(idClaim, out var userId))
                 userContext.Id = userId;

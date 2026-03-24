@@ -6,7 +6,7 @@ gateway:
       name: http
       protocol: HTTP
     hosts:
-    - {{ .Values.global.appDomain }}
+    - {{ .Values.global.clusterDomain }}
 observability:
   collector:
     name: otel
