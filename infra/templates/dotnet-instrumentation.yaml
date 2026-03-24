@@ -13,7 +13,11 @@ spec:
     argument: "1"
   dotnet:
     env:
-      - name: OTEL_LOGS_EXPORTER
-        value: otlp
+      - name: OTEL_LOG_LEVEL
+        value: "debug"
+      - name: OTEL_EXPORTER_OTLP_LOGS_ENDPOINT                                                                                                    
+        value: http://{{ .Values.observability.collector.name }}-collector:4318/v1/logs 
       - name: OTEL_DOTNET_AUTO_LOGS_INCLUDE_FORMATTED_MESSAGE
         value: "true"
+      - name: ASPNETCORE_HOSTINGSTARTUPASSEMBLIES
+        value: "OpenTelemetry.AutoInstrumentation.AspNetCoreBootstrapper"
