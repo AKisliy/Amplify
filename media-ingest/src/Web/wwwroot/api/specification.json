@@ -382,6 +382,46 @@
         }
       }
     },
+    "/api/internal/media/presigned-upload": {
+      "post": {
+        "tags": [
+          "internal/media"
+        ],
+        "summary": "Create presigned upload URL (internal)",
+        "description": "Service-to-service only. Registers a new media record and returns a presigned PUT URL for direct S3 upload.",
+        "operationId": "PostApiInternalMediaPresignedUpload",
+        "requestBody": {
+          "x-name": "command",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateUploadPresignedUrlCommand"
+              }
+            }
+          },
+          "required": true,
+          "x-position": 1
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {}
+            }
+          },
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreateUploadPresignedUrlDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/internal/media/import-gs": {
       "post": {
         "tags": [
@@ -634,11 +674,13 @@
         "description": "",
         "x-enumNames": [
           "GoogleCloudStorage",
-          "Public"
+          "Public",
+          "Presigned"
         ],
         "enum": [
           "GoogleCloudStorage",
-          "Public"
+          "Public",
+          "Presigned"
         ]
       },
       "ImportFromUrlDto": {
@@ -648,6 +690,35 @@
           "mediaId": {
             "type": "string",
             "format": "guid"
+          }
+        }
+      },
+      "CreateUploadPresignedUrlDto": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "mediaId": {
+            "type": "string",
+            "format": "guid"
+          },
+          "uploadUrl": {
+            "type": "string"
+          }
+        }
+      },
+      "CreateUploadPresignedUrlCommand": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "fileName": {
+            "type": "string"
+          },
+          "contentType": {
+            "type": "string"
+          },
+          "fileSize": {
+            "type": "integer",
+            "format": "int64"
           }
         }
       },
