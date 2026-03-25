@@ -7,6 +7,7 @@ from models.broker_model import BrokerModel
 class CaptionsSettings(BrokerModel):
     font: str
     font_size: int
+    language: Optional[str] = None
 
 
 class VoiceoverSettings(BrokerModel):

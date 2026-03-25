@@ -138,6 +138,19 @@ releases:
     needs:
       - gateway
 
+  - name: ai-gateway
+    namespace: "{{ .Values.namespace }}"
+    chart: ./ai-gateway/charts
+    labels:
+      tier: backend
+      app: ai-gateway
+    values:
+      - ./ai-gateway/charts/envs/values.yaml
+      - ./ai-gateway/charts/envs/values.yaml.gotmpl
+      - ./ai-gateway/charts/envs/values.{{ .Environment.Name }}.yaml
+    needs:
+      - gateway
+
   - name: template-service
     namespace: "{{ .Values.namespace }}"
     chart: ./template-service/charts

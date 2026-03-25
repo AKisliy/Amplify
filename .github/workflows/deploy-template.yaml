@@ -104,3 +104,24 @@ jobs:
               run: |
                   export ${{ inputs.image_tag_var_name }}=${{ env.IMAGE_TAG }}
                   helmfile -e ${{ inputs.env_name }} -l app=${{ inputs.app_label }} apply
+
+            - name: Build Failure Notification Message
+              if: failure()
+              run: |
+                  {
+                    echo "FAILURE_MESSAGE<<EOF"
+                    echo "❌ *Сборка/деплой упала!*"
+                    echo "🔧 *Сервис:* \`${{ inputs.app_label }}\`"
+                    echo "👤 *Автор:* ${{ github.actor }}"
+                    echo "🔗 [PR #${{ github.event.number }}](${{ github.event.pull_request.html_url }})"
+                    echo "EOF"
+                  } >> "$GITHUB_ENV"
+
+            - name: Notify Telegram on Failure
+              if: failure()
+              uses: ./.github/actions/telegram-notify
+              with:
+                  message: ${{ env.FAILURE_MESSAGE }}
+                  chat_id: ${{ secrets.TELEGRAM_CHAT_ID }}
+                  topic_id: ${{ vars.TELEGRAM_TOPIC_ID }}
+                  bot_token: ${{ secrets.TELEGRAM_BOT_TOKEN }}

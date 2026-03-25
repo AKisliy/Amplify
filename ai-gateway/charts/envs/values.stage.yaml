@@ -1,0 +1,17 @@
+environment: Staging
+
+secrets:
+  openAiApiKey:
+    key: openai-test-api-key
+
+volumeMounts:
+  - name: config-volume
+    mountPath: /app/appsettings.Staging.json
+    subPath: appsettings_override.json
+
+appConfig:
+  MediaIngest:
+    BaseUrl: "http://mediaingest.test-env.svc.cluster.local"
+  OpenAi:
+    BaseUrl: "https://api.openai.com/v1"
+    TranscriptionModel: "whisper-1"

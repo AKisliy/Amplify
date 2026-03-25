@@ -14,6 +14,9 @@ from queues.consumers.normalize_video_consumer import normalizeConsumer
 from pika.adapters.blocking_connection import BlockingChannel
 from dotenv import load_dotenv
 
+from celery_app import app
+
+
 def setup_request_consumers(channel: BlockingChannel):
     preprocessConsumer.setup_queue(channel)
     detectScenesConsumer.setup_queue(channel)

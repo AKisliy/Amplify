@@ -35,7 +35,7 @@ class AddMusicStep(PipelineStep):
             codec="libx264", 
             audio_codec="aac", 
             temp_audio_file = ctx.workspace.get_temp_path("mp3"),
-            ogger=None)
+            logger=None)
 
         video.close()
         music.close()

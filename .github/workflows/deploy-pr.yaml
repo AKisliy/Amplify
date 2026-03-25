@@ -15,6 +15,7 @@ jobs:
             ws-gateway: ${{ steps.filter.outputs.ws-gateway }}
             video-editor: ${{ steps.filter.outputs.video-editor }}
             template-service: ${{ steps.filter.outputs.template-service }}
+            ai-gateway: ${{ steps.filter.outputs.ai-gateway }}
         steps:
             - uses: actions/checkout@v4
             - uses: dorny/paths-filter@v3
@@ -34,6 +35,8 @@ jobs:
                         - 'video-editor/**'
                       template-service:
                         - 'template-service/**'
+                      ai-gateway:
+                        - 'ai-gateway/**'
 
     deploy-userservice:
         needs: changes

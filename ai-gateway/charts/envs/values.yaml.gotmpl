@@ -1,0 +1,5 @@
+secretStore:
+  name: {{ .Values.global.secretStore.name }}
+
+image:
+  tag: {{ env "AI_GATEWAY_IMAGE_TAG" | default "latest" }}

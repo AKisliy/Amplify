@@ -10,5 +10,6 @@ class EditingContext:
     args: BaseUgcArgs
     workspace: EditingWorkspace
     media_urls: list[str] = field(default_factory=list)
-    current_video_path: str | None = None 
+    current_video_path: str | None = None
+    srt_path: str | None = None
     output_media_id: str | None = None
