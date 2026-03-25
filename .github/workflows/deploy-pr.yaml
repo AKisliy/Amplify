@@ -106,3 +106,14 @@ jobs:
             image_tag_var_name: "TEMPLATE_SERVICE_IMAGE_TAG"
             env_name: "stage"
         secrets: inherit
+
+    deploy-ai-gateway:
+        needs: changes
+        if: ${{ needs.changes.outputs.ai-gateway == 'true' }}
+        uses: ./.github/workflows/deploy-template.yaml
+        with:
+            service_folder: "ai-gateway"
+            app_label: "ai-gateway"
+            image_tag_var_name: "AI_GATEWAY_IMAGE_TAG"
+            env_name: "stage"
+        secrets: inherit
