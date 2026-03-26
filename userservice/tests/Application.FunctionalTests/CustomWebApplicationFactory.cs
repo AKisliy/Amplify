@@ -1,11 +1,10 @@
 ﻿using System.Data.Common;
+using MassTransit;
 using UserService.Application.Common.Interfaces;
-using UserService.Infrastructure.Data;
+using UserService.Application.Common.Interfaces.Clients;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.AspNetCore.TestHost;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Diagnostics;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 
@@ -15,12 +14,10 @@ using static Testing;
 
 public class CustomWebApplicationFactory : WebApplicationFactory<Program>
 {
-    private readonly DbConnection _connection;
     private readonly string _connectionString;
 
-    public CustomWebApplicationFactory(DbConnection connection, string connectionString)
+    public CustomWebApplicationFactory(DbConnection _, string connectionString)
     {
-        _connection = connection;
         _connectionString = connectionString;
     }
 
@@ -34,20 +31,24 @@ public class CustomWebApplicationFactory : WebApplicationFactory<Program>
         {
             services
                 .RemoveAll<IUser>()
-                .AddTransient(provider =>
+                .AddTransient(_ =>
                 {
                     var mock = new Mock<IUser>();
                     mock.SetupGet(x => x.Roles).Returns(GetRoles());
                     mock.SetupGet(x => x.Id).Returns(GetUserId());
                     return mock.Object;
                 });
+
+            services.AddMassTransitTestHarness();
+
             services
-                .RemoveAll<DbContextOptions<ApplicationDbContext>>()
-                .AddDbContext<ApplicationDbContext>((sp, options) =>
-                {
-                    options.AddInterceptors(sp.GetServices<ISaveChangesInterceptor>());
-                    options.UseSqlServer(_connection);
-                });
+                .RemoveAll<IMediaServiceClient>()
+                .AddTransient(_ => Mock.Of<IMediaServiceClient>());
+
+            // Mock email service — register/forgot-password shouldn't send real emails in tests
+            services
+                .RemoveAll<IEmailService>()
+                .AddTransient(_ => Mock.Of<IEmailService>());
         });
     }
 }

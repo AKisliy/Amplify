@@ -1,24 +1,24 @@
-﻿using System.Data.Common;
+using System.Data.Common;
+using UserService.Domain.Enums;
 using UserService.Infrastructure.Data;
-using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Diagnostics;
+using Npgsql;
 using Respawn;
-using Testcontainers.MsSql;
+using Testcontainers.PostgreSql;
 
 namespace UserService.Application.FunctionalTests;
 
-public class SqlTestcontainersTestDatabase : ITestDatabase
+public class PostgreSqlTestcontainersTestDatabase : ITestDatabase
 {
-    private const string DefaultDatabase = "UserServiceTestDb";
-    private readonly MsSqlContainer _container;
-    private DbConnection _connection = null!;
+    private readonly PostgreSqlContainer _container;
+    private NpgsqlConnection _connection = null!;
     private string _connectionString = null!;
     private Respawner _respawner = null!;
 
-    public SqlTestcontainersTestDatabase()
+    public PostgreSqlTestcontainersTestDatabase()
     {
-        _container = new MsSqlBuilder()
+        _container = new PostgreSqlBuilder()
             .WithAutoRemove(true)
             .Build();
     }
@@ -26,43 +26,36 @@ public class SqlTestcontainersTestDatabase : ITestDatabase
     public async Task InitialiseAsync()
     {
         await _container.StartAsync();
-        await _container.ExecScriptAsync($"CREATE DATABASE {DefaultDatabase}");
 
-        var builder = new SqlConnectionStringBuilder(_container.GetConnectionString())
-        {
-            InitialCatalog = DefaultDatabase
-        };
-
-        _connectionString = builder.ConnectionString;
-
-        _connection = new SqlConnection(_connectionString);
+        _connectionString = _container.GetConnectionString();
 
         var options = new DbContextOptionsBuilder<ApplicationDbContext>()
-            .UseSqlServer(_connectionString)
-            .ConfigureWarnings(warnings => warnings.Log(RelationalEventId.PendingModelChangesWarning))
+            .UseNpgsql(_connectionString, o => o
+                .MapEnum<AssetLifetime>(schemaName: ApplicationDbContext.DefaultSchemaName))
+            .UseSnakeCaseNamingConvention()
+            .ConfigureWarnings(w => w.Ignore(RelationalEventId.PendingModelChangesWarning))
             .Options;
 
-        var context = new ApplicationDbContext(options);
-
-        await context.Database.EnsureDeletedAsync();
+        await using var context = new ApplicationDbContext(options);
         await context.Database.EnsureCreatedAsync();
 
-        _respawner = await Respawner.CreateAsync(_connectionString);
+        _connection = new NpgsqlConnection(_connectionString);
+        await _connection.OpenAsync();
+
+        _respawner = await Respawner.CreateAsync(_connection, new RespawnerOptions
+        {
+            DbAdapter = DbAdapter.Postgres,
+            SchemasToInclude = [ApplicationDbContext.DefaultSchemaName]
+        });
     }
 
-    public DbConnection GetConnection()
-    {
-        return _connection;
-    }
+    public DbConnection GetConnection() => _connection;
 
-    public string GetConnectionString()
-    {
-        return _connectionString;
-    }
+    public string GetConnectionString() => _connectionString;
 
     public async Task ResetAsync()
     {
-        await _respawner.ResetAsync(_connectionString);
+        await _respawner.ResetAsync(_connection);
     }
 
     public async Task DisposeAsync()
