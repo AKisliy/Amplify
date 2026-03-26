@@ -1,0 +1,10 @@
+global using System.Security.Claims;
+global using Ardalis.GuardClauses;
+global using AutoMapper;
+global using MockQueryable.Moq;
+global using Moq;
+global using NUnit.Framework;
+global using Shouldly;
+global using UserService.Application.Common.Interfaces;
+global using UserService.Application.Common.Models;
+global using UserService.Domain.Entities;

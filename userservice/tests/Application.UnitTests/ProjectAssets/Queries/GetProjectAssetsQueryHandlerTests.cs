@@ -1,12 +1,5 @@
-using AutoMapper;
-using MockQueryable.Moq;
-using Moq;
-using NUnit.Framework;
-using Shouldly;
-using UserService.Application.Common.Interfaces;
 using UserService.Application.ProjectAssets.Dto;
 using UserService.Application.ProjectAssets.Queries.GetProjectAssets;
-using UserService.Domain.Entities;
 using UserService.Domain.Enums;
 
 namespace UserService.Application.UnitTests.ProjectAssets.Queries;
@@ -66,7 +59,7 @@ public class GetProjectAssetsQueryHandlerTests
         };
         SetupDbSet(data);
 
-        var result = await _handler.Handle(new GetProjectAssetsQuery(ProjectId), CancellationToken.None);
+        var result = await _handler.Handle(new GetProjectAssetsQuery(ProjectId, AssetLifetime.Permanent), CancellationToken.None);
 
         result.Items.Count.ShouldBe(2);
     }
@@ -83,7 +76,7 @@ public class GetProjectAssetsQueryHandlerTests
         };
         SetupDbSet(data);
 
-        var result = await _handler.Handle(new GetProjectAssetsQuery(ProjectId), CancellationToken.None);
+        var result = await _handler.Handle(new GetProjectAssetsQuery(ProjectId, AssetLifetime.Permanent), CancellationToken.None);
 
         result.Items[0].CreatedAt.ShouldBe(now);
         result.Items[1].CreatedAt.ShouldBe(now.AddMinutes(-1));
@@ -95,7 +88,7 @@ public class GetProjectAssetsQueryHandlerTests
     {
         SetupDbSet([]);
 
-        var result = await _handler.Handle(new GetProjectAssetsQuery(ProjectId), CancellationToken.None);
+        var result = await _handler.Handle(new GetProjectAssetsQuery(ProjectId, AssetLifetime.Permanent), CancellationToken.None);
 
         result.Items.ShouldBeEmpty();
         result.NextCursor.ShouldBeNull();
@@ -110,7 +103,7 @@ public class GetProjectAssetsQueryHandlerTests
             .ToList();
         SetupDbSet(data);
 
-        var result = await _handler.Handle(new GetProjectAssetsQuery(ProjectId, PageSize: 10), CancellationToken.None);
+        var result = await _handler.Handle(new GetProjectAssetsQuery(ProjectId, AssetLifetime.Permanent, PageSize: 10), CancellationToken.None);
 
         result.Items.Count.ShouldBe(5);
         result.NextCursor.ShouldBeNull();
@@ -125,7 +118,7 @@ public class GetProjectAssetsQueryHandlerTests
             .ToList();
         SetupDbSet(data);
 
-        var result = await _handler.Handle(new GetProjectAssetsQuery(ProjectId, PageSize: 10), CancellationToken.None);
+        var result = await _handler.Handle(new GetProjectAssetsQuery(ProjectId, AssetLifetime.Permanent, PageSize: 10), CancellationToken.None);
 
         result.Items.Count.ShouldBe(10);
         result.NextCursor.ShouldBe(now.AddMinutes(-9));
@@ -141,7 +134,7 @@ public class GetProjectAssetsQueryHandlerTests
             .ToList();
         SetupDbSet(data);
 
-        var result = await _handler.Handle(new GetProjectAssetsQuery(ProjectId, Cursor: cursor), CancellationToken.None);
+        var result = await _handler.Handle(new GetProjectAssetsQuery(ProjectId, AssetLifetime.Permanent, Cursor: cursor), CancellationToken.None);
 
         result.Items.ShouldAllBe(item => item.CreatedAt < cursor);
     }
@@ -155,7 +148,7 @@ public class GetProjectAssetsQueryHandlerTests
             .ToList();
         SetupDbSet(data);
 
-        var result = await _handler.Handle(new GetProjectAssetsQuery(ProjectId, PageSize: 5), CancellationToken.None);
+        var result = await _handler.Handle(new GetProjectAssetsQuery(ProjectId, AssetLifetime.Permanent, PageSize: 5), CancellationToken.None);
 
         result.Items.Count.ShouldBe(5);
         result.NextCursor.ShouldNotBeNull();

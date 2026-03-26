@@ -1,19 +1,20 @@
-﻿using System.Data.Common;
+using System.Data.Common;
+using UserService.Domain.Enums;
 using UserService.Infrastructure.Data;
-using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
+using Npgsql;
 using Respawn;
 
 namespace UserService.Application.FunctionalTests;
 
-public class SqlTestDatabase : ITestDatabase
+public class PostgreSqlTestDatabase : ITestDatabase
 {
-    private readonly string _connectionString = null!;
-    private SqlConnection _connection = null!;
+    private readonly string _connectionString;
+    private NpgsqlConnection _connection = null!;
     private Respawner _respawner = null!;
 
-    public SqlTestDatabase()
+    public PostgreSqlTestDatabase()
     {
         var configuration = new ConfigurationBuilder()
             .AddJsonFile("appsettings.json")
@@ -21,41 +22,39 @@ public class SqlTestDatabase : ITestDatabase
             .Build();
 
         var connectionString = configuration.GetConnectionString("UserServiceDb");
-
         Guard.Against.Null(connectionString);
-
         _connectionString = connectionString;
     }
 
     public async Task InitialiseAsync()
     {
-        _connection = new SqlConnection(_connectionString);
-
         var options = new DbContextOptionsBuilder<ApplicationDbContext>()
-            .UseSqlServer(_connectionString)
+            .UseNpgsql(_connectionString, o => o
+                .MapEnum<AssetLifetime>(schemaName: ApplicationDbContext.DefaultSchemaName))
+            .UseSnakeCaseNamingConvention()
             .Options;
 
-        var context = new ApplicationDbContext(options);
-
+        await using var context = new ApplicationDbContext(options);
         await context.Database.EnsureDeletedAsync();
         await context.Database.EnsureCreatedAsync();
 
-        _respawner = await Respawner.CreateAsync(_connectionString);
+        _connection = new NpgsqlConnection(_connectionString);
+        await _connection.OpenAsync();
+
+        _respawner = await Respawner.CreateAsync(_connection, new RespawnerOptions
+        {
+            DbAdapter = DbAdapter.Postgres,
+            SchemasToInclude = [ApplicationDbContext.DefaultSchemaName]
+        });
     }
 
-    public DbConnection GetConnection()
-    {
-        return _connection;
-    }
+    public DbConnection GetConnection() => _connection;
 
-    public string GetConnectionString()
-    {
-        return _connectionString;
-    }
+    public string GetConnectionString() => _connectionString;
 
     public async Task ResetAsync()
     {
-        await _respawner.ResetAsync(_connectionString);
+        await _respawner.ResetAsync(_connection);
     }
 
     public async Task DisposeAsync()

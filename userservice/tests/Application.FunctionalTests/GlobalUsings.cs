@@ -1,4 +1,6 @@
-﻿global using Ardalis.GuardClauses;
+global using Ardalis.GuardClauses;
 global using Shouldly;
 global using Moq;
 global using NUnit.Framework;
+global using UserService.Application.Common.Exceptions;
+global using UserService.Domain.Entities;
