@@ -4,7 +4,7 @@ from .api_registry import (
     register_versions as register_versions,
     get_all_versions as get_all_versions,
 )
-
+import asyncio
 from typing import Callable, Optional
 
 
@@ -92,19 +92,44 @@ def shallow_clone_class(cls, new_name=None):
     new_bases = (cls,) + cls.__bases__
     return type(new_name, new_bases, dict(cls.__dict__))
 
-class ExecutionBlocker:
+# NOTE: this was ai generated and validated by hand
+def lock_class(cls):
+    '''
+    Lock a class so that its top-levelattributes cannot be modified.
+    '''
+    # Locked instance __setattr__
+    def locked_instance_setattr(self, name, value):
+        raise AttributeError(
+            f"Cannot set attribute '{name}' on immutable instance of {type(self).__name__}"
+        )
+    # Locked metaclass
+    class LockedMeta(type(cls)):
+        def __setattr__(cls_, name, value):
+            raise AttributeError(
+                f"Cannot modify class attribute '{name}' on locked class '{cls_.__name__}'"
+            )
+    # Rebuild class with locked behavior
+    locked_dict = dict(cls.__dict__)
+    locked_dict['__setattr__'] = locked_instance_setattr
+
+    return LockedMeta(cls.__name__, cls.__bases__, locked_dict)
+
+def make_locked_method_func(type_obj, func, class_clone):
     """
-    Return this from a node and any users will be blocked with the given error message.
-    If the message is None, execution will be blocked silently instead.
-    Generally, you should avoid using this functionality unless absolutely necessary. Whenever it's
-    possible, a lazy input will be more efficient and have a better user experience.
-    This functionality is useful in two cases:
-    1. You want to conditionally prevent an output node from executing. (Particularly a built-in node
-       like SaveImage. For your own output nodes, I would recommend just adding a BOOL input and using
-       lazy evaluation to let it conditionally disable itself.)
-    2. You have a node with multiple possible outputs, some of which are invalid and should not be used.
-       (I would recommend not making nodes like this in the future -- instead, make multiple nodes with
-       different outputs. Unfortunately, there are several popular existing nodes using this pattern.)
+    Returns a function that, when called with **inputs, will execute:
+    getattr(type_obj, func).__func__(lock_class(class_clone), **inputs)
+
+    Supports both synchronous and asynchronous methods.
     """
-    def __init__(self, message):
-        self.message = message
+    locked_class = lock_class(class_clone)
+    method = getattr(type_obj, func).__func__
+
+    # Check if the original method is async
+    if asyncio.iscoroutinefunction(method):
+        async def wrapped_async_func(**inputs):
+            return await method(locked_class, **inputs)
+        return wrapped_async_func
+    else:
+        def wrapped_func(**inputs):
+            return method(locked_class, **inputs)
+        return wrapped_func

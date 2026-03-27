@@ -8,7 +8,8 @@ from enum import Enum
 from typing import Any, TypeVar, TypedDict, Literal, Callable
 from typing_extensions import final
 
-from comfy_api.internal import (copy_class, prune_dict, _NodeOutputInternal, is_class, shallow_clone_class, first_real_override, classproperty, ExecutionBlocker, _ComfyNodeInternal)
+from comfy_api.internal import (copy_class, prune_dict, _NodeOutputInternal, is_class, shallow_clone_class, first_real_override, classproperty, _ComfyNodeInternal)
+from comfy_execution.graph_utils import ExecutionBlocker
 
 
 class RemoteOptions:
@@ -512,9 +513,9 @@ class V3Data(TypedDict):
     'Dictionary where the keys are the hidden input ids and the values are the values of the hidden inputs.'
     
 class HiddenHolder:
-    def __init__(self, unique_id: str, prompt: Any,
-                 extra_pnginfo: Any, dynprompt: Any,
-                 auth_token_comfy_org: str, api_key_comfy_org: str, **kwargs):
+    def __init__(self, unique_id: str=None, prompt: Any=None,
+                 extra_pnginfo: Any=None, dynprompt: Any=None,
+                 auth_token_comfy_org: str=None, api_key_comfy_org: str=None, **kwargs):
         self.unique_id = unique_id
         """UNIQUE_ID is the unique identifier of the node, and matches the id property of the node on the client side. It is commonly used in client-server communications (see messages)."""
         self.prompt = prompt
@@ -544,7 +545,9 @@ class Hidden(str, Enum):
     unique_id = "UNIQUE_ID"
     """UNIQUE_ID is the unique identifier of the node, and matches the id property of the node on the client side. It is commonly used in client-server communications (see messages)."""
     prompt = "PROMPT"
+    extra_pnginfo = "EXTRA_PNGINFO"
     """PROMPT is the complete prompt sent by the client to the server. See the prompt object for a full description."""
+    dynprompt = "DYNPROMPT"
 
 @dataclass
 class NodeInfoV1:
@@ -794,6 +797,29 @@ class Schema:
         )
         return info 
 
+def get_finalized_class_inputs(d: dict[str, Any], live_inputs: dict[str, Any], include_hidden=False) -> tuple[dict[str, Any], V3Data]:
+    out_dict = {
+        "required": {},
+        "optional": {},
+        "dynamic_paths": {},
+        "dynamic_paths_default_value": {},
+    }
+    d = d.copy()
+    # ignore hidden for parsing
+    hidden = d.pop("hidden", None)
+    parse_class_inputs(out_dict, live_inputs, d)
+    if hidden is not None and include_hidden:
+        out_dict["hidden"] = hidden
+    v3_data = {}
+    dynamic_paths = out_dict.pop("dynamic_paths", None)
+    if dynamic_paths is not None and len(dynamic_paths) > 0:
+        v3_data["dynamic_paths"] = dynamic_paths
+    # this list is used for autogrow, in the case all inputs are optional and no values are passed
+    dynamic_paths_default_value = out_dict.pop("dynamic_paths_default_value", None)
+    if dynamic_paths_default_value is not None and len(dynamic_paths_default_value) > 0:
+        v3_data["dynamic_paths_default_value"] = dynamic_paths_default_value
+    return out_dict, hidden, v3_data
+
 def parse_class_inputs(out_dict: dict[str, Any], live_inputs: dict[str, Any], curr_dict: dict[str, Any], curr_prefix: list[str] | None=None) -> None:
     for input_type, inner_d in curr_dict.items():
         for id, value in inner_d.items():
@@ -827,6 +853,43 @@ def add_to_dict_v1(i: Input, d: dict):
 
 def add_to_dict_v3(io: Input | Output, d: dict):
     d[io.id] = (io.get_io_type(), io.as_dict())           
+
+class DynamicPathsDefaultValue:
+    EMPTY_DICT = "empty_dict"
+
+def build_nested_inputs(values: dict[str, Any], v3_data: V3Data):
+    paths = v3_data.get("dynamic_paths", None)
+    default_value_dict = v3_data.get("dynamic_paths_default_value", {})
+    if paths is None:
+        return values
+    values = values.copy()
+
+    result = {}
+
+    create_tuple = v3_data.get("create_dynamic_tuple", False)
+
+    for key, path in paths.items():
+        parts = path.split(".")
+        current = result
+
+        for i, p in enumerate(parts):
+            is_last = (i == len(parts) - 1)
+
+            if is_last:
+                value = values.pop(key, None)
+                if value is None:
+                    # see if a default value was provided for this key
+                    default_option = default_value_dict.get(key, None)
+                    if default_option == DynamicPathsDefaultValue.EMPTY_DICT:
+                        value = {}
+                if create_tuple:
+                    value = (value, key)
+                current[p] = value
+            else:
+                current = current.setdefault(p, {})
+
+    values.update(result)
+    return values
 
 class _ComfyNodeBaseInternal(_ComfyNodeInternal):
     """Common base class for storing internal methods and properties; DO NOT USE for defining nodes."""
@@ -1141,9 +1204,10 @@ class NodeOutput(_NodeOutputInternal):
     '''
     Standardized output of a node; can pass in any number of args and/or a UIOutput into 'ui' kwarg.
     '''
-    def __init__(self, *args: Any, ui: _UIOutput | dict=None, block_execution: str=None):
+    def __init__(self, *args: Any, ui: _UIOutput | dict=None, expand: dict=None, block_execution: str=None):
         self.args = args
         self.ui = ui
+        self.expand = expand
         self.block_execution = block_execution
 
     @property
@@ -1154,14 +1218,17 @@ class NodeOutput(_NodeOutputInternal):
     def from_dict(cls, data: dict[str, Any]) -> NodeOutput:
         args = ()
         ui = None
+        expand = None
         if "result" in data:
             result = data["result"]
-            if isinstance(result, ExecutionBlocker): # content from the graph_utils file, don't understand it  yet
+            if isinstance(result, ExecutionBlocker):
                 return cls(block_execution=result.message)
             args = result
         if "ui" in data:
             ui = data["ui"]
-        return cls(*args, ui=ui)
+        if "expand" in data:
+            expand = data["expand"]
+        return cls(*args, ui=ui, expand=expand)
 
     def __getitem__(self, index) -> Any:
         return self.args[index]
