@@ -22,6 +22,7 @@ FROM build AS publish
 RUN dotnet publish "Web.csproj" -c Release -o /app/publish /p:UseAppHost=false --no-restore
 
 FROM build AS bundle
+RUN dotnet ef migrations has-pending-model-changes -s Web.csproj --context ApplicationDbContext
 RUN dotnet ef migrations bundle -s Web.csproj --context ApplicationDbContext --self-contained -o /app/efbundle --verbose
 
 FROM mcr.microsoft.com/dotnet/aspnet:9.0 AS final-api
