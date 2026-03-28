@@ -19,8 +19,8 @@ Frontend (Next.js) ──→ UserService (5050) ──→ PostgreSQL
 | Сервис              | Технологии             | Порт  | Назначение                           |
 |---------------------|------------------------|-------|--------------------------------------|
 | **userservice**     | C# .NET 9, Clean Arch  | 5050  | Пользователи, проекты, амбассадоры   |
-| publisher           | C# .NET 8              | 6060  | Публикации в соцсети                 |
-| media-ingest        | C# .NET 8              | 5070  | Загрузка файлов, MinIO               |
+| publisher           | C# .NET 9              | 6060  | Публикации в соцсети                 |
+| media-ingest        | C# .NET 9              | 5070  | Загрузка файлов, MinIO               |
 | websocket-gateway   | C# .NET 9, SignalR     | 5000  | Реал-тайм обновления                 |
 | template-service    | Python FastAPI          | 8000  | Генерация контента через AI          |
 | frontend            | Next.js 16 / React 19  | 3000  | Веб-интерфейс                        |
