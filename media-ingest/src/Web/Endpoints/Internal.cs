@@ -5,6 +5,7 @@ using MediaIngest.Application.Media.Commands.ImportFromUrl;
 using MediaIngest.Application.Media.Commands.UploadFromFile;
 using MediaIngest.Application.Media.Queries.GetLinkById;
 using MediaIngest.Application.Media.Queries.GetMediaStream;
+using MediaIngest.Application.Media.Queries.GetUploadPresignedUrl;
 using MediaIngest.Domain.Enums;
 using MediaIngest.Web.Endpoints.Models;
 using Microsoft.AspNetCore.Http.HttpResults;
@@ -45,6 +46,12 @@ public class Internal : EndpointGroupBase
             .WithSummary("Get media URL (internal)")
             .WithDescription("Service-to-service only. Returns a URL for the media file based on the requested link type.")
             .Produces<GetLinkByIdResponse>(StatusCodes.Status200OK)
+            .ProducesProblem(StatusCodes.Status404NotFound);
+
+        groupBuilder.MapGet("/{mediaId:guid}/presigned-upload", GetUploadPresignedUrl)
+            .WithSummary("Get presigned upload URL for existing media (internal)")
+            .WithDescription("Service-to-service only. Returns a presigned PUT URL to overwrite an existing media file in S3.")
+            .Produces<GetUploadPresignedUrlResponse>(StatusCodes.Status200OK)
             .ProducesProblem(StatusCodes.Status404NotFound);
 
         groupBuilder.MapPost("/import-url", ImportFromUrl)
@@ -109,6 +116,12 @@ public class Internal : EndpointGroupBase
     {
         var result = await sender.Send(command);
         return TypedResults.Created($"/api/internal/media/{result.MediaId}/link", result);
+    }
+
+    public async Task<Ok<GetUploadPresignedUrlResponse>> GetUploadPresignedUrl(ISender sender, Guid mediaId)
+    {
+        var result = await sender.Send(new GetUploadPresignedUrlQuery(mediaId));
+        return TypedResults.Ok(result);
     }
 
     public async Task<Created<ImportFromGoogleStorageResponse>> ImportFromGoogleStorage(ISender sender, ImportFromGoogleStorageCommand request)

@@ -9,6 +9,7 @@ from editors.base_ugc.steps.generate_voiceover import GenerateVoiceoverStep
 from editors.base_ugc.steps.add_captions import AddCaptionsStep
 from editors.base_ugc.steps.add_music import AddMusicStep
 from editors.base_ugc.steps.export_upload import ExportAndUploadStep
+from editors.base_ugc.steps.upload_intermediate_result import UploadIntermediateResultStep
 from models.creation_args.base_ugc import BaseUgcArgs
 from utils.editing_workspace import WorkspaceManager
 import logging
@@ -40,12 +41,15 @@ class BaseUgcEditor(BaseEditor):
         steps: list[PipelineStep] = [FetchMediaStep(), ConcatenateStep()]
         if args.remove_silence:
             steps.append(RemoveSilenceStep())
+        if args.add_music:
+            steps.append(AddMusicStep())
+        # TODO: refactor for different intermediate upload checking
+        if args.generate_voiceover or args.add_captions:
+            steps.append(UploadIntermediateResultStep())
         if args.generate_voiceover:
             steps.append(GenerateVoiceoverStep())
         if args.add_captions:
             steps.append(AddCaptionsStep())
-        if args.add_music:
-            steps.append(AddMusicStep())
         steps.append(ExportAndUploadStep())
         return steps
 

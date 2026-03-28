@@ -15,5 +15,6 @@ app.UseSwagger();
 app.UseSwaggerUI();
 
 app.MapTranscriptionEndpoints();
+app.MapVoiceoverEndpoints();
 
 app.Run();
