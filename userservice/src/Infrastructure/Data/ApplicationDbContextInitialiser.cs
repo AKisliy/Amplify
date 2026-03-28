@@ -36,7 +36,14 @@ public class ApplicationDbContextInitialiser(
     {
         try
         {
-            await context.Database.MigrateAsync();
+            var pendingMigrations = (await context.Database.GetPendingMigrationsAsync()).ToList();
+            if (pendingMigrations.Count > 0)
+                throw new InvalidOperationException(
+                    $"Database has {pendingMigrations.Count} pending migration(s): {string.Join(", ", pendingMigrations)}. Apply them before starting the application.");
+
+            if (context.Database.HasPendingModelChanges())
+                throw new InvalidOperationException(
+                    "The EF Core model has changes not captured in a migration. Run 'dotnet ef migrations add' to create a new migration.");
         }
         catch (Exception ex)
         {
