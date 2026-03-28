@@ -1,0 +1,23 @@
+{
+  "applicationName": "application",
+  "apiDependencies": {
+    "ElevenLabsClient": {
+      "apiDescriptionUrl": "https://api.elevenlabs.io/openapi.json",
+      "apiDeploymentBaseUrl": "/",
+      "requests": [
+        {
+          "method": "POST",
+          "uriTemplate": "v1/speech-to-speech/{voice_id}/stream"
+        },
+        {
+          "method": "POST",
+          "uriTemplate": "v1/speech-to-speech/{voice_id}"
+        }
+      ],
+      "extensions": {
+        "x-ms-kiota-hash": "150518E58B6B06FE0E18BA86C580F60B0FD1AD6758CDE71CF712A00308B2356E",
+        "x-ms-kiota-version": "1.30.0"
+      }
+    }
+  }
+}

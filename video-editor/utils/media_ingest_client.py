@@ -27,6 +27,14 @@ def download_media(media_id: str, dest_path: str) -> None:
     logger.debug("Downloaded media %s to %s", media_id, dest_path)
 
 
+def get_upload_presigned_url(media_id: str) -> str:
+    """Return a presigned PUT URL to overwrite an existing media file."""
+    url = f"{_BASE_URL}/api/internal/media/{media_id}/presigned-upload"
+    response = requests.get(url, timeout=30)
+    response.raise_for_status()
+    return response.json()["uploadUrl"]
+
+
 def upload_media(file_path: str, content_type: str = "video/mp4") -> str:
     """Register a new media record, get a presigned PUT URL, upload directly to S3, return media ID."""
     file_name = os.path.basename(file_path)

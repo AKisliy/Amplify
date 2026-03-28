@@ -332,6 +332,50 @@
         }
       }
     },
+    "/api/internal/media/{mediaId}/presigned-upload": {
+      "get": {
+        "tags": [
+          "internal/media"
+        ],
+        "summary": "Get presigned upload URL for existing media (internal)",
+        "description": "Service-to-service only. Returns a presigned PUT URL to overwrite an existing media file in S3.",
+        "operationId": "GetApiInternalMediaPresignedUpload",
+        "parameters": [
+          {
+            "name": "mediaId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "guid"
+            },
+            "x-position": 1
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GetUploadPresignedUrlResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/internal/media/import-url": {
       "post": {
         "tags": [
@@ -682,6 +726,19 @@
           "Public",
           "Presigned"
         ]
+      },
+      "GetUploadPresignedUrlResponse": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "mediaId": {
+            "type": "string",
+            "format": "guid"
+          },
+          "uploadUrl": {
+            "type": "string"
+          }
+        }
       },
       "ImportFromUrlDto": {
         "type": "object",

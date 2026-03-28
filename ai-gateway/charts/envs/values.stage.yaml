@@ -3,6 +3,9 @@ environment: Staging
 secrets:
   openAiApiKey:
     key: openai-test-api-key
+  elevenLabsApiKey:
+    key: elevenlabs-test-key
+
 
 volumeMounts:
   - name: config-volume
