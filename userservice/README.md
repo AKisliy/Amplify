@@ -122,8 +122,6 @@ src/
 docker-compose up -d
 ```
 
-Swagger UI доступен по адресу: `http://localhost:5050`
-
 ### Конфигурация
 
 `appsettings.Development.json` (пример):
@@ -145,8 +143,9 @@ Swagger UI доступен по адресу: `http://localhost:5050`
 ### Запуск приложения
 
 ```bash
-cd userservice
-dotnet run --project src/Web/Web.csproj
+cd userservice/src/Web
+dotnet ef database update
+dotnet run
 ```
 
 Swagger UI доступен по адресу: `https://localhost:5001`

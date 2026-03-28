@@ -1,20 +1,4 @@
 services:
-  api:
-    build:
-      context: .
-      dockerfile: Dockerfile
-    ports:
-      - "5050:8080"
-    environment:
-      - ConnectionStrings__UserServiceDb=Host=db;Database=my_app;Username=postgres;Password=password
-      - ASPNETCORE_ENVIRONMENT=Development
-      - ASPNETCORE_URLS=http://+:8080
-    depends_on:
-      db:
-        condition: service_healthy
-      broker:
-        condition: service_healthy
-
   db:
     image: postgres:16.9-alpine
     environment:
