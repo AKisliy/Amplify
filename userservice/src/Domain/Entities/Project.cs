@@ -6,8 +6,6 @@ public class Project : BaseAuditableEntity
 
     public string? Description { get; set; }
 
-    public string? NewDescription { get; set; }
-
     public Guid? Photo { get; set; }
 
     public Guid UserId { get; set; }

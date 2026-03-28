@@ -12,6 +12,8 @@ services:
     depends_on:
       db:
         condition: service_healthy
+      broker:
+        condition: service_healthy
 
   db:
     image: postgres:16.9-alpine
@@ -26,3 +28,13 @@ services:
       interval: 5s
       timeout: 5s
       retries: 5
+  broker:
+    image: rabbitmq:3-management
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    healthcheck:
+      test: rabbitmq-diagnostics -q ping
+      interval: 30s
+      timeout: 30s
+      retries: 3
