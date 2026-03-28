@@ -1,6 +1,7 @@
 using AiGateway.Web.Clients;
 using AiGateway.Web.Clients.ElevenLabs.Models;
 using AiGateway.Web.Configuration;
+using AiGateway.Web.Services;
 
 namespace AiGateway.Web.Endpoints;
 

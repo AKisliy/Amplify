@@ -10,6 +10,10 @@
     <PackageReference Include="FluentValidation.DependencyInjectionExtensions" />
     <PackageReference Include="Microsoft.Kiota.Bundle" />
     <PackageReference Include="Microsoft.Kiota.Serialization.Multipart" />
+    <PackageReference Include="MimeTypes">
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+      <PrivateAssets>all</PrivateAssets>
+    </PackageReference>
     <PackageReference Include="OpenAI" />
     <PackageReference Include="Swashbuckle.AspNetCore" />
   </ItemGroup>

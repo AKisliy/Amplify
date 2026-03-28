@@ -1,8 +1,8 @@
 using AiGateway.Web.Configuration;
-using AiGateway.Web.Endpoints;
+using AiGateway.Web.Services;
 using OpenAI.Audio;
 
-namespace AiGateway.Web.Clients;
+namespace AiGateway.Web.Clients.OpenAi;
 
 public class OpenAiTranscriptionClient(IOptions<OpenAiOptions> options)
 {

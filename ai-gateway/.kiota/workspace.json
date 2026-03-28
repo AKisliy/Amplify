@@ -23,6 +23,35 @@
       ],
       "excludePatterns": [],
       "outputPath": "./src/Web/Clients"
+    },
+    "MediaIngestClient": {
+      "language": "CSharp",
+      "typeAccessModifier": "Public",
+      "structuredMimeTypes": [
+        "application/json",
+        "text/plain;q=0.9",
+        "application/x-www-form-urlencoded;q=0.2",
+        "multipart/form-data;q=0.1"
+      ],
+      "clientNamespaceName": "AiGateway.Web.Clients.MediaIngest",
+      "usesBackingStore": false,
+      "includeAdditionalData": true,
+      "excludeBackwardCompatible": false,
+      "disabledValidationRules": [],
+      "descriptionLocation": "/Users/alexeykiselev/dev/amplify-vkr/media-ingest/src/Web/wwwroot/api/specification.json",
+      "includePatterns": [
+        "/api/internal",
+        "/api/internal/media",
+        "/api/internal/media/import-gs",
+        "/api/internal/media/import-url",
+        "/api/internal/media/presigned-upload",
+        "/api/internal/media/{mediaId}",
+        "/api/internal/media/{mediaId}/link",
+        "/api/internal/media/{mediaId}/presigned-upload",
+        "/api/internal/media/{mediaId}/stream"
+      ],
+      "excludePatterns": [],
+      "outputPath": "./src/Web/Clients/MediaIngest"
     }
   },
   "plugins": {}

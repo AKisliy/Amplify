@@ -18,6 +18,48 @@
         "x-ms-kiota-hash": "150518E58B6B06FE0E18BA86C580F60B0FD1AD6758CDE71CF712A00308B2356E",
         "x-ms-kiota-version": "1.30.0"
       }
+    },
+    "MediaIngestClient": {
+      "apiDescriptionUrl": "/Users/alexeykiselev/dev/amplify-vkr/media-ingest/src/Web/wwwroot/api/specification.json",
+      "apiDeploymentBaseUrl": "/media/",
+      "requests": [
+        {
+          "method": "GET",
+          "uriTemplate": "api/internal/media/{mediaId}/stream"
+        },
+        {
+          "method": "GET",
+          "uriTemplate": "api/internal/media/{mediaId}/link"
+        },
+        {
+          "method": "GET",
+          "uriTemplate": "api/internal/media/{mediaId}/presigned-upload"
+        },
+        {
+          "method": "DELETE",
+          "uriTemplate": "api/internal/media/{mediaId}"
+        },
+        {
+          "method": "POST",
+          "uriTemplate": "api/internal/media/import-url"
+        },
+        {
+          "method": "POST",
+          "uriTemplate": "api/internal/media/presigned-upload"
+        },
+        {
+          "method": "POST",
+          "uriTemplate": "api/internal/media/import-gs"
+        },
+        {
+          "method": "POST",
+          "uriTemplate": "api/internal/media"
+        }
+      ],
+      "extensions": {
+        "x-ms-kiota-hash": "FBB559B70F3AA037558DC4C7B07C863C0D14B5D23D9D8E2BF55549BB86474EFC",
+        "x-ms-kiota-version": "1.30.0"
+      }
     }
   }
 }

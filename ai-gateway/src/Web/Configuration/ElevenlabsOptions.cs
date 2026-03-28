@@ -5,6 +5,8 @@ public class ElevenlabsOptions
     public const string ConfigurationSection = "Elevenlabs";
 
     public required string ApiKey { get; set; }
+
+    public string BaseUrl { get; set; } = "https://api.elevenlabs.io";
 }
 
 public class ElevenlabsOptionsValidator : AbstractValidator<ElevenlabsOptions>
