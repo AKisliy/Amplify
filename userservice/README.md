@@ -19,8 +19,8 @@ Frontend (Next.js) ──→ UserService (5050) ──→ PostgreSQL
 | Сервис              | Технологии             | Порт  | Назначение                           |
 |---------------------|------------------------|-------|--------------------------------------|
 | **userservice**     | C# .NET 9, Clean Arch  | 5050  | Пользователи, проекты, амбассадоры   |
-| publisher           | C# .NET 8              | 6060  | Публикации в соцсети                 |
-| media-ingest        | C# .NET 8              | 5070  | Загрузка файлов, MinIO               |
+| publisher           | C# .NET 9              | 6060  | Публикации в соцсети                 |
+| media-ingest        | C# .NET 9              | 5070  | Загрузка файлов, MinIO               |
 | websocket-gateway   | C# .NET 9, SignalR     | 5000  | Реал-тайм обновления                 |
 | template-service    | Python FastAPI          | 8000  | Генерация контента через AI          |
 | frontend            | Next.js 16 / React 19  | 3000  | Веб-интерфейс                        |
@@ -143,11 +143,12 @@ docker-compose up -d
 ### Запуск приложения
 
 ```bash
-cd userservice
-dotnet run --project src/Web/Web.csproj
+cd userservice/src/Web
+dotnet ef database update
+dotnet run
 ```
 
-Swagger UI доступен по адресу: `http://localhost:5050/api`
+Swagger UI доступен по адресу: `https://localhost:5001`
 
 Дефолтный администратор (только в Development): `administrator@localhost` / `Administrator1!`
 
@@ -199,9 +200,8 @@ dotnet test tests/Domain.UnitTests/
 - `Auth/` — тесты аутентификации
 - Используют **WebApplicationFactory** + **Testcontainers** (реальный PostgreSQL в Docker)
 - Изоляция тестов через **Respawn** (сброс БД между тестами)
-- Мокирование: `IUser`, `IMediaServiceClient`, `IEmailService`, `MassTransit TestHarness`
 
-**Unit-тесты** (`tests/Application.UnitTests/`, `tests/Domain.UnitTests/`):
+**Unit-тесты** (`tests/Application.UnitTests/`):
 - Тесты доменных сущностей и Application-логики без зависимостей
 
 **Конфигурация для тестов**: `tests/Application.FunctionalTests/appsettings.json`
@@ -255,11 +255,6 @@ RUN dotnet ef migrations bundle \
 #### 2.1 Логирование
 
 - **Стандартный `ILogger`** из `Microsoft.Extensions.Logging` подключён по всему приложению
-- MediatR pipeline behaviours:
-  - `src/Application/Common/Behaviours/LoggingBehaviour.cs` — логирует каждый запрос (имя, пользователь)
-  - `src/Application/Common/Behaviours/PerformanceBehaviour.cs` — логирует медленные запросы (> 500мс)
-  - `src/Application/Common/Behaviours/UnhandledExceptionBehaviour.cs` — логирует необработанные исключения
-- `src/Web/Infrastructure/CustomExceptionHandler.cs` — перехватывает доменные исключения, отдаёт структурированный HTTP-ответ
 - Уровни логирования в `appsettings.json`: `Default: Information`, `Microsoft.*: Warning`
 
 В Kubernetes логи собираются через **OpenTelemetry Collector** с помощью автоинструментирования (см. п. 2.4).
@@ -301,7 +296,7 @@ charts/
 │   ├── values.stage.yaml
 │   └── values.prod.yaml
 └── templates/
-    ├── deployment.yaml      # Deployment с OpenTelemetry annotation
+    ├── deployment.yaml      
     ├── service.yaml         # ClusterIP Service
     ├── configmap.yaml       # Конфигурация приложения
     ├── secrets.yaml         # Секреты (JWT ключ, строки подключения)
@@ -310,35 +305,17 @@ charts/
     └── migration-job.yaml   # Kubernetes Job для применения миграций
 ```
 
-Деплой через Helmfile:
-
-```bash
-helmfile -e stage -l app=userservice sync
-```
-
-Istio VirtualService настраивает:
-- Таймаут запросов: 2 секунды
-- Политику повторов: 3 попытки, retry on `5xx`
-
-#### 2.4 Сборка логов в Kubernetes
-
-Все логи приложения и инфраструктурных объектов собираются через стек **OpenTelemetry**:
-
-- OpenTelemetry Operator управляет инструментированием подов (annotation `inject-dotnet: "true"`)
-- OpenTelemetry Collector агрегирует логи/трейсы/метрики со всего кластера
-- Логи и метрики пересылаются в Grafana Cloud.
-
 ---
 
-### Блок 3 — CI/CD и документация (2 балла)
+### Блок 3 — CI/CD и документация
 
 #### 3.1 CI/CD
 
-GitHub Actions workflow: `.github/workflows/deploy.yaml`
+GitHub Actions workflow: `.github/workflows/deploy-pr.yaml`
 
-**Триггер**: push в `main` при изменениях в `userservice/**`
+**Триггер**: PR в `main` при изменениях в `userservice/**`
 
-**Pipeline (при push в main)**:
+**Pipeline (при PR в main)**:
 1. `build` — сборка: `dotnet restore` + `dotnet build -c Release`
 2. `push-to-registry` — Docker-образ публикуется в Docker Hub (`akisliy/amplify-userservice:{sha}` и `:latest`)
 3. `deploy` (manual trigger) — деплой в Kubernetes через Helmfile
@@ -358,8 +335,6 @@ API-документация генерируется через **NSwag** (Open
 
 - Конфигурация: `src/Web/config.nswag`
 - Спецификация: `src/Web/wwwroot/api/specification.json` (генерируется при сборке в Debug)
-- Swagger UI доступен по адресу: `GET /api` (перенаправляет на UI)
-- JSON-спецификация: `GET /api/specification.json`
 
 Документированы **все** API-методы, включая схемы запросов/ответов и требования к авторизации (Bearer JWT).
 
