@@ -11,6 +11,7 @@ from backend_template.entities.project_template import (
     ProjectTemplateUpdate,
 )
 from backend_template.repositories.project_template import ProjectTemplateRepository
+from backend_template.repositories.library_template import LibraryTemplateRepository
 
 
 class ProjectTemplateService:
@@ -22,12 +23,15 @@ class ProjectTemplateService:
     def __init__(
         self,
         repo: Annotated[ProjectTemplateRepository, Depends(ProjectTemplateRepository)],
+        library_repo: Annotated[LibraryTemplateRepository, Depends(LibraryTemplateRepository)],
     ):
         """
-        :param repo: Injected Repository layer. 
+        :param repo: Injected ProjectTemplate Repository layer.
+        :param library_repo: Injected LibraryTemplate Repository (for duplicate operations).
         Service does NOT touch the raw DB session.
         """
         self.repo = repo
+        self.library_repo = library_repo
 
     async def create_template(
         self, payload: ProjectTemplateCreate
@@ -130,3 +134,30 @@ class ProjectTemplateService:
 
         # 2. Execute Delete
         await self.repo.delete(template_id)
+
+    async def duplicate_from_library(
+        self, library_template_id: UUID, project_id: UUID
+    ) -> ProjectTemplateResponse:
+        """
+        Duplicates a read-only LibraryTemplate into a new editable ProjectTemplate.
+        Copies name and graph_json from the source library template.
+        """
+        # 1. Fetch the source LibraryTemplate
+        source = await self.library_repo.get_by_id(library_template_id)
+        if not source:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"LibraryTemplate with ID {library_template_id} not found.",
+            )
+
+        # 2. Create a new ProjectTemplate with the copied data
+        orm_template = await self.repo.create(
+            project_id=project_id,
+            name=source.name,
+            description=source.description,
+            current_graph_json=source.graph_json,
+        )
+
+        # 3. Return as Pydantic response
+        return ProjectTemplateResponse.model_validate(orm_template)
+        

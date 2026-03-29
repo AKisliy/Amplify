@@ -5,6 +5,7 @@ from .project_template import ProjectTemplate
 from .template_version import TemplateVersion
 from .job import Job, JobStatus
 from .node_execution import NodeExecution, NodeStatus
+from .library_template import LibraryTemplate
 
 # Allow imports like: from backend_template.models import Job
 __all__ = [
@@ -15,4 +16,5 @@ __all__ = [
     "JobStatus",
     "NodeExecution",
     "NodeStatus",
+    "LibraryTemplate",
 ]

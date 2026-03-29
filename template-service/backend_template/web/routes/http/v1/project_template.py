@@ -117,3 +117,22 @@ async def delete_template(
     await service.delete_template(template_id)
     # 204 No Content returns empty body
     return
+
+
+@router.post(
+    "/from-library",
+    response_model=ProjectTemplateResponse,
+    status_code=status.HTTP_201_CREATED,
+    summary="Duplicate a Library Template into a Project",
+)
+async def duplicate_from_library(
+    service: Service,
+    library_template_id: UUID = Query(..., description="UUID of the source LibraryTemplate to clone"),
+    project_id: UUID = Query(..., description="UUID of the target Project to create the template in"),
+):
+    """
+    Duplicates a read-only Library Template into a new editable Project Template.
+    No JSON body required — the backend fetches the source template and copies its graph.
+    """
+    return await service.duplicate_from_library(library_template_id, project_id)
+
