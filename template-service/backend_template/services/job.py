@@ -85,11 +85,14 @@ class JobService:
         await self.db.commit()
         await self.db.refresh(job)
 
+        # Use user_id as the ComfyUI client_id so execution events are routed to
+        # the user's WS connection. Multiple concurrent runs from the same user
+        # share one socket; _listen_execution filters by prompt_id.
         try:
             async with aiohttp.ClientSession() as session:
                 async with session.post(
                     f"{settings.engine_base_url}/api/prompt",
-                    json={"prompt": comfy_prompt},
+                    json={"prompt": comfy_prompt, "client_id": user_id},
                     timeout=aiohttp.ClientTimeout(total=30),
                 ) as resp:
                     body = await resp.json()
@@ -135,13 +138,12 @@ async def _listen_execution(
     comfy_prompt: dict,  # kept for potential future use
 ) -> None:
     """Connects to the ComfyUI WebSocket and processes execution events."""
-    client_id = str(uuid.uuid4())
     ws_url = (
         settings.engine_base_url
         .replace("http://", "ws://", 1)
         .replace("https://", "wss://", 1)
     )
-    ws_url = f"{ws_url}/ws?clientId={client_id}"
+    ws_url = f"{ws_url}/ws?clientId={user_id}"
 
     try:
         async with aiohttp.ClientSession() as session:
