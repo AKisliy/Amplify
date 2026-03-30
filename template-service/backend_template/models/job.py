@@ -35,6 +35,9 @@ class Job(Base, CommonMixin):
     )
     total_cost: Mapped[float] = mapped_column(Float, default=0.0)
     
+    # ComfyUI prompt ID — set after submission, used to correlate WS events
+    prompt_id: Mapped[str | None] = mapped_column(String(255), nullable=True)
+
     # Worker Tracking
     worker_id: Mapped[str | None] = mapped_column(UUID(as_uuid=True), nullable=True)
     

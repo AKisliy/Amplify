@@ -6,8 +6,7 @@
 
 "use client";
 
-// Set to true to use fake/mock execution — backend not yet ready
-const MOCK_MODE = true;
+const MOCK_MODE = false;
 
 // Placeholder image shown in PreviewImageNode during mock runs
 const MOCK_IMAGE_URL = "https://picsum.photos/seed/amplify/640/360";
@@ -28,11 +27,9 @@ import type {
   CanvasNodeData,
   NodeExecutionStatus,
   CanvasExecutionState,
-  PromptRequest,
   PortDef,
 } from "../types";
-import { workflowApi, jobApi } from "../services/comfy-api";
-import { buildPromptPayload } from "../lib/schemaMapper";
+import { runTemplate } from "@/lib/api/template-service";
 
 // ---------------------------------------------------------------------------
 // Execution state reducer
@@ -381,11 +378,12 @@ export function useCanvasStore({
   // ---------------------------------------------------------------------------
 
   /**
-   * Submits the current canvas state.
+   * Submits the template for execution via POST /v1/engine/run.
+   * Status updates arrive via SignalR — no polling needed.
    * In MOCK_MODE, runs a fake animated execution without hitting any backend.
    */
   const submitWorkflow = useCallback(
-    async (clientId: string): Promise<string | null> => {
+    async (templateId: string): Promise<string | null> => {
       dispatchExec({ type: "SUBMIT_START" });
 
       // Reset all nodes to queued, clear edge animations
@@ -474,40 +472,24 @@ export function useCanvasStore({
         return jobId;
       }
 
-      // ── Real ComfyUI path ────────────────────────────────────────────────
+      // ── Real path via template-service ───────────────────────────────────
       try {
-        const promptPayload = buildPromptPayload(nodes, edges);
-
-        const request: PromptRequest = {
-          client_id: clientId,
-          prompt: promptPayload,
-        };
-
-        const response = await workflowApi.submitWorkflow(request);
-
-        if (Object.keys(response.node_errors).length > 0) {
-          for (const [nodeId, err] of Object.entries(response.node_errors)) {
-            setNodeStatus(nodeId, "error", String(err));
-          }
-        }
-
-        dispatchExec({ type: "SUBMIT_SUCCESS", jobId: response.prompt_id });
-        return response.prompt_id;
+        const response = await runTemplate(templateId);
+        dispatchExec({ type: "SUBMIT_SUCCESS", jobId: response.job_id });
+        return response.job_id;
       } catch (err) {
         console.error("[useCanvasStore] submitWorkflow failed:", err);
         dispatchExec({ type: "SUBMIT_ERROR" });
-
         setNodes((nds) =>
           nds.map((n) => ({ ...n, data: { ...n.data, status: "idle" as NodeExecutionStatus } }))
         );
         setEdges((eds) =>
           eds.map((e) => ({ ...e, data: { flowing: false, error: false } }))
         );
-
         return null;
       }
     },
-    [nodes, edges, setNodes, setEdges, setNodeStatus]
+    [setNodes, setEdges, setNodeStatus]
   );
 
   // ---------------------------------------------------------------------------

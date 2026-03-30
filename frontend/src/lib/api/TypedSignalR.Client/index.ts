@@ -94,11 +94,17 @@ class IClientReceiver_Binder implements ReceiverRegister<IClientReceiver> {
     public readonly register = (connection: HubConnection, receiver: IClientReceiver): Disposable => {
 
         const __onPublicationStatusChanged = (...args: [string, string, string, string]) => receiver.onPublicationStatusChanged(...args);
+        const __onVideoEditingStepChanged = (...args: [string, string, string, string, string]) => receiver.onVideoEditingStepChanged(...args);
+        const __onNodeExecutionStatusChanged = (...args: [string, string, any, string]) => receiver.onNodeExecutionStatusChanged(...args);
 
         connection.on("OnPublicationStatusChanged", __onPublicationStatusChanged);
+        connection.on("OnVideoEditingStepChanged", __onVideoEditingStepChanged);
+        connection.on("OnNodeExecutionStatusChanged", __onNodeExecutionStatusChanged);
 
         const methodList: ReceiverMethod[] = [
-            { methodName: "OnPublicationStatusChanged", method: __onPublicationStatusChanged }
+            { methodName: "OnPublicationStatusChanged", method: __onPublicationStatusChanged },
+            { methodName: "OnVideoEditingStepChanged", method: __onVideoEditingStepChanged },
+            { methodName: "OnNodeExecutionStatusChanged", method: __onNodeExecutionStatusChanged }
         ]
 
         return new ReceiverMethodSubscription(connection, methodList);

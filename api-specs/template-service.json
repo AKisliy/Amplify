@@ -289,6 +289,64 @@
         }
       }
     },
+    "/v1/templates/from-library": {
+      "post": {
+        "tags": [
+          "Project Templates"
+        ],
+        "summary": "Duplicate a Library Template into a Project",
+        "description": "Duplicates a read-only Library Template into a new editable Project Template.\nNo JSON body required \u2014 the backend fetches the source template and copies its graph.",
+        "operationId": "duplicate_from_library_v1_templates_from_library_post",
+        "parameters": [
+          {
+            "name": "library_template_id",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "description": "UUID of the source LibraryTemplate to clone",
+              "title": "Library Template Id"
+            },
+            "description": "UUID of the source LibraryTemplate to clone"
+          },
+          {
+            "name": "project_id",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "description": "UUID of the target Project to create the template in",
+              "title": "Project Id"
+            },
+            "description": "UUID of the target Project to create the template in"
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProjectTemplateResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/v1/engine/nodes": {
       "get": {
         "tags": [
@@ -551,6 +609,246 @@
         }
       }
     },
+    "/v1/library-templates/": {
+      "get": {
+        "tags": [
+          "Library Templates"
+        ],
+        "summary": "List Library Templates",
+        "description": "Lists all available library template cards with pagination.",
+        "operationId": "list_library_templates_v1_library_templates__get",
+        "parameters": [
+          {
+            "name": "skip",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "description": "Number of records to skip",
+              "default": 0,
+              "title": "Skip"
+            },
+            "description": "Number of records to skip"
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 100,
+              "minimum": 1,
+              "description": "Max records to return",
+              "default": 100,
+              "title": "Limit"
+            },
+            "description": "Max records to return"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/LibraryTemplateResponse"
+                  },
+                  "title": "Response List Library Templates V1 Library Templates  Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/library-templates/{template_id}": {
+      "get": {
+        "tags": [
+          "Library Templates"
+        ],
+        "summary": "Get Library Template by ID",
+        "description": "Retrieves a specific library template by its UUID.",
+        "operationId": "get_library_template_v1_library_templates__template_id__get",
+        "parameters": [
+          {
+            "name": "template_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Template Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LibraryTemplateResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/internal/library-templates/": {
+      "post": {
+        "tags": [
+          "Library Templates (Internal)"
+        ],
+        "summary": "Create a Library Template",
+        "description": "Creates a new library template card (internal use only).",
+        "operationId": "create_library_template_internal_library_templates__post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LibraryTemplateCreate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LibraryTemplateResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/internal/library-templates/{template_id}": {
+      "patch": {
+        "tags": [
+          "Library Templates (Internal)"
+        ],
+        "summary": "Update a Library Template",
+        "description": "Partially updates a library template (internal use only).\nOnly fields sent in the payload will be updated.",
+        "operationId": "update_library_template_internal_library_templates__template_id__patch",
+        "parameters": [
+          {
+            "name": "template_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Template Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LibraryTemplateUpdate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LibraryTemplateResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Library Templates (Internal)"
+        ],
+        "summary": "Delete a Library Template",
+        "description": "Deletes a library template from the library (internal use only).",
+        "operationId": "delete_library_template_internal_library_templates__template_id__delete",
+        "parameters": [
+          {
+            "name": "template_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Template Id"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/health": {
       "get": {
         "summary": "Health Check",
@@ -667,6 +965,172 @@
         ],
         "title": "HistoryEntry",
         "description": "A single prompt's execution history entry."
+      },
+      "LibraryTemplateCreate": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "maxLength": 255,
+            "minLength": 1,
+            "title": "Name",
+            "description": "The display name of the library template card."
+          },
+          "description": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description",
+            "description": "Optional description of what this template does."
+          },
+          "graph_json": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Graph Json",
+            "description": "The static ComfyUI-style node graph definition."
+          },
+          "thumbnail_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Thumbnail Url",
+            "description": "Signed HTTPS URL to the template's thumbnail image on GCS."
+          }
+        },
+        "type": "object",
+        "required": [
+          "name"
+        ],
+        "title": "LibraryTemplateCreate",
+        "description": "Fields required to CREATE a new library template (internal use only).\nInherits everything from Base."
+      },
+      "LibraryTemplateResponse": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "maxLength": 255,
+            "minLength": 1,
+            "title": "Name",
+            "description": "The display name of the library template card."
+          },
+          "description": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description",
+            "description": "Optional description of what this template does."
+          },
+          "graph_json": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Graph Json",
+            "description": "The static ComfyUI-style node graph definition."
+          },
+          "thumbnail_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Thumbnail Url",
+            "description": "Signed HTTPS URL to the template's thumbnail image on GCS."
+          },
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Updated At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "name",
+          "id",
+          "created_at",
+          "updated_at"
+        ],
+        "title": "LibraryTemplateResponse",
+        "description": "The full representation returned to the client.\nInherits from Base (Shared fields) + Adds System fields (ID, Timestamps)."
+      },
+      "LibraryTemplateUpdate": {
+        "properties": {
+          "name": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 255,
+                "minLength": 1
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Name"
+          },
+          "description": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description"
+          },
+          "graph_json": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Graph Json"
+          },
+          "thumbnail_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Thumbnail Url"
+          }
+        },
+        "type": "object",
+        "title": "LibraryTemplateUpdate",
+        "description": "Fields allowed to be UPDATED (internal use only).\nCRITICAL: Inherits from BaseModel, NOT LibraryTemplateBase.\nAll fields are optional (None) to support PATCH operations."
       },
       "ProjectTemplateCreate": {
         "properties": {

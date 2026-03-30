@@ -2,6 +2,7 @@ from sqlalchemy import String, ForeignKey
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
+
 from backend_template.database import Base
 from backend_template.models.common import CommonMixin
 
@@ -18,6 +19,9 @@ class TemplateVersion(Base, CommonMixin):
     
     # De-duplication Hash (e.g., SHA256 of the JSON)
     version_hash: Mapped[str] = mapped_column(String(64), nullable=False, index=True)
+
+    # Who triggered this snapshot (user_id from JWT)
+    created_by: Mapped[str | None] = mapped_column(String(255), nullable=True)
 
     # Relationships
     template = relationship("ProjectTemplate", back_populates="versions")

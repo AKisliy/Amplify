@@ -4,6 +4,16 @@ from pydantic import field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
+class AuthConfig(BaseSettings):
+    userservice_url: str = "http://userservice"
+    jwt_audience: str = "MyAppDevelopmentUsers"
+
+    model_config = SettingsConfigDict(frozen=True, extra="allow", env_file=".env.example")
+
+
+auth_config = AuthConfig()
+
+
 class Config(BaseSettings):
     # App Settings
     debug: bool = False

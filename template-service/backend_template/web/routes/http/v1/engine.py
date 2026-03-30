@@ -2,16 +2,20 @@ from typing import Annotated
 
 from fastapi import APIRouter, Body, Depends, Query, status
 
+from backend_template.auth import CurrentUserId, _get_user_id
 from backend_template.entities.engine import (
     HistoryEntry,
     PromptRequest,
     PromptResponse,
 )
+from backend_template.entities.job import RunTemplateRequest, RunTemplateResponse
 from backend_template.services.engine_client import EngineClientService
+from backend_template.services.job import JobService
 
-router = APIRouter(prefix="/engine", tags=["Engine"])
+router = APIRouter(prefix="/engine", tags=["Engine"], dependencies=[Depends(_get_user_id)])
 
 Service = Annotated[EngineClientService, Depends(EngineClientService)]
+JobSvc = Annotated[JobService, Depends(JobService)]
 
 
 # ── Node Info ─────────────────────────────────────────────────────────────
@@ -46,6 +50,29 @@ async def get_node(
     (e.g., `GeminiNode`, `VeoVideoGenerationNode`).
     """
     return await service.get_node_info(node_class)
+
+
+# ── Template Execution ────────────────────────────────────────────────────
+
+
+@router.post(
+    "/run",
+    response_model=RunTemplateResponse,
+    status_code=status.HTTP_202_ACCEPTED,
+    summary="Run a template",
+)
+async def run_template(
+    payload: RunTemplateRequest,
+    service: JobSvc,
+    user_id: CurrentUserId,
+):
+    """
+    Snapshots the template's current graph into a TemplateVersion, creates a
+    Job + NodeExecution records, submits the graph to ComfyUI, and streams
+    node status updates via RabbitMQ → WebSocket Gateway → frontend.
+    Returns immediately with job_id and prompt_id.
+    """
+    return await service.run_template(payload.template_id, user_id)
 
 
 # ── Prompt Submission ─────────────────────────────────────────────────────

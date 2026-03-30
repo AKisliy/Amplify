@@ -8,11 +8,16 @@ from backend_template.entities.project_template import (
     ProjectTemplateResponse,
     ProjectTemplateUpdate,
 )
+from backend_template.auth import _get_user_id
 from backend_template.services.project_template import ProjectTemplateService
 
 # 1. Initialize Router with prefix and tags
 # This ensures all routes start with /v1/templates
-router = APIRouter(prefix="/templates", tags=["Project Templates"])
+router = APIRouter(
+    prefix="/templates",
+    tags=["Project Templates"],
+    dependencies=[Depends(_get_user_id)],
+)
 
 # 2. Define Dependency Injection Type Alias
 # This makes the route signatures cleaner and ensures strict typing.
