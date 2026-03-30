@@ -57,7 +57,7 @@ async def _get_user_id(authorization: str = Header(alias="Authorization")) -> st
                 algorithms=["RS256"],
                 audience=auth_config.jwt_audience,
             )
-            user_id: str | None = payload.get("sub")
+            user_id: str | None = payload.get("http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier")
             if not user_id:
                 raise HTTPException(status.HTTP_401_UNAUTHORIZED, detail="Missing sub claim")
             return user_id
@@ -81,7 +81,7 @@ async def _get_user_id(authorization: str = Header(alias="Authorization")) -> st
                     algorithms=["RS256"],
                     audience=auth_config.jwt_audience,
                 )
-                user_id = payload.get("sub")
+                user_id = payload.get("http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier")
                 if not user_id:
                     raise HTTPException(status.HTTP_401_UNAUTHORIZED, detail="Missing sub claim")
                 return user_id
