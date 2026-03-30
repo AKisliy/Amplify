@@ -152,6 +152,7 @@ async def _listen_execution(
                 timeout=aiohttp.ClientWSTimeout(), 
             ) as ws:
                 async for msg in ws:
+                    logger.info(f"WS message for prompt {prompt_id}: {msg}")
                     if msg.type == aiohttp.WSMsgType.TEXT:
                         data = json.loads(msg.data)
                         done = await _handle_ws_event(
