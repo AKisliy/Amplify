@@ -287,6 +287,7 @@ class GeminiNode(IO.ComfyNode):
             description="Generate text responses with Google's Gemini AI model. "
             "You can provide multiple types of inputs (text, images, audio, video) "
             "as context for generating more relevant and meaningful responses.",
+            is_output_node=True,
             inputs=[
                 IO.String.Input(
                     "prompt",
@@ -401,6 +402,7 @@ class GeminiImageNode(IO.ComfyNode):
             display_name="Nano Banana (Google Gemini Image)",
             category="api node/image/Gemini",
             description="Edit images synchronously via Google API.",
+            is_output_node=True,
             inputs=[
                 IO.String.Input(
                     "prompt",
@@ -513,6 +515,7 @@ class GeminiImage2Node(IO.ComfyNode):
             display_name="Nano Banana Pro (Google Gemini Image)",
             category="api node/image/Gemini",
             description="Generate or edit images synchronously via Google Vertex API.",
+            is_output_node=True,
             inputs=[
                 IO.String.Input(
                     "prompt",
