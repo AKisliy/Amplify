@@ -35,7 +35,8 @@ import { NodeLibrarySidebar } from "@/features/canvas/components/NodeLibrarySide
 import { MediaAssetsPanel } from "@/features/canvas/components/MediaAssetsPanel";
 import { TemplateMenu } from "@/features/canvas/components/TemplateMenu";
 import { useCanvasStore } from "@/features/canvas/hooks/useCanvasStore";
-import { NODE_REGISTRY, getNodesByCategory } from "@/features/canvas/registry";
+import { useNodeRegistry } from "@/features/canvas/hooks/useNodeRegistry";
+import { getNodesByCategory, getNodeDef } from "@/features/canvas/registry";
 import { nodeDefToCanvasNode } from "@/features/canvas/lib/schemaMapper";
 import { PREVIEW_SCHEMA_NAMES } from "@/features/canvas/registry/preview-schemas";
 import type { CanvasNode, CanvasEdge } from "@/features/canvas/types";
@@ -55,23 +56,7 @@ const edgeTypes: EdgeTypes = {
   status: FlowingEdge,
 };
 
-// ---------------------------------------------------------------------------
-// Seed canvas
-// ---------------------------------------------------------------------------
-
-function buildSeedNodes(): CanvasNode[] {
-  const geminiDef = NODE_REGISTRY["GeminiNodeAmplify"];
-  const veo3Def   = NODE_REGISTRY["Veo3VideoGenerationNodeAmplify"];
-  const nodes: CanvasNode[] = [];
-  if (geminiDef) nodes.push(nodeDefToCanvasNode("GeminiNodeAmplify", geminiDef, { x: 80, y: 100 }, "node-gemini"));
-  if (veo3Def)   nodes.push(nodeDefToCanvasNode("Veo3VideoGenerationNodeAmplify", veo3Def, { x: 500, y: 80 }, "node-veo3"));
-  return nodes;
-}
-
-const SEED_NODES = buildSeedNodes();
-const SEED_EDGES: CanvasEdge[] = []; // start empty — user wires their own connections
-
-const NODE_LIBRARY = getNodesByCategory();
+const SEED_EDGES: CanvasEdge[] = [];
 
 // ---------------------------------------------------------------------------
 // Page
@@ -87,6 +72,8 @@ export default function TemplateCanvasPage() {
 
   const { resolvedTheme } = useTheme();
   const { projects, isLoading: projectsLoading } = useProjects();
+  const { registry, isLoading: registryLoading } = useNodeRegistry();
+  const nodeLibrary = useMemo(() => getNodesByCategory(registry), [registry]);
 
   // ── UI state ────────────────────────────────────────────────────────────────
   const [sidebarOpen, setSidebarOpen] = useState(true);
@@ -148,7 +135,7 @@ export default function TemplateCanvasPage() {
   }, []);
 
   // ── Load saved graph ────────────────────────────────────────────────────────
-  const [initialNodes, setInitialNodes] = useState(SEED_NODES);
+  const [initialNodes, setInitialNodes] = useState<CanvasNode[]>([]);
   const [initialEdges, setInitialEdges] = useState(SEED_EDGES);
 
   useEffect(() => {
@@ -262,7 +249,7 @@ export default function TemplateCanvasPage() {
   // ── Add node helper ──────────────────────────────────────────────────────────
   const handleAddNode = useCallback(
     (schemaName: string, position: { x: number; y: number }, initialConfig?: Record<string, unknown>) => {
-      const def = NODE_REGISTRY[schemaName];
+      const def = getNodeDef(registry, schemaName);
       if (!def) return;
       let nodeType: "amplify-node" | "preview-node" | "import-media-node" = "amplify-node";
       if (schemaName === "ImportMediaNode") nodeType = "import-media-node";
@@ -271,7 +258,7 @@ export default function TemplateCanvasPage() {
       if (initialConfig) newNode.data.config = { ...newNode.data.config, ...initialConfig };
       addNode(newNode);
     },
-    [addNode]
+    [addNode, registry]
   );
 
   // ── Pane context menu ────────────────────────────────────────────────────────
@@ -509,7 +496,7 @@ export default function TemplateCanvasPage() {
       {/* Main area */}
       <div className="flex-1 flex overflow-hidden" style={{ minHeight: 0 }}>
         {sidebarTab === "nodes"
-          ? <NodeLibrarySidebar isOpen={sidebarOpen} nodesByCategory={NODE_LIBRARY} />
+          ? <NodeLibrarySidebar isOpen={sidebarOpen} nodesByCategory={nodeLibrary} />
           : <MediaAssetsPanel   isOpen={sidebarOpen} projectId={projectId} />
         }
 
@@ -557,7 +544,7 @@ export default function TemplateCanvasPage() {
       {/* Floating menus */}
       <ContextMenu
         position={contextMenu?.screenPos ?? null}
-        nodesByCategory={NODE_LIBRARY}
+        nodesByCategory={nodeLibrary}
         onAddNode={(s) => handleAddNode(s, contextMenu?.flowPos ?? { x: 100, y: 100 })}
         onClose={() => setContextMenu(null)}
       />

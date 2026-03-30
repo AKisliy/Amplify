@@ -37,6 +37,7 @@ export interface StringInputConfig {
   multiline?: boolean;
   forceInput?: boolean;
   advanced?: boolean;
+  widget_type?: string;
 }
 
 export interface IntInputConfig {

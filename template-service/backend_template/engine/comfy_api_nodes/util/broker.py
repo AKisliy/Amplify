@@ -1,0 +1,27 @@
+import json
+import logging
+
+import aio_pika
+from pydantic import BaseModel
+
+from config import rabbitmq_config
+
+logger = logging.getLogger(__name__)
+
+
+async def publish_event(exchange_name: str, message: BaseModel) -> None:
+    """Publishes a message to a fanout exchange on RabbitMQ."""
+    connection = await aio_pika.connect_robust(rabbitmq_config.rabbitmq_url)
+    async with connection:
+        channel = await connection.channel()
+        exchange = await channel.declare_exchange(
+            exchange_name,
+            aio_pika.ExchangeType.FANOUT,
+            durable=True,
+        )
+        body = json.dumps(message.model_dump(by_alias=True)).encode()
+        await exchange.publish(
+            aio_pika.Message(body=body, content_type="application/json"),
+            routing_key="",
+        )
+        logger.info(f"Published {exchange_name}: {body.decode()}")

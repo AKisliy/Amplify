@@ -21,6 +21,11 @@ class EngineConfig(ConfigBase):
     log_level: str = "INFO"            
     log_stdout: bool = False           
 
+class RabbitMqConfig(ConfigBase):
+    rabbitmq_url: str = "amqp://guest:guest@localhost:5672/"
+
+
 gemini_config = GeminiConfig()
 media_ingest_config = MediaIngestConfig()
 engine_config = EngineConfig()
+rabbitmq_config = RabbitMqConfig()

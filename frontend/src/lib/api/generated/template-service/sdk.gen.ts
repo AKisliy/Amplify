@@ -2,7 +2,7 @@
 
 import type { Client, Options as Options2, TDataShape } from './client';
 import { client } from './client.gen';
-import type { CreateTemplateV1TemplatesPostData, CreateTemplateV1TemplatesPostErrors, CreateTemplateV1TemplatesPostResponses, DeleteTemplateV1TemplatesTemplateIdDeleteData, DeleteTemplateV1TemplatesTemplateIdDeleteErrors, DeleteTemplateV1TemplatesTemplateIdDeleteResponses, GetTemplatesByProjectV1TemplatesProjectProjectIdGetData, GetTemplatesByProjectV1TemplatesProjectProjectIdGetErrors, GetTemplatesByProjectV1TemplatesProjectProjectIdGetResponses, GetTemplateV1TemplatesTemplateIdGetData, GetTemplateV1TemplatesTemplateIdGetErrors, GetTemplateV1TemplatesTemplateIdGetResponses, HealthCheckHealthGetData, HealthCheckHealthGetResponses, ListTemplatesV1TemplatesGetData, ListTemplatesV1TemplatesGetErrors, ListTemplatesV1TemplatesGetResponses, UpdateTemplateV1TemplatesTemplateIdPatchData, UpdateTemplateV1TemplatesTemplateIdPatchErrors, UpdateTemplateV1TemplatesTemplateIdPatchResponses } from './types.gen';
+import type { ClearHistoryV1EngineHistoryPostData, ClearHistoryV1EngineHistoryPostErrors, ClearHistoryV1EngineHistoryPostResponses, CreateTemplateV1TemplatesPostData, CreateTemplateV1TemplatesPostErrors, CreateTemplateV1TemplatesPostResponses, DeleteTemplateV1TemplatesTemplateIdDeleteData, DeleteTemplateV1TemplatesTemplateIdDeleteErrors, DeleteTemplateV1TemplatesTemplateIdDeleteResponses, GetAllHistoryV1EngineHistoryGetData, GetAllHistoryV1EngineHistoryGetErrors, GetAllHistoryV1EngineHistoryGetResponses, GetAllNodesV1EngineNodesGetData, GetAllNodesV1EngineNodesGetResponses, GetNodeV1EngineNodesNodeClassGetData, GetNodeV1EngineNodesNodeClassGetErrors, GetNodeV1EngineNodesNodeClassGetResponses, GetPromptHistoryV1EngineHistoryPromptIdGetData, GetPromptHistoryV1EngineHistoryPromptIdGetErrors, GetPromptHistoryV1EngineHistoryPromptIdGetResponses, GetTemplatesByProjectV1TemplatesProjectProjectIdGetData, GetTemplatesByProjectV1TemplatesProjectProjectIdGetErrors, GetTemplatesByProjectV1TemplatesProjectProjectIdGetResponses, GetTemplateV1TemplatesTemplateIdGetData, GetTemplateV1TemplatesTemplateIdGetErrors, GetTemplateV1TemplatesTemplateIdGetResponses, HealthCheckHealthGetData, HealthCheckHealthGetResponses, ListTemplatesV1TemplatesGetData, ListTemplatesV1TemplatesGetErrors, ListTemplatesV1TemplatesGetResponses, SubmitPromptV1EnginePromptPostData, SubmitPromptV1EnginePromptPostErrors, SubmitPromptV1EnginePromptPostResponses, UpdateTemplateV1TemplatesTemplateIdPatchData, UpdateTemplateV1TemplatesTemplateIdPatchErrors, UpdateTemplateV1TemplatesTemplateIdPatchResponses } from './types.gen';
 
 export type Options<TData extends TDataShape = TDataShape, ThrowOnError extends boolean = boolean> = Options2<TData, ThrowOnError> & {
     /**
@@ -88,6 +88,87 @@ export const getTemplatesByProjectV1TemplatesProjectProjectIdGet = <ThrowOnError
     responseType: 'json',
     url: '/v1/templates/project/{project_id}',
     ...options
+});
+
+/**
+ * Get all node schemas
+ *
+ * Returns the full schema (inputs, outputs, metadata) for every
+ * registered node in the engine.
+ */
+export const getAllNodesV1EngineNodesGet = <ThrowOnError extends boolean = false>(options?: Options<GetAllNodesV1EngineNodesGetData, ThrowOnError>) => (options?.client ?? client).get<GetAllNodesV1EngineNodesGetResponses, unknown, ThrowOnError>({
+    responseType: 'json',
+    url: '/v1/engine/nodes',
+    ...options
+});
+
+/**
+ * Get a single node schema
+ *
+ * Returns the schema for a specific node class by name
+ * (e.g., `GeminiNode`, `VeoVideoGenerationNode`).
+ */
+export const getNodeV1EngineNodesNodeClassGet = <ThrowOnError extends boolean = false>(options: Options<GetNodeV1EngineNodesNodeClassGetData, ThrowOnError>) => (options.client ?? client).get<GetNodeV1EngineNodesNodeClassGetResponses, GetNodeV1EngineNodesNodeClassGetErrors, ThrowOnError>({
+    responseType: 'json',
+    url: '/v1/engine/nodes/{node_class}',
+    ...options
+});
+
+/**
+ * Submit a workflow for execution
+ *
+ * Submits a workflow graph for asynchronous execution on the engine.
+ * Returns immediately with a `prompt_id` — poll
+ * `GET /history/{prompt_id}` for results.
+ */
+export const submitPromptV1EnginePromptPost = <ThrowOnError extends boolean = false>(options: Options<SubmitPromptV1EnginePromptPostData, ThrowOnError>) => (options.client ?? client).post<SubmitPromptV1EnginePromptPostResponses, SubmitPromptV1EnginePromptPostErrors, ThrowOnError>({
+    responseType: 'json',
+    url: '/v1/engine/prompt',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+/**
+ * Get execution history for a prompt
+ *
+ * Returns the execution history entry for a specific prompt_id.
+ * Returns null if no history exists for that prompt.
+ */
+export const getPromptHistoryV1EngineHistoryPromptIdGet = <ThrowOnError extends boolean = false>(options: Options<GetPromptHistoryV1EngineHistoryPromptIdGetData, ThrowOnError>) => (options.client ?? client).get<GetPromptHistoryV1EngineHistoryPromptIdGetResponses, GetPromptHistoryV1EngineHistoryPromptIdGetErrors, ThrowOnError>({
+    responseType: 'json',
+    url: '/v1/engine/history/{prompt_id}',
+    ...options
+});
+
+/**
+ * List execution history
+ *
+ * Returns execution history for all prompts.
+ * Supports optional pagination via `max_items` and `offset`.
+ */
+export const getAllHistoryV1EngineHistoryGet = <ThrowOnError extends boolean = false>(options?: Options<GetAllHistoryV1EngineHistoryGetData, ThrowOnError>) => (options?.client ?? client).get<GetAllHistoryV1EngineHistoryGetResponses, GetAllHistoryV1EngineHistoryGetErrors, ThrowOnError>({
+    responseType: 'json',
+    url: '/v1/engine/history',
+    ...options
+});
+
+/**
+ * Clear or delete history entries
+ *
+ * Clears all execution history (if `clear=true`) and/or deletes
+ * specific entries by prompt_id (if `delete` list is provided).
+ */
+export const clearHistoryV1EngineHistoryPost = <ThrowOnError extends boolean = false>(options?: Options<ClearHistoryV1EngineHistoryPostData, ThrowOnError>) => (options?.client ?? client).post<ClearHistoryV1EngineHistoryPostResponses, ClearHistoryV1EngineHistoryPostErrors, ThrowOnError>({
+    responseType: 'json',
+    url: '/v1/engine/history',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options?.headers
+    }
 });
 
 /**

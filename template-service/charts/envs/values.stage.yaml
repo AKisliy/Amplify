@@ -3,6 +3,8 @@ secrets:
     key: template-service-db-conn-test
   serviceAccountKeyFile:
     key: template-service-sa-key-test
+  rabbitmqUrl:
+    key: rabbitmq-test
 
 config:
   mediaIngestUrl: "http://mediaingest.test-env.svc.cluster.local/media/api"
