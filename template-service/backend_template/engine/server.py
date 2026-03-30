@@ -246,6 +246,8 @@ class PromptServer():
             await send_socket_catch_exception(self.sockets[sid].send_json, message)
 
     def send_sync(self, event, data, sid=None):
+        import logging as _logging
+        _logging.getLogger(__name__).info(f"[SERVER] send_sync with event: {event}, data: {data}, sid: {sid}")
         self.loop.call_soon_threadsafe(
             self.messages.put_nowait, (event, data, sid))
 
