@@ -85,6 +85,14 @@ class JobService:
         await self.db.commit()
         await self.db.refresh(job)
 
+        asyncio.create_task(
+            _listen_execution(
+                job_id=str(job.id),
+                user_id=user_id,
+                comfy_prompt=comfy_prompt,
+            )
+        )
+
         # Use user_id as the ComfyUI client_id so execution events are routed to
         # the user's WS connection. Multiple concurrent runs from the same user
         # share one socket; _listen_execution filters by prompt_id.
@@ -115,15 +123,7 @@ class JobService:
         job.started_at = datetime.now(timezone.utc)
         await self.db.commit()
 
-        # 7. Spawn background task: subscribe to ComfyUI WS and track execution
-        asyncio.create_task(
-            _listen_execution(
-                prompt_id=prompt_id,
-                job_id=str(job.id),
-                user_id=user_id,
-                comfy_prompt=comfy_prompt,
-            )
-        )
+        # 7. Spawn background task: subscribe to ComfyUI WS and track executio
 
         return RunTemplateResponse(job_id=str(job.id), prompt_id=prompt_id)
 
@@ -132,7 +132,6 @@ class JobService:
 
 
 async def _listen_execution(
-    prompt_id: str,
     job_id: str,
     user_id: str,
     comfy_prompt: dict,  # kept for potential future use
@@ -152,43 +151,38 @@ async def _listen_execution(
                 timeout=aiohttp.ClientWSTimeout(), 
             ) as ws:
                 async for msg in ws:
-                    logger.info(f"WS message for prompt {prompt_id}: {msg}")
+                    logger.info(f"WS message for prompt: {msg}")
                     if msg.type == aiohttp.WSMsgType.TEXT:
                         data = json.loads(msg.data)
                         done = await _handle_ws_event(
                             data=data,
-                            prompt_id=prompt_id,
                             job_id=job_id,
                             user_id=user_id,
                         )
                         if done:
                             return
                     elif msg.type in (aiohttp.WSMsgType.CLOSED, aiohttp.WSMsgType.ERROR):
-                        logger.warning(f"WS closed unexpectedly for prompt {prompt_id}")
+                        logger.warning(f"WS closed unexpectedly for prompt")
                         break
     except aiohttp.ClientConnectorError:
-        logger.error(f"Cannot connect to engine WS for prompt {prompt_id}")
+        logger.error(f"Cannot connect to engine WS for prompt")
     except Exception as e:
-        logger.error(f"WS listener error for prompt {prompt_id}: {e}", exc_info=True)
+        logger.error(f"WS listener error for prompt: {e}", exc_info=True)
     finally:
         await _ensure_job_terminal(job_id)
 
 
 async def _handle_ws_event(
     data: dict,
-    prompt_id: str,
     job_id: str,
     user_id: str,
 ) -> bool:
     """Processes one WS message. Returns True when execution is complete."""
-    logger.info(f"WS event for prompt {prompt_id}: {data}")
+    logger.info(f"WS event for prompt: {data}")
     event_type = data.get("type")
     event_data = data.get("data", {})
 
-    # Ignore events belonging to other prompts
     event_prompt_id = event_data.get("prompt_id")
-    if event_prompt_id and event_prompt_id != prompt_id:
-        return False
 
     if event_type == "executing":
         node_id = event_data.get("node")
@@ -199,7 +193,7 @@ async def _handle_ws_event(
         await publish_event(
             "node-status-changed",
             NodeStatusChangedEvent(
-                job_id=job_id, prompt_id=prompt_id, node_id=node_id,
+                job_id=job_id, prompt_id=event_prompt_id, node_id=node_id,
                 status="RUNNING", user_id=user_id,
             ),
         )
@@ -210,7 +204,7 @@ async def _handle_ws_event(
             await publish_event(
                 "node-status-changed",
                 NodeStatusChangedEvent(
-                    job_id=job_id, prompt_id=prompt_id, node_id=node_id,
+                    job_id=job_id, prompt_id=event_prompt_id, node_id=node_id,
                     status="CACHED", user_id=user_id,
                 ),
             )
@@ -222,7 +216,7 @@ async def _handle_ws_event(
         await publish_event(
             "node-status-changed",
             NodeStatusChangedEvent(
-                job_id=job_id, prompt_id=prompt_id, node_id=node_id,
+                job_id=job_id, prompt_id=event_prompt_id, node_id=node_id,
                 status="SUCCESS", user_id=user_id, outputs=outputs,
             ),
         )
@@ -235,7 +229,7 @@ async def _handle_ws_event(
         await publish_event(
             "node-status-changed",
             NodeStatusChangedEvent(
-                job_id=job_id, prompt_id=prompt_id, node_id=node_id,
+                job_id=job_id, prompt_id=event_prompt_id, node_id=node_id,
                 status="FAILURE", user_id=user_id, error=error,
             ),
         )
