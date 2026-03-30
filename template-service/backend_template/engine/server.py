@@ -86,6 +86,26 @@ class PromptServer():
 
             return info
 
+        @routes.get("/ws")
+        async def websocket_handler(request):
+            ws = web.WebSocketResponse()
+            await ws.prepare(request)
+
+            sid = request.rel_url.query.get("clientId", str(uuid.uuid4()))
+            self.sockets[sid] = ws
+            logging.info(f"[WS] client connected: {sid}")
+
+            try:
+                async for msg in ws:
+                    if msg.type == aiohttp.WSMsgType.ERROR:
+                        logging.warning(f"[WS] error from {sid}: {ws.exception()}")
+                        break
+            finally:
+                self.sockets.pop(sid, None)
+                logging.info(f"[WS] client disconnected: {sid}")
+
+            return ws
+
         @routes.get("/object_info")
         async def get_object_info(request):
             out = {}
