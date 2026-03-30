@@ -178,6 +178,7 @@ async def _handle_ws_event(
     user_id: str,
 ) -> bool:
     """Processes one WS message. Returns True when execution is complete."""
+    logger.info(f"WS event for prompt {prompt_id}: {data}")
     event_type = data.get("type")
     event_data = data.get("data", {})
 
