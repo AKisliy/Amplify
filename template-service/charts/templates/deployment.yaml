@@ -51,6 +51,8 @@ spec:
               value: "/secrets/sa-key.json"
             - name: ROOT_PATH
               value: "{{ .Values.config.rootPath }}"
+            - name: USER_SERVICE_URL
+              value: "{{ .Values.config.userServiceUrl }}"
           envFrom:
             - secretRef:
                 name: {{ .Values.secret.name }}
