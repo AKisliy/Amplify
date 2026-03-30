@@ -536,7 +536,6 @@ export default function TemplateCanvasPage() {
                 if (d?.categoryTag === "video") return "#ef4444";
                 return "#64748b";
               }}
-              
             />
           </ReactFlow>
         </div>
