@@ -223,83 +223,7 @@ export type CanvasNode = Node<CanvasNodeData, CanvasNodeType>;
 export type CanvasEdge = Edge<{ flowing?: boolean; error?: boolean }, "status">;
 
 // ---------------------------------------------------------------------------
-// 5. ComfyUI API — Request / Response Types
-// ---------------------------------------------------------------------------
-
-// --- Workflow endpoints ---
-
-/**
- * A node payload entry inside POST /api/prompt.
- * Input values are either literals or node-link references [nodeId, outputIndex].
- */
-export type PromptInputValue = string | number | boolean | [string, number];
-
-export interface PromptNodeInput {
-  class_type: string;
-  _meta?: { title?: string };
-  inputs: Record<string, PromptInputValue>;
-}
-
-/** POST /api/prompt — request body */
-export interface PromptRequest {
-  client_id: string;
-  prompt: Record<string, PromptNodeInput>;
-  extra_data?: { extra_pnginfo?: object };
-}
-
-/** POST /api/prompt — response */
-export interface PromptResponse {
-  prompt_id: string;
-  number: number;
-  node_errors: Record<string, unknown>;
-}
-
-/** GET /api/prompt — response */
-export interface QueueStatusResponse {
-  exec_info: {
-    queue_remaining: number;
-  };
-}
-
-// --- Job (history) endpoints ---
-
-export type JobStatusStr = "success" | "error" | "interrupted" | "cached";
-
-export interface JobNodeOutput {
-  [outputName: string]: unknown;
-}
-
-export interface JobNodeResult {
-  outputs: Record<string, JobNodeOutput>;
-  meta?: Record<string, unknown>;
-}
-
-export interface HistoryEntry {
-  prompt: [number, string, Record<string, PromptNodeInput>, object, string[]];
-  outputs: Record<string, JobNodeResult>;
-  status: {
-    status_str: JobStatusStr;
-    completed: boolean;
-    messages: [string, unknown][];
-  };
-}
-
-/** GET /api/history and GET /api/history/{prompt_id} */
-export type HistoryResponse = Record<string, HistoryEntry>;
-
-/** DELETE /api/history — request body */
-export interface DeleteHistoryRequest {
-  delete?: string[];
-  clear?: boolean;
-}
-
-// --- Node (object_info) endpoints ---
-
-/** GET /api/object_info and GET /api/object_info/{node_type} */
-export type ObjectInfoResponse = Record<string, NodeSchemaDef>;
-
-// ---------------------------------------------------------------------------
-// 6. Canvas Store State Shape
+// 5. Canvas Store State Shape
 // ---------------------------------------------------------------------------
 
 export interface CanvasExecutionState {
@@ -309,8 +233,6 @@ export interface CanvasExecutionState {
   nodeStatuses: Record<string, NodeExecutionStatus>;
   /** Error messages keyed by node ID */
   nodeErrors: Record<string, string>;
-  /** History of completed job IDs (most recent first) */
-  jobHistory: string[];
   /** Whether a submission is in-flight */
   isSubmitting: boolean;
 }
@@ -324,7 +246,7 @@ export interface CanvasState {
 }
 
 // ---------------------------------------------------------------------------
-// 7. Node Library Item (used in the sidebar / context menu)
+// 6. Node Library Item (used in the sidebar / context menu)
 // ---------------------------------------------------------------------------
 
 export interface NodeLibraryItem {
