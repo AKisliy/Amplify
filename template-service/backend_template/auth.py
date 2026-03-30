@@ -19,7 +19,7 @@ _jwks: dict | None = None
 
 async def _fetch_jwks() -> dict:
     global _jwks
-    openid_url = f"{auth_config.userservice_url}/api/auth/.well-known/openid-configuration"
+    openid_url = f"{auth_config.userservice_url}/auth/.well-known/openid-configuration"
     async with aiohttp.ClientSession() as session:
         async with session.get(openid_url) as resp:
             resp.raise_for_status()
