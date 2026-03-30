@@ -11,4 +11,4 @@ config:
   gcpProjectId: "proven-aviary-484307-c9"
   gcpLocation: "global"
   gcpStorageUri: "gs://amplify-media-test"
-  userServiceUrl: "http://userservice.test-env.svc.cluster.local/user/api"
+  userServiceUrl: "http://userservice.test-env.svc.cluster.local/userservice/api"
