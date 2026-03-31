@@ -110,6 +110,7 @@ class VeoVideoGenerationNode(IO.ComfyNode):
                 ),
                 IO.String.Input(
                     "image_uuid",
+                    force_input=True,
                     optional=True,
                     tooltip="A Media Ingest API UUID representing an uploaded image"
                 ),
@@ -327,6 +328,7 @@ class Veo3VideoGenerationNode(VeoVideoGenerationNode):
                 ),
                 IO.String.Input(
                     "image_uuid",
+                    force_input=True,
                     optional=True,
                     tooltip="A Media Ingest API UUID representing an uploaded image"
                 ),
@@ -406,10 +408,12 @@ class Veo3FirstLastFrameNode(IO.ComfyNode):
                 ),
                 IO.String.Input(
                     "first_frame_uuid",
+                    force_input=True,
                     tooltip="A Media Ingest API UUID representing an uploaded image"
                 ),
                 IO.String.Input(
                     "last_frame_uuid",
+                    force_input=True,
                     tooltip="A Media Ingest API UUID representing an uploaded image"
                 ),
                 IO.Combo.Input(
