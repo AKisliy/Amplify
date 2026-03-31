@@ -241,9 +241,9 @@ class VeoVideoGenerationNode(IO.ComfyNode):
             video = poll_response.response.videos[0]
 
             if hasattr(video, "gcsUri") and video.gcsUri:
-                
+
                 media_id = await register_media_uri_with_ingest(cls, video.gcsUri, "video/mp4")
-                return IO.NodeOutput(media_id)
+                return IO.NodeOutput(media_id, ui={"video_uuid": [media_id]})
 
             raise Exception("Video returned but no data or URL was provided")
         raise Exception("Video generation completed but no video was returned")
@@ -512,9 +512,8 @@ class Veo3FirstLastFrameNode(IO.ComfyNode):
         if response.videos:
             video = response.videos[0]
             if video.gcsUri:
-                
                 media_id = await register_media_uri_with_ingest(cls, video.gcsUri, "video/mp4")
-                return IO.NodeOutput(media_id)
+                return IO.NodeOutput(media_id, ui={"video_uuid": [media_id]})
             raise Exception("Video returned but no data or URL was provided")
         raise Exception("Video generation completed but no video was returned")
 

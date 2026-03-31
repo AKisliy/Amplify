@@ -384,8 +384,8 @@ class GeminiNode(IO.ComfyNode):
             response_model=GeminiGenerateContentResponse,
         )
 
-        output_text = get_text_from_response(response)
-        return IO.NodeOutput(output_text or "Empty response from Gemini model...")
+        output_text = get_text_from_response(response) or "Empty response from Gemini model..."
+        return IO.NodeOutput(output_text, ui={"text": [output_text]})
 
 class GeminiImageNode(IO.ComfyNode):
 
@@ -498,7 +498,9 @@ class GeminiImageNode(IO.ComfyNode):
             response_model=GeminiGenerateContentResponse,
         )
 
-        return IO.NodeOutput(await upload_images_and_get_uuids(cls, response), get_text_from_response(response))
+        image_uuid = await upload_images_and_get_uuids(cls, response)
+        text = get_text_from_response(response)
+        return IO.NodeOutput(image_uuid, text, ui={"image_uuid": [image_uuid], "text": [text]})
 
 class GeminiImage2Node(IO.ComfyNode):
 
@@ -615,7 +617,9 @@ class GeminiImage2Node(IO.ComfyNode):
             price_extractor=calculate_tokens_price,
         )
 
-        return IO.NodeOutput(await upload_images_and_get_uuids(cls, response), get_text_from_response(response))
+        image_uuid = await upload_images_and_get_uuids(cls, response)
+        text = get_text_from_response(response)
+        return IO.NodeOutput(image_uuid, text, ui={"image_uuid": [image_uuid], "text": [text]})
 
 class GeminiExtension(ComfyExtension):
     @override

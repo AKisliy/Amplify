@@ -341,6 +341,7 @@ class PromptServer():
                 logging.error(f"Failed to publish execution event: {e}")
 
     def send_sync(self, event, data, sid=None):
+        logging.info(f"[SERVER] send_sync {event} {data} {sid}")
         self.loop.call_soon_threadsafe(
             self.messages.put_nowait, (event, data, sid))
 

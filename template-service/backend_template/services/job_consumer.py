@@ -54,8 +54,8 @@ async def consume_job_events() -> None:
 
 
 async def _handle_event(data: dict) -> None:
-    logger.debug(f"Received job event: {data}")
-    
+    logger.info(f"Received job event: {data}")
+
     job_id_str: str | None = data.get("jobId") or data.get("job_id")
     node_id_str: str | None = data.get("nodeId") or data.get("node_id")
     status_str: str = data.get("status", "")
