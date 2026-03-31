@@ -31,6 +31,7 @@ import {
   Clock,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { mediaUrl } from "@/lib/media";
 import type { CanvasNode, CanvasNodeData, NodeCategory, NodeExecutionStatus, PortDef } from "../types";
 import { NodePort } from "./NodePort";
 import { NodeWidget } from "./NodeWidget";
@@ -326,6 +327,13 @@ export function AmplifyNode({ id, data, selected }: NodeProps<CanvasNode>) {
       )}
 
       {/* ----------------------------------------------------------------- */}
+      {/* Output preview — shown on success when the node produced media  */}
+      {/* ----------------------------------------------------------------- */}
+      {data.status === "success" && data.outputValues && (
+        <NodeOutputPreview outputs={data.outputValues as Record<string, unknown[]>} />
+      )}
+
+      {/* ----------------------------------------------------------------- */}
       {/* Error message */}
       {/* ----------------------------------------------------------------- */}
       {data.status === "error" && data.errorMessage && (
@@ -339,6 +347,42 @@ export function AmplifyNode({ id, data, selected }: NodeProps<CanvasNode>) {
       {/* ----------------------------------------------------------------- */}
       <div className={cn("h-[3px] w-full mt-1 transition-all duration-500", statusCfg.barClass)} />
     </motion.div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// NodeOutputPreview — renders image/video result inside the node after success
+// ---------------------------------------------------------------------------
+
+interface NodeOutputPreviewProps {
+  outputs: Record<string, unknown[]>;
+}
+
+function NodeOutputPreview({ outputs }: NodeOutputPreviewProps) {
+  const videoGuid = (outputs.video_uuid?.[0] as string | undefined);
+  const imageGuid = (outputs.image_uuid?.[0] as string | undefined);
+
+  if (!videoGuid && !imageGuid) return null;
+
+  return (
+    <div className="mx-3 mb-2 mt-1 rounded-lg overflow-hidden border border-white/[0.06]">
+      {videoGuid && (
+        // eslint-disable-next-line jsx-a11y/media-has-caption
+        <video
+          src={mediaUrl(videoGuid)}
+          controls
+          className="nodrag nopan nowheel w-full max-h-48 bg-black object-contain"
+        />
+      )}
+      {imageGuid && !videoGuid && (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img
+          src={mediaUrl(imageGuid)}
+          alt="Output"
+          className="nodrag nopan nowheel w-full max-h-48 object-contain bg-black"
+        />
+      )}
+    </div>
   );
 }
 
