@@ -25,3 +25,4 @@ class NodeStatusChangedEvent(BaseModel):
     status: str  # RUNNING | SUCCESS | FAILURE | CACHED
     outputs: dict | None = None
     error: str | None = None
+    job_status: str | None = None  # COMPLETED | FAILED — set on terminal events

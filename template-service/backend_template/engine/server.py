@@ -1,18 +1,37 @@
 import asyncio
-
-import nodes
-import execution
-
-import aiohttp
-from aiohttp import web
+import json
 import logging
 import time
 import traceback
 import uuid
 
+import aiohttp
+from aiohttp import web
+from pydantic import BaseModel, ConfigDict
+from pydantic.alias_generators import to_camel
+
+import nodes
+import execution
+
 from comfy_api.internal import _ComfyNodeInternal
+from comfy_api_nodes.util.broker import publish_event
 
 from typing import Optional
+
+
+class _NodeStatusEvent(BaseModel):
+    """Mirrors NodeStatusChangedEvent from template-service entities."""
+    model_config = ConfigDict(alias_generator=to_camel, populate_by_name=True)
+
+    job_id: str
+    prompt_id: str
+    node_id: str
+    user_id: str
+    status: str
+    outputs: dict | None = None
+    error: str | None = None
+    job_status: str | None = None  # COMPLETED | FAILED on terminal events
+
 
 async def send_socket_catch_exception(function, message):
     try:
@@ -33,6 +52,9 @@ class PromptServer():
         self.app = web.Application()
         self.sockets = dict()
         self.sockets_metadata = dict()
+
+        # prompt_id → {job_id, user_id} — populated on POST /api/prompt
+        self.prompt_metadata: dict[str, dict] = {}
 
         routes = web.RouteTableDef()
         self.routes = routes
@@ -163,6 +185,13 @@ class PromptServer():
                             sensitive[sensitive_val] = extra_data.pop(sensitive_val)
                     extra_data["create_time"] = int(time.time() * 1000)  # timestamp in milliseconds
                     self.prompt_queue.put((number, prompt_id, prompt, extra_data, outputs_to_execute, sensitive))
+
+                    # Store metadata for RabbitMQ event publishing
+                    self.prompt_metadata[prompt_id] = {
+                        "job_id": extra_data.get("job_id"),
+                        "user_id": extra_data.get("client_id"),
+                    }
+
                     response = {"prompt_id": prompt_id, "number": number, "node_errors": valid[3]}
                     return web.json_response(response)
                 else:
@@ -215,7 +244,7 @@ class PromptServer():
         self.client_session = aiohttp.ClientSession(timeout=timeout)
 
     def add_routes(self):
-        
+
         api_routes = web.RouteTableDef()
         for route in self.routes:
             # Custom nodes might add extra static routes. Only process non-static
@@ -224,17 +253,17 @@ class PromptServer():
                 api_routes.route(route.method, "/api" + route.path)(route.handler, **route.kwargs)
         self.app.add_routes(api_routes)
         self.app.add_routes(self.routes)
-    
+
     def get_queue_info(self):
         prompt_info = {}
         exec_info = {}
         exec_info['queue_remaining'] = self.prompt_queue.get_tasks_remaining()
         prompt_info['exec_info'] = exec_info
         return prompt_info
-    
+
     async def send(self, event, data, sid=None):
         await self.send_json(event, data, sid)
-    
+
     async def send_json(self, event, data, sid=None):
         message = {"type": event, "data": data}
 
@@ -245,9 +274,73 @@ class PromptServer():
         elif sid in self.sockets:
             await send_socket_catch_exception(self.sockets[sid].send_json, message)
 
+        _EXECUTION_EVENTS = {"executing", "execution_cached", "executed", "execution_error", "execution_success"}
+        if event in _EXECUTION_EVENTS:
+            asyncio.create_task(self._publish_exec_event(event, data))
+
+    async def _publish_exec_event(self, event: str, data: dict) -> None:
+        """Publishes execution progress events to RabbitMQ."""
+        prompt_id = data.get("prompt_id")
+        if not prompt_id:
+            return
+        meta = self.prompt_metadata.get(prompt_id)
+        if not meta or not meta.get("job_id"):
+            logging.warning(f"No metadata or job ID found for prompt ID {prompt_id}")
+            return
+
+        job_id: str = meta["job_id"]
+        user_id: str = meta.get("user_id") or ""
+
+        to_publish: list[_NodeStatusEvent] = []
+
+        if event == "executing":
+            node_id = data.get("node")
+            if node_id is None:
+                return
+            to_publish.append(_NodeStatusEvent(
+                job_id=job_id, prompt_id=prompt_id, node_id=node_id,
+                user_id=user_id, status="RUNNING",
+            ))
+
+        elif event == "execution_cached":
+            for node_id in data.get("nodes", []):
+                to_publish.append(_NodeStatusEvent(
+                    job_id=job_id, prompt_id=prompt_id, node_id=node_id,
+                    user_id=user_id, status="CACHED",
+                ))
+
+        elif event == "executed":
+            node_id = data.get("node", "")
+            outputs = data.get("output")
+            to_publish.append(_NodeStatusEvent(
+                job_id=job_id, prompt_id=prompt_id, node_id=node_id,
+                user_id=user_id, status="SUCCESS", outputs=outputs,
+            ))
+
+        elif event == "execution_error":
+            node_id = data.get("node_id", "")
+            error = data.get("exception_message", "Unknown error")
+            to_publish.append(_NodeStatusEvent(
+                job_id=job_id, prompt_id=prompt_id, node_id=node_id,
+                user_id=user_id, status="FAILURE", error=error,
+                job_status="FAILED",
+            ))
+            self.prompt_metadata.pop(prompt_id, None)
+
+        elif event == "execution_success":
+            to_publish.append(_NodeStatusEvent(
+                job_id=job_id, prompt_id=prompt_id, node_id="",
+                user_id=user_id, status="JOB_COMPLETED", job_status="COMPLETED",
+            ))
+            self.prompt_metadata.pop(prompt_id, None)
+
+        for ev in to_publish:
+            try:
+                await publish_event("node-status-changed", ev)
+            except Exception as e:
+                logging.error(f"Failed to publish execution event: {e}")
+
     def send_sync(self, event, data, sid=None):
-        import logging as _logging
-        _logging.getLogger(__name__).info(f"[SERVER] send_sync with event: {event}, data: {data}, sid: {sid}")
         self.loop.call_soon_threadsafe(
             self.messages.put_nowait, (event, data, sid))
 

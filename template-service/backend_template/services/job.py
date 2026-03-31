@@ -1,11 +1,9 @@
-import asyncio
 import hashlib
 import json
 import logging
 import uuid
-from datetime import datetime, timezone
-from typing import Annotated
 from uuid import UUID
+from typing import Annotated
 
 import aiohttp
 from fastapi import Depends, HTTPException, status
@@ -13,13 +11,12 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from backend_template.config import settings
-from backend_template.database import async_session_maker, get_db
-from backend_template.entities.job import NodeStatusChangedEvent, RunTemplateResponse
+from backend_template.database import get_db
+from backend_template.entities.job import RunTemplateResponse
 from backend_template.models.job import Job, JobStatus
 from backend_template.models.node_execution import NodeExecution, NodeStatus
 from backend_template.models.project_template import ProjectTemplate
 from backend_template.models.template_version import TemplateVersion
-from backend_template.utils.broker import publish_event
 from backend_template.utils.graph import convert_reactflow_to_comfy
 
 logger = logging.getLogger(__name__)
@@ -85,22 +82,17 @@ class JobService:
         await self.db.commit()
         await self.db.refresh(job)
 
-        asyncio.create_task(
-            _listen_execution(
-                job_id=str(job.id),
-                user_id=user_id,
-                comfy_prompt=comfy_prompt,
-            )
-        )
-
-        # Use user_id as the ComfyUI client_id so execution events are routed to
-        # the user's WS connection. Multiple concurrent runs from the same user
-        # share one socket; _listen_execution filters by prompt_id.
+        # Submit to engine.  Pass job_id in extra_data so the engine can include
+        # it in RabbitMQ events; client_id is the user_id for potential WS routing.
         try:
             async with aiohttp.ClientSession() as session:
                 async with session.post(
                     f"{settings.engine_base_url}/api/prompt",
-                    json={"prompt": comfy_prompt, "client_id": user_id},
+                    json={
+                        "prompt": comfy_prompt,
+                        "client_id": user_id,
+                        "extra_data": {"job_id": str(job.id)},
+                    },
                     timeout=aiohttp.ClientTimeout(total=30),
                 ) as resp:
                     body = await resp.json()
@@ -117,182 +109,8 @@ class JobService:
                 detail="Engine is not available",
             )
 
-        # 6. Store prompt_id and mark job as PROCESSING
         job.prompt_id = prompt_id
         job.status = JobStatus.PROCESSING
-        job.started_at = datetime.now(timezone.utc)
         await self.db.commit()
 
-        # 7. Spawn background task: subscribe to ComfyUI WS and track executio
-
         return RunTemplateResponse(job_id=str(job.id), prompt_id=prompt_id)
-
-
-# ── Background WS listener ────────────────────────────────────────────────────
-
-
-async def _listen_execution(
-    job_id: str,
-    user_id: str,
-    comfy_prompt: dict,  # kept for potential future use
-) -> None:
-    """Connects to the ComfyUI WebSocket and processes execution events."""
-    ws_url = (
-        settings.engine_base_url
-        .replace("http://", "ws://", 1)
-        .replace("https://", "wss://", 1)
-    )
-    ws_url = f"{ws_url}/ws?clientId={user_id}"
-
-    try:
-        async with aiohttp.ClientSession() as session:
-            async with session.ws_connect(
-                ws_url,
-                timeout=aiohttp.ClientWSTimeout(), 
-            ) as ws:
-                async for msg in ws:
-                    logger.info(f"WS message for prompt: {msg}")
-                    if msg.type == aiohttp.WSMsgType.TEXT:
-                        data = json.loads(msg.data)
-                        done = await _handle_ws_event(
-                            data=data,
-                            job_id=job_id,
-                            user_id=user_id,
-                        )
-                        if done:
-                            return
-                    elif msg.type in (aiohttp.WSMsgType.CLOSED, aiohttp.WSMsgType.ERROR):
-                        logger.warning(f"WS closed unexpectedly for prompt")
-                        break
-    except aiohttp.ClientConnectorError:
-        logger.error(f"Cannot connect to engine WS for prompt")
-    except Exception as e:
-        logger.error(f"WS listener error for prompt: {e}", exc_info=True)
-    finally:
-        await _ensure_job_terminal(job_id)
-
-
-async def _handle_ws_event(
-    data: dict,
-    job_id: str,
-    user_id: str,
-) -> bool:
-    """Processes one WS message. Returns True when execution is complete."""
-    logger.info(f"WS event for prompt: {data}")
-    event_type = data.get("type")
-    event_data = data.get("data", {})
-
-    event_prompt_id = event_data.get("prompt_id")
-
-    if event_type == "executing":
-        node_id = event_data.get("node")
-        if node_id is None:
-            return False  # null node = "wrapping up", wait for execution_success
-
-        await _update_node_status(job_id, node_id, NodeStatus.RUNNING)
-        await publish_event(
-            "node-status-changed",
-            NodeStatusChangedEvent(
-                job_id=job_id, prompt_id=event_prompt_id, node_id=node_id,
-                status="RUNNING", user_id=user_id,
-            ),
-        )
-
-    elif event_type == "execution_cached":
-        for node_id in event_data.get("nodes", []):
-            await _update_node_status(job_id, node_id, NodeStatus.SUCCESS)
-            await publish_event(
-                "node-status-changed",
-                NodeStatusChangedEvent(
-                    job_id=job_id, prompt_id=event_prompt_id, node_id=node_id,
-                    status="CACHED", user_id=user_id,
-                ),
-            )
-
-    elif event_type == "executed":
-        node_id = event_data.get("node")
-        outputs = event_data.get("output", {})
-        await _update_node_status(job_id, node_id, NodeStatus.SUCCESS, outputs=outputs)
-        await publish_event(
-            "node-status-changed",
-            NodeStatusChangedEvent(
-                job_id=job_id, prompt_id=event_prompt_id, node_id=node_id,
-                status="SUCCESS", user_id=user_id, outputs=outputs,
-            ),
-        )
-
-    elif event_type == "execution_error":
-        node_id = event_data.get("node_id", "")
-        error = event_data.get("exception_message", "Unknown error")
-        await _update_node_status(job_id, node_id, NodeStatus.FAILURE, error_message=error)
-        await _finish_job(job_id, JobStatus.FAILED)
-        await publish_event(
-            "node-status-changed",
-            NodeStatusChangedEvent(
-                job_id=job_id, prompt_id=event_prompt_id, node_id=node_id,
-                status="FAILURE", user_id=user_id, error=error,
-            ),
-        )
-        return True
-
-    elif event_type == "execution_success":
-        await _finish_job(job_id, JobStatus.COMPLETED)
-        return True
-
-    return False
-
-
-# ── DB helpers (use a fresh session — called outside the request lifecycle) ────
-
-
-async def _update_node_status(
-    job_id: str,
-    node_id: str,
-    node_status: NodeStatus,
-    outputs: dict | None = None,
-    error_message: str | None = None,
-) -> None:
-    try:
-        node_uuid = uuid.UUID(node_id)
-        job_uuid = uuid.UUID(job_id)
-    except (ValueError, AttributeError):
-        return
-    async with async_session_maker() as db:
-        result = await db.execute(
-            select(NodeExecution).where(
-                NodeExecution.job_id == job_uuid,
-                NodeExecution.node_id == node_uuid,
-            )
-        )
-        ne = result.scalar_one_or_none()
-        if ne:
-            ne.status = node_status
-            if outputs is not None:
-                ne.outputs = outputs
-            if error_message is not None:
-                ne.error_message = error_message
-            await db.commit()
-
-
-async def _finish_job(job_id: str, final_status: JobStatus) -> None:
-    job_uuid = uuid.UUID(job_id)
-    async with async_session_maker() as db:
-        result = await db.execute(select(Job).where(Job.id == job_uuid))
-        job = result.scalar_one_or_none()
-        if job and job.status == JobStatus.PROCESSING:
-            job.status = final_status
-            job.finished_at = datetime.now(timezone.utc)
-            await db.commit()
-
-
-async def _ensure_job_terminal(job_id: str) -> None:
-    """If the job is still PROCESSING when the WS closes, mark it FAILED."""
-    job_uuid = uuid.UUID(job_id)
-    async with async_session_maker() as db:
-        result = await db.execute(select(Job).where(Job.id == job_uuid))
-        job = result.scalar_one_or_none()
-        if job and job.status == JobStatus.PROCESSING:
-            job.status = JobStatus.FAILED
-            job.finished_at = datetime.now(timezone.utc)
-            await db.commit()
-            logger.warning(f"Job {job_id} marked FAILED — WS closed before completion")

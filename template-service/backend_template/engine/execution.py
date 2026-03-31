@@ -656,9 +656,6 @@ class PromptExecutor:
         else:
             self.server.client_id = None
 
-        import logging as _logging
-        _logging.getLogger(__name__).info(f"[EXEC] client_id={self.server.client_id!r}, sockets={list(self.server.sockets.keys())}")
-
         self.status_messages = []
         self.add_message("execution_start", { "prompt_id": prompt_id}, broadcast=False)
 

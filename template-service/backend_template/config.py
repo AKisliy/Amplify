@@ -24,6 +24,9 @@ class Config(BaseSettings):
     # Engine Settings
     engine_base_url: str = "http://localhost:8188"
 
+    # RabbitMQ
+    rabbitmq_url: str = "amqp://guest:guest@localhost:5672/"
+
     # Database Settings
     postgres_dsn: str
     postgres_echo: bool = False
