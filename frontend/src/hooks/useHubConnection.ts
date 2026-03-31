@@ -10,7 +10,7 @@ import {
 function getHubUrl(): string {
   const base =
     process.env.NEXT_PUBLIC_WS_GATEWAY_URL ??
-    `${process.env.NEXT_PUBLIC_API_BASE_URL ?? "https://staging.alexeykiselev.tech"}/ws`;
+    `${process.env.NEXT_PUBLIC_API_BASE_URL ?? "https://staging.alexeykiselev.tech"}`;
   return `${base}/hubs/main`;
 }
 
