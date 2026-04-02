@@ -1,5 +1,7 @@
 using Microsoft.Extensions.Logging;
 using Publisher.Application.Common.Interfaces;
+using Publisher.Domain.Entities;
+using Publisher.Domain.Enums;
 using Publisher.Domain.Events;
 
 namespace Publisher.Application.Publications.Commands.PublishFromCanvas;
