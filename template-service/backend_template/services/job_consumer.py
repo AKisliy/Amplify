@@ -95,10 +95,13 @@ async def _handle_event(data: dict) -> None:
         if node_status is not None:
             await _update_node_status(job_id_str, node_id_str, node_status, outputs=outputs, error_message=error)
 
+        if node_status == NodeStatus.SUCCESS and outputs and user_id_str:
+            await _maybe_notify_terminal_node(job_id_str, node_id_str, user_id_str, outputs)
+
     if job_status == "COMPLETED":
-        await _finish_job(job_id_str, JobStatus.COMPLETED, user_id=user_id_str)
+        await _finish_job(job_id_str, JobStatus.COMPLETED)
     elif job_status == "FAILED":
-        await _finish_job(job_id_str, JobStatus.FAILED, user_id=user_id_str)
+        await _finish_job(job_id_str, JobStatus.FAILED)
 
 
 # ---------------------------------------------------------------------------
@@ -134,10 +137,37 @@ async def _update_node_status(
             await db.commit()
 
 
-async def _finish_job(job_id: str, final_status: JobStatus, *, user_id: str | None = None) -> None:
+async def _finish_job(job_id: str, final_status: JobStatus) -> None:
     try:
         job_uuid = uuid.UUID(job_id)
     except (ValueError, AttributeError):
+        return
+
+    async with async_session_maker() as db:
+        result = await db.execute(select(Job).where(Job.id == job_uuid))
+        job = result.scalar_one_or_none()
+        if not job or job.status == JobStatus.COMPLETED or job.status == JobStatus.FAILED:
+            return
+
+        job.status = final_status
+        job.finished_at = datetime.now(timezone.utc)
+        await db.commit()
+
+
+async def _maybe_notify_terminal_node(
+    job_id: str,
+    node_id: str,
+    user_id: str,
+    outputs: dict,
+) -> None:
+    """Publishes graph-completed if this node is a terminal node in the graph."""
+    try:
+        job_uuid = uuid.UUID(job_id)
+    except (ValueError, AttributeError):
+        return
+
+    media_id, media_type = _extract_media_output(outputs)
+    if not media_id:
         return
 
     async with async_session_maker() as db:
@@ -147,39 +177,34 @@ async def _finish_job(job_id: str, final_status: JobStatus, *, user_id: str | No
             .where(Job.id == job_uuid)
         )
         job = result.scalar_one_or_none()
-        if not job or job.status == JobStatus.COMPLETED or job.status == JobStatus.FAILED:
+        if not job or not job.template_version:
             return
 
-        job.status = final_status
-        job.finished_at = datetime.now(timezone.utc)
-        await db.commit()
+        tv = job.template_version
+        graph_json = tv.graph_json or {}
 
-        if final_status == JobStatus.COMPLETED and user_id:
-            await _maybe_notify_graph_completed(job, job_uuid, user_id, db)
+        if _has_autolist_publish_node(graph_json):
+            logger.info(f"Job {job_uuid}: AutoListPublishNode found — skipping graph-completed notification")
+            return
 
-
-async def _maybe_notify_graph_completed(job: Job, job_uuid: uuid.UUID, user_id: str, db) -> None:
-    """Publishes graph-completed if the graph has no AutoListPublishNode."""
-    tv = job.template_version
-    if tv is None:
-        return
-
-    graph_json = tv.graph_json or {}
-    if _has_autolist_publish_node(graph_json):
-        logger.info(f"Job {job_uuid}: AutoListPublishNode found — skipping graph-completed notification")
-        return
-
-    media_id, media_type = await _get_last_media_output(job_uuid, db)
+        if not _is_terminal_node(node_id, graph_json):
+            return
 
     event = GraphCompletedEvent(
-        job_id=str(job_uuid),
+        job_id=job_id,
         user_id=user_id,
         template_id=str(tv.template_id),
         media_id=media_id,
         media_type=media_type,
     )
     await _publish_graph_completed(event)
-    logger.info(f"Published graph-completed for job {job_uuid}, mediaId={media_id}")
+    logger.info(f"Published graph-completed for job {job_uuid}, nodeId={node_id}, mediaId={media_id}")
+
+
+def _is_terminal_node(node_id: str, graph_json: dict) -> bool:
+    """A node is terminal if its id does not appear as a source in any edge."""
+    source_ids = {e.get("source") for e in graph_json.get("edges", [])}
+    return node_id not in source_ids
 
 
 def _has_autolist_publish_node(graph_json: dict) -> bool:
@@ -189,24 +214,13 @@ def _has_autolist_publish_node(graph_json: dict) -> bool:
     )
 
 
-async def _get_last_media_output(job_uuid: uuid.UUID, db) -> tuple[str | None, str | None]:
-    result = await db.execute(
-        select(NodeExecution)
-        .where(
-            NodeExecution.job_id == job_uuid,
-            NodeExecution.status == NodeStatus.SUCCESS,
-            NodeExecution.outputs.isnot(None),
-        )
-        .order_by(NodeExecution.created_at.desc())
-    )
-    for ne in result.scalars():
-        outputs = ne.outputs or {}
-        video_uuids = outputs.get("video_uuid") or []
-        if video_uuids:
-            return video_uuids[0], "video"
-        image_uuids = outputs.get("image_uuid") or []
-        if image_uuids:
-            return image_uuids[0], "image"
+def _extract_media_output(outputs: dict) -> tuple[str | None, str | None]:
+    video_uuids = outputs.get("video_uuid") or []
+    if video_uuids:
+        return video_uuids[0], "video"
+    image_uuids = outputs.get("image_uuid") or []
+    if image_uuids:
+        return image_uuids[0], "image"
     return None, None
 
 
