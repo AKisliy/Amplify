@@ -32,11 +32,17 @@ export type IClientReceiver = {
     onNodeExecutionStatusChanged(nodeId: string, status: string, outputs: any, error: string): Promise<void>;
     /**
     * @param jobId Transpiled from string
-    * @param templateId Transpiled from string
-    * @param mediaId Transpiled from string?
-    * @param mediaType Transpiled from string?
     * @returns Transpiled from System.Threading.Tasks.Task
     */
-    onGraphCompleted(jobId: string, templateId: string, mediaId: string, mediaType: string): Promise<void>;
+    onJobCompleted(jobId: string): Promise<void>;
+    /**
+    * @param id Transpiled from string
+    * @param jobId Transpiled from string
+    * @param projectId Transpiled from string
+    * @param mediaId Transpiled from string
+    * @param mediaType Transpiled from string
+    * @returns Transpiled from System.Threading.Tasks.Task
+    */
+    onAssetReady(id: string, jobId: string, projectId: string, mediaId: string, mediaType: string): Promise<void>;
 }
 

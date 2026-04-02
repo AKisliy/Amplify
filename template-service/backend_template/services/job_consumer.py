@@ -15,10 +15,13 @@ from backend_template.config import settings
 from backend_template.database import async_session_maker
 from backend_template.models.job import Job, JobStatus
 from backend_template.models.node_execution import NodeExecution, NodeStatus
+from backend_template.models.template_version import TemplateVersion
+from backend_template.models.project_template import ProjectTemplate
 
 logger = logging.getLogger(__name__)
 
 EXCHANGE_NAME = "node-status-changed"
+FINAL_ASSET_GENERATED_EXCHANGE = "final-asset-generated"
 GRAPH_COMPLETED_EXCHANGE = "graph-completed"
 
 _STATUS_MAP: dict[str, NodeStatus] = {
@@ -38,9 +41,18 @@ class GraphCompletedEvent(BaseModel):
 
     job_id: str
     user_id: str
+
+
+class FinalAssetGeneratedEvent(BaseModel):
+    model_config = ConfigDict(alias_generator=to_camel, populate_by_name=True)
+
+    id: str           # stable guid — same value lands in UserService.ProjectAssets and Publisher.MediaPosts
+    job_id: str
+    user_id: str
+    project_id: str
     template_id: str
-    media_id: str | None = None
-    media_type: str | None = None  # "video" | "image"
+    media_id: str
+    media_type: str   # "video" | "image"
 
 
 # ---------------------------------------------------------------------------
@@ -96,10 +108,12 @@ async def _handle_event(data: dict) -> None:
             await _update_node_status(job_id_str, node_id_str, node_status, outputs=outputs, error_message=error)
 
         if node_status == NodeStatus.SUCCESS and outputs and user_id_str:
-            await _maybe_notify_terminal_node(job_id_str, node_id_str, user_id_str, outputs)
+            await _maybe_publish_final_asset(job_id_str, node_id_str, user_id_str, outputs)
 
     if job_status == "COMPLETED":
         await _finish_job(job_id_str, JobStatus.COMPLETED)
+        if user_id_str:
+            await _publish_graph_completed(job_id_str, user_id_str)
     elif job_status == "FAILED":
         await _finish_job(job_id_str, JobStatus.FAILED)
 
@@ -154,51 +168,59 @@ async def _finish_job(job_id: str, final_status: JobStatus) -> None:
         await db.commit()
 
 
-async def _maybe_notify_terminal_node(
+async def _maybe_publish_final_asset(
     job_id: str,
     node_id: str,
     user_id: str,
     outputs: dict,
 ) -> None:
-    """Publishes graph-completed if this node is a terminal node in the graph."""
+    """Publishes final-asset-generated if this node is a terminal node with media output."""
     try:
         job_uuid = uuid.UUID(job_id)
     except (ValueError, AttributeError):
         return
 
     media_id, media_type = _extract_media_output(outputs)
-    if not media_id:
+    if not media_id or not media_type:
         return
 
     async with async_session_maker() as db:
         result = await db.execute(
             select(Job)
-            .options(selectinload(Job.template_version))
+            .options(
+                selectinload(Job.template_version).selectinload(TemplateVersion.template)
+            )
             .where(Job.id == job_uuid)
         )
         job = result.scalar_one_or_none()
-        if not job or not job.template_version:
+        if not job or not job.template_version or not job.template_version.template:
             return
 
         tv = job.template_version
+        template = tv.template
         graph_json = tv.graph_json or {}
 
         if _has_autolist_publish_node(graph_json):
-            logger.info(f"Job {job_uuid}: AutoListPublishNode found — skipping graph-completed notification")
+            logger.info(f"Job {job_uuid}: AutoListPublishNode found — skipping final-asset-generated")
             return
 
         if not _is_terminal_node(node_id, graph_json):
             return
 
-    event = GraphCompletedEvent(
+    event = FinalAssetGeneratedEvent(
+        id=str(uuid.uuid4()),
         job_id=job_id,
         user_id=user_id,
+        project_id=str(template.project_id),
         template_id=str(tv.template_id),
         media_id=media_id,
         media_type=media_type,
     )
-    await _publish_graph_completed(event)
-    logger.info(f"Published graph-completed for job {job_uuid}, nodeId={node_id}, mediaId={media_id}")
+    await _publish_final_asset_generated(event)
+    logger.info(
+        f"Published final-asset-generated for job {job_uuid}, "
+        f"nodeId={node_id}, mediaId={media_id}, assetId={event.id}"
+    )
 
 
 def _is_terminal_node(node_id: str, graph_json: dict) -> bool:
@@ -224,12 +246,28 @@ def _extract_media_output(outputs: dict) -> tuple[str | None, str | None]:
     return None, None
 
 
-async def _publish_graph_completed(event: GraphCompletedEvent) -> None:
+async def _publish_graph_completed(job_id: str, user_id: str) -> None:
+    event = GraphCompletedEvent(job_id=job_id, user_id=user_id)
     connection = await aio_pika.connect_robust(settings.rabbitmq_url)
     async with connection:
         channel = await connection.channel()
         exchange = await channel.declare_exchange(
             GRAPH_COMPLETED_EXCHANGE, aio_pika.ExchangeType.FANOUT, durable=True,
+        )
+        body = json.dumps(event.model_dump(by_alias=True)).encode()
+        await exchange.publish(
+            aio_pika.Message(body=body, content_type="application/json"),
+            routing_key="",
+        )
+    logger.info(f"Published graph-completed for job {job_id}")
+
+
+async def _publish_final_asset_generated(event: FinalAssetGeneratedEvent) -> None:
+    connection = await aio_pika.connect_robust(settings.rabbitmq_url)
+    async with connection:
+        channel = await connection.channel()
+        exchange = await channel.declare_exchange(
+            FINAL_ASSET_GENERATED_EXCHANGE, aio_pika.ExchangeType.FANOUT, durable=True,
         )
         body = json.dumps(event.model_dump(by_alias=True)).encode()
         await exchange.publish(

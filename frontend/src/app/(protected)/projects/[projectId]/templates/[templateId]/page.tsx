@@ -146,13 +146,18 @@ export default function TemplateCanvasPage() {
       },
       onPublicationStatusChanged: async () => {},
       onVideoEditingStepChanged: async () => {},
-      onGraphCompleted: async (jobId, templateId, mediaId, mediaType) => {
+      onJobCompleted: async (jobId) => {
         toast({
           title: "Graph completed",
-          description: mediaId
-            ? `Output ${mediaType ?? "media"} is ready`
-            : "Workflow finished successfully",
-          duration: 6000,
+          description: "Saving your asset…",
+          duration: 8000,
+        });
+      },
+      onAssetReady: async (id, jobId, assetProjectId, mediaId, mediaType) => {
+        toast({
+          title: "Asset ready",
+          description: `Your ${mediaType} is saved. Open project assets →`,
+          duration: 10000,
         });
       },
     };

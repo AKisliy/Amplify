@@ -11,5 +11,9 @@ public interface IClientReceiver
 
     Task OnNodeExecutionStatusChanged(string nodeId, string status, object? outputs, string? error);
 
-    Task OnGraphCompleted(string jobId, string templateId, string? mediaId, string? mediaType);
+    // Sent when the graph finishes executing; frontend shows a loading indicator
+    Task OnJobCompleted(string jobId);
+
+    // Sent when userservice confirms the asset is saved; frontend shows the final "ready" toast with a link
+    Task OnAssetReady(string id, string jobId, string projectId, string mediaId, string mediaType);
 }
