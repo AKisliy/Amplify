@@ -10,4 +10,6 @@ public interface IClientReceiver
     Task OnVideoEditingStepChanged(string videoId, string nodeId, string step, string status, string? error);
 
     Task OnNodeExecutionStatusChanged(string nodeId, string status, object? outputs, string? error);
+
+    Task OnGraphCompleted(string jobId, string templateId, string? mediaId, string? mediaType);
 }

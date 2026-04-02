@@ -124,6 +124,7 @@ export default function TemplateCanvasPage() {
   } = useCanvasStore({});
 
   const { connection } = useHubConnection();
+  const { toast } = useToast();
 
   // ── SignalR: subscribe to node execution events ──────────────────────────────
   useEffect(() => {
@@ -145,11 +146,20 @@ export default function TemplateCanvasPage() {
       },
       onPublicationStatusChanged: async () => {},
       onVideoEditingStepChanged: async () => {},
+      onGraphCompleted: async (jobId, templateId, mediaId, mediaType) => {
+        toast({
+          title: "Graph completed",
+          description: mediaId
+            ? `Output ${mediaType ?? "media"} is ready`
+            : "Workflow finished successfully",
+          duration: 6000,
+        });
+      },
     };
 
     const disposable = getReceiverRegister("IClientReceiver").register(connection, receiver);
     return () => disposable.dispose();
-  }, [connection, setNodeStatus, updateNodeData]);
+  }, [connection, setNodeStatus, updateNodeData, toast]);
 
   // ── Load saved graph (waits for registry) ───────────────────────────────────
   const [isGraphReady, setIsGraphReady] = useState(false);
@@ -367,8 +377,6 @@ export default function TemplateCanvasPage() {
     },
     [nodes]
   );
-
-  const { toast } = useToast();
 
   const isValidConnection: IsValidConnection<CanvasEdge> = useCallback(
     (connection) => {

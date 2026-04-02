@@ -20,6 +20,7 @@ internal static class ServiceCollectionExtensions
             config.AddConsumer<PublicationStatusChangedConsumer>();
             config.AddConsumer<VideoEditingStepChangedConsumer>();
             config.AddConsumer<NodeExecutionStatusChangedConsumer>();
+            config.AddConsumer<GraphCompletedConsumer>();
 
             config.SetEndpointNameFormatter(new KebabCaseEndpointNameFormatter(includeNamespace: false));
 
@@ -35,6 +36,7 @@ internal static class ServiceCollectionExtensions
                 cfg.Message<PublicationStatusChanged>(x => x.SetEntityName("publication-status-changed"));
                 cfg.Message<VideoEditingStepChanged>(x => x.SetEntityName("video-editing-step-changed"));
                 cfg.Message<NodeExecutionStatusChanged>(x => x.SetEntityName("node-status-changed"));
+                cfg.Message<GraphCompleted>(x => x.SetEntityName("graph-completed"));
 
                 cfg.UseRawJsonSerializer(RawSerializerOptions.AnyMessageType, isDefault: true);
 
