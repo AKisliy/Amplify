@@ -30,5 +30,13 @@ export type IClientReceiver = {
     * @returns Transpiled from System.Threading.Tasks.Task
     */
     onNodeExecutionStatusChanged(nodeId: string, status: string, outputs: any, error: string): Promise<void>;
+    /**
+    * @param jobId Transpiled from string
+    * @param templateId Transpiled from string
+    * @param mediaId Transpiled from string?
+    * @param mediaType Transpiled from string?
+    * @returns Transpiled from System.Threading.Tasks.Task
+    */
+    onGraphCompleted(jobId: string, templateId: string, mediaId: string, mediaType: string): Promise<void>;
 }
 

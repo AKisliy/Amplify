@@ -96,15 +96,18 @@ class IClientReceiver_Binder implements ReceiverRegister<IClientReceiver> {
         const __onPublicationStatusChanged = (...args: [string, string, string, string]) => receiver.onPublicationStatusChanged(...args);
         const __onVideoEditingStepChanged = (...args: [string, string, string, string, string]) => receiver.onVideoEditingStepChanged(...args);
         const __onNodeExecutionStatusChanged = (...args: [string, string, any, string]) => receiver.onNodeExecutionStatusChanged(...args);
+        const __onGraphCompleted = (...args: [string, string, string, string]) => receiver.onGraphCompleted(...args);
 
         connection.on("OnPublicationStatusChanged", __onPublicationStatusChanged);
         connection.on("OnVideoEditingStepChanged", __onVideoEditingStepChanged);
         connection.on("OnNodeExecutionStatusChanged", __onNodeExecutionStatusChanged);
+        connection.on("OnGraphCompleted", __onGraphCompleted);
 
         const methodList: ReceiverMethod[] = [
             { methodName: "OnPublicationStatusChanged", method: __onPublicationStatusChanged },
             { methodName: "OnVideoEditingStepChanged", method: __onVideoEditingStepChanged },
-            { methodName: "OnNodeExecutionStatusChanged", method: __onNodeExecutionStatusChanged }
+            { methodName: "OnNodeExecutionStatusChanged", method: __onNodeExecutionStatusChanged },
+            { methodName: "OnGraphCompleted", method: __onGraphCompleted }
         ]
 
         return new ReceiverMethodSubscription(connection, methodList);

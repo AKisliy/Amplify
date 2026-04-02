@@ -37,6 +37,6 @@ export type IClientReceiver = {
     * @param mediaType Transpiled from string?
     * @returns Transpiled from System.Threading.Tasks.Task
     */
-    onGraphCompleted(jobId: string, templateId: string, mediaId: string | null, mediaType: string | null): Promise<void>;
+    onGraphCompleted(jobId: string, templateId: string, mediaId: string, mediaType: string): Promise<void>;
 }
 
