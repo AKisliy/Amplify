@@ -23,7 +23,7 @@ import nodes
 import comfy.utils
 import comfy.model_management
 
-def prompt_worker(q, server_instance, cache_type=execution.CacheType.CLASSIC):
+def prompt_worker(q, server_instance, cache_type=execution.CacheType.NONE):
     current_time: float = 0.0
     
     e = execution.PromptExecutor(server_instance, cache_type=cache_type)
