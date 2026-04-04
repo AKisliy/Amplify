@@ -9,12 +9,8 @@ import { useProjects } from "@/features/ambassadors/hooks/useProjects";
 import { useProjectAssets } from "@/features/ambassadors/hooks/useProjectAssets";
 import type { ProjectAsset } from "@/features/ambassadors/types";
 
-function isVideo(url: string): boolean {
-  return /\.(mp4|webm|mov|avi)(\?|$)/i.test(url);
-}
-
 function AssetCard({ asset }: { asset: ProjectAsset }) {
-  const video = isVideo(asset.mediaUrl);
+  const video = asset.mediaType === "Video";
   const date = new Date(asset.createdAt).toLocaleDateString(undefined, {
     day: "2-digit",
     month: "short",

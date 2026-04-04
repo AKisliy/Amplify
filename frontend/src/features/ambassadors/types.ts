@@ -48,9 +48,12 @@ export type UpdateProjectDto = {
 };
 
 // Project Asset types
+export type AssetMediaType = "Image" | "Video";
+
 export type ProjectAsset = {
   id: string;
   mediaId: string;
+  mediaType: AssetMediaType;
   mediaUrl: string;
   createdAt: string;
 };
