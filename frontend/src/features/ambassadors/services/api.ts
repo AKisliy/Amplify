@@ -7,6 +7,7 @@ import type {
   CreateProjectDto,
   UpdateProjectDto,
   AmbassadorImage,
+  ProjectAsset,
 } from "../types";
 
 export const ambassadorApi = {
