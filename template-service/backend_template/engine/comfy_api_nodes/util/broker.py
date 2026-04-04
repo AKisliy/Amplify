@@ -10,15 +10,20 @@ from config import rabbitmq_config
 logger = logging.getLogger(__name__)
 
 _connection: aio_pika.abc.AbstractRobustConnection | None = None
-_connection_lock = asyncio.Lock()
+_connection_loop: asyncio.AbstractEventLoop | None = None
 
 
 async def _get_connection() -> aio_pika.abc.AbstractRobustConnection:
-    global _connection
-    async with _connection_lock:
-        if _connection is None or _connection.is_closed:
-            _connection = await aio_pika.connect_robust(rabbitmq_config.rabbitmq_url)
-            logger.info("RabbitMQ broker connection established")
+    global _connection, _connection_loop
+
+    loop = asyncio.get_running_loop()
+
+    # Reconnect if no connection, closed, or created in a different event loop
+    if _connection is None or _connection.is_closed or _connection_loop is not loop:
+        _connection = await aio_pika.connect_robust(rabbitmq_config.rabbitmq_url)
+        _connection_loop = loop
+        logger.info("RabbitMQ broker connection established (loop=%s)", id(loop))
+
     return _connection
 
 
