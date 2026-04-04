@@ -1,6 +1,6 @@
 "use client";
 
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import { ImageIcon, Video, Loader2, PackageOpen } from "lucide-react";
 import { ProjectHeader } from "@/components/ProjectHeader";
@@ -9,7 +9,8 @@ import { useProjects } from "@/features/ambassadors/hooks/useProjects";
 import { useProjectAssets } from "@/features/ambassadors/hooks/useProjectAssets";
 import type { ProjectAsset } from "@/features/ambassadors/types";
 
-function AssetCard({ asset }: { asset: ProjectAsset }) {
+function AssetCard({ asset, projectId }: { asset: ProjectAsset; projectId: string }) {
+  const router = useRouter();
   const video = asset.mediaType === "Video";
   const date = new Date(asset.createdAt).toLocaleDateString(undefined, {
     day: "2-digit",
@@ -21,7 +22,8 @@ function AssetCard({ asset }: { asset: ProjectAsset }) {
     <motion.div
       initial={{ opacity: 0, scale: 0.97 }}
       animate={{ opacity: 1, scale: 1 }}
-      className="group relative rounded-xl overflow-hidden bg-card border border-border/50 hover:border-border transition-all"
+      onClick={() => router.push(`/projects/${projectId}/assets/${asset.id}`)}
+      className="group relative rounded-xl overflow-hidden bg-card border border-border/50 hover:border-border transition-all cursor-pointer"
     >
       <div className="aspect-video bg-muted/40 relative flex items-center justify-center overflow-hidden">
         {video ? (
@@ -118,7 +120,7 @@ export default function AssetsPage() {
           <>
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
               {assets.map((asset) => (
-                <AssetCard key={asset.id} asset={asset} />
+                <AssetCard key={asset.id} asset={asset} projectId={projectId} />
               ))}
             </div>
 

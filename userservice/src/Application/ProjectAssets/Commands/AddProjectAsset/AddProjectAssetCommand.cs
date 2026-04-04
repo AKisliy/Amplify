@@ -9,6 +9,7 @@ public record AddProjectAssetCommand(
     Guid ProjectId,
     Guid MediaId,
     Guid? Id = null,
+    Guid? TemplateId = null,
     AssetLifetime Lifetime = AssetLifetime.Intermediate,
     AssetMediaType MediaType = AssetMediaType.Image) : IRequest<Guid>;
 
@@ -30,6 +31,7 @@ public class AddProjectAssetCommandHandler(
             MediaId = request.MediaId,
             Lifetime = request.Lifetime,
             MediaType = request.MediaType,
+            TemplateId = request.TemplateId
         };
 
         dbContext.ProjectAssets.Add(projectAsset);

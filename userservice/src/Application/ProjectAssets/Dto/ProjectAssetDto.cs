@@ -10,6 +10,8 @@ public class ProjectAssetDto
 
     public Guid MediaId { get; set; }
 
+    public Guid? TemplateId { get; set; }
+
     public AssetMediaType MediaType { get; set; }
 
     public required string MediaUrl { get; set; }

@@ -8,6 +8,7 @@ import type {
   UpdateProjectDto,
   AmbassadorImage,
   ProjectAsset,
+  PublicationRecord,
 } from "../types";
 
 export const ambassadorApi = {
@@ -144,6 +145,24 @@ export const projectApi = {
     const response = await api.get<{ items: ProjectAsset[]; nextCursor: string | null }>(
       `/project-assets/${projectId}`,
       { params: { lifetime: 1, ...params } }
+    );
+    return response.data;
+  },
+
+  /**
+   * Get a single project asset by ID
+   */
+  async getProjectAsset(assetId: string): Promise<ProjectAsset> {
+    const response = await api.get<ProjectAsset>(`/project-assets/item/${assetId}`);
+    return response.data;
+  },
+
+  /**
+   * Get publication records for a media post (asset)
+   */
+  async getMediaPostRecords(assetId: string): Promise<PublicationRecord[]> {
+    const response = await api.get<PublicationRecord[]>(
+      `/publications/media-posts/${assetId}/records`
     );
     return response.data;
   },

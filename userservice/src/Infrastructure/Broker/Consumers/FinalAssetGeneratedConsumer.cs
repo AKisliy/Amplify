@@ -28,6 +28,7 @@ internal class FinalAssetGeneratedConsumer(
             msg.ProjectId,
             msg.MediaId,
             Id: msg.Id,
+            TemplateId: msg.TemplateId,
             Lifetime: AssetLifetime.Permanent,
             MediaType: mediaType));
 
