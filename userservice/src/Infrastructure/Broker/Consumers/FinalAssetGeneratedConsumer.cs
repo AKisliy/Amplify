@@ -20,11 +20,16 @@ internal class FinalAssetGeneratedConsumer(
             "Consumed FinalAssetGenerated: id={Id} projectId={ProjectId} mediaId={MediaId}",
             msg.Id, msg.ProjectId, msg.MediaId);
 
+        var mediaType = msg.MediaType.Equals("video", StringComparison.OrdinalIgnoreCase)
+            ? AssetMediaType.Video
+            : AssetMediaType.Image;
+
         await mediator.Send(new AddProjectAssetCommand(
             msg.ProjectId,
             msg.MediaId,
             Id: msg.Id,
-            Lifetime: AssetLifetime.Permanent));
+            Lifetime: AssetLifetime.Permanent,
+            MediaType: mediaType));
 
         await bus.Publish(new AssetRegistered
         {

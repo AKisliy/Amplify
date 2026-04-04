@@ -1,5 +1,6 @@
 using UserService.Application.Common.Mappings;
 using UserService.Domain.Entities;
+using UserService.Domain.Enums;
 
 namespace UserService.Application.ProjectAssets.Dto;
 
@@ -8,6 +9,8 @@ public class ProjectAssetDto
     public Guid Id { get; set; }
 
     public Guid MediaId { get; set; }
+
+    public AssetMediaType MediaType { get; set; }
 
     public required string MediaUrl { get; set; }
 
