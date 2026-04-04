@@ -26,7 +26,7 @@ COPY pyproject.toml poetry.lock* ./
 
 # 5. Install Dependencies
 # --no-root: specific to project structure, prevents trying to install the app itself yet
-RUN poetry install --no-interaction --no-ansi --no-root
+RUN poetry install --no-interaction --no-ansi --no-root --without dev
 
 # 6. Copy the rest of the source code
 # This layer invalidates often, but now the dependencies above it are cached!

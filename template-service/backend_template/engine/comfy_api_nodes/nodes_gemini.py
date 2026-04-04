@@ -287,6 +287,7 @@ class GeminiNode(IO.ComfyNode):
             description="Generate text responses with Google's Gemini AI model. "
             "You can provide multiple types of inputs (text, images, audio, video) "
             "as context for generating more relevant and meaningful responses.",
+            is_output_node=True,
             inputs=[
                 IO.String.Input(
                     "prompt",
@@ -383,8 +384,8 @@ class GeminiNode(IO.ComfyNode):
             response_model=GeminiGenerateContentResponse,
         )
 
-        output_text = get_text_from_response(response)
-        return IO.NodeOutput(output_text or "Empty response from Gemini model...")
+        output_text = get_text_from_response(response) or "Empty response from Gemini model..."
+        return IO.NodeOutput(output_text, ui={"text": [output_text]})
 
 class GeminiImageNode(IO.ComfyNode):
 
@@ -401,6 +402,7 @@ class GeminiImageNode(IO.ComfyNode):
             display_name="Nano Banana (Google Gemini Image)",
             category="api node/image/Gemini",
             description="Edit images synchronously via Google API.",
+            is_output_node=True,
             inputs=[
                 IO.String.Input(
                     "prompt",
@@ -496,7 +498,9 @@ class GeminiImageNode(IO.ComfyNode):
             response_model=GeminiGenerateContentResponse,
         )
 
-        return IO.NodeOutput(await upload_images_and_get_uuids(cls, response), get_text_from_response(response))
+        image_uuid = await upload_images_and_get_uuids(cls, response)
+        text = get_text_from_response(response)
+        return IO.NodeOutput(image_uuid, text, ui={"image_uuid": [image_uuid], "text": [text]})
 
 class GeminiImage2Node(IO.ComfyNode):
 
@@ -513,6 +517,7 @@ class GeminiImage2Node(IO.ComfyNode):
             display_name="Nano Banana Pro (Google Gemini Image)",
             category="api node/image/Gemini",
             description="Generate or edit images synchronously via Google Vertex API.",
+            is_output_node=True,
             inputs=[
                 IO.String.Input(
                     "prompt",
@@ -612,7 +617,9 @@ class GeminiImage2Node(IO.ComfyNode):
             price_extractor=calculate_tokens_price,
         )
 
-        return IO.NodeOutput(await upload_images_and_get_uuids(cls, response), get_text_from_response(response))
+        image_uuid = await upload_images_and_get_uuids(cls, response)
+        text = get_text_from_response(response)
+        return IO.NodeOutput(image_uuid, text, ui={"image_uuid": [image_uuid], "text": [text]})
 
 class GeminiExtension(ComfyExtension):
     @override

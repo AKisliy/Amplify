@@ -289,6 +289,566 @@
         }
       }
     },
+    "/v1/templates/from-library": {
+      "post": {
+        "tags": [
+          "Project Templates"
+        ],
+        "summary": "Duplicate a Library Template into a Project",
+        "description": "Duplicates a read-only Library Template into a new editable Project Template.\nNo JSON body required \u2014 the backend fetches the source template and copies its graph.",
+        "operationId": "duplicate_from_library_v1_templates_from_library_post",
+        "parameters": [
+          {
+            "name": "library_template_id",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "description": "UUID of the source LibraryTemplate to clone",
+              "title": "Library Template Id"
+            },
+            "description": "UUID of the source LibraryTemplate to clone"
+          },
+          {
+            "name": "project_id",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "description": "UUID of the target Project to create the template in",
+              "title": "Project Id"
+            },
+            "description": "UUID of the target Project to create the template in"
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProjectTemplateResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/engine/nodes": {
+      "get": {
+        "tags": [
+          "Engine"
+        ],
+        "summary": "Get all node schemas",
+        "description": "Returns the full schema (inputs, outputs, metadata) for every\nregistered node in the engine.",
+        "operationId": "get_all_nodes_v1_engine_nodes_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/engine/nodes/{node_class}": {
+      "get": {
+        "tags": [
+          "Engine"
+        ],
+        "summary": "Get a single node schema",
+        "description": "Returns the schema for a specific node class by name\n(e.g., `GeminiNode`, `VeoVideoGenerationNode`).",
+        "operationId": "get_node_v1_engine_nodes__node_class__get",
+        "parameters": [
+          {
+            "name": "node_class",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Node Class"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/engine/prompt": {
+      "post": {
+        "tags": [
+          "Engine"
+        ],
+        "summary": "Submit a workflow for execution",
+        "description": "Submits a workflow graph for asynchronous execution on the engine.\nReturns immediately with a `prompt_id` \u2014 poll\n`GET /history/{prompt_id}` for results.",
+        "operationId": "submit_prompt_v1_engine_prompt_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PromptRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PromptResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/engine/history/{prompt_id}": {
+      "get": {
+        "tags": [
+          "Engine"
+        ],
+        "summary": "Get execution history for a prompt",
+        "description": "Returns the execution history entry for a specific prompt_id.\nReturns null if no history exists for that prompt.",
+        "operationId": "get_prompt_history_v1_engine_history__prompt_id__get",
+        "parameters": [
+          {
+            "name": "prompt_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Prompt Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/HistoryEntry"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "title": "Response Get Prompt History V1 Engine History  Prompt Id  Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/engine/history": {
+      "get": {
+        "tags": [
+          "Engine"
+        ],
+        "summary": "List execution history",
+        "description": "Returns execution history for all prompts.\nSupports optional pagination via `max_items` and `offset`.",
+        "operationId": "get_all_history_v1_engine_history_get",
+        "parameters": [
+          {
+            "name": "max_items",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "integer",
+                  "minimum": 1
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Max Items"
+            }
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Offset"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/HistoryEntry"
+                  },
+                  "title": "Response Get All History V1 Engine History Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Engine"
+        ],
+        "summary": "Clear or delete history entries",
+        "description": "Clears all execution history (if `clear=true`) and/or deletes\nspecific entries by prompt_id (if `delete` list is provided).",
+        "operationId": "clear_history_v1_engine_history_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Body_clear_history_v1_engine_history_post"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/library-templates/": {
+      "get": {
+        "tags": [
+          "Library Templates"
+        ],
+        "summary": "List Library Templates",
+        "description": "Lists all available library template cards with pagination.",
+        "operationId": "list_library_templates_v1_library_templates__get",
+        "parameters": [
+          {
+            "name": "skip",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "description": "Number of records to skip",
+              "default": 0,
+              "title": "Skip"
+            },
+            "description": "Number of records to skip"
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 100,
+              "minimum": 1,
+              "description": "Max records to return",
+              "default": 100,
+              "title": "Limit"
+            },
+            "description": "Max records to return"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/LibraryTemplateResponse"
+                  },
+                  "title": "Response List Library Templates V1 Library Templates  Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/library-templates/{template_id}": {
+      "get": {
+        "tags": [
+          "Library Templates"
+        ],
+        "summary": "Get Library Template by ID",
+        "description": "Retrieves a specific library template by its UUID.",
+        "operationId": "get_library_template_v1_library_templates__template_id__get",
+        "parameters": [
+          {
+            "name": "template_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Template Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LibraryTemplateResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/internal/library-templates/": {
+      "post": {
+        "tags": [
+          "Library Templates (Internal)"
+        ],
+        "summary": "Create a Library Template",
+        "description": "Creates a new library template card (internal use only).",
+        "operationId": "create_library_template_internal_library_templates__post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LibraryTemplateCreate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LibraryTemplateResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/internal/library-templates/{template_id}": {
+      "patch": {
+        "tags": [
+          "Library Templates (Internal)"
+        ],
+        "summary": "Update a Library Template",
+        "description": "Partially updates a library template (internal use only).\nOnly fields sent in the payload will be updated.",
+        "operationId": "update_library_template_internal_library_templates__template_id__patch",
+        "parameters": [
+          {
+            "name": "template_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Template Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LibraryTemplateUpdate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LibraryTemplateResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Library Templates (Internal)"
+        ],
+        "summary": "Delete a Library Template",
+        "description": "Deletes a library template from the library (internal use only).",
+        "operationId": "delete_library_template_internal_library_templates__template_id__delete",
+        "parameters": [
+          {
+            "name": "template_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Template Id"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/health": {
       "get": {
         "summary": "Health Check",
@@ -308,6 +868,62 @@
   },
   "components": {
     "schemas": {
+      "Body_clear_history_v1_engine_history_post": {
+        "properties": {
+          "clear": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Clear"
+          },
+          "delete": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Delete"
+          }
+        },
+        "type": "object",
+        "title": "Body_clear_history_v1_engine_history_post"
+      },
+      "ExecutionStatus": {
+        "properties": {
+          "status_str": {
+            "type": "string",
+            "title": "Status Str"
+          },
+          "completed": {
+            "type": "boolean",
+            "title": "Completed"
+          },
+          "messages": {
+            "items": {},
+            "type": "array",
+            "title": "Messages"
+          }
+        },
+        "type": "object",
+        "required": [
+          "status_str",
+          "completed",
+          "messages"
+        ],
+        "title": "ExecutionStatus",
+        "description": "Status block returned by the engine for each completed prompt."
+      },
       "HTTPValidationError": {
         "properties": {
           "detail": {
@@ -320,6 +936,201 @@
         },
         "type": "object",
         "title": "HTTPValidationError"
+      },
+      "HistoryEntry": {
+        "properties": {
+          "prompt": {
+            "$ref": "#/components/schemas/QueueItem"
+          },
+          "outputs": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Outputs"
+          },
+          "status": {
+            "$ref": "#/components/schemas/ExecutionStatus"
+          },
+          "meta": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Meta"
+          }
+        },
+        "type": "object",
+        "required": [
+          "prompt",
+          "outputs",
+          "status",
+          "meta"
+        ],
+        "title": "HistoryEntry",
+        "description": "A single prompt's execution history entry."
+      },
+      "LibraryTemplateCreate": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "maxLength": 255,
+            "minLength": 1,
+            "title": "Name",
+            "description": "The display name of the library template card."
+          },
+          "description": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description",
+            "description": "Optional description of what this template does."
+          },
+          "graph_json": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Graph Json",
+            "description": "The static ComfyUI-style node graph definition."
+          },
+          "thumbnail_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Thumbnail Url",
+            "description": "Signed HTTPS URL to the template's thumbnail image on GCS."
+          }
+        },
+        "type": "object",
+        "required": [
+          "name"
+        ],
+        "title": "LibraryTemplateCreate",
+        "description": "Fields required to CREATE a new library template (internal use only).\nInherits everything from Base."
+      },
+      "LibraryTemplateResponse": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "maxLength": 255,
+            "minLength": 1,
+            "title": "Name",
+            "description": "The display name of the library template card."
+          },
+          "description": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description",
+            "description": "Optional description of what this template does."
+          },
+          "graph_json": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Graph Json",
+            "description": "The static ComfyUI-style node graph definition."
+          },
+          "thumbnail_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Thumbnail Url",
+            "description": "Signed HTTPS URL to the template's thumbnail image on GCS."
+          },
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Updated At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "name",
+          "id",
+          "created_at",
+          "updated_at"
+        ],
+        "title": "LibraryTemplateResponse",
+        "description": "The full representation returned to the client.\nInherits from Base (Shared fields) + Adds System fields (ID, Timestamps)."
+      },
+      "LibraryTemplateUpdate": {
+        "properties": {
+          "name": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 255,
+                "minLength": 1
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Name"
+          },
+          "description": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description"
+          },
+          "graph_json": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Graph Json"
+          },
+          "thumbnail_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Thumbnail Url"
+          }
+        },
+        "type": "object",
+        "title": "LibraryTemplateUpdate",
+        "description": "Fields allowed to be UPDATED (internal use only).\nCRITICAL: Inherits from BaseModel, NOT LibraryTemplateBase.\nAll fields are optional (None) to support PATCH operations."
       },
       "ProjectTemplateCreate": {
         "properties": {
@@ -465,6 +1276,138 @@
         "type": "object",
         "title": "ProjectTemplateUpdate",
         "description": "Fields allowed to be UPDATED.\nCRITICAL: Inherits from BaseModel, NOT ProjectTemplateBase.\nAll fields are optional (None) to support PATCH operations."
+      },
+      "PromptRequest": {
+        "properties": {
+          "prompt": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Prompt",
+            "description": "Workflow graph \u2014 dict of node_id \u2192 Node definition."
+          },
+          "partial_execution_targets": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Partial Execution Targets",
+            "description": "Execute only these output nodes (+ upstream deps). Omit to run all OUTPUT_NODE nodes."
+          },
+          "extra_data": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Extra Data",
+            "description": "Arbitrary metadata forwarded to nodes via hidden inputs."
+          },
+          "number": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Number",
+            "description": "Queue priority (lower = higher). Auto-incremented if omitted."
+          },
+          "front": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Front",
+            "description": "Push to front of queue."
+          }
+        },
+        "type": "object",
+        "required": [
+          "prompt"
+        ],
+        "title": "PromptRequest",
+        "description": "Request body for submitting a workflow graph for execution."
+      },
+      "PromptResponse": {
+        "properties": {
+          "prompt_id": {
+            "type": "string",
+            "title": "Prompt Id"
+          },
+          "number": {
+            "type": "integer",
+            "title": "Number"
+          },
+          "node_errors": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Node Errors"
+          }
+        },
+        "type": "object",
+        "required": [
+          "prompt_id",
+          "number",
+          "node_errors"
+        ],
+        "title": "PromptResponse",
+        "description": "Successful response from POST /api/prompt."
+      },
+      "QueueItem": {
+        "properties": {
+          "number": {
+            "type": "number",
+            "title": "Number"
+          },
+          "prompt_id": {
+            "type": "string",
+            "title": "Prompt Id"
+          },
+          "prompt": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Prompt"
+          },
+          "extra_data": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Extra Data"
+          },
+          "outputs_to_execute": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Outputs To Execute"
+          }
+        },
+        "type": "object",
+        "required": [
+          "number",
+          "prompt_id",
+          "prompt",
+          "extra_data",
+          "outputs_to_execute"
+        ],
+        "title": "QueueItem",
+        "description": "Parsed representation of the engine's prompt queue-item tuple.\n\nThe engine stores this as a 5-element tuple:\n    (number, prompt_id, prompt, extra_data, outputs_to_execute)\nThe model_validator converts the tuple into named fields on arrival."
       },
       "ValidationError": {
         "properties": {

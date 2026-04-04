@@ -1,22 +1,47 @@
-@startuml Final Asset Saving
+@startuml Final Asset Saving & Publication
 
-participant "template-service /\nvideo-editor" as GEN
-participant "media-ingest\n(MinIO)" as MI
+participant "VideoEditor\n(worker)" as VE
 participant "RabbitMQ" as RMQ
+participant "template-service" as TS
+participant "media-ingest\n(MinIO)" as MI
 participant "userservice" as US
 participant "publisher" as PUB
+participant "websocket-gateway" as WS
 participant "Frontend" as FE
 
-GEN -> MI: upload final video/image
-MI --> GEN: mediaId
+== Завершение генерации (всегда) ==
 
-GEN -> RMQ: AssetGenerated {mediaId, projectId, userId, type=final}
-RMQ -> US: consume event
+VE -> MI: upload final video
+MI --> VE: mediaId
+
+VE -> RMQ: AssetGenerated {mediaId, projectId, userId}
+VE -> RMQ: NodeCompleted {nodeId, nodeType, workflowId, mediaId}
+
+RMQ -> US: consume AssetGenerated
 US -> US: CREATE GeneratedAsset (type=final)
 
-note over FE,PUB: Пользователь решает опубликовать
+RMQ -> PUB: consume AssetGenerated
+note over PUB: bookkeeping — знает об ассете,\nPublicationRecord не создаётся
+
+RMQ -> TS: consume NodeCompleted
+TS -> TS: проверить граф:\nесть ли после nodeId нода autolist-publish?
+
+== Сценарий A: autolist-publish нода есть в графе ==
+
+TS -> RMQ: AssetReadyForPublish {mediaId, autoListId, projectId}
+RMQ -> PUB: consume AssetReadyForPublish
+PUB -> PUB: CREATE PublicationRecord {assetId, autoListId}
+PUB -> WS: PublicationQueued {publicationId, assetId}
+WS -> FE: SignalR → PublicationQueued
+note over FE: карточка в "публикациях"\nсо статусом и прогресс-баром
+
+== Сценарий Б: autolist-publish ноды нет ==
+
+TS -> WS: AssetGenerated {mediaId, projectId}
+WS -> FE: SignalR → AssetGenerated
+note over FE: превью результата\n+ кнопка "Опубликовать"
+
 FE -> PUB: POST /publications {assetId, ...}
 PUB -> PUB: CREATE PublicationRecord {assetId}
-note over PUB: assetId — просто ссылка,\nPUB не владеет ассетом
 
 @enduml

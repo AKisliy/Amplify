@@ -29,6 +29,22 @@ internal static class ServiceCollectionExtensions
             {
                 var isDevelopment = builder.Environment.IsDevelopment();
 
+                // SignalR JS client sends the token via query string for WebSocket connections
+                // because the WS upgrade request cannot carry custom headers.
+                options.Events = new Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerEvents
+                {
+                    OnMessageReceived = context =>
+                    {
+                        var accessToken = context.Request.Query["access_token"];
+                        if (!string.IsNullOrEmpty(accessToken) &&
+                            context.HttpContext.Request.Path.StartsWithSegments("/hubs"))
+                        {
+                            context.Token = accessToken;
+                        }
+                        return Task.CompletedTask;
+                    }
+                };
+
                 if (isDevelopment)
                 {
                     options.TokenValidationParameters = new TokenValidationParameters
@@ -56,7 +72,6 @@ internal static class ServiceCollectionExtensions
 
                         ValidateIssuerSigningKey = true,
                     };
-
                 }
             });
 

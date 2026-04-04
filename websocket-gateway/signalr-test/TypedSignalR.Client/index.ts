@@ -95,13 +95,22 @@ class IClientReceiver_Binder implements ReceiverRegister<IClientReceiver> {
 
         const __onPublicationStatusChanged = (...args: [string, string, string, string]) => receiver.onPublicationStatusChanged(...args);
         const __onVideoEditingStepChanged = (...args: [string, string, string, string, string]) => receiver.onVideoEditingStepChanged(...args);
+        const __onNodeExecutionStatusChanged = (...args: [string, string, any, string]) => receiver.onNodeExecutionStatusChanged(...args);
+        const __onJobCompleted = (...args: [string]) => receiver.onJobCompleted(...args);
+        const __onAssetReady = (...args: [string, string, string, string, string]) => receiver.onAssetReady(...args);
 
         connection.on("OnPublicationStatusChanged", __onPublicationStatusChanged);
         connection.on("OnVideoEditingStepChanged", __onVideoEditingStepChanged);
+        connection.on("OnNodeExecutionStatusChanged", __onNodeExecutionStatusChanged);
+        connection.on("OnJobCompleted", __onJobCompleted);
+        connection.on("OnAssetReady", __onAssetReady);
 
         const methodList: ReceiverMethod[] = [
             { methodName: "OnPublicationStatusChanged", method: __onPublicationStatusChanged },
-            { methodName: "OnVideoEditingStepChanged", method: __onVideoEditingStepChanged }
+            { methodName: "OnVideoEditingStepChanged", method: __onVideoEditingStepChanged },
+            { methodName: "OnNodeExecutionStatusChanged", method: __onNodeExecutionStatusChanged },
+            { methodName: "OnJobCompleted", method: __onJobCompleted },
+            { methodName: "OnAssetReady", method: __onAssetReady }
         ]
 
         return new ReceiverMethodSubscription(connection, methodList);

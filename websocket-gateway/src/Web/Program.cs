@@ -4,10 +4,12 @@ using WebSocketGateway.Web.Broker;
 using WebSocketGateway.Web.Configuration;
 using WebSocketGateway.Web.Configuration.Extensions;
 using WebSocketGateway.Web.Hubs;
+using WebSocketGateway.Web.State;
 
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddSignalR();
+builder.Services.AddSingleton<JobNotificationStateManager>();
 builder.AddBroker();
 builder.Services.AddValidatorsFromAssembly(Assembly.GetExecutingAssembly());
 

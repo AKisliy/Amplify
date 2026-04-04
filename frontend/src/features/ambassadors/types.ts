@@ -47,6 +47,28 @@ export type UpdateProjectDto = {
   photo?: string | null;
 };
 
+// Project Asset types
+export type AssetMediaType = "Image" | "Video";
+
+export type ProjectAsset = {
+  id: string;
+  mediaId: string;
+  templateId?: string | null;
+  mediaType: AssetMediaType;
+  mediaUrl: string;
+  createdAt: string;
+};
+
+// Publication types
+export type PublicationRecord = {
+  id: string;
+  status: string;
+  platform: string;
+  createdAt: string;
+  updatedAt?: string | null;
+  errorMessage?: string | null;
+};
+
 // Ambassador Image types
 export type AmbassadorImage = {
   id: string;

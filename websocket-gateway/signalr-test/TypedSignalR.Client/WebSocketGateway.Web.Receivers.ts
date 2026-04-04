@@ -22,5 +22,27 @@ export type IClientReceiver = {
     * @returns Transpiled from System.Threading.Tasks.Task
     */
     onVideoEditingStepChanged(videoId: string, nodeId: string, step: string, status: string, error: string): Promise<void>;
+    /**
+    * @param nodeId Transpiled from string
+    * @param status Transpiled from string
+    * @param outputs Transpiled from object?
+    * @param error Transpiled from string?
+    * @returns Transpiled from System.Threading.Tasks.Task
+    */
+    onNodeExecutionStatusChanged(nodeId: string, status: string, outputs: any, error: string): Promise<void>;
+    /**
+    * @param jobId Transpiled from string
+    * @returns Transpiled from System.Threading.Tasks.Task
+    */
+    onJobCompleted(jobId: string): Promise<void>;
+    /**
+    * @param id Transpiled from string
+    * @param jobId Transpiled from string
+    * @param projectId Transpiled from string
+    * @param mediaId Transpiled from string
+    * @param mediaType Transpiled from string
+    * @returns Transpiled from System.Threading.Tasks.Task
+    */
+    onAssetReady(id: string, jobId: string, projectId: string, mediaId: string, mediaType: string): Promise<void>;
 }
 

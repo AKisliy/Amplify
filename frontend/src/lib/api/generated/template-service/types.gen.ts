@@ -5,6 +5,40 @@ export type ClientOptions = {
 };
 
 /**
+ * Body_clear_history_v1_engine_history_post
+ */
+export type BodyClearHistoryV1EngineHistoryPost = {
+    /**
+     * Clear
+     */
+    clear?: boolean | null;
+    /**
+     * Delete
+     */
+    delete?: Array<string> | null;
+};
+
+/**
+ * ExecutionStatus
+ *
+ * Status block returned by the engine for each completed prompt.
+ */
+export type ExecutionStatus = {
+    /**
+     * Status Str
+     */
+    status_str: string;
+    /**
+     * Completed
+     */
+    completed: boolean;
+    /**
+     * Messages
+     */
+    messages: Array<unknown>;
+};
+
+/**
  * HTTPValidationError
  */
 export type HttpValidationError = {
@@ -12,6 +46,28 @@ export type HttpValidationError = {
      * Detail
      */
     detail?: Array<ValidationError>;
+};
+
+/**
+ * HistoryEntry
+ *
+ * A single prompt's execution history entry.
+ */
+export type HistoryEntry = {
+    prompt: QueueItem;
+    /**
+     * Outputs
+     */
+    outputs: {
+        [key: string]: unknown;
+    };
+    status: ExecutionStatus;
+    /**
+     * Meta
+     */
+    meta: {
+        [key: string]: unknown;
+    };
 };
 
 /**
@@ -119,6 +175,106 @@ export type ProjectTemplateUpdate = {
     current_graph_json?: {
         [key: string]: unknown;
     } | null;
+};
+
+/**
+ * PromptRequest
+ *
+ * Request body for submitting a workflow graph for execution.
+ */
+export type PromptRequest = {
+    /**
+     * Prompt
+     *
+     * Workflow graph — dict of node_id → Node definition.
+     */
+    prompt: {
+        [key: string]: unknown;
+    };
+    /**
+     * Partial Execution Targets
+     *
+     * Execute only these output nodes (+ upstream deps). Omit to run all OUTPUT_NODE nodes.
+     */
+    partial_execution_targets?: Array<string> | null;
+    /**
+     * Extra Data
+     *
+     * Arbitrary metadata forwarded to nodes via hidden inputs.
+     */
+    extra_data?: {
+        [key: string]: unknown;
+    } | null;
+    /**
+     * Number
+     *
+     * Queue priority (lower = higher). Auto-incremented if omitted.
+     */
+    number?: number | null;
+    /**
+     * Front
+     *
+     * Push to front of queue.
+     */
+    front?: boolean | null;
+};
+
+/**
+ * PromptResponse
+ *
+ * Successful response from POST /api/prompt.
+ */
+export type PromptResponse = {
+    /**
+     * Prompt Id
+     */
+    prompt_id: string;
+    /**
+     * Number
+     */
+    number: number;
+    /**
+     * Node Errors
+     */
+    node_errors: {
+        [key: string]: unknown;
+    };
+};
+
+/**
+ * QueueItem
+ *
+ * Parsed representation of the engine's prompt queue-item tuple.
+ *
+ * The engine stores this as a 5-element tuple:
+ * (number, prompt_id, prompt, extra_data, outputs_to_execute)
+ * The model_validator converts the tuple into named fields on arrival.
+ */
+export type QueueItem = {
+    /**
+     * Number
+     */
+    number: number;
+    /**
+     * Prompt Id
+     */
+    prompt_id: string;
+    /**
+     * Prompt
+     */
+    prompt: {
+        [key: string]: unknown;
+    };
+    /**
+     * Extra Data
+     */
+    extra_data: {
+        [key: string]: unknown;
+    };
+    /**
+     * Outputs To Execute
+     */
+    outputs_to_execute: Array<string>;
 };
 
 /**
@@ -325,6 +481,164 @@ export type GetTemplatesByProjectV1TemplatesProjectProjectIdGetResponses = {
 };
 
 export type GetTemplatesByProjectV1TemplatesProjectProjectIdGetResponse = GetTemplatesByProjectV1TemplatesProjectProjectIdGetResponses[keyof GetTemplatesByProjectV1TemplatesProjectProjectIdGetResponses];
+
+export type GetAllNodesV1EngineNodesGetData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/v1/engine/nodes';
+};
+
+export type GetAllNodesV1EngineNodesGetResponses = {
+    /**
+     * Successful Response
+     */
+    200: unknown;
+};
+
+export type GetNodeV1EngineNodesNodeClassGetData = {
+    body?: never;
+    path: {
+        /**
+         * Node Class
+         */
+        node_class: string;
+    };
+    query?: never;
+    url: '/v1/engine/nodes/{node_class}';
+};
+
+export type GetNodeV1EngineNodesNodeClassGetErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type GetNodeV1EngineNodesNodeClassGetError = GetNodeV1EngineNodesNodeClassGetErrors[keyof GetNodeV1EngineNodesNodeClassGetErrors];
+
+export type GetNodeV1EngineNodesNodeClassGetResponses = {
+    /**
+     * Successful Response
+     */
+    200: unknown;
+};
+
+export type SubmitPromptV1EnginePromptPostData = {
+    body: PromptRequest;
+    path?: never;
+    query?: never;
+    url: '/v1/engine/prompt';
+};
+
+export type SubmitPromptV1EnginePromptPostErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type SubmitPromptV1EnginePromptPostError = SubmitPromptV1EnginePromptPostErrors[keyof SubmitPromptV1EnginePromptPostErrors];
+
+export type SubmitPromptV1EnginePromptPostResponses = {
+    /**
+     * Successful Response
+     */
+    200: PromptResponse;
+};
+
+export type SubmitPromptV1EnginePromptPostResponse = SubmitPromptV1EnginePromptPostResponses[keyof SubmitPromptV1EnginePromptPostResponses];
+
+export type GetPromptHistoryV1EngineHistoryPromptIdGetData = {
+    body?: never;
+    path: {
+        /**
+         * Prompt Id
+         */
+        prompt_id: string;
+    };
+    query?: never;
+    url: '/v1/engine/history/{prompt_id}';
+};
+
+export type GetPromptHistoryV1EngineHistoryPromptIdGetErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type GetPromptHistoryV1EngineHistoryPromptIdGetError = GetPromptHistoryV1EngineHistoryPromptIdGetErrors[keyof GetPromptHistoryV1EngineHistoryPromptIdGetErrors];
+
+export type GetPromptHistoryV1EngineHistoryPromptIdGetResponses = {
+    /**
+     * Response Get Prompt History V1 Engine History  Prompt Id  Get
+     *
+     * Successful Response
+     */
+    200: HistoryEntry | null;
+};
+
+export type GetPromptHistoryV1EngineHistoryPromptIdGetResponse = GetPromptHistoryV1EngineHistoryPromptIdGetResponses[keyof GetPromptHistoryV1EngineHistoryPromptIdGetResponses];
+
+export type GetAllHistoryV1EngineHistoryGetData = {
+    body?: never;
+    path?: never;
+    query?: {
+        /**
+         * Max Items
+         */
+        max_items?: number | null;
+        /**
+         * Offset
+         */
+        offset?: number | null;
+    };
+    url: '/v1/engine/history';
+};
+
+export type GetAllHistoryV1EngineHistoryGetErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type GetAllHistoryV1EngineHistoryGetError = GetAllHistoryV1EngineHistoryGetErrors[keyof GetAllHistoryV1EngineHistoryGetErrors];
+
+export type GetAllHistoryV1EngineHistoryGetResponses = {
+    /**
+     * Response Get All History V1 Engine History Get
+     *
+     * Successful Response
+     */
+    200: Array<HistoryEntry>;
+};
+
+export type GetAllHistoryV1EngineHistoryGetResponse = GetAllHistoryV1EngineHistoryGetResponses[keyof GetAllHistoryV1EngineHistoryGetResponses];
+
+export type ClearHistoryV1EngineHistoryPostData = {
+    body?: BodyClearHistoryV1EngineHistoryPost;
+    path?: never;
+    query?: never;
+    url: '/v1/engine/history';
+};
+
+export type ClearHistoryV1EngineHistoryPostErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type ClearHistoryV1EngineHistoryPostError = ClearHistoryV1EngineHistoryPostErrors[keyof ClearHistoryV1EngineHistoryPostErrors];
+
+export type ClearHistoryV1EngineHistoryPostResponses = {
+    /**
+     * Successful Response
+     */
+    200: unknown;
+};
 
 export type HealthCheckHealthGetData = {
     body?: never;

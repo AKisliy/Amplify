@@ -30,7 +30,7 @@ appConfig:
   InstagramApiOptions:
     AppId: ""
     AppSecret: ""
-    RedirectUri: "https://localhost:3000/integrations/callback"
+    RedirectUri: "https://app.alexeykiselev.tech/integrations/callback"
     ApiVersion: "v22.0"
     DailyLimit: 200
     BaseGraphHostUrl: "https://graph.instagram.com"
@@ -54,7 +54,7 @@ appConfig:
   TikTokApi:
     ClientKey: ""
     ClientSecret: ""
-    RedirectUri: "https://localhost:3000/integrations/callback"
+    RedirectUri: "https://app.alexeykiselev.tech/integrations/callback"
   RecurringJobs:
     AutoListJobEnabled: false
     TokenRefreshJobEnabled: false

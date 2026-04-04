@@ -4,7 +4,7 @@
 // ComfyUI prompt payload from canvas state.
 // =============================================================================
 
-import type { XYPosition, Edge } from "@xyflow/react";
+import type { XYPosition } from "@xyflow/react";
 
 import type {
   NodeSchemaDef,
@@ -17,8 +17,6 @@ import type {
   CanvasNodeData,
   CanvasNodeType,
   NodeCategory,
-  PromptNodeInput,
-  PromptInputValue,
 } from "../types";
 import { resolveCategoryTag } from "../registry";
 
@@ -202,81 +200,3 @@ export function nodeDefToCanvasNode(
   };
 }
 
-// ---------------------------------------------------------------------------
-// 4. Canvas state → ComfyUI prompt payload
-// ---------------------------------------------------------------------------
-
-/**
- * Builds the `prompt` record for POST /api/prompt from the current canvas
- * nodes and edges.
- *
- * Edge wiring logic:
- *   For each target node input that has an incoming edge, replace the
- *   widget/config value with a node-link reference: [sourceNodeId, outputIndex].
- *   The output index is derived from the source node's output_name array.
- */
-export function buildPromptPayload(
-  nodes: CanvasNode[],
-  edges: Edge[]
-): Record<string, PromptNodeInput> {
-  // Build a lookup: nodeId → schema output_name list
-  // We read this from the ports (direction === "output")
-  const nodeOutputNames: Record<string, string[]> = {};
-  for (const node of nodes) {
-    nodeOutputNames[node.id] = node.data.ports
-      .filter((p) => p.direction === "output")
-      .map((p) => p.id);
-  }
-
-  // Build edge lookup: "[targetId]:[targetHandle]" → [sourceId, outputIndex]
-  const edgeLinkMap: Record<string, [string, number]> = {};
-  for (const edge of edges) {
-    if (!edge.source || !edge.target || !edge.sourceHandle || !edge.targetHandle) {
-      continue;
-    }
-    const outputNames = nodeOutputNames[edge.source] ?? [];
-    const outputIndex = outputNames.indexOf(edge.sourceHandle);
-    if (outputIndex === -1) continue;
-    edgeLinkMap[`${edge.target}:${edge.targetHandle}`] = [
-      edge.source,
-      outputIndex,
-    ];
-  }
-
-  // Build the prompt record
-  const prompt: Record<string, PromptNodeInput> = {};
-
-  for (const node of nodes) {
-    const inputs: Record<string, PromptInputValue> = {};
-
-    // For each input port, check if it's wired via an edge, otherwise use config value
-    for (const port of node.data.ports) {
-      if (port.direction !== "input") continue;
-
-      const linkKey = `${node.id}:${port.id}`;
-      const link = edgeLinkMap[linkKey];
-
-      if (link) {
-        inputs[port.id] = link;
-      } else if (!port.isWidget) {
-        // Handle ports that are not wired and not widgets are left undefined
-        // (ComfyUI will error if a required handle has no connection)
-        continue;
-      } else {
-        // Widget value from config
-        const value = node.data.config[port.id];
-        if (value !== undefined && value !== "") {
-          inputs[port.id] = value as PromptInputValue;
-        }
-      }
-    }
-
-    prompt[node.id] = {
-      class_type: node.data.schemaName,
-      _meta: { title: node.data.displayName },
-      inputs,
-    };
-  }
-
-  return prompt;
-}

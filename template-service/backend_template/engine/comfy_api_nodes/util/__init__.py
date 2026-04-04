@@ -16,6 +16,8 @@ from .request_utils import (
     register_media_uri_with_ingest,
 )
 
+from .broker import publish_event
+
 __all__ = [
     # API client
     "ApiEndpoint",
@@ -28,8 +30,11 @@ __all__ = [
     "validate_string",
     
     # Request utilities
-    get_vertex_ai_access_token, 
-    fetch_media_uri_from_ingest,
-    register_media_uri_with_ingest,
+    "get_vertex_ai_access_token",
+    "fetch_media_uri_from_ingest",
+    "register_media_uri_with_ingest",
+
+    # Broker
+    "publish_event",
 ]
     

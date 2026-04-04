@@ -56,6 +56,7 @@ internal static class DependencyInjection
     private static NpgsqlDataSourceBuilder MapApplicationEnums(this NpgsqlDataSourceBuilder builder)
     {
         builder.MapEnum<AssetLifetime>();
+        builder.MapEnum<AssetMediaType>();
 
         return builder;
     }
@@ -63,6 +64,7 @@ internal static class DependencyInjection
     private static NpgsqlDbContextOptionsBuilder MapApplicationEnums(this NpgsqlDbContextOptionsBuilder builder)
     {
         builder.MapEnum<AssetLifetime>(schemaName: ApplicationDbContext.DefaultSchemaName);
+        builder.MapEnum<AssetMediaType>(schemaName: ApplicationDbContext.DefaultSchemaName);
 
         return builder;
     }

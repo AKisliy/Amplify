@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Http.HttpResults;
 using UserService.Application.Common.Models;
 using UserService.Application.ProjectAssets.Dto;
+using UserService.Application.ProjectAssets.Queries.GetProjectAsset;
 using UserService.Application.ProjectAssets.Queries.GetProjectAssets;
 using UserService.Domain.Enums;
 
@@ -13,6 +14,8 @@ public class ProjectAssets : EndpointGroupBase
     public override void Map(RouteGroupBuilder groupBuilder)
     {
         groupBuilder.MapGet(GetProjectAssets, "{id}").RequireAuthorization();
+
+        groupBuilder.MapGet(GetProjectAsset, "item/{id}").RequireAuthorization();
     }
 
     public async Task<Ok<CursorPagedList<ProjectAssetDto>>> GetProjectAssets(
@@ -28,6 +31,12 @@ public class ProjectAssets : EndpointGroupBase
             lifetime,
             cursor,
             pageSize));
+        return TypedResults.Ok(result);
+    }
+
+    public async Task<Ok<ProjectAssetDto>> GetProjectAsset(ISender sender, Guid id)
+    {
+        var result = await sender.Send(new GetProjectAssetQuery(id));
         return TypedResults.Ok(result);
     }
 }

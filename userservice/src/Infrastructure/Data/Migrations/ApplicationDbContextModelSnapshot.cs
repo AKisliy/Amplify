@@ -23,6 +23,7 @@ namespace UserService.Infrastructure.Data.Migrations
                 .HasAnnotation("Relational:MaxIdentifierLength", 63);
 
             NpgsqlModelBuilderExtensions.HasPostgresEnum(modelBuilder, "userservice", "asset_lifetime", new[] { "intermediate", "permanent" });
+            NpgsqlModelBuilderExtensions.HasPostgresEnum(modelBuilder, "userservice", "asset_media_type", new[] { "image", "video" });
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
             modelBuilder.Entity("Microsoft.AspNetCore.DataProtection.EntityFrameworkCore.DataProtectionKey", b =>
@@ -376,9 +377,17 @@ namespace UserService.Infrastructure.Data.Migrations
                         .HasColumnType("uuid")
                         .HasColumnName("media_id");
 
+                    b.Property<AssetMediaType>("MediaType")
+                        .HasColumnType("userservice.asset_media_type")
+                        .HasColumnName("media_type");
+
                     b.Property<Guid>("ProjectId")
                         .HasColumnType("uuid")
                         .HasColumnName("project_id");
+
+                    b.Property<Guid?>("TemplateId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("template_id");
 
                     b.HasKey("Id")
                         .HasName("pk_project_assets");

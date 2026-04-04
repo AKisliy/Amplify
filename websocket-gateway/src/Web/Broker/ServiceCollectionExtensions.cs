@@ -1,6 +1,8 @@
 using MassTransit;
 using Microsoft.Extensions.Options;
 using WebSocketGateway.Contracts.Publisher;
+using WebSocketGateway.Contracts.TemplateService;
+using WebSocketGateway.Contracts.UserService;
 using WebSocketGateway.Contracts.VideoEditor;
 using WebSocketGateway.Web.Configuration;
 using WebSocketGateway.Web.Consumers;
@@ -18,6 +20,9 @@ internal static class ServiceCollectionExtensions
             // TODO: fix to auto-scan all consumers from assembly
             config.AddConsumer<PublicationStatusChangedConsumer>();
             config.AddConsumer<VideoEditingStepChangedConsumer>();
+            config.AddConsumer<NodeExecutionStatusChangedConsumer>();
+            config.AddConsumer<GraphCompletedConsumer>();
+            config.AddConsumer<AssetRegisteredConsumer>();
 
             config.SetEndpointNameFormatter(new KebabCaseEndpointNameFormatter(includeNamespace: false));
 
@@ -25,13 +30,11 @@ internal static class ServiceCollectionExtensions
             {
                 var options = context.GetRequiredService<IOptions<RabbitMQOptions>>().Value;
                 cfg.Host(options.Url);
-                // cfg.Host(options.Host, h =>
-                // {
-                //     h.Username(options.Username);
-                //     h.Password(options.Password);
-                // });
                 cfg.Message<PublicationStatusChanged>(x => x.SetEntityName("publication-status-changed"));
                 cfg.Message<VideoEditingStepChanged>(x => x.SetEntityName("video-editing-step-changed"));
+                cfg.Message<NodeExecutionStatusChanged>(x => x.SetEntityName("node-status-changed"));
+                cfg.Message<GraphCompleted>(x => x.SetEntityName("graph-completed"));
+                cfg.Message<AssetRegistered>(x => x.SetEntityName("asset-registered"));
 
                 cfg.UseRawJsonSerializer(RawSerializerOptions.AnyMessageType, isDefault: true);
 

@@ -15,6 +15,8 @@ internal static class ServiceCollectionExtensions
         {
             config.AddConsumer<PublishRequestedConsumer>();
             config.AddConsumer<ProjectCreatedConsumer>();
+            config.AddConsumer<AssetReadyForPublishConsumer>();
+            config.AddConsumer<FinalAssetGeneratedConsumer>();
 
             config.SetEndpointNameFormatter(new KebabCaseEndpointNameFormatter(includeNamespace: false));
 
@@ -24,6 +26,8 @@ internal static class ServiceCollectionExtensions
                 cfg.Host(options.Url);
                 cfg.Message<PublicationStatusChanged>(x => x.SetEntityName("publication-status-changed"));
                 cfg.Message<ProjectCreated>(x => x.SetEntityName("project-created"));
+                cfg.Message<AssetReadyForPublish>(x => x.SetEntityName("asset-ready-for-publish"));
+                cfg.Message<FinalAssetGenerated>(x => x.SetEntityName("final-asset-generated"));
 
                 cfg.UseRawJsonSerializer(RawSerializerOptions.AnyMessageType, isDefault: true);
 

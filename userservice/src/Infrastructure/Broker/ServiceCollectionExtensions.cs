@@ -17,6 +17,7 @@ internal static class ServiceCollectionExtensions
         services.AddMassTransit(config =>
         {
             config.AddConsumer<ProjectAssetGeneratedConsumer>();
+            config.AddConsumer<FinalAssetGeneratedConsumer>();
 
             config.SetEndpointNameFormatter(new KebabCaseEndpointNameFormatter(includeNamespace: false));
 
@@ -28,6 +29,8 @@ internal static class ServiceCollectionExtensions
 
                 cfg.Message<ProjectCreatedEvent>(x => x.SetEntityName("project-created"));
                 cfg.Message<ProjectAssetGenerated>(x => x.SetEntityName("project-asset-generated"));
+                cfg.Message<FinalAssetGenerated>(x => x.SetEntityName("final-asset-generated"));
+                cfg.Message<AssetRegistered>(x => x.SetEntityName("asset-registered"));
 
                 cfg.UseRawJsonSerializer(RawSerializerOptions.AnyMessageType, isDefault: true);
 

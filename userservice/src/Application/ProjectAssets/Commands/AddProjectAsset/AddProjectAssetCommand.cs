@@ -1,10 +1,17 @@
-
 using Microsoft.Extensions.Logging;
 using UserService.Application.Common.Interfaces;
+using UserService.Domain.Enums;
+using UserService.Domain.Entities;
 
 namespace UserService.Application.ProjectAssets.Commands.AddProjectAsset;
 
-public record AddProjectAssetCommand(Guid ProjectId, Guid MediaId) : IRequest<Guid>;
+public record AddProjectAssetCommand(
+    Guid ProjectId,
+    Guid MediaId,
+    Guid? Id = null,
+    Guid? TemplateId = null,
+    AssetLifetime Lifetime = AssetLifetime.Intermediate,
+    AssetMediaType MediaType = AssetMediaType.Image) : IRequest<Guid>;
 
 public class AddProjectAssetCommandHandler(
     IApplicationDbContext dbContext,
@@ -17,10 +24,14 @@ public class AddProjectAssetCommandHandler(
             request.ProjectId,
             request.MediaId);
 
-        var projectAsset = new Domain.Entities.ProjectAsset
+        var projectAsset = new ProjectAsset
         {
+            Id = request.Id ?? Guid.NewGuid(),
             ProjectId = request.ProjectId,
-            MediaId = request.MediaId
+            MediaId = request.MediaId,
+            Lifetime = request.Lifetime,
+            MediaType = request.MediaType,
+            TemplateId = request.TemplateId
         };
 
         dbContext.ProjectAssets.Add(projectAsset);

@@ -26,8 +26,8 @@ import base64
 AVERAGE_DURATION_VIDEO_GEN = 32
 MODELS_MAP = {
     "veo-2.0-generate-001": "veo-2.0-generate-001",
-    "veo-3.1-generate": "veo-3.1-generate-preview",
-    "veo-3.1-fast-generate": "veo-3.1-fast-generate-preview",
+    "veo-3.1-generate": "veo-3.1-generate-001",
+    "veo-3.1-fast-generate": "veo-3.1-fast-generate-001",
     "veo-3.0-generate-001": "veo-3.0-generate-001",
     "veo-3.0-fast-generate-001": "veo-3.0-fast-generate-001",
 }
@@ -51,6 +51,7 @@ class VeoVideoGenerationNode(IO.ComfyNode):
             display_name="Google Veo 2 Video Generation",
             category="api node/video/Veo",
             description="Generates videos from text prompts using Google's Veo 2 API",
+            is_output_node=True,
             inputs=[
                 IO.String.Input(
                     "prompt",
@@ -109,6 +110,7 @@ class VeoVideoGenerationNode(IO.ComfyNode):
                 ),
                 IO.String.Input(
                     "image_uuid",
+                    force_input=True,
                     optional=True,
                     tooltip="A Media Ingest API UUID representing an uploaded image"
                 ),
@@ -240,9 +242,9 @@ class VeoVideoGenerationNode(IO.ComfyNode):
             video = poll_response.response.videos[0]
 
             if hasattr(video, "gcsUri") and video.gcsUri:
-                
+
                 media_id = await register_media_uri_with_ingest(cls, video.gcsUri, "video/mp4")
-                return IO.NodeOutput(media_id)
+                return IO.NodeOutput(media_id, ui={"video_uuid": [media_id]})
 
             raise Exception("Video returned but no data or URL was provided")
         raise Exception("Video generation completed but no video was returned")
@@ -267,6 +269,7 @@ class Veo3VideoGenerationNode(VeoVideoGenerationNode):
             display_name="Google Veo 3 Video Generation",
             category="api node/video/Veo",
             description="Generates videos from text prompts using Google's Veo 3 API",
+            is_output_node=True,
             inputs=[
                 IO.String.Input(
                     "prompt",
@@ -325,6 +328,7 @@ class Veo3VideoGenerationNode(VeoVideoGenerationNode):
                 ),
                 IO.String.Input(
                     "image_uuid",
+                    force_input=True,
                     optional=True,
                     tooltip="A Media Ingest API UUID representing an uploaded image"
                 ),
@@ -362,6 +366,7 @@ class Veo3FirstLastFrameNode(IO.ComfyNode):
             display_name="Google Veo 3 First-Last-Frame to Video",
             category="api node/video/Veo",
             description="Generate video using prompt and first and last frames.",
+            is_output_node=True,
             inputs=[
                 IO.String.Input(
                     "prompt",
@@ -403,10 +408,14 @@ class Veo3FirstLastFrameNode(IO.ComfyNode):
                 ),
                 IO.String.Input(
                     "first_frame_uuid",
+                    force_input=True,
+                    optional=True,
                     tooltip="A Media Ingest API UUID representing an uploaded image"
                 ),
                 IO.String.Input(
                     "last_frame_uuid",
+                    force_input=True,
+                    optional=True,
                     tooltip="A Media Ingest API UUID representing an uploaded image"
                 ),
                 IO.Combo.Input(
@@ -434,21 +443,30 @@ class Veo3FirstLastFrameNode(IO.ComfyNode):
         aspect_ratio: str,
         duration: int,
         seed: int,
-        first_frame_uuid: str,
-        last_frame_uuid: str,
-        model: str,
-        generate_audio: bool,
+        first_frame_uuid: str | None = None,
+        last_frame_uuid: str | None = None,
+        model: str = "veo-3.1-fast-generate",
+        generate_audio: bool = True,
     ):
         model = MODELS_MAP[model]
 
-        first_frame = asyncio.create_task(fetch_media_uri_from_ingest(cls, first_frame_uuid))
-        last_frame = asyncio.create_task(fetch_media_uri_from_ingest(cls, last_frame_uuid))
-        
+        first_frame_task = (
+            asyncio.create_task(fetch_media_uri_from_ingest(cls, first_frame_uuid))
+            if first_frame_uuid else None
+        )
+        last_frame_task = (
+            asyncio.create_task(fetch_media_uri_from_ingest(cls, last_frame_uuid))
+            if last_frame_uuid else None
+        )
+
+        first_frame_uri = await first_frame_task if first_frame_task else None
+        last_frame_uri = await last_frame_task if last_frame_task else None
+
         initial_response = await sync_op(
             cls,
             ApiEndpoint(
-                path=f"{GEMINI_BASE_ENDPOINT}/{model}:predictLongRunning", 
-                method="POST", 
+                path=f"{GEMINI_BASE_ENDPOINT}/{model}:predictLongRunning",
+                method="POST",
                 headers={"Authorization": f"Bearer {get_vertex_ai_access_token()}"}
             ),
             response_model=VeoGenVidResponse,
@@ -457,11 +475,11 @@ class Veo3FirstLastFrameNode(IO.ComfyNode):
                     VeoRequestInstance(
                         prompt=prompt,
                         image=VeoRequestInstanceImage(
-                            gcsUri=await first_frame, mimeType="image/png"
-                        ),
+                            gcsUri=first_frame_uri, mimeType="image/png"
+                        ) if first_frame_uri else None,
                         lastFrame=VeoRequestInstanceImage(
-                            gcsUri=await last_frame, mimeType="image/png"
-                        ),
+                            gcsUri=last_frame_uri, mimeType="image/png"
+                        ) if last_frame_uri else None,
                     ),
                 ],
                 parameters=VeoRequestParameters(
@@ -509,9 +527,8 @@ class Veo3FirstLastFrameNode(IO.ComfyNode):
         if response.videos:
             video = response.videos[0]
             if video.gcsUri:
-                
                 media_id = await register_media_uri_with_ingest(cls, video.gcsUri, "video/mp4")
-                return IO.NodeOutput(media_id)
+                return IO.NodeOutput(media_id, ui={"video_uuid": [media_id]})
             raise Exception("Video returned but no data or URL was provided")
         raise Exception("Video generation completed but no video was returned")
 

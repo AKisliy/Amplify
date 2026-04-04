@@ -7,6 +7,13 @@ const nextConfig: NextConfig = {
         source: "/api/:path*",
         destination: `${process.env.NEXT_PUBLIC_API_BASE_URL}/:path*`,
       },
+      // Proxies /media/<guid> → <API_BASE>/media/api/media/<guid>
+      // Allows using mediaUrl(guid) as a same-domain path — works with
+      // <img>, <video>, and next/image without extra remotePatterns.
+      {
+        source: "/media/:guid",
+        destination: `${process.env.NEXT_PUBLIC_API_BASE_URL}/media/api/media/:guid`,
+      },
     ];
   },
   images: {

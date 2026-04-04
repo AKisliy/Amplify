@@ -23,6 +23,10 @@ import { useProjects } from "@/features/ambassadors/hooks/useProjects";
 import { ProjectHeader } from "@/components/ProjectHeader";
 import { useTheme } from "next-themes";
 import { updateTemplateV1TemplatesTemplateIdPatch } from "@/lib/api/template-service";
+import { useHubConnection } from "@/hooks/useHubConnection";
+import { getReceiverRegister } from "@/lib/api/TypedSignalR.Client";
+import type { IClientReceiver } from "@/lib/api/TypedSignalR.Client/WebSocketGateway.Web.Receivers";
+import type { NodeExecutionStatus } from "@/features/canvas/types";
 
 // Canvas feature imports
 import { AmplifyNode } from "@/features/canvas/components/AmplifyNode";
@@ -35,7 +39,8 @@ import { NodeLibrarySidebar } from "@/features/canvas/components/NodeLibrarySide
 import { MediaAssetsPanel } from "@/features/canvas/components/MediaAssetsPanel";
 import { TemplateMenu } from "@/features/canvas/components/TemplateMenu";
 import { useCanvasStore } from "@/features/canvas/hooks/useCanvasStore";
-import { NODE_REGISTRY, getNodesByCategory } from "@/features/canvas/registry";
+import { useNodeRegistry } from "@/features/canvas/hooks/useNodeRegistry";
+import { getNodesByCategory, getNodeDef } from "@/features/canvas/registry";
 import { nodeDefToCanvasNode } from "@/features/canvas/lib/schemaMapper";
 import { PREVIEW_SCHEMA_NAMES } from "@/features/canvas/registry/preview-schemas";
 import type { CanvasNode, CanvasEdge } from "@/features/canvas/types";
@@ -55,23 +60,7 @@ const edgeTypes: EdgeTypes = {
   status: FlowingEdge,
 };
 
-// ---------------------------------------------------------------------------
-// Seed canvas
-// ---------------------------------------------------------------------------
-
-function buildSeedNodes(): CanvasNode[] {
-  const geminiDef = NODE_REGISTRY["GeminiNodeAmplify"];
-  const veo3Def   = NODE_REGISTRY["Veo3VideoGenerationNodeAmplify"];
-  const nodes: CanvasNode[] = [];
-  if (geminiDef) nodes.push(nodeDefToCanvasNode("GeminiNodeAmplify", geminiDef, { x: 80, y: 100 }, "node-gemini"));
-  if (veo3Def)   nodes.push(nodeDefToCanvasNode("Veo3VideoGenerationNodeAmplify", veo3Def, { x: 500, y: 80 }, "node-veo3"));
-  return nodes;
-}
-
-const SEED_NODES = buildSeedNodes();
-const SEED_EDGES: CanvasEdge[] = []; // start empty — user wires their own connections
-
-const NODE_LIBRARY = getNodesByCategory();
+const SEED_EDGES: CanvasEdge[] = [];
 
 // ---------------------------------------------------------------------------
 // Page
@@ -87,6 +76,8 @@ export default function TemplateCanvasPage() {
 
   const { resolvedTheme } = useTheme();
   const { projects, isLoading: projectsLoading } = useProjects();
+  const { registry, isLoading: registryLoading } = useNodeRegistry();
+  const nodeLibrary = useMemo(() => getNodesByCategory(registry), [registry]);
 
   // ── UI state ────────────────────────────────────────────────────────────────
   const [sidebarOpen, setSidebarOpen] = useState(true);
@@ -121,38 +112,65 @@ export default function TemplateCanvasPage() {
     })();
   }, [templateId]);
 
-  // Auto-save to localStorage on unmount
-  useEffect(() => {
-    return () => {
-      if (!templateId || nodes.length === 0) return;
-      // Save to localStorage as backup
-      const key = `template-canvas-${templateId}`;
-      localStorage.setItem(key, JSON.stringify({ nodes, edges }));
-      console.log("Auto-saved to localStorage:", key);
+  // ── Canvas store ─────────────────────────────────────────────────────────────
+  const {
+    nodes, edges,
+    onNodesChange, onEdgesChange, onConnect,
+    addNode, deleteNode, deleteSelectedElements,
+    updateNodeConfig, updateNodeData,
+    setNodes, setEdges,
+    execution, submitWorkflow,
+    setNodeStatus,
+  } = useCanvasStore({});
 
-      // Also try to save to backend (may fail if not implemented yet)
-      (async () => {
-        try {
-          await updateTemplateV1TemplatesTemplateIdPatch({
-            path: { template_id: templateId },
-            body: {
-              current_graph_json: { nodes: nodes as unknown[], edges: edges as unknown[] },
-            },
-          });
-        } catch {
-          // Silently fail on unmount
+  const { connection } = useHubConnection();
+  const { toast } = useToast();
+
+  // ── SignalR: subscribe to node execution events ──────────────────────────────
+  useEffect(() => {
+    if (!connection) return;
+
+    const receiver: IClientReceiver = {
+      onNodeExecutionStatusChanged: async (nodeId, status, outputs, error) => {
+        const mapped: NodeExecutionStatus =
+          status === "RUNNING" ? "processing"
+          : status === "SUCCESS" || status === "CACHED" ? "success"
+          : status === "FAILURE" ? "error"
+          : "idle";
+
+        setNodeStatus(nodeId, mapped, error ?? undefined);
+
+        if (outputs && mapped === "success") {
+          updateNodeData(nodeId, { outputValues: outputs as Record<string, unknown> });
         }
-      })();
+      },
+      onPublicationStatusChanged: async () => {},
+      onVideoEditingStepChanged: async () => {},
+      onJobCompleted: async (jobId) => {
+        toast({
+          title: "Graph completed",
+          description: "Saving your asset…",
+          duration: 8000,
+        });
+      },
+      onAssetReady: async (id, jobId, assetProjectId, mediaId, mediaType) => {
+        toast({
+          title: "Asset ready",
+          description: `Your ${mediaType} is saved. Open project assets →`,
+          duration: 10000,
+        });
+      },
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
 
-  // ── Load saved graph ────────────────────────────────────────────────────────
-  const [initialNodes, setInitialNodes] = useState(SEED_NODES);
-  const [initialEdges, setInitialEdges] = useState(SEED_EDGES);
+    const disposable = getReceiverRegister("IClientReceiver").register(connection, receiver);
+    return () => disposable.dispose();
+  }, [connection, setNodeStatus, updateNodeData, toast]);
+
+  // ── Load saved graph (waits for registry) ───────────────────────────────────
+  const [isGraphReady, setIsGraphReady] = useState(false);
 
   useEffect(() => {
-    if (!templateId) return;
+    if (!templateId || registryLoading) return;
     (async () => {
       try {
         // 1. Try localStorage first
@@ -162,10 +180,9 @@ export default function TemplateCanvasPage() {
           try {
             const parsedLocal = JSON.parse(localStorageData);
             if (parsedLocal.nodes && Array.isArray(parsedLocal.nodes) && parsedLocal.nodes.length > 0) {
-              console.log("Loaded from localStorage:", parsedLocal.nodes.length, "nodes");
-              setInitialNodes(parsedLocal.nodes as CanvasNode[]);
-              if (parsedLocal.edges) setInitialEdges(parsedLocal.edges as any[]);
-              return; // Use localStorage version, skip backend fetch
+              setNodes(parsedLocal.nodes as CanvasNode[]);
+              if (parsedLocal.edges) setEdges(parsedLocal.edges as CanvasEdge[]);
+              return;
             }
           } catch (e) {
             console.warn("Failed to parse localStorage data:", e);
@@ -173,55 +190,70 @@ export default function TemplateCanvasPage() {
         }
 
         // 2. Fall back to backend
-        console.log("Fetching template from backend:", templateId);
         const response = await getTemplateV1TemplatesTemplateIdGet({ path: { template_id: templateId } });
-        console.log("Template response:", response);
         const savedGraph = response?.data?.current_graph_json;
-        console.log("Saved graph raw:", savedGraph, "Type:", typeof savedGraph);
 
         if (savedGraph) {
-          // Try to parse if it's a string (JSON)
           let parsedGraph = savedGraph;
           if (typeof savedGraph === "string") {
-            try {
-              parsedGraph = JSON.parse(savedGraph);
-              console.log("Parsed graph from string:", parsedGraph);
-            } catch (parseErr) {
-              console.error("Failed to parse graph JSON string:", parseErr);
+            try { parsedGraph = JSON.parse(savedGraph); } catch { /* ignore */ }
+          }
+          if (typeof parsedGraph === "object" && "nodes" in parsedGraph && "edges" in parsedGraph) {
+            const pNodes = (parsedGraph.nodes as unknown[]) || [];
+            const pEdges = (parsedGraph.edges as unknown[]) || [];
+            if (Array.isArray(pNodes) && pNodes.length > 0) {
+              setNodes(pNodes as CanvasNode[]);
+              if (Array.isArray(pEdges)) setEdges(pEdges as CanvasEdge[]);
               return;
             }
           }
+        }
 
-          if (typeof parsedGraph === "object" && "nodes" in parsedGraph && "edges" in parsedGraph) {
-            const nodes = (parsedGraph.nodes as unknown[]) || [];
-            const edges = (parsedGraph.edges as unknown[]) || [];
-            console.log("Loaded from backend:", nodes.length, "nodes");
-            if (Array.isArray(nodes) && nodes.length > 0) {
-              setInitialNodes(nodes as CanvasNode[]);
-            }
-            if (Array.isArray(edges)) {
-              setInitialEdges(edges as any[]);
-            }
-          } else {
-            console.warn("Saved graph doesn't have expected structure:", parsedGraph);
-          }
-        } else {
-          console.log("No saved graph found on backend, using seed nodes");
+        // 3. No saved graph — build seed from registry
+        const geminiDef = registry["GeminiImageNode"];
+        const veo3Def   = registry["Veo3VideoGenerationNode"];
+        if (geminiDef && veo3Def) {
+          const geminiId   = crypto.randomUUID();
+          const veo3Id     = crypto.randomUUID();
+          const geminiNode = nodeDefToCanvasNode("GeminiImageNode", geminiDef, { x: 80, y: 120 }, geminiId);
+          const veo3Node   = nodeDefToCanvasNode("Veo3VideoGenerationNode", veo3Def, { x: 520, y: 80 }, veo3Id);
+          const seedEdge: CanvasEdge = {
+            id: crypto.randomUUID(),
+            source: geminiId,
+            sourceHandle: "image_uuid",
+            target: veo3Id,
+            targetHandle: "image_uuid",
+            type: "status",
+            data: { flowing: false, error: false },
+          };
+          setNodes([geminiNode, veo3Node]);
+          setEdges([seedEdge]);
         }
       } catch (err) {
         console.error("Failed to load saved template graph:", err);
+      } finally {
+        setIsGraphReady(true);
       }
     })();
-  }, [templateId]);
+  }, [templateId, registryLoading, registry, setNodes, setEdges]);
 
-  // ── Canvas store ─────────────────────────────────────────────────────────────
-  const {
-    nodes, edges,
-    onNodesChange, onEdgesChange, onConnect,
-    addNode, deleteNode, deleteSelectedElements,
-    updateNodeConfig,
-    execution, submitWorkflow,
-  } = useCanvasStore({ initialNodes, initialEdges });
+  // ── Debounced auto-save (2s after last change) ───────────────────────────────
+  useEffect(() => {
+    if (!isGraphReady || !templateId || nodes.length === 0) return;
+    const timer = setTimeout(async () => {
+      const payload = { nodes: nodes as unknown[], edges: edges as unknown[] };
+      localStorage.setItem(`template-canvas-${templateId}`, JSON.stringify(payload));
+      try {
+        await updateTemplateV1TemplatesTemplateIdPatch({
+          path: { template_id: templateId },
+          body: { current_graph_json: payload },
+        });
+      } catch {
+        // Silently fail — localStorage already has the backup
+      }
+    }, 2000);
+    return () => clearTimeout(timer);
+  }, [nodes, edges, templateId, isGraphReady]);
 
   // ── Escape key — close menus or delete selected ──────────────────────────────
   useEffect(() => {
@@ -262,16 +294,16 @@ export default function TemplateCanvasPage() {
   // ── Add node helper ──────────────────────────────────────────────────────────
   const handleAddNode = useCallback(
     (schemaName: string, position: { x: number; y: number }, initialConfig?: Record<string, unknown>) => {
-      const def = NODE_REGISTRY[schemaName];
+      const def = getNodeDef(registry, schemaName);
       if (!def) return;
       let nodeType: "amplify-node" | "preview-node" | "import-media-node" = "amplify-node";
       if (schemaName === "ImportMediaNode") nodeType = "import-media-node";
       else if (PREVIEW_SCHEMA_NAMES.has(schemaName)) nodeType = "preview-node";
-      const newNode  = nodeDefToCanvasNode(schemaName, def, position, `node-${crypto.randomUUID().slice(0, 8)}`, nodeType);
+      const newNode  = nodeDefToCanvasNode(schemaName, def, position, crypto.randomUUID(), nodeType);
       if (initialConfig) newNode.data.config = { ...newNode.data.config, ...initialConfig };
       addNode(newNode);
     },
-    [addNode]
+    [addNode, registry]
   );
 
   // ── Pane context menu ────────────────────────────────────────────────────────
@@ -322,8 +354,8 @@ export default function TemplateCanvasPage() {
 
   // ── Run ──────────────────────────────────────────────────────────────────────
   const handleRun = useCallback(async () => {
-    await submitWorkflow(crypto.randomUUID());
-  }, [submitWorkflow]);
+    await submitWorkflow(templateId);
+  }, [submitWorkflow, templateId]);
 
   // ── Port-type compatibility ────────────────────────────────────────────────
   // Defines which source port types can connect to which target port types.
@@ -350,8 +382,6 @@ export default function TemplateCanvasPage() {
     },
     [nodes]
   );
-
-  const { toast } = useToast();
 
   const isValidConnection: IsValidConnection<CanvasEdge> = useCallback(
     (connection) => {
@@ -509,7 +539,7 @@ export default function TemplateCanvasPage() {
       {/* Main area */}
       <div className="flex-1 flex overflow-hidden" style={{ minHeight: 0 }}>
         {sidebarTab === "nodes"
-          ? <NodeLibrarySidebar isOpen={sidebarOpen} nodesByCategory={NODE_LIBRARY} />
+          ? <NodeLibrarySidebar isOpen={sidebarOpen} nodesByCategory={nodeLibrary} />
           : <MediaAssetsPanel   isOpen={sidebarOpen} projectId={projectId} />
         }
 
@@ -549,6 +579,7 @@ export default function TemplateCanvasPage() {
                 if (d?.categoryTag === "video") return "#ef4444";
                 return "#64748b";
               }}
+              
             />
           </ReactFlow>
         </div>
@@ -557,7 +588,7 @@ export default function TemplateCanvasPage() {
       {/* Floating menus */}
       <ContextMenu
         position={contextMenu?.screenPos ?? null}
-        nodesByCategory={NODE_LIBRARY}
+        nodesByCategory={nodeLibrary}
         onAddNode={(s) => handleAddNode(s, contextMenu?.flowPos ?? { x: 100, y: 100 })}
         onClose={() => setContextMenu(null)}
       />
