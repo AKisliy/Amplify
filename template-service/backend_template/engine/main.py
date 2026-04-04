@@ -141,7 +141,15 @@ def start_comfyui(asyncio_loop=None):
     prompt_server.add_routes()
     hijack_progress(prompt_server)
 
-    threading.Thread(target=prompt_worker, daemon=True, args=(prompt_server.prompt_queue, prompt_server,)).start()
+    _cache_map = {
+        "none":    execution.CacheType.NONE,
+        "classic": execution.CacheType.CLASSIC,
+        "lru":     execution.CacheType.LRU,
+    }
+    cache_type = _cache_map.get(engine_config.cache_type.lower(), execution.CacheType.NONE)
+    logging.info(f"Prompt executor cache type: {cache_type} (ENGINE_CACHE_TYPE='{engine_config.cache_type}')")
+
+    threading.Thread(target=prompt_worker, daemon=True, args=(prompt_server.prompt_queue, prompt_server, cache_type)).start()
 
     os.makedirs(folder_paths.get_temp_directory(), exist_ok=True)
 

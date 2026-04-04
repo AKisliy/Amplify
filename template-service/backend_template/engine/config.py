@@ -20,6 +20,8 @@ class EngineConfig(ConfigBase):
     temp_directory: str | None = None  
     log_level: str = "INFO"            
     log_stdout: bool = False           
+    # Cache strategy for the prompt executor.
+    cache_type: str = "none"           
 
 gemini_config = GeminiConfig()
 media_ingest_config = MediaIngestConfig()
