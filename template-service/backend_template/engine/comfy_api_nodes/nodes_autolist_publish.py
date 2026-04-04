@@ -33,22 +33,30 @@ class AutoListPublishNode(IO.ComfyNode):
                     force_input=True,
                     tooltip="Media UUID from the upstream video or image generation node",
                 ),
+                IO.Combo.Input(
+                    "media_type",
+                    options=["video", "image"],
+                    tooltip="Type of the media asset being published",
+                ),
                 IO.String.Input(
                     "auto_list_id",
                     tooltip="AutoList to publish the asset into",
                     extra_dict={"widget_type": "autolist_picker"},
                 ),
             ],
-            outputs=[],
+            outputs=[
+                IO.String.Output("media_id", tooltip="Passthrough media UUID"),
+                IO.String.Output("media_type", tooltip="Passthrough media type"),
+            ],
         )
 
     @classmethod
-    async def execute(cls, media_id: str, auto_list_id: str) -> IO.NodeOutput:
+    async def execute(cls, media_id: str, media_type: str, auto_list_id: str) -> IO.NodeOutput:
         await publish_event(
             EXCHANGE_NAME,
             AssetReadyForPublish(media_id=media_id, auto_list_id=auto_list_id),
         )
-        return IO.NodeOutput()
+        return IO.NodeOutput(media_id=[media_id], media_type=[media_type])
 
 
 class AutoListPublishExtension(ComfyExtension):

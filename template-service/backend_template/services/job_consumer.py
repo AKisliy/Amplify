@@ -200,10 +200,6 @@ async def _maybe_publish_final_asset(
         template = tv.template
         graph_json = tv.graph_json or {}
 
-        if _has_autolist_publish_node(graph_json):
-            logger.info(f"Job {job_uuid}: AutoListPublishNode found — skipping final-asset-generated")
-            return
-
         if not _is_terminal_node(node_id, graph_json):
             return
 
@@ -229,13 +225,6 @@ def _is_terminal_node(node_id: str, graph_json: dict) -> bool:
     return node_id not in source_ids
 
 
-def _has_autolist_publish_node(graph_json: dict) -> bool:
-    return any(
-        n.get("data", {}).get("schemaName") == "AutoListPublishNode"
-        for n in graph_json.get("nodes", [])
-    )
-
-
 def _extract_media_output(outputs: dict) -> tuple[str | None, str | None]:
     video_uuids = outputs.get("video_uuid") or []
     if video_uuids:
@@ -243,6 +232,11 @@ def _extract_media_output(outputs: dict) -> tuple[str | None, str | None]:
     image_uuids = outputs.get("image_uuid") or []
     if image_uuids:
         return image_uuids[0], "image"
+    # AutoListPublishNode passthrough format: media_id + media_type
+    media_ids = outputs.get("media_id") or []
+    media_types = outputs.get("media_type") or []
+    if media_ids and media_types:
+        return media_ids[0], media_types[0]
     return None, None
 
 
