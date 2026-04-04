@@ -5,6 +5,10 @@ namespace UserService.Application.ProjectAssets.Dto;
 
 public class ProjectAssetDto
 {
+    public Guid Id { get; set; }
+
+    public Guid MediaId { get; set; }
+
     public required string MediaUrl { get; set; }
 
     public DateTimeOffset CreatedAt { get; set; }
