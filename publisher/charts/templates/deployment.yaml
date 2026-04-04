@@ -11,6 +11,8 @@ spec:
       {{- include "publisher.selectorLabels" . | nindent 6 }}
   template:
     metadata:
+      annotations:
+        instrumentation.opentelemetry.io/inject-dotnet: "true"
       labels:
         {{- include "publisher.labels" . | nindent 8 }}
         {{- with .Values.podLabels }}
