@@ -3,11 +3,13 @@ using Microsoft.AspNetCore.SignalR;
 using WebSocketGateway.Contracts.TemplateService;
 using WebSocketGateway.Web.Hubs;
 using WebSocketGateway.Web.Receivers;
+using WebSocketGateway.Web.State;
 
 namespace WebSocketGateway.Web.Consumers;
 
 public class NodeExecutionStatusChangedConsumer(
     IHubContext<MainHub, IClientReceiver> hubContext,
+    NodeNotificationStateManager stateManager,
     ILogger<NodeExecutionStatusChangedConsumer> logger)
     : IConsumer<NodeExecutionStatusChanged>
 {

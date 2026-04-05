@@ -14,7 +14,8 @@ internal static class ServiceCollectionExtensions
         services.AddMassTransit(config =>
         {
             config.AddConsumer<ProjectCreatedConsumer>();
-            config.AddConsumer<AssetRegisteredConsumer>();
+            config.AddConsumer<AssetRegisteredConsumer>()
+                .Endpoint(e => e.Name = "publisher-asset-registered");
 
             config.SetEndpointNameFormatter(new KebabCaseEndpointNameFormatter(includeNamespace: false));
 
