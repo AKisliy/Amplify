@@ -5,7 +5,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useSearchParams } from "next/navigation";
 import { motion } from "framer-motion";
-import { ShieldCheck, ArrowRight, CheckCircle2, Lock } from "lucide-react";
+import { ShieldCheck, ArrowRight, CheckCircle2, Lock, Info } from "lucide-react";
 import Link from "next/link";
 import { z } from "zod";
 
@@ -23,10 +23,49 @@ import {
 
 import { resetPassword as resetPasswordService } from "@/features/auth/services/auth.service";
 import { AuthMotionWrapper, FadeInStagger } from "./AuthMotionWrapper";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 
-// Simplified schema - only password fields
+const PASSWORD_REQUIREMENTS = [
+  "At least 6 characters",
+  "At least one uppercase letter (A–Z)",
+  "At least one lowercase letter (a–z)",
+  "At least one digit (0–9)",
+  "At least one non-alphanumeric character (e.g. @, !, #)",
+];
+
+const PasswordTooltip = () => (
+  <Popover>
+    <PopoverTrigger asChild>
+      <button type="button" className="text-muted-foreground hover:text-foreground transition-colors">
+        <Info className="w-3.5 h-3.5" />
+      </button>
+    </PopoverTrigger>
+    <PopoverContent className="w-64 text-sm" side="top">
+      <p className="font-medium mb-2">Password requirements:</p>
+      <ul className="space-y-1 text-muted-foreground">
+        {PASSWORD_REQUIREMENTS.map((req) => (
+          <li key={req} className="flex items-start gap-2">
+            <span className="mt-0.5 text-primary">•</span>
+            {req}
+          </li>
+        ))}
+      </ul>
+    </PopoverContent>
+  </Popover>
+);
+
 const resetPasswordSchema = z.object({
-  newPassword: z.string().min(8, "Password must be at least 8 characters"),
+  newPassword: z
+    .string()
+    .min(6, "Password must be at least 6 characters")
+    .regex(/[A-Z]/, "Must contain at least one uppercase letter (A–Z)")
+    .regex(/[a-z]/, "Must contain at least one lowercase letter (a–z)")
+    .regex(/[0-9]/, "Must contain at least one digit (0–9)")
+    .regex(/[^a-zA-Z0-9]/, "Must contain at least one non-alphanumeric character"),
   confirmPassword: z.string(),
 }).refine((data) => data.newPassword === data.confirmPassword, {
   message: "Passwords don't match",
@@ -63,11 +102,14 @@ export const ResetPasswordForm = () => {
         newPassword: values.newPassword,
       });
       setSuccess(true);
-    } catch {
-      // BYPASS: For frontend testing, if the code is invalid or backend fails,
-      // we still show success so the user can proceed to login (where we also bypass)
-      console.warn("Reset password failed, bypassing for frontend dev");
-      setSuccess(true);
+    } catch (error: any) {
+      const data = error?.response?.data;
+      const errorMessage =
+        data?.message ||
+        data?.title ||
+        (data?.errors ? Object.values(data.errors as Record<string, string[]>).flat().join(" ") : null) ||
+        "Something went wrong. Please try again.";
+      setServerError(errorMessage);
     }
   };
 
@@ -128,7 +170,10 @@ export const ResetPasswordForm = () => {
                 )}
 
                 <div className="space-y-2">
-                  <Label htmlFor="newPassword">New password</Label>
+                  <div className="flex items-center gap-1.5">
+                    <Label htmlFor="newPassword">New password</Label>
+                    <PasswordTooltip />
+                  </div>
                   <Input
                     id="newPassword"
                     className="h-12 bg-white/50 dark:bg-black/20"

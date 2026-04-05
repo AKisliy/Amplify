@@ -19,10 +19,46 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import { Info } from "lucide-react";
 
 import { registerSchema, RegisterFormValues } from "./register.schema";
 import { register as registerService } from "@/features/auth/services/auth.service";
 import { AuthMotionWrapper, FadeInStagger } from "./AuthMotionWrapper";
+
+const PASSWORD_REQUIREMENTS = [
+  "At least 6 characters",
+  "At least one uppercase letter (A–Z)",
+  "At least one lowercase letter (a–z)",
+  "At least one digit (0–9)",
+  "At least one non-alphanumeric character (e.g. @, !, #)",
+];
+
+const PasswordTooltip = () => (
+  <Popover>
+    <PopoverTrigger asChild>
+      <button type="button" className="text-muted-foreground hover:text-foreground transition-colors">
+        <Info className="w-3.5 h-3.5" />
+      </button>
+    </PopoverTrigger>
+    <PopoverContent className="w-64 text-sm" side="top">
+      <p className="font-medium mb-2">Password requirements:</p>
+      <ul className="space-y-1 text-muted-foreground">
+        {PASSWORD_REQUIREMENTS.map((req) => (
+          <li key={req} className="flex items-start gap-2">
+            <span className="mt-0.5 text-primary">•</span>
+            {req}
+          </li>
+        ))}
+      </ul>
+    </PopoverContent>
+  </Popover>
+);
+
 export const RegisterForm = () => {
   const [success, setSuccess] = useState(false);
   const [serverError, setServerError] = useState<string | null>(null);
@@ -50,7 +86,12 @@ export const RegisterForm = () => {
 
     } catch (error: any) {
       console.error("Registration failed:", error);
-      const errorMessage = error?.response?.data?.message || "Something went wrong. Please try again.";
+      const data = error?.response?.data;
+      const errorMessage =
+        data?.message ||
+        data?.title ||
+        (data?.errors ? Object.values(data.errors as Record<string, string[]>).flat().join(" ") : null) ||
+        "Something went wrong. Please try again.";
       setServerError(errorMessage);
     }
   };
@@ -222,7 +263,10 @@ export const RegisterForm = () => {
 
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
-                      <Label htmlFor="password">Password</Label>
+                      <div className="flex items-center gap-1.5">
+                        <Label htmlFor="password">Password</Label>
+                        <PasswordTooltip />
+                      </div>
                       <Input
                         id="password"
                         className="h-12 bg-white/50 dark:bg-black/20"
