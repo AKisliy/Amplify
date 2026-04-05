@@ -12,7 +12,7 @@ spec:
   template:
     metadata:
       annotations:
-        instrumentation.opentelemetry.io/inject-python: "true"
+        instrumentation.opentelemetry.io/inject-python: "python-instrumentation"
       labels:
         {{- include "template-service.labels" . | nindent 8 }}
         {{- with .Values.podLabels }}

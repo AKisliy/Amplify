@@ -19,7 +19,7 @@ spec:
         value: http://{{ .Values.observability.collector.name }}-collector:4318
       - name: OTEL_EXPORTER_OTLP_PROTOCOL
         value: http/protobuf
-      - name: OTEL_PYTHON_LOGGING_AUTO_INSTRUMENTATION_ENABLED
-        value: "true"
       - name: OTEL_LOGS_EXPORTER
         value: otlp
+      - name: OTEL_PYTHON_LOG_CORRELATION
+        value: "true"
