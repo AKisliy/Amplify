@@ -1,6 +1,6 @@
-namespace Contracts;
+namespace Contracts.Events;
 
-public class AssetRegistered : IAuditableMessage
+public class AssetRegistered
 {
     public Guid Id { get; set; }
 

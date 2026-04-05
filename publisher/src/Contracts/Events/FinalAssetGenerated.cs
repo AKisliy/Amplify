@@ -7,4 +7,5 @@ public record FinalAssetGenerated(
     Guid ProjectId,
     Guid TemplateId,
     Guid MediaId,
-    string MediaType);
+    string MediaType,
+    Guid? AutoListId = null);

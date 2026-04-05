@@ -15,4 +15,6 @@ public class FinalAssetGenerated
     public required string MediaId { get; set; }
 
     public required string MediaType { get; set; }
+
+    public string? AutoListId { get; set; }
 }

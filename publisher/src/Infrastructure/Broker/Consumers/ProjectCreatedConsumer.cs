@@ -4,11 +4,11 @@ using MediatR;
 using Microsoft.Extensions.Logging;
 using Publisher.Application.Projects.Commands.AddProject;
 
-namespace Publisher.Infrastructure.Consumers;
+namespace Publisher.Infrastructure.Broker.Consumers;
 
 public class ProjectCreatedConsumer(
     IMediator mediator,
-    ILogger<PublishRequestedConsumer> logger) : IConsumer<ProjectCreated>
+    ILogger<ProjectCreatedConsumer> logger) : IConsumer<ProjectCreated>
 {
     public async Task Consume(ConsumeContext<ProjectCreated> context)
     {

@@ -31,12 +31,13 @@ _STATUS_MAP: dict[str, NodeStatus] = {
 }
 
 # ---------------------------------------------------------------------------
-# In-memory last-media cache (job_id → (media_id, media_type))
+# In-memory caches (keyed by job_id)
 # Safe with exclusive queues: each consumer instance sees all messages in
-# order, so only the instance that saw the media-producing node's SUCCESS
-# will have an entry here when JOB_COMPLETED arrives.
+# order, so only the instance that processed the node events will have
+# entries here when JOB_COMPLETED arrives.
 # ---------------------------------------------------------------------------
-_last_media: dict[str, tuple[str, str]] = {}
+_last_media: dict[str, tuple[str, str]] = {}       # job_id → (media_id, media_type)
+_last_auto_list_id: dict[str, str] = {}            # job_id → auto_list_id
 
 
 # ---------------------------------------------------------------------------
@@ -60,6 +61,7 @@ class FinalAssetGeneratedEvent(BaseModel):
     template_id: str
     media_id: str
     media_type: str
+    auto_list_id: str | None = None
 
 
 # ---------------------------------------------------------------------------
@@ -119,20 +121,26 @@ async def _handle_event(data: dict) -> None:
             if media:
                 _last_media[job_id] = media
                 logger.info(f"Job {job_id}: cached last media {media}")
+            auto_list_id = _extract_auto_list_id(outputs)
+            if auto_list_id:
+                _last_auto_list_id[job_id] = auto_list_id
+                logger.info(f"Job {job_id}: cached auto_list_id {auto_list_id}")
 
     if job_status == "COMPLETED":
         await _finish_job(job_id, JobStatus.COMPLETED)
         if user_id:
             await _publish_graph_completed(job_id, user_id)
             media = _last_media.pop(job_id, None)
+            auto_list_id = _last_auto_list_id.pop(job_id, None)
             if media:
-                await _publish_final_asset_for_job(job_id, user_id, media[0], media[1])
+                await _publish_final_asset_for_job(job_id, user_id, media[0], media[1], auto_list_id)
             else:
                 logger.info(f"Job {job_id}: no media output recorded, skipping final-asset-generated")
 
     elif job_status == "FAILED":
         await _finish_job(job_id, JobStatus.FAILED)
         _last_media.pop(job_id, None)
+        _last_auto_list_id.pop(job_id, None)
 
 
 # ---------------------------------------------------------------------------
@@ -146,12 +154,12 @@ def _extract_media(outputs: dict) -> tuple[str, str] | None:
     image_uuids = outputs.get("image_uuid") or []
     if image_uuids:
         return image_uuids[0], "image"
-    # AutoListPublishNode passthrough format
-    media_ids = outputs.get("media_id") or []
-    media_types = outputs.get("media_type") or []
-    if media_ids and media_types:
-        return media_ids[0], media_types[0]
     return None
+
+
+def _extract_auto_list_id(outputs: dict) -> str | None:
+    ids = outputs.get("auto_list_id") or []
+    return ids[0] if ids else None
 
 
 # ---------------------------------------------------------------------------
@@ -212,6 +220,7 @@ async def _publish_final_asset_for_job(
     user_id: str,
     media_id: str,
     media_type: str,
+    auto_list_id: str | None = None,
 ) -> None:
     try:
         job_uuid = uuid.UUID(job_id)
@@ -240,6 +249,7 @@ async def _publish_final_asset_for_job(
         template_id=str(tv.template_id),
         media_id=media_id,
         media_type=media_type,
+        auto_list_id=auto_list_id,
     )
     connection = await aio_pika.connect_robust(settings.rabbitmq_url)
     async with connection:

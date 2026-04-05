@@ -65,7 +65,6 @@ public static class DependencyInjection
         services.AddScoped<ISocialMediaPublisherFactory, SocialMediaPublisherFactory>();
         services.AddScoped<IConnectionServiceFactory, ConnectionServiceFactory>();
 
-        services.AddScoped<AutoListEntryRetriever>();
         services.AddSingleton(TimeProvider.System);
 
         services.AddPollyPipelines();

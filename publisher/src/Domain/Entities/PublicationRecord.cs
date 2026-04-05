@@ -1,8 +1,8 @@
+using Publisher.Domain.Enums;
 using Publisher.Domain.Events.Publications;
 
 namespace Publisher.Domain.Entities;
 
-// This entity is used when media was published
 public class PublicationRecord : BaseAuditableEntity
 {
     public Guid MediaPostId { get; set; }
@@ -12,6 +12,17 @@ public class PublicationRecord : BaseAuditableEntity
     public SocialProvider Provider { get; set; }
 
     public PublicationStatus Status { get; set; }
+
+    public PublicationType PublicationType { get; set; } = PublicationType.Manual;
+
+    /// <summary>When the record is scheduled to be published (AutoList only).</summary>
+    public DateTimeOffset? ScheduledAt { get; set; }
+
+    /// <summary>Actual time the post was published successfully.</summary>
+    public DateTimeOffset? PublishedAt { get; set; }
+
+    /// <summary>The AutoList entry (slot) this record is tied to.</summary>
+    public Guid? AutoListEntryId { get; set; }
 
     // TODO: should be updated after publication
     public string? ExternalPostId { get; set; }
@@ -46,6 +57,7 @@ public class PublicationRecord : BaseAuditableEntity
     {
         Status = PublicationStatus.Published;
         PublicUrl = publicUrl;
+        PublishedAt = DateTimeOffset.UtcNow;
         AddDomainEvent(new PublicationRecordStatusChangedEvent(this));
     }
 

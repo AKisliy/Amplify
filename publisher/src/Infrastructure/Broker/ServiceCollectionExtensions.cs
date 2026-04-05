@@ -2,8 +2,8 @@ using Contracts.Events;
 using MassTransit;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
+using Publisher.Infrastructure.Broker.Consumers;
 using Publisher.Infrastructure.Configuration.Options;
-using Publisher.Infrastructure.Consumers;
 
 namespace Publisher.Infrastructure.Broker;
 
@@ -13,10 +13,8 @@ internal static class ServiceCollectionExtensions
     {
         services.AddMassTransit(config =>
         {
-            config.AddConsumer<PublishRequestedConsumer>();
             config.AddConsumer<ProjectCreatedConsumer>();
-            config.AddConsumer<AssetReadyForPublishConsumer>();
-            config.AddConsumer<FinalAssetGeneratedConsumer>();
+            config.AddConsumer<AssetRegisteredConsumer>();
 
             config.SetEndpointNameFormatter(new KebabCaseEndpointNameFormatter(includeNamespace: false));
 
@@ -26,8 +24,7 @@ internal static class ServiceCollectionExtensions
                 cfg.Host(options.Url);
                 cfg.Message<PublicationStatusChanged>(x => x.SetEntityName("publication-status-changed"));
                 cfg.Message<ProjectCreated>(x => x.SetEntityName("project-created"));
-                cfg.Message<AssetReadyForPublish>(x => x.SetEntityName("asset-ready-for-publish"));
-                cfg.Message<FinalAssetGenerated>(x => x.SetEntityName("final-asset-generated"));
+                cfg.Message<AssetRegistered>(x => x.SetEntityName("asset-registered"));
 
                 cfg.UseRawJsonSerializer(RawSerializerOptions.AnyMessageType, isDefault: true);
 

@@ -40,6 +40,7 @@ internal class FinalAssetGeneratedConsumer(
             ProjectId = msg.ProjectId,
             MediaId = msg.MediaId,
             MediaType = msg.MediaType,
+            AutoListId = msg.AutoListId,
         }, context.CancellationToken);
 
         logger.LogInformation("Published AssetRegistered for asset {Id}", msg.Id);

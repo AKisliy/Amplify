@@ -5,17 +5,6 @@ from comfy_api.latest import IO, ComfyExtension
 from pydantic import BaseModel
 from typing_extensions import override
 
-from comfy_api_nodes.util.broker import publish_event
-
-EXCHANGE_NAME = "asset-ready-for-publish"
-
-
-class AssetReadyForPublish(BaseModel):
-    model_config = ConfigDict(alias_generator=to_camel, populate_by_name=True)
-
-    media_id: str
-    auto_list_id: str
-
 
 class AutoListPublishNode(IO.ComfyNode):
     OUTPUT_NODE = True
@@ -26,7 +15,7 @@ class AutoListPublishNode(IO.ComfyNode):
             node_id="AutoListPublishNode",
             display_name="AutoList Publish",
             category="amplify/publish",
-            description="Publishes the generated asset to an AutoList for scheduled social media posting.",
+            description="Marks the asset for scheduled AutoList publishing. The asset is added to the AutoList when the job completes.",
             inputs=[
                 IO.String.Input(
                     "media_id",
@@ -39,16 +28,14 @@ class AutoListPublishNode(IO.ComfyNode):
                     extra_dict={"widget_type": "autolist_picker"},
                 ),
             ],
-            outputs=[],
+            outputs=[
+                IO.String.Output("auto_list_id", tooltip="Passthrough AutoList ID"),
+            ],
         )
 
     @classmethod
     async def execute(cls, media_id: str, auto_list_id: str) -> IO.NodeOutput:
-        await publish_event(
-            EXCHANGE_NAME,
-            AssetReadyForPublish(media_id=media_id, auto_list_id=auto_list_id),
-        )
-        return IO.NodeOutput()
+        return IO.NodeOutput(auto_list_id=[auto_list_id])
 
 
 class AutoListPublishExtension(ComfyExtension):
