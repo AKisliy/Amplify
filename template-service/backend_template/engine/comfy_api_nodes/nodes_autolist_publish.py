@@ -35,7 +35,7 @@ class AutoListPublishNode(IO.ComfyNode):
 
     @classmethod
     async def execute(cls, media_id: str, auto_list_id: str) -> IO.NodeOutput:
-        return IO.NodeOutput(auto_list_id, ui={"auto_list_id": auto_list_id})
+        return IO.NodeOutput(auto_list_id=[auto_list_id], ui={"auto_list_id": auto_list_id})
 
 class AutoListPublishExtension(ComfyExtension):
     @override
