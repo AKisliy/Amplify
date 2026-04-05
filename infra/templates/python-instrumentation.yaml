@@ -1,0 +1,25 @@
+apiVersion: opentelemetry.io/v1alpha1
+kind: Instrumentation
+metadata:
+  name: python-instrumentation
+spec:
+  exporter:
+    endpoint: http://{{ .Values.observability.collector.name }}-collector:4318
+  propagators:
+    - tracecontext
+    - baggage
+  sampler:
+    type: parentbased_traceidratio
+    argument: "1"
+  python:
+    env:
+      - name: OTEL_LOG_LEVEL
+        value: "debug"
+      - name: OTEL_EXPORTER_OTLP_ENDPOINT
+        value: http://{{ .Values.observability.collector.name }}-collector:4318
+      - name: OTEL_EXPORTER_OTLP_PROTOCOL
+        value: http/protobuf
+      - name: OTEL_LOGS_EXPORTER
+        value: otlp
+      - name: OTEL_PYTHON_LOG_CORRELATION
+        value: "true"

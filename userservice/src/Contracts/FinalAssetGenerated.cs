@@ -15,4 +15,6 @@ public class FinalAssetGenerated : IAuditableMessage
     public Guid MediaId { get; set; }
 
     public string MediaType { get; set; } = string.Empty;
+
+    public Guid? AutoListId { get; set; }
 }

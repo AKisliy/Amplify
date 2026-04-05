@@ -15,11 +15,7 @@ public class MediaPost : BaseAuditableEntity
 
     public string? Description { get; set; }
 
-    public PublicationType PublicationType { get; set; }
-
     public Guid? AutoListId { get; set; }
-
-    public bool ProcessedInAutoList { get; set; }
 
     public PublicationSettings PublicationSettings { get; set; } = new();
 

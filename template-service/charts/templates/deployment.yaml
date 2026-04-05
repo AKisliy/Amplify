@@ -11,6 +11,8 @@ spec:
       {{- include "template-service.selectorLabels" . | nindent 6 }}
   template:
     metadata:
+      annotations:
+        instrumentation.opentelemetry.io/inject-python: "python-instrumentation"
       labels:
         {{- include "template-service.labels" . | nindent 8 }}
         {{- with .Values.podLabels }}

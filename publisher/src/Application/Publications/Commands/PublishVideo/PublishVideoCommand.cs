@@ -42,7 +42,6 @@ public class PublishVideoCommandHandler(
             UserId = userId.Value,
             Description = request.Description,
             CoverMediaId = request.CoverMediaId,
-            PublicationType = PublicationType.Manual,
         };
 
         var publicationSettings = new PublicationSettings();

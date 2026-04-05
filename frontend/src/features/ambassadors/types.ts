@@ -60,13 +60,23 @@ export type ProjectAsset = {
 };
 
 // Publication types
+export type SocialAccountSummary = {
+  id: string;
+  socialProvider: string;
+  username: string;
+  avatarUrl?: string | null;
+};
+
 export type PublicationRecord = {
   id: string;
   status: string;
-  platform: string;
-  createdAt: string;
-  updatedAt?: string | null;
-  errorMessage?: string | null;
+  provider: string;
+  publicationType: string;
+  scheduledAt?: string | null;
+  publishedAt?: string | null;
+  publicUrl?: string | null;
+  createdAt?: string | null;
+  socialAccount: SocialAccountSummary;
 };
 
 // Ambassador Image types

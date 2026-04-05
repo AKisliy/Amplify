@@ -14,10 +14,11 @@ public class GetMediaPostRecordsQueryHandler(
         GetMediaPostRecordsQuery request,
         CancellationToken cancellationToken)
     {
-        return await dbContext.PublicationRecords
+        var records = await dbContext.PublicationRecords
             .Where(r => r.MediaPostId == request.MediaPostId)
             .Include(r => r.SocialAccount)
-            .ProjectTo<PublicationRecordResponseDto>(mapper.ConfigurationProvider)
             .ToListAsync(cancellationToken);
+
+        return mapper.Map<List<PublicationRecordResponseDto>>(records);
     }
 }

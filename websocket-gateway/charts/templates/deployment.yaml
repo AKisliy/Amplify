@@ -11,6 +11,8 @@ spec:
       {{- include "ws-gateway.selectorLabels" . | nindent 6 }}
   template:
     metadata:
+      annotations:
+        instrumentation.opentelemetry.io/inject-dotnet: "dotnet-instrumentation"
       labels:
         {{- include "ws-gateway.labels" . | nindent 8 }}
         {{- with .Values.podLabels }}

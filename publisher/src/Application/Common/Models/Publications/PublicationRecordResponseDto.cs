@@ -12,6 +12,12 @@ public class PublicationRecordResponseDto
 
     public PublicationStatus Status { get; set; }
 
+    public DateTimeOffset? ScheduledAt { get; set; }
+
+    public DateTimeOffset? PublishedAt { get; set; }
+
+    public PublicationType PublicationType { get; set; }
+
     public string? PublicUrl { get; set; }
 
     public FullSocialAccountDto SocialAccount { get; set; } = null!;

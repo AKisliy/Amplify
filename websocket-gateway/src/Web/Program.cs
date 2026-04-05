@@ -10,6 +10,7 @@ var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddSignalR();
 builder.Services.AddSingleton<JobNotificationStateManager>();
+builder.Services.AddSingleton<NodeNotificationStateManager>();
 builder.AddBroker();
 builder.Services.AddValidatorsFromAssembly(Assembly.GetExecutingAssembly());
 
