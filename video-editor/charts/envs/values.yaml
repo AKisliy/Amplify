@@ -52,6 +52,10 @@ externalSecret:
   name: video-editor-external-secret
   refreshInterval: 1h
 
+service:
+  type: ClusterIP
+  port: 8000
+
 internalServices:
   mediaIngest:
     url: "http://media-service.default.svc.cluster.local/media"

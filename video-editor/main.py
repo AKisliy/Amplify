@@ -1,7 +1,9 @@
 import logging
 import os
 import sys
+import threading
 import pika
+import uvicorn
 
 from queues.create_video_queue import setup_create_video_queue
 from queues.consumers.convert_file_consumer import convertConsumer
@@ -54,12 +56,17 @@ logger = logging.getLogger()
 
 load_dotenv()
 
-connection = setup_rabbitmq_connection()
-channel = connection.channel()
 
-setup_request_consumers(channel)
-setup_create_video_queue(channel)
+def run_rabbitmq():
+    connection = setup_rabbitmq_connection()
+    channel = connection.channel()
+    setup_request_consumers(channel)
+    setup_create_video_queue(channel)
+    logging.info("Waiting for messages")
+    channel.start_consuming()
 
-logging.info("Waiting for messages")
 
-channel.start_consuming()
+rabbitmq_thread = threading.Thread(target=run_rabbitmq, daemon=True)
+rabbitmq_thread.start()
+
+uvicorn.run("api:api", host="0.0.0.0", port=8000)

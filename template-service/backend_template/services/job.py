@@ -91,7 +91,10 @@ class JobService:
                     json={
                         "prompt": comfy_prompt,
                         "client_id": user_id,
-                        "extra_data": {"job_id": str(job.id)},
+                        "extra_data": {
+                            "job_id": str(job.id),
+                            "extra_pnginfo": {"client_id": user_id},
+                        },
                     },
                     timeout=aiohttp.ClientTimeout(total=30),
                 ) as resp:
