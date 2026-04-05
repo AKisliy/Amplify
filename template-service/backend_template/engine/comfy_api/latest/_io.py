@@ -532,6 +532,7 @@ class HiddenHolder:
         return cls(
             unique_id=d.get(Hidden.unique_id, None),
             prompt=d.get(Hidden.prompt, None),
+            extra_pnginfo=d.get(Hidden.extra_pnginfo, None),
         )
 
     @classmethod

@@ -8,6 +8,8 @@ secrets:
     key: video-editor-bucket-access-key
   s3SecretKey:
     key: video-editor-bucket-secret-key
+  celeryResultBackend:
+    key: celery-result-backend
 
 minio:
   host: "storage.googleapis.com"
