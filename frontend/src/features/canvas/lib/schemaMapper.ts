@@ -60,13 +60,13 @@ function parseInputPorts(schema: NodeSchemaDef): PortDef[] {
       if (type === "COMFY_AUTOGROW_V3") {
         // Expand the autogrow group into `min` initial slots
         const agConfig = config as { template: { prefix: string; min: number; max: number } };
-        const min = agConfig.template?.min ?? 1;
+        const min = agConfig.template?.min ?? 0;
         const prefix = agConfig.template?.prefix ?? fieldName;
 
         for (let i = 0; i < min; i++) {
           ports.push({
             id: `${prefix}_${i}`,
-            label: `${prefix.replace(/_/g, " ")} ${i + 1}`,
+            label: `${prefix.replace(/_/g, " ")} ${i}`,
             portType: "STRING",
             direction: "input",
             required,
