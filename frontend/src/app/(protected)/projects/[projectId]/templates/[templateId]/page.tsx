@@ -119,6 +119,7 @@ export default function TemplateCanvasPage() {
     addNode, deleteNode, deleteSelectedElements,
     updateNodeConfig, updateNodeData,
     appendNodeOutputHistory,
+    propagateOutputsDownstream,
     setNodes, setEdges,
     execution, submitWorkflow,
     setNodeStatus,
@@ -145,6 +146,9 @@ export default function TemplateCanvasPage() {
           updateNodeData(nodeId, { outputValues: outputs as Record<string, unknown> });
           // Accumulate image history — does nothing if outputs has no image_uuid
           appendNodeOutputHistory(nodeId, outputs as Record<string, unknown>);
+          // Push output values into all downstream connected nodes' config
+          // (this is what makes PreviewImageNode / PreviewTextNode display results)
+          propagateOutputsDownstream(nodeId, outputs as Record<string, unknown>);
         }
       },
       onPublicationStatusChanged: async () => {},
@@ -167,7 +171,7 @@ export default function TemplateCanvasPage() {
 
     const disposable = getReceiverRegister("IClientReceiver").register(connection, receiver);
     return () => disposable.dispose();
-  }, [connection, setNodeStatus, updateNodeData, appendNodeOutputHistory, toast]);
+  }, [connection, setNodeStatus, updateNodeData, appendNodeOutputHistory, propagateOutputsDownstream, toast]);
 
   // ── Load saved graph (waits for registry) ───────────────────────────────────
   const [isGraphReady, setIsGraphReady] = useState(false);

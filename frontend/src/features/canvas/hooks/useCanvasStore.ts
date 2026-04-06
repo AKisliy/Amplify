@@ -315,6 +315,55 @@ export function useCanvasStore({
     [setNodes]
   );
 
+  /**
+   * After a node completes successfully, walk all outgoing edges from that
+   * node and push output values into each downstream node's config.
+   *
+   * Rule: outputs[sourceHandle] is typically an array — we take the first
+   * element and write it as a string into targetNode.data.config[targetHandle].
+   */
+  const propagateOutputsDownstream = useCallback(
+    (nodeId: string, outputs: Record<string, unknown>) => {
+      setNodes((nds) => {
+        // Build a map of outgoing edges from this node
+        const outgoingEdges = edges.filter(
+          (e) => e.source === nodeId && e.sourceHandle && e.targetHandle
+        );
+        if (outgoingEdges.length === 0) return nds;
+
+        return nds.map((n) => {
+          const relevantEdges = outgoingEdges.filter((e) => e.target === n.id);
+          if (relevantEdges.length === 0) return n;
+
+          // Build config patch for this downstream node
+          const configPatch: Record<string, unknown> = {};
+          for (const edge of relevantEdges) {
+            const outputKey = edge.sourceHandle!;
+            const targetKey = edge.targetHandle!;
+            const raw = outputs[outputKey];
+            if (raw === undefined) continue;
+            // Outputs are arrays from the backend — take the first element
+            const value = Array.isArray(raw) ? raw[0] : raw;
+            if (value !== undefined) {
+              configPatch[targetKey] = String(value);
+            }
+          }
+
+          if (Object.keys(configPatch).length === 0) return n;
+
+          return {
+            ...n,
+            data: {
+              ...n.data,
+              config: { ...n.data.config, ...configPatch },
+            },
+          };
+        });
+      });
+    },
+    [setNodes, edges]
+  );
+
   const deleteSelectedElements = useCallback(() => {
     setNodes((nds) => nds.filter((n) => !n.selected));
     setEdges((eds) => eds.filter((e) => !e.selected));
@@ -421,6 +470,7 @@ export function useCanvasStore({
     updateNodeConfig,
     updateNodeData,
     appendNodeOutputHistory,
+    propagateOutputsDownstream,
     setNodeStatus,
 
     execution,
