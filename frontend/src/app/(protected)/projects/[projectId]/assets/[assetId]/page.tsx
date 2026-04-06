@@ -25,6 +25,7 @@ import {
   Heart,
   Download,
   Sparkles,
+  ChevronRight,
 } from "lucide-react";
 import { ProjectHeader } from "@/components/ProjectHeader";
 import { Button } from "@/components/ui/button";
