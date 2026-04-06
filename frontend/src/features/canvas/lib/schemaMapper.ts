@@ -65,7 +65,7 @@ function parseInputPorts(schema: NodeSchemaDef): PortDef[] {
 
         for (let i = 0; i < min; i++) {
           ports.push({
-            id: `${prefix}_${i}`,
+            id: `${prefix}${i}`,
             label: `${prefix.replace(/_/g, " ")} ${i}`,
             portType: "STRING",
             direction: "input",

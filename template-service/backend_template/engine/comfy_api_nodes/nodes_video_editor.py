@@ -66,7 +66,7 @@ class BaseUGCEditingNode(IO.ComfyNode):
             is_output_node=True,
             inputs=[
                 IO.Autogrow.Input(
-                    "media_files",
+                    "media_files_",
                     template=IO.Autogrow.TemplatePrefix(
                         IO.String.Input("media_file", force_input=True, tooltip="Media UUID of a video to include"),
                         prefix="media_file",
