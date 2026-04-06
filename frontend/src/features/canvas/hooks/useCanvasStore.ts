@@ -24,6 +24,7 @@ import type {
   NodeExecutionStatus,
   CanvasExecutionState,
   PortDef,
+  ImageBatch,
 } from "../types";
 import { runTemplate } from "@/lib/api/template-service";
 
@@ -282,6 +283,109 @@ export function useCanvasStore({
     [setNodes]
   );
 
+  /**
+   * Appends image UUIDs from a successful node execution as a new ImageBatch
+   * in node.data.outputHistory. Call this instead of (or in addition to)
+   * updateNodeData when outputs contain image_uuid arrays.
+   */
+  const appendNodeOutputHistory = useCallback(
+    (nodeId: string, outputs: Record<string, unknown>) => {
+      const imageUuids = (outputs.image_uuid as string[] | undefined) ?? [];
+      if (imageUuids.length === 0) return;
+
+      setNodes((nds) =>
+        nds.map((n) => {
+          if (n.id !== nodeId) return n;
+          const existingHistory = (n.data.outputHistory as ImageBatch[]) ?? [];
+          const nextRunIndex =
+            existingHistory.length > 0
+              ? existingHistory[existingHistory.length - 1].runIndex + 1
+              : 0;
+          const newBatch: ImageBatch = { runIndex: nextRunIndex, imageUuids };
+          return {
+            ...n,
+            data: {
+              ...n.data,
+              outputHistory: [...existingHistory, newBatch],
+            },
+          };
+        })
+      );
+    },
+    [setNodes]
+  );
+
+  /**
+   * After a node completes successfully, walk all outgoing edges from that
+   * node and push output values into each downstream node's config.
+   *
+   * Rule: outputs[sourceHandle] is typically an array — we take the first
+   * element and write it as a string into targetNode.data.config[targetHandle].
+   */
+  const propagateOutputsDownstream = useCallback(
+    (nodeId: string, outputs: Record<string, unknown>) => {
+      setNodes((nds) => {
+        const outgoingEdges = edges.filter(
+          (e) => e.source === nodeId && e.sourceHandle && e.targetHandle
+        );
+        if (outgoingEdges.length === 0) return nds;
+
+        return nds.map((n) => {
+          const relevantEdges = outgoingEdges.filter((e) => e.target === n.id);
+          if (relevantEdges.length === 0) return n;
+
+          const configPatch: Record<string, unknown> = {};
+          // Collect image UUIDs being propagated into this node
+          const incomingImageUuids: string[] = [];
+
+          for (const edge of relevantEdges) {
+            const outputKey = edge.sourceHandle!;
+            const targetKey = edge.targetHandle!;
+            const raw = outputs[outputKey];
+            if (raw === undefined) continue;
+            // Outputs are arrays from the backend — take the first element
+            const value = Array.isArray(raw) ? raw[0] : raw;
+            if (value !== undefined) {
+              configPatch[targetKey] = String(value);
+              // Track image UUIDs so we can also update outputHistory
+              if (outputKey === "image_uuid") {
+                const uuids = Array.isArray(raw)
+                  ? (raw as string[])
+                  : [String(raw)];
+                incomingImageUuids.push(...uuids);
+              }
+            }
+          }
+
+          if (Object.keys(configPatch).length === 0) return n;
+
+          // Build outputHistory patch if image UUIDs are flowing in
+          let nextHistory = (n.data.outputHistory as ImageBatch[] | undefined) ?? [];
+          if (incomingImageUuids.length > 0) {
+            const nextRunIndex =
+              nextHistory.length > 0
+                ? nextHistory[nextHistory.length - 1].runIndex + 1
+                : 0;
+            nextHistory = [
+              ...nextHistory,
+              { runIndex: nextRunIndex, imageUuids: incomingImageUuids },
+            ];
+          }
+
+          return {
+            ...n,
+            data: {
+              ...n.data,
+              config: { ...n.data.config, ...configPatch },
+              outputHistory: nextHistory,
+            },
+          };
+        });
+      });
+    },
+    [setNodes, edges]
+  );
+
   const deleteSelectedElements = useCallback(() => {
     setNodes((nds) => nds.filter((n) => !n.selected));
     setEdges((eds) => eds.filter((e) => !e.selected));
@@ -387,6 +491,8 @@ export function useCanvasStore({
     deleteSelectedElements,
     updateNodeConfig,
     updateNodeData,
+    appendNodeOutputHistory,
+    propagateOutputsDownstream,
     setNodeStatus,
 
     execution,
