@@ -130,7 +130,7 @@ export function useCanvasStore({
 
           const newSlot: PortDef = {
             id: `${prefix}_${currentCount}`,
-            label: `${prefix.replace(/_/g, " ")} ${currentCount}`,
+            label: `${prefix.replace(/_/g, " ")} ${currentCount + 1}`,
             portType: connectedPort.portType,
             direction: "input",
             required: "optional",
