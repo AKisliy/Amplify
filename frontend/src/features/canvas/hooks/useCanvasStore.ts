@@ -325,7 +325,6 @@ export function useCanvasStore({
   const propagateOutputsDownstream = useCallback(
     (nodeId: string, outputs: Record<string, unknown>) => {
       setNodes((nds) => {
-        // Build a map of outgoing edges from this node
         const outgoingEdges = edges.filter(
           (e) => e.source === nodeId && e.sourceHandle && e.targetHandle
         );
@@ -335,8 +334,10 @@ export function useCanvasStore({
           const relevantEdges = outgoingEdges.filter((e) => e.target === n.id);
           if (relevantEdges.length === 0) return n;
 
-          // Build config patch for this downstream node
           const configPatch: Record<string, unknown> = {};
+          // Collect image UUIDs being propagated into this node
+          const incomingImageUuids: string[] = [];
+
           for (const edge of relevantEdges) {
             const outputKey = edge.sourceHandle!;
             const targetKey = edge.targetHandle!;
@@ -346,16 +347,37 @@ export function useCanvasStore({
             const value = Array.isArray(raw) ? raw[0] : raw;
             if (value !== undefined) {
               configPatch[targetKey] = String(value);
+              // Track image UUIDs so we can also update outputHistory
+              if (outputKey === "image_uuid") {
+                const uuids = Array.isArray(raw)
+                  ? (raw as string[])
+                  : [String(raw)];
+                incomingImageUuids.push(...uuids);
+              }
             }
           }
 
           if (Object.keys(configPatch).length === 0) return n;
+
+          // Build outputHistory patch if image UUIDs are flowing in
+          let nextHistory = (n.data.outputHistory as ImageBatch[] | undefined) ?? [];
+          if (incomingImageUuids.length > 0) {
+            const nextRunIndex =
+              nextHistory.length > 0
+                ? nextHistory[nextHistory.length - 1].runIndex + 1
+                : 0;
+            nextHistory = [
+              ...nextHistory,
+              { runIndex: nextRunIndex, imageUuids: incomingImageUuids },
+            ];
+          }
 
           return {
             ...n,
             data: {
               ...n.data,
               config: { ...n.data.config, ...configPatch },
+              outputHistory: nextHistory,
             },
           };
         });

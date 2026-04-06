@@ -3,23 +3,22 @@
 // =============================================================================
 // ImportMediaNode — Input node for attaching media from the library.
 //
-// Shows a preview of the currently attached image/video and allows users to
-// select a new media asset via drag-drop or upload from the sidebar.
-// Outputs both image_uuid and video_uuid ports (only the selected type produces a value).
+// Shows a gallery of all previously imported images (using NodeImageGallery)
+// or a single video preview. Each time a user attaches a new image, it is
+// appended to outputHistory so the full import history is browseable.
 // =============================================================================
 
-import React, { useState } from "react";
+import React from "react";
 import { type NodeProps } from "@xyflow/react";
 import { motion } from "framer-motion";
 import {
   ImageIcon,
   VideoIcon,
-  Loader2,
-  AlertCircle,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import type { CanvasNode } from "../types";
+import type { CanvasNode, ImageBatch } from "../types";
 import { NodePort } from "./NodePort";
+import { NodeImageGallery } from "./NodeImageGallery";
 
 // ---------------------------------------------------------------------------
 // Media URL helper
@@ -37,13 +36,22 @@ function getMediaUrl(uuidOrUrl: string): string {
 // ---------------------------------------------------------------------------
 
 export function ImportMediaNode({ id, data, selected }: NodeProps<CanvasNode>) {
-  // Determine which media type is attached (image or video)
   const imageUuid = (data.config?.image_uuid as string | undefined) || "";
   const videoUuid = (data.config?.video_uuid as string | undefined) || "";
   const hasImage = imageUuid && imageUuid.trim() !== "";
   const hasVideo = videoUuid && videoUuid.trim() !== "";
 
-  // Determine the variant to display
+  // Image gallery history — persisted in outputHistory.
+  // If outputHistory exists use it; otherwise synthesise a single batch from
+  // the current config value so existing saved nodes still show something.
+  const storedHistory = (data.outputHistory as ImageBatch[] | undefined) ?? [];
+  const outputHistory: ImageBatch[] =
+    storedHistory.length > 0
+      ? storedHistory
+      : hasImage
+        ? [{ runIndex: 0, imageUuids: [imageUuid] }]
+        : [];
+
   const variant = hasImage ? "image" : hasVideo ? "video" : null;
 
   return (
@@ -60,7 +68,7 @@ export function ImportMediaNode({ id, data, selected }: NodeProps<CanvasNode>) {
       )}
       style={
         selected
-          ? { boxShadow: `0 0 0 2px #3b82f688, 0 8px 32px rgba(0,0,0,0.5)` }
+          ? { boxShadow: "0 0 0 2px #3b82f688, 0 8px 32px rgba(0,0,0,0.5)" }
           : undefined
       }
     >
@@ -99,15 +107,17 @@ export function ImportMediaNode({ id, data, selected }: NodeProps<CanvasNode>) {
       <div className="mx-3 h-px bg-white/[0.05] mb-1" />
 
       {/* Preview area */}
-      <div className="mx-3 mb-3">
-        {!variant ? (
-          <EmptyMediaPreview />
-        ) : variant === "image" ? (
-          <ImagePreview uuid={imageUuid} />
-        ) : (
+      {variant === "image" ? (
+        <NodeImageGallery batches={outputHistory} nodeName={data.displayName} />
+      ) : variant === "video" ? (
+        <div className="mx-3 mb-3">
           <VideoPreview uuid={videoUuid} />
-        )}
-      </div>
+        </div>
+      ) : (
+        <div className="mx-3 mb-3">
+          <EmptyMediaPreview />
+        </div>
+      )}
 
       {/* Output handles row */}
       <div className="py-1">
@@ -144,41 +154,12 @@ function EmptyMediaPreview() {
   );
 }
 
-function ImagePreview({ uuid }: { uuid: string }) {
-  const [status, setStatus] = useState<"loading" | "loaded" | "error">("loading");
-  const url = uuid.startsWith("http") ? uuid : getMediaUrl(uuid);
-
-  return (
-    <div className="rounded-lg overflow-hidden bg-black/25 border border-white/[0.06] aspect-video flex items-center justify-center mb-2">
-      {status === "loading" && (
-        <Loader2 className="w-5 h-5 text-muted-foreground/30 animate-spin" />
-      )}
-      {status === "error" && (
-        <div className="flex flex-col items-center gap-1">
-          <AlertCircle className="w-5 h-5 text-red-400/60" />
-          <p className="text-[10px] text-red-400/60">Failed to load</p>
-        </div>
-      )}
-      {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img
-        src={url}
-        alt="imported media"
-        className={cn(
-          "w-full h-full object-contain transition-opacity duration-300",
-          status === "loaded" ? "opacity-100" : "opacity-0 absolute"
-        )}
-        onLoad={() => setStatus("loaded")}
-        onError={() => setStatus("error")}
-      />
-    </div>
-  );
-}
-
 function VideoPreview({ uuid }: { uuid: string }) {
   const url = uuid.startsWith("http") ? uuid : getMediaUrl(uuid);
 
   return (
     <div className="rounded-lg overflow-hidden bg-black/25 border border-white/[0.06] aspect-video mb-2">
+      {/* eslint-disable-next-line jsx-a11y/media-has-caption */}
       <video
         src={url}
         controls
