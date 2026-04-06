@@ -27,6 +27,19 @@ import type { ImageBatch, ImageViewMode } from "../types";
 import { FullscreenGallery } from "./FullscreenGallery";
 
 // ---------------------------------------------------------------------------
+// URL helper — handles both full URLs (ambassador images) and bare GUIDs
+// (generated images from media-ingest). Must match getMediaUrl in nodes.
+// ---------------------------------------------------------------------------
+
+function resolveImgUrl(uuidOrUrl: string): string {
+  if (!uuidOrUrl) return "";
+  if (uuidOrUrl.startsWith("http://") || uuidOrUrl.startsWith("https://") || uuidOrUrl.startsWith("/")) {
+    return uuidOrUrl;
+  }
+  return mediaUrl(uuidOrUrl);
+}
+
+// ---------------------------------------------------------------------------
 // Types
 // ---------------------------------------------------------------------------
 
@@ -51,7 +64,7 @@ function ImageCard({
   className?: string;
 }) {
   const [status, setStatus] = useState<"loading" | "loaded" | "error">("loading");
-  const url = mediaUrl(uuid);
+  const url = resolveImgUrl(uuid);
 
   return (
     // eslint-disable-next-line jsx-a11y/click-events-have-key-events

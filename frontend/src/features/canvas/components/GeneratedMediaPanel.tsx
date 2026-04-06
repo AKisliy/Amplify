@@ -23,6 +23,18 @@ import type { CanvasNode, ImageBatch } from "../types";
 import { FullscreenGallery } from "./FullscreenGallery";
 
 // ---------------------------------------------------------------------------
+// URL helper — handles both full URLs (ambassador images) and bare GUIDs
+// ---------------------------------------------------------------------------
+
+function resolveImgUrl(uuidOrUrl: string): string {
+  if (!uuidOrUrl) return "";
+  if (uuidOrUrl.startsWith("http://") || uuidOrUrl.startsWith("https://") || uuidOrUrl.startsWith("/")) {
+    return uuidOrUrl;
+  }
+  return mediaUrl(uuidOrUrl);
+}
+
+// ---------------------------------------------------------------------------
 // Types
 // ---------------------------------------------------------------------------
 
@@ -57,7 +69,7 @@ function Thumb({
   onClick: () => void;
 }) {
   const [status, setStatus] = useState<"loading" | "loaded" | "error">("loading");
-  const url = mediaUrl(uuid);
+  const url = resolveImgUrl(uuid);
 
   return (
     <button

@@ -25,6 +25,18 @@ import { mediaUrl } from "@/lib/media";
 import type { ImageBatch } from "../types";
 
 // ---------------------------------------------------------------------------
+// URL helper — handles both full URLs and bare GUIDs
+// ---------------------------------------------------------------------------
+
+function resolveImgUrl(uuidOrUrl: string): string {
+  if (!uuidOrUrl) return "";
+  if (uuidOrUrl.startsWith("http://") || uuidOrUrl.startsWith("https://") || uuidOrUrl.startsWith("/")) {
+    return uuidOrUrl;
+  }
+  return mediaUrl(uuidOrUrl);
+}
+
+// ---------------------------------------------------------------------------
 // Types
 // ---------------------------------------------------------------------------
 
@@ -54,8 +66,7 @@ function Thumbnail({
   onClick: () => void;
 }) {
   const [status, setStatus] = useState<"loading" | "loaded" | "error">("loading");
-  const url = mediaUrl(uuid);
-
+  const url = resolveImgUrl(uuid);
   return (
     <button
       onClick={onClick}
@@ -98,7 +109,7 @@ function Thumbnail({
 
 function LargePreview({ uuid }: { uuid: string }) {
   const [status, setStatus] = useState<"loading" | "loaded" | "error">("loading");
-  const url = mediaUrl(uuid);
+  const url = resolveImgUrl(uuid);
 
   // Reset to loading when the uuid changes
   useEffect(() => {
