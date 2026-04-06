@@ -303,7 +303,7 @@ export default function AssetDetailPage() {
   const publishedCount = records.filter((r) => r.status.toLowerCase() === "published").length;
 
   return (
-    <div className="min-h-screen bg-[oklch(0.09_0.02_264)]">
+    <div className="min-h-screen bg-background">
       <ProjectHeader projects={projects} isLoading={projectsLoading} />
 
       <div className="container mx-auto px-6 py-8 max-w-6xl">
