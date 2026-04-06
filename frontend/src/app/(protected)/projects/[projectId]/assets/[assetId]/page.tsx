@@ -1,8 +1,12 @@
 "use client";
 
+// =============================================================================
+// AssetDetailPage — Full view of a single generated asset
+// =============================================================================
+
 import { useEffect, useRef, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import {
   ArrowLeft,
   ImageIcon,
@@ -13,9 +17,18 @@ import {
   Loader2,
   ExternalLink,
   Clock,
+  LayoutTemplate,
+  CalendarDays,
+  TrendingUp,
+  Eye,
+  Users,
+  Heart,
+  Download,
+  Sparkles,
 } from "lucide-react";
 import { ProjectHeader } from "@/components/ProjectHeader";
 import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 import { useProjects } from "@/features/ambassadors/hooks/useProjects";
 import { projectApi } from "@/features/ambassadors/services/api";
 import type { ProjectAsset, PublicationRecord } from "@/features/ambassadors/types";
@@ -23,6 +36,10 @@ import { getTemplateV1TemplatesTemplateIdGet } from "@/lib/api/template-service"
 import { useHubConnection } from "@/hooks/useHubConnection";
 
 type TemplateMeta = { id: string; name: string } | null | undefined;
+
+// ---------------------------------------------------------------------------
+// Helpers
+// ---------------------------------------------------------------------------
 
 function statusColor(status: string) {
   switch (status.toLowerCase()) {
@@ -38,6 +55,29 @@ function statusColor(status: string) {
       return "bg-white/10 text-white/70 border-white/20";
   }
 }
+
+function formatDateTime(iso: string) {
+  return new Date(iso).toLocaleString(undefined, {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+}
+
+function formatTime(iso: string) {
+  return new Date(iso).toLocaleString(undefined, {
+    day: "2-digit",
+    month: "short",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+}
+
+// ---------------------------------------------------------------------------
+// Social provider icon
+// ---------------------------------------------------------------------------
 
 function ProviderIcon({ provider, size = 4 }: { provider: string; size?: number }) {
   const cls = `w-${size} h-${size} fill-current`;
@@ -56,47 +96,70 @@ function ProviderIcon({ provider, size = 4 }: { provider: string; size?: number 
       </svg>
     );
   }
-  return <span className="text-xs text-white/60">{provider}</span>;
+  return <span className="text-xs text-white/60">{provider[0].toUpperCase()}</span>;
 }
 
-function formatTime(iso: string) {
-  return new Date(iso).toLocaleString(undefined, {
-    day: "2-digit",
-    month: "short",
-    hour: "2-digit",
-    minute: "2-digit",
-  });
-}
+// ---------------------------------------------------------------------------
+// Analytics stat card
+// ---------------------------------------------------------------------------
 
-function PublicationCard({
-  rec,
-  thumbnailUrl,
+function StatCard({
+  icon,
+  label,
+  value,
+  sub,
+  accent,
 }: {
-  rec: PublicationRecord;
-  thumbnailUrl: string;
+  icon: React.ReactNode;
+  label: string;
+  value: string;
+  sub?: string;
+  accent?: string;
 }) {
+  return (
+    <div className={cn(
+      "flex-1 rounded-xl border border-white/[0.07] bg-white/[0.03] px-4 py-4",
+      "hover:border-white/[0.12] transition-colors duration-200"
+    )}>
+      <div className="flex items-center gap-2 mb-3">
+        <div className={cn("w-7 h-7 rounded-lg flex items-center justify-center", accent ?? "bg-white/[0.07]")}>
+          {icon}
+        </div>
+        <span className="text-[10px] font-semibold uppercase tracking-wider text-white/30">{label}</span>
+      </div>
+      <p className="text-2xl font-bold text-white/85 tracking-tight">{value}</p>
+      {sub && <p className="text-[10px] text-white/25 mt-0.5">{sub}</p>}
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Publication card (social post)
+// ---------------------------------------------------------------------------
+
+function PublicationCard({ rec, thumbnailUrl }: { rec: PublicationRecord; thumbnailUrl: string }) {
   const statusLow = rec.status.toLowerCase();
   const isPublished = statusLow === "published";
   const timeLabel = isPublished && rec.publishedAt
     ? formatTime(rec.publishedAt)
     : rec.scheduledAt
-    ? formatTime(rec.scheduledAt)
-    : null;
+      ? formatTime(rec.scheduledAt)
+      : null;
 
   const inner = (
-    <div className="relative rounded-xl overflow-hidden bg-muted/40 aspect-[9/16] group cursor-pointer">
-      <img
-        src={thumbnailUrl}
-        alt="publication thumbnail"
-        className="w-full h-full object-cover"
-      />
-
-      {/* Gradient overlay */}
+    <div className={cn(
+      "relative rounded-xl overflow-hidden bg-black/40 aspect-[9/16] group cursor-pointer",
+      "border border-white/[0.06] hover:border-white/[0.15]",
+      "transition-all duration-200"
+    )}>
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img src={thumbnailUrl} alt="" className="w-full h-full object-cover" />
       <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/10 to-transparent" />
 
       {/* Top-left: avatar */}
       <div className="absolute top-2.5 left-2.5">
         {rec.socialAccount?.avatarUrl ? (
+          // eslint-disable-next-line @next/next/no-img-element
           <img
             src={rec.socialAccount.avatarUrl}
             alt={rec.socialAccount.username}
@@ -104,7 +167,7 @@ function PublicationCard({
           />
         ) : (
           <div className="w-7 h-7 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center ring-1 ring-white/30">
-            <span className="text-[10px] font-semibold text-white">
+            <span className="text-[10px] font-bold text-white">
               {rec.socialAccount?.username?.[0]?.toUpperCase() ?? "?"}
             </span>
           </div>
@@ -116,29 +179,25 @@ function PublicationCard({
         <ProviderIcon provider={rec.provider} size={5} />
       </div>
 
-      {/* Bottom: username + time + status */}
+      {/* Bottom: info */}
       <div className="absolute bottom-0 left-0 right-0 px-3 pb-3 space-y-1.5">
         <p className="text-white text-xs font-medium truncate leading-none">
           @{rec.socialAccount?.username ?? rec.provider}
         </p>
-
         {timeLabel && (
-          <div className="flex items-center gap-1 text-white/60 text-[10px]">
+          <div className="flex items-center gap-1 text-white/50 text-[10px]">
             <Clock className="w-2.5 h-2.5 shrink-0" />
             {timeLabel}
           </div>
         )}
-
-        <span
-          className={`inline-flex items-center px-1.5 py-0.5 rounded-full text-[10px] font-medium border ${statusColor(rec.status)}`}
-        >
+        <span className={`inline-flex items-center px-1.5 py-0.5 rounded-full text-[10px] font-semibold border ${statusColor(rec.status)}`}>
           {rec.status}
         </span>
       </div>
 
-      {/* Hover: view post hint */}
+      {/* Hover overlay */}
       {isPublished && rec.publicUrl && (
-        <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+        <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
           <div className="flex items-center gap-1.5 text-white text-xs font-medium">
             <ExternalLink className="w-3.5 h-3.5" />
             View post
@@ -149,15 +208,32 @@ function PublicationCard({
   );
 
   if (isPublished && rec.publicUrl) {
-    return (
-      <a href={rec.publicUrl} target="_blank" rel="noopener noreferrer">
-        {inner}
-      </a>
-    );
+    return <a href={rec.publicUrl} target="_blank" rel="noopener noreferrer">{inner}</a>;
   }
-
   return inner;
 }
+
+// ---------------------------------------------------------------------------
+// Metadata row item
+// ---------------------------------------------------------------------------
+
+function MetaRow({ icon, label, children }: { icon: React.ReactNode; label: string; children: React.ReactNode }) {
+  return (
+    <div className="flex items-start gap-3 py-3 border-b border-white/[0.05] last:border-0">
+      <div className="w-7 h-7 rounded-md bg-white/[0.05] flex items-center justify-center shrink-0 mt-0.5">
+        {icon}
+      </div>
+      <div className="flex-1 min-w-0">
+        <p className="text-[10px] font-semibold uppercase tracking-wider text-white/25 mb-0.5">{label}</p>
+        <div className="text-sm text-white/75">{children}</div>
+      </div>
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Page
+// ---------------------------------------------------------------------------
 
 export default function AssetDetailPage() {
   const params = useParams();
@@ -173,21 +249,17 @@ export default function AssetDetailPage() {
   const [records, setRecords] = useState<PublicationRecord[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-
   const [videoPlaying, setVideoPlaying] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
 
   useEffect(() => {
     if (!assetId) return;
-
     setLoading(true);
     setError(null);
 
-    projectApi
-      .getProjectAsset(assetId)
+    projectApi.getProjectAsset(assetId)
       .then(async (fetchedAsset) => {
         setAsset(fetchedAsset);
-
         const [templateResult, recordsResult] = await Promise.allSettled([
           fetchedAsset.templateId
             ? getTemplateV1TemplatesTemplateIdGet({ path: { template_id: fetchedAsset.templateId } })
@@ -210,15 +282,10 @@ export default function AssetDetailPage() {
       .finally(() => setLoading(false));
   }, [assetId]);
 
-  // Live status updates via SignalR
+  // Live SignalR status updates
   useEffect(() => {
     if (!connection) return;
-
-    const handler = (
-      publicationRecordId: string,
-      status: string,
-      publicUrl: string | null,
-    ) => {
+    const handler = (publicationRecordId: string, status: string, publicUrl: string | null) => {
       setRecords((prev) =>
         prev.map((r) =>
           r.id === publicationRecordId
@@ -227,46 +294,56 @@ export default function AssetDetailPage() {
         )
       );
     };
-
     connection.on("OnPublicationStatusChanged", handler);
     return () => connection.off("OnPublicationStatusChanged", handler);
   }, [connection]);
 
   const isVideo = asset?.mediaType === "Video";
+  const publishedCount = records.filter((r) => r.status.toLowerCase() === "published").length;
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-[oklch(0.09_0.02_264)]">
       <ProjectHeader projects={projects} isLoading={projectsLoading} />
 
-      <div className="container mx-auto px-6 py-8 max-w-5xl">
+      <div className="container mx-auto px-6 py-8 max-w-6xl">
+        {/* Back */}
         <button
           onClick={() => router.push(`/projects/${projectId}/assets`)}
-          className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors mb-6"
+          className="flex items-center gap-1.5 text-sm text-white/30 hover:text-white/70 transition-colors mb-7 group"
         >
-          <ArrowLeft className="w-4 h-4" />
+          <ArrowLeft className="w-3.5 h-3.5 transition-transform group-hover:-translate-x-0.5" />
           Back to Assets
         </button>
 
+        {/* Loading */}
         {loading && (
           <div className="flex items-center justify-center py-32">
-            <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
+            <Loader2 className="w-7 h-7 animate-spin text-white/20" />
           </div>
         )}
 
+        {/* Error */}
         {error && (
-          <div className="text-center py-20 text-destructive">{error}</div>
+          <div className="text-center py-20 text-red-400/60 text-sm">{error}</div>
         )}
 
+        {/* Content */}
         {!loading && !error && asset && (
           <motion.div
-            initial={{ opacity: 0, y: 12 }}
+            initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
-            className="space-y-8"
+            transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
+            className="space-y-10"
           >
-            {/* Top: media preview + details */}
-            <div className="grid grid-cols-1 lg:grid-cols-5 gap-8">
-              <div className="lg:col-span-3 space-y-4">
-                <div className="relative rounded-2xl overflow-hidden bg-muted/40 aspect-video flex items-center justify-center">
+            {/* ── Hero + Metadata ── */}
+            <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
+              {/* Left: Media */}
+              <div className="lg:col-span-3 space-y-3">
+                <div className={cn(
+                  "relative rounded-2xl overflow-hidden bg-black/50",
+                  "border border-white/[0.07]",
+                  isVideo ? "aspect-video" : "aspect-video"
+                )}>
                   {isVideo ? (
                     <>
                       <video
@@ -278,111 +355,193 @@ export default function AssetDetailPage() {
                         controls={videoPlaying}
                         onEnded={() => setVideoPlaying(false)}
                       />
-                      {!videoPlaying && (
-                        <button
-                          onClick={() => {
-                            setVideoPlaying(true);
-                            videoRef.current?.play();
-                          }}
-                          className="absolute inset-0 flex items-center justify-center group"
-                        >
-                          <div className="w-16 h-16 rounded-full bg-black/60 backdrop-blur-sm flex items-center justify-center group-hover:bg-black/80 transition-colors">
-                            <Play className="w-7 h-7 text-white ml-1" />
-                          </div>
-                        </button>
-                      )}
+                      <AnimatePresence>
+                        {!videoPlaying && (
+                          <motion.button
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            exit={{ opacity: 0 }}
+                            onClick={() => { setVideoPlaying(true); videoRef.current?.play(); }}
+                            className="absolute inset-0 flex items-center justify-center group"
+                          >
+                            <div className="w-16 h-16 rounded-full bg-black/60 backdrop-blur-sm border border-white/20 flex items-center justify-center group-hover:bg-black/80 group-hover:scale-110 transition-all duration-200">
+                              <Play className="w-6 h-6 text-white ml-0.5" />
+                            </div>
+                          </motion.button>
+                        )}
+                      </AnimatePresence>
                     </>
                   ) : (
-                    <img
-                      src={asset.mediaUrl}
-                      alt="Generated asset"
-                      className="w-full h-full object-contain"
-                    />
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={asset.mediaUrl} alt="Generated asset" className="w-full h-full object-contain" />
                   )}
 
-                  <div className="absolute top-3 left-3 flex items-center gap-1 px-2 py-0.5 rounded-full bg-black/60 text-white text-xs font-medium backdrop-blur-sm">
-                    {isVideo
-                      ? <><Video className="w-3 h-3" /> Video</>
-                      : <><ImageIcon className="w-3 h-3" /> Image</>
-                    }
+                  {/* Type badge */}
+                  <div className={cn(
+                    "absolute top-3 left-3 flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold backdrop-blur-sm",
+                    isVideo
+                      ? "bg-red-500/20 text-red-300 border border-red-500/30"
+                      : "bg-[#ec4899]/15 text-[#ec4899] border border-[#ec4899]/30"
+                  )}>
+                    {isVideo ? <Video className="w-2.5 h-2.5" /> : <ImageIcon className="w-2.5 h-2.5" />}
+                    {isVideo ? "Video" : "Image"}
                   </div>
                 </div>
 
-                <a
-                  href={asset.mediaUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors"
-                >
-                  <ExternalLink className="w-3.5 h-3.5" />
-                  Open original
-                </a>
+                {/* Download / open */}
+                <div className="flex items-center gap-3">
+                  <a
+                    href={asset.mediaUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-1.5 text-xs text-white/30 hover:text-white/60 transition-colors"
+                  >
+                    <ExternalLink className="w-3.5 h-3.5" />
+                    Open original
+                  </a>
+                  <a
+                    href={asset.mediaUrl}
+                    download
+                    className="flex items-center gap-1.5 text-xs text-white/30 hover:text-white/60 transition-colors"
+                  >
+                    <Download className="w-3.5 h-3.5" />
+                    Download
+                  </a>
+                </div>
               </div>
 
-              <div className="lg:col-span-2 space-y-3">
-                <h2 className="text-lg font-semibold">Details</h2>
-                <div className="rounded-xl border border-border/50 divide-y divide-border/50 text-sm">
-                  <div className="flex items-center justify-between px-4 py-3">
-                    <span className="text-muted-foreground">Created</span>
-                    <span>
-                      {new Date(asset.createdAt).toLocaleDateString(undefined, {
-                        day: "2-digit",
-                        month: "short",
-                        year: "numeric",
-                      })}
-                    </span>
-                  </div>
-                  <div className="flex items-center justify-between px-4 py-3">
-                    <span className="text-muted-foreground">Template</span>
-                    {template === null ? (
-                      <span className="text-muted-foreground italic flex items-center gap-1">
+              {/* Right: Metadata */}
+              <div className="lg:col-span-2">
+                <div className="rounded-2xl border border-white/[0.07] bg-white/[0.02] px-4 py-2">
+                  <p className="text-[10px] font-semibold uppercase tracking-wider text-white/20 pt-2 pb-1">
+                    Asset Details
+                  </p>
+
+                  <MetaRow
+                    icon={<CalendarDays className="w-3.5 h-3.5 text-white/40" />}
+                    label="Generated"
+                  >
+                    {formatDateTime(asset.createdAt)}
+                  </MetaRow>
+
+                  <MetaRow
+                    icon={<LayoutTemplate className="w-3.5 h-3.5 text-white/40" />}
+                    label="Template"
+                  >
+                    {template === undefined ? (
+                      <Loader2 className="w-3.5 h-3.5 animate-spin text-white/30" />
+                    ) : template === null ? (
+                      <span className="text-white/25 flex items-center gap-1">
                         <FileQuestion className="w-3.5 h-3.5" />
                         Not found
                       </span>
-                    ) : template === undefined ? (
-                      <Loader2 className="w-3.5 h-3.5 animate-spin text-muted-foreground" />
                     ) : (
                       <button
-                        onClick={() =>
-                          router.push(`/projects/${projectId}/templates/${template.id}`)
-                        }
-                        className="text-primary hover:underline truncate max-w-[160px]"
+                        onClick={() => router.push(`/projects/${projectId}/templates/${template.id}`)}
+                        className="text-[#ec4899]/80 hover:text-[#ec4899] hover:underline flex items-center gap-1 transition-colors"
                       >
                         {template.name}
+                        <ChevronRight className="w-3 h-3" />
                       </button>
                     )}
-                  </div>
+                  </MetaRow>
+
+                  <MetaRow
+                    icon={<Sparkles className="w-3.5 h-3.5 text-white/40" />}
+                    label="Type"
+                  >
+                    {asset.mediaType}
+                  </MetaRow>
+
+                  <MetaRow
+                    icon={<Send className="w-3.5 h-3.5 text-white/40" />}
+                    label="Publications"
+                  >
+                    <span className={publishedCount > 0 ? "text-emerald-400" : "text-white/40"}>
+                      {publishedCount} published
+                    </span>
+                    {records.length > publishedCount && (
+                      <span className="text-white/25 ml-1.5">/ {records.length} total</span>
+                    )}
+                  </MetaRow>
                 </div>
               </div>
             </div>
 
-            {/* Publications grid */}
-            <div className="space-y-4">
-              <h2 className="text-lg font-semibold">Publications</h2>
+            {/* ── Analytics row (stub — ready for real data) ── */}
+            <div>
+              <div className="flex items-center gap-2 mb-4">
+                <TrendingUp className="w-4 h-4 text-white/25" />
+                <h2 className="text-sm font-semibold uppercase tracking-widest text-white/30">
+                  Analytics
+                </h2>
+                <span className="ml-1 text-[9px] font-medium px-1.5 py-0.5 rounded-full bg-white/[0.06] text-white/25 border border-white/[0.06]">
+                  Coming soon
+                </span>
+              </div>
+              <div className="flex gap-4">
+                <StatCard
+                  icon={<Eye className="w-3.5 h-3.5 text-blue-400/70" />}
+                  label="Total Views"
+                  value="—"
+                  sub="Across all platforms"
+                  accent="bg-blue-500/10"
+                />
+                <StatCard
+                  icon={<Users className="w-3.5 h-3.5 text-violet-400/70" />}
+                  label="Reach"
+                  value="—"
+                  sub="Unique accounts"
+                  accent="bg-violet-500/10"
+                />
+                <StatCard
+                  icon={<Heart className="w-3.5 h-3.5 text-[#ec4899]/70" />}
+                  label="Engagement"
+                  value="—"
+                  sub="Likes + comments"
+                  accent="bg-[#ec4899]/10"
+                />
+                <StatCard
+                  icon={<TrendingUp className="w-3.5 h-3.5 text-emerald-400/70" />}
+                  label="Publications"
+                  value={String(records.length)}
+                  sub={`${publishedCount} live`}
+                  accent="bg-emerald-500/10"
+                />
+              </div>
+            </div>
+
+            {/* ── Publications ── */}
+            <div>
+              <div className="flex items-center gap-2 mb-4">
+                <Send className="w-4 h-4 text-white/25" />
+                <h2 className="text-sm font-semibold uppercase tracking-widest text-white/30">
+                  Publications
+                </h2>
+                {records.length > 0 && (
+                  <span className="ml-1 text-[9px] font-mono text-white/20">
+                    {records.length}
+                  </span>
+                )}
+              </div>
 
               {records.length === 0 ? (
-                <div className="rounded-xl border border-dashed border-border/60 px-5 py-12 flex flex-col items-center gap-3 text-center">
-                  <div className="w-10 h-10 rounded-full bg-muted/60 flex items-center justify-center">
-                    <Send className="w-4 h-4 text-muted-foreground" />
+                <div className={cn(
+                  "rounded-2xl border border-dashed border-white/[0.08] px-6 py-14",
+                  "flex flex-col items-center gap-3 text-center"
+                )}>
+                  <div className="w-10 h-10 rounded-full bg-white/[0.05] border border-white/[0.08] flex items-center justify-center">
+                    <Send className="w-4 h-4 text-white/25" />
                   </div>
                   <div>
-                    <p className="text-sm font-medium">No publications yet</p>
-                    <p className="text-xs text-muted-foreground mt-0.5">
-                      Share this asset to social media.
-                    </p>
+                    <p className="text-sm font-medium text-white/40">No publications yet</p>
+                    <p className="text-xs text-white/20 mt-0.5">Share this asset to social media to see it here.</p>
                   </div>
-                  <Button size="sm" variant="outline" disabled>
-                    Create your first publication
-                  </Button>
                 </div>
               ) : (
                 <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
                   {records.map((rec) => (
-                    <PublicationCard
-                      key={rec.id}
-                      rec={rec}
-                      thumbnailUrl={asset.mediaUrl}
-                    />
+                    <PublicationCard key={rec.id} rec={rec} thumbnailUrl={asset.mediaUrl} />
                   ))}
                 </div>
               )}
@@ -393,3 +552,5 @@ export default function AssetDetailPage() {
     </div>
   );
 }
+
+
