@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { motion } from "framer-motion";
-import { ArrowLeft, Play, PanelLeft, Image as ImageIcon } from "lucide-react";
+import { ArrowLeft, Play, PanelLeft, Image as ImageIcon, Sparkles } from "lucide-react";
 import {
   ReactFlow,
   Background,
@@ -38,6 +38,7 @@ import { NodeContextMenu } from "@/features/canvas/components/NodeContextMenu";
 import { NodeLibrarySidebar } from "@/features/canvas/components/NodeLibrarySidebar";
 import { MediaAssetsPanel } from "@/features/canvas/components/MediaAssetsPanel";
 import { TemplateMenu } from "@/features/canvas/components/TemplateMenu";
+import { GeneratedMediaPanel } from "@/features/canvas/components/GeneratedMediaPanel";
 import { useCanvasStore } from "@/features/canvas/hooks/useCanvasStore";
 import { useNodeRegistry } from "@/features/canvas/hooks/useNodeRegistry";
 import { getNodesByCategory, getNodeDef } from "@/features/canvas/registry";
@@ -66,7 +67,7 @@ const SEED_EDGES: CanvasEdge[] = [];
 // Page
 // ---------------------------------------------------------------------------
 
-type SidebarTab = "nodes" | "media";
+type SidebarTab = "nodes" | "media" | "generated";
 
 export default function TemplateCanvasPage() {
   const params    = useParams();
@@ -476,6 +477,17 @@ export default function TemplateCanvasPage() {
           >
             <ImageIcon className="w-4 h-4" />
           </Button>
+          <Button
+            variant="ghost" size="sm"
+            onClick={() => {
+              setSidebarTab("generated");
+              setSidebarOpen((v) => sidebarTab === "generated" ? !v : true);
+            }}
+            className={cn("text-muted-foreground hover:text-foreground w-8 h-8 p-0", sidebarOpen && sidebarTab === "generated" && "bg-white/[0.06] text-[#ec4899]")}
+            title="Generated media"
+          >
+            <Sparkles className="w-4 h-4" />
+          </Button>
         </div>
 
         <div className="h-4 w-px bg-border" />
@@ -547,7 +559,9 @@ export default function TemplateCanvasPage() {
       <div className="flex-1 flex overflow-hidden" style={{ minHeight: 0 }}>
         {sidebarTab === "nodes"
           ? <NodeLibrarySidebar isOpen={sidebarOpen} nodesByCategory={nodeLibrary} />
-          : <MediaAssetsPanel   isOpen={sidebarOpen} projectId={projectId} />
+          : sidebarTab === "media"
+            ? <MediaAssetsPanel   isOpen={sidebarOpen} projectId={projectId} />
+            : <GeneratedMediaPanel isOpen={sidebarOpen} nodes={nodes} />
         }
 
         <div className="flex-1" style={{ minHeight: 0 }}>
