@@ -118,6 +118,7 @@ export default function TemplateCanvasPage() {
     onNodesChange, onEdgesChange, onConnect,
     addNode, deleteNode, deleteSelectedElements,
     updateNodeConfig, updateNodeData,
+    appendNodeOutputHistory,
     setNodes, setEdges,
     execution, submitWorkflow,
     setNodeStatus,
@@ -142,6 +143,8 @@ export default function TemplateCanvasPage() {
 
         if (outputs && mapped === "success") {
           updateNodeData(nodeId, { outputValues: outputs as Record<string, unknown> });
+          // Accumulate image history — does nothing if outputs has no image_uuid
+          appendNodeOutputHistory(nodeId, outputs as Record<string, unknown>);
         }
       },
       onPublicationStatusChanged: async () => {},
@@ -164,7 +167,7 @@ export default function TemplateCanvasPage() {
 
     const disposable = getReceiverRegister("IClientReceiver").register(connection, receiver);
     return () => disposable.dispose();
-  }, [connection, setNodeStatus, updateNodeData, toast]);
+  }, [connection, setNodeStatus, updateNodeData, appendNodeOutputHistory, toast]);
 
   // ── Load saved graph (waits for registry) ───────────────────────────────────
   const [isGraphReady, setIsGraphReady] = useState(false);

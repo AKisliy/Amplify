@@ -182,6 +182,20 @@ export type NodeExecutionStatus =
 /** Category tag used for colour-coding and grouping in the node library */
 export type NodeCategory = "text" | "image" | "video" | "utility";
 
+/** The three view modes for the node image gallery */
+export type ImageViewMode = "single" | "batch" | "all";
+
+/**
+ * One execution run's worth of output image UUIDs.
+ * A batch is created each time the node runs successfully.
+ */
+export interface ImageBatch {
+  /** Monotonically-increasing index — used as React key and for display */
+  runIndex: number;
+  /** Ordered list of image GUIDs produced in this run */
+  imageUuids: string[];
+}
+
 export interface CanvasNodeData {
   // Index signature required by @xyflow/react Node<T extends Record<string, unknown>>
   [key: string]: unknown;
@@ -203,6 +217,11 @@ export interface CanvasNodeData {
   errorMessage?: string;
   /** Output values populated after successful execution */
   outputValues?: Record<string, unknown>;
+  /**
+   * Accumulated image history across all runs.
+   * Each entry is one batch (one press of "Run Model").
+   */
+  outputHistory?: ImageBatch[];
   // ---------------------------------------------------------------------------
   // Runtime callbacks — injected by the canvas page at render time.
   // Typed as unknown to satisfy the index signature; components cast them.

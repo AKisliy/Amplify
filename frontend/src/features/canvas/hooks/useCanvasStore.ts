@@ -24,6 +24,7 @@ import type {
   NodeExecutionStatus,
   CanvasExecutionState,
   PortDef,
+  ImageBatch,
 } from "../types";
 import { runTemplate } from "@/lib/api/template-service";
 
@@ -282,6 +283,38 @@ export function useCanvasStore({
     [setNodes]
   );
 
+  /**
+   * Appends image UUIDs from a successful node execution as a new ImageBatch
+   * in node.data.outputHistory. Call this instead of (or in addition to)
+   * updateNodeData when outputs contain image_uuid arrays.
+   */
+  const appendNodeOutputHistory = useCallback(
+    (nodeId: string, outputs: Record<string, unknown>) => {
+      const imageUuids = (outputs.image_uuid as string[] | undefined) ?? [];
+      if (imageUuids.length === 0) return;
+
+      setNodes((nds) =>
+        nds.map((n) => {
+          if (n.id !== nodeId) return n;
+          const existingHistory = (n.data.outputHistory as ImageBatch[]) ?? [];
+          const nextRunIndex =
+            existingHistory.length > 0
+              ? existingHistory[existingHistory.length - 1].runIndex + 1
+              : 0;
+          const newBatch: ImageBatch = { runIndex: nextRunIndex, imageUuids };
+          return {
+            ...n,
+            data: {
+              ...n.data,
+              outputHistory: [...existingHistory, newBatch],
+            },
+          };
+        })
+      );
+    },
+    [setNodes]
+  );
+
   const deleteSelectedElements = useCallback(() => {
     setNodes((nds) => nds.filter((n) => !n.selected));
     setEdges((eds) => eds.filter((e) => !e.selected));
@@ -387,6 +420,7 @@ export function useCanvasStore({
     deleteSelectedElements,
     updateNodeConfig,
     updateNodeData,
+    appendNodeOutputHistory,
     setNodeStatus,
 
     execution,
