@@ -4,9 +4,9 @@
 // PreviewNode — Output-sink node for visualising text / image / video results.
 //
 // After a workflow completes, the canvas store propagates upstream outputValues
-// into downstream nodes' config.  PreviewNode reads config[portId] and renders:
+// into downstream nodes' config and outputHistory.  PreviewNode renders:
 //   • PreviewTextNode  → scrollable text area
-//   • PreviewImageNode → <img> fetched from media-ingest
+//   • PreviewImageNode → NodeImageGallery (multi-image with Single/Batch/All)
 //   • PreviewVideoNode → <video> fetched from media-ingest
 // =============================================================================
 
@@ -22,15 +22,15 @@ import {
   Maximize2,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import type { CanvasNode } from "../types";
+import type { CanvasNode, ImageBatch } from "../types";
 import { NodePort } from "./NodePort";
+import { NodeImageGallery } from "./NodeImageGallery";
 
 // ---------------------------------------------------------------------------
 // Media URL helper (mirrors mediaApi.getMediaUrl)
 // ---------------------------------------------------------------------------
 
 function getMediaUrl(uuidOrUrl: string): string {
-  // If it's already a full URL (mock placeholder or direct CDN link), use it as-is
   if (uuidOrUrl.startsWith("http://") || uuidOrUrl.startsWith("https://")) return uuidOrUrl;
   const base =
     process.env.NEXT_PUBLIC_API_BASE_URL ?? "https://staging.alexeykiselev.tech";
@@ -70,7 +70,11 @@ export function PreviewNode({ id, data, selected }: NodeProps<CanvasNode>) {
   const accentColor = VARIANT_COLORS[variant];
   const Icon = VARIANT_ICONS[variant];
 
-  // Get the single input port value from config
+  // Image gallery — populated by propagateOutputsDownstream via outputHistory
+  const outputHistory = (data.outputHistory as ImageBatch[] | undefined) ?? [];
+  const hasImageHistory = variant === "image" && outputHistory.length > 0;
+
+  // Text / video — still read from config directly
   const inputPort = data.ports.find((p) => p.direction === "input");
   const rawValue = inputPort ? (data.config[inputPort.id] as string | undefined) : undefined;
   const hasValue = rawValue !== undefined && rawValue !== "";
@@ -131,17 +135,25 @@ export function PreviewNode({ id, data, selected }: NodeProps<CanvasNode>) {
       </div>
 
       {/* Preview area */}
-      <div className="mx-3 mb-3 mt-1">
-        {!hasValue ? (
-          <EmptyPreview variant={variant} accentColor={accentColor} />
-        ) : variant === "text" ? (
-          <TextPreview value={rawValue!} />
-        ) : variant === "image" ? (
-          <ImagePreview uuid={rawValue!} />
+      {variant === "image" ? (
+        hasImageHistory ? (
+          <NodeImageGallery batches={outputHistory} nodeName={data.displayName} />
         ) : (
-          <VideoPreview uuid={rawValue!} />
-        )}
-      </div>
+          <div className="mx-3 mb-3 mt-1">
+            <EmptyPreview variant={variant} accentColor={accentColor} />
+          </div>
+        )
+      ) : (
+        <div className="mx-3 mb-3 mt-1">
+          {!hasValue ? (
+            <EmptyPreview variant={variant} accentColor={accentColor} />
+          ) : variant === "text" ? (
+            <TextPreview value={rawValue!} />
+          ) : (
+            <VideoPreview uuid={rawValue!} />
+          )}
+        </div>
+      )}
     </motion.div>
   );
 }
@@ -200,42 +212,12 @@ function TextPreview({ value }: { value: string }) {
   );
 }
 
-function ImagePreview({ uuid }: { uuid: string }) {
-  const [status, setStatus] = useState<"loading" | "loaded" | "error">("loading");
-  // If uuid is already a full URL (mock or ambassador image), use it directly
-  const url = uuid.startsWith("http") ? uuid : getMediaUrl(uuid);
-
-  return (
-    <div className="rounded-lg overflow-hidden bg-black/25 border border-white/[0.06] aspect-video flex items-center justify-center">
-      {status === "loading" && (
-        <Loader2 className="w-5 h-5 text-muted-foreground/30 animate-spin" />
-      )}
-      {status === "error" && (
-        <div className="flex flex-col items-center gap-1">
-          <AlertCircle className="w-5 h-5 text-red-400/60" />
-          <p className="text-[10px] text-red-400/60">Failed to load</p>
-        </div>
-      )}
-      {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img
-        src={url}
-        alt="output preview"
-        className={cn(
-          "w-full h-full object-contain transition-opacity duration-300",
-          status === "loaded" ? "opacity-100" : "opacity-0 absolute"
-        )}
-        onLoad={() => setStatus("loaded")}
-        onError={() => setStatus("error")}
-      />
-    </div>
-  );
-}
-
 function VideoPreview({ uuid }: { uuid: string }) {
   const url = uuid.startsWith("http") ? uuid : getMediaUrl(uuid);
 
   return (
     <div className="rounded-lg overflow-hidden bg-black/25 border border-white/[0.06] aspect-video">
+      {/* eslint-disable-next-line jsx-a11y/media-has-caption */}
       <video
         src={url}
         controls

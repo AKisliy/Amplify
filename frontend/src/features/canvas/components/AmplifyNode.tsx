@@ -1,19 +1,5 @@
 "use client";
 
-// =============================================================================
-// AmplifyNode — The premium schema-driven node component (Weavy / ComfyUI style).
-//
-// Features:
-//   • Glassmorphic card: backdrop-blur + semi-transparent dark surface
-//   • Category-coloured 3 px top accent stripe
-//   • Header: category icon, display_name, live status badge, delete button
-//   • Port section: left input handles (non-widget) + right output handles
-//   • Widget section: inline controls for STRING / INT / FLOAT / BOOLEAN / COMBO
-//   • Advanced section: collapsible for advanced-flagged inputs
-//   • Status footer: idle / queued / processing (shimmer) / success / error
-//   • framer-motion entry animation
-// =============================================================================
-
 import React, { useState, useCallback, useEffect } from "react";
 import { type NodeProps, useUpdateNodeInternals } from "@xyflow/react";
 import { motion, AnimatePresence } from "framer-motion";
@@ -29,12 +15,13 @@ import {
   CheckCircle2,
   AlertCircle,
   Clock,
+  Images,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { mediaUrl } from "@/lib/media";
-import type { CanvasNode, CanvasNodeData, NodeCategory, NodeExecutionStatus, PortDef } from "../types";
+import type { CanvasNode, CanvasNodeData, NodeCategory, NodeExecutionStatus, PortDef, ImageBatch } from "../types";
 import { NodePort } from "./NodePort";
 import { NodeWidget } from "./NodeWidget";
+import { NodeImageGallery } from "./NodeImageGallery";
 
 // ---------------------------------------------------------------------------
 // Category accent colours (inline styles — dynamic at runtime)
@@ -107,7 +94,6 @@ export function AmplifyNode({ id, data, selected }: NodeProps<CanvasNode>) {
   const [showAdvanced, setShowAdvanced] = useState(false);
 
   // Re-measure handle positions whenever the port list grows or shrinks
-  // (COMFY_AUTOGROW_V3 slots are added/removed dynamically)
   useEffect(() => {
     updateNodeInternals(id);
   }, [data.ports.length, id, updateNodeInternals]);
@@ -115,6 +101,10 @@ export function AmplifyNode({ id, data, selected }: NodeProps<CanvasNode>) {
   const accentColor = CATEGORY_COLORS[data.categoryTag] ?? "#64748b";
   const CategoryIcon = CATEGORY_ICONS[data.categoryTag];
   const statusCfg = STATUS_CONFIG[data.status ?? "idle"];
+
+  // Derive output image history from node data
+  const outputHistory = (data.outputHistory as ImageBatch[] | undefined) ?? [];
+  const totalImages = outputHistory.reduce((sum, b) => sum + b.imageUuids.length, 0);
 
   // Callbacks injected by the canvas page into node.data
   const onUpdateConfig = data.onUpdateConfig as
@@ -197,6 +187,20 @@ export function AmplifyNode({ id, data, selected }: NodeProps<CanvasNode>) {
             {data.schemaName}
           </p>
         </div>
+
+        {/* Image counter badge — shown when there are stored images */}
+        {outputHistory.length > 0 && (
+          <div
+            className={cn(
+              "flex items-center gap-0.5 px-1.5 py-0.5 rounded-full text-[9px] font-medium shrink-0",
+              "bg-[#ec4899]/15 text-[#ec4899]/80"
+            )}
+            title={`${totalImages} image${totalImages !== 1 ? "s" : ""} stored`}
+          >
+            <Images className="w-2.5 h-2.5" />
+            <span>{totalImages}</span>
+          </div>
+        )}
 
         {/* Status badge */}
         <div
@@ -327,10 +331,13 @@ export function AmplifyNode({ id, data, selected }: NodeProps<CanvasNode>) {
       )}
 
       {/* ----------------------------------------------------------------- */}
-      {/* Output preview — shown on success when the node produced media  */}
+      {/* Output image gallery — shown when the node has image history      */}
       {/* ----------------------------------------------------------------- */}
-      {data.status === "success" && data.outputValues && (
-        <NodeOutputPreview outputs={data.outputValues as Record<string, unknown[]>} />
+      {outputHistory.length > 0 && (
+        <NodeImageGallery
+          batches={outputHistory}
+          nodeName={data.displayName}
+        />
       )}
 
       {/* ----------------------------------------------------------------- */}
@@ -350,41 +357,6 @@ export function AmplifyNode({ id, data, selected }: NodeProps<CanvasNode>) {
   );
 }
 
-// ---------------------------------------------------------------------------
-// NodeOutputPreview — renders image/video result inside the node after success
-// ---------------------------------------------------------------------------
-
-interface NodeOutputPreviewProps {
-  outputs: Record<string, unknown[]>;
-}
-
-function NodeOutputPreview({ outputs }: NodeOutputPreviewProps) {
-  const videoGuid = (outputs.video_uuid?.[0] as string | undefined);
-  const imageGuid = (outputs.image_uuid?.[0] as string | undefined);
-
-  if (!videoGuid && !imageGuid) return null;
-
-  return (
-    <div className="mx-3 mb-2 mt-1 rounded-lg overflow-hidden border border-white/[0.06]">
-      {videoGuid && (
-        // eslint-disable-next-line jsx-a11y/media-has-caption
-        <video
-          src={mediaUrl(videoGuid)}
-          controls
-          className="nodrag nopan nowheel w-full max-h-48 bg-black object-contain"
-        />
-      )}
-      {imageGuid && !videoGuid && (
-        // eslint-disable-next-line @next/next/no-img-element
-        <img
-          src={mediaUrl(imageGuid)}
-          alt="Output"
-          className="nodrag nopan nowheel w-full max-h-48 object-contain bg-black"
-        />
-      )}
-    </div>
-  );
-}
 
 // ---------------------------------------------------------------------------
 // Port classification helpers
