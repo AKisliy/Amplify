@@ -70,7 +70,7 @@ class BaseUGCEditingNode(IO.ComfyNode):
                     template=IO.Autogrow.TemplatePrefix(
                         IO.String.Input("media_file", force_input=True, tooltip="Media UUID of a video to include"),
                         prefix="media_file_",
-                        min=1,
+                        min=0,
                         max=20,
                     ),
                     tooltip="Video files to merge in order",
