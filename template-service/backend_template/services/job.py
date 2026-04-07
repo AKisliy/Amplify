@@ -56,7 +56,7 @@ class JobService:
 
         # Convert ReactFlow graph to ComfyUI prompt format
         comfy_prompt = convert_reactflow_to_comfy(graph)
-        logger.info(f"Converted comfy graph: {json.dumps(comfy_prompt, indent=2)}")
+        logger.warning(f"Converted comfy graph: {json.dumps(comfy_prompt, indent=2)}")
         
         job = Job(
             template_version_id=template_version.id,
