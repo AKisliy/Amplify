@@ -12,7 +12,8 @@ from backend_template.entities.job import RunTemplateRequest, RunTemplateRespons
 from backend_template.services.engine_client import EngineClientService
 from backend_template.services.job import JobService
 
-router = APIRouter(prefix="/engine", tags=["Engine"], dependencies=[Depends(_get_user_id)])
+# router = APIRouter(prefix="/engine", tags=["Engine"], dependencies=[Depends(_get_user_id)])
+router = APIRouter(prefix="/engine", tags=["Engine"])
 
 Service = Annotated[EngineClientService, Depends(EngineClientService)]
 JobSvc = Annotated[JobService, Depends(JobService)]
