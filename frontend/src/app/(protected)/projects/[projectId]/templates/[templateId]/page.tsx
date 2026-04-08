@@ -353,9 +353,8 @@ export default function TemplateCanvasPage() {
     const mediaRaw = event.dataTransfer.getData("application/amplify-media");
     if (mediaRaw) {
       try {
-        const payload = JSON.parse(mediaRaw) as { url: string; mediaType: "image" | "video" };
-        const configKey = payload.mediaType === "video" ? "video_uuid" : "image_uuid";
-        handleAddNode("ImportMediaNode", position, { [configKey]: payload.url });
+        const payload = JSON.parse(mediaRaw) as { url: string; mediaType: "image" | "video"; id: string };
+        handleAddNode("MediaInputNode", position, { media_uuid: payload.id });
       } catch { /* invalid payload */ }
     }
   }, [handleAddNode]);
