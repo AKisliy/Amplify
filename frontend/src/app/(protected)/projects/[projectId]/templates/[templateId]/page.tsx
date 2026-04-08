@@ -354,8 +354,9 @@ export default function TemplateCanvasPage() {
     if (mediaRaw) {
       try {
         const payload = JSON.parse(mediaRaw) as { url: string; mediaType: "image" | "video"; id: string };
+        const mediaUuid = payload.id || new URL(payload.url).pathname.split("/").pop() || "";
         handleAddNode("MediaInputNode", position, {
-          media_uuid: payload.id,
+          media_uuid: mediaUuid,
           media_type: payload.mediaType,
           media_preview_url: payload.url,
         });
