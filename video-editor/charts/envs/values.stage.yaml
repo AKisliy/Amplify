@@ -10,6 +10,10 @@ secrets:
     key: video-editor-bucket-secret-key
   celeryResultBackend:
     key: celery-result-backend
+  
+internalServices:
+  mediaIngest:
+    url: "http://mediaingest.test-env.svc.cluster.local/media"
 
 minio:
   host: "storage.googleapis.com"
