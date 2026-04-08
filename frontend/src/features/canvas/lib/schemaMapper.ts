@@ -75,6 +75,7 @@ function parseInputPorts(schema: NodeSchemaDef): PortDef[] {
             isWidget: false,
             isAutogrowSlot: true,
             autogrowIndex: i,
+            autogrowContainerId: fieldName,
           });
         }
         continue;

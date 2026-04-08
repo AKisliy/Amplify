@@ -58,13 +58,20 @@ def convert_reactflow_to_comfy(graph: dict) -> dict:
     frontend_only_ids = frontend_sink_ids | frontend_source_ids
 
     # build output slot index map for ComfyUI nodes only
+    # also build autogrow handle map: port_id → "containerId.port_id" for autogrow slots
     output_slot_map: dict[str, dict[str, int]] = {}
+    autogrow_handle_map: dict[str, dict[str, str]] = {}
     for node_id, node in nodes.items():
         if node_id in frontend_only_ids:
             continue
         ports = node.get("data", {}).get("ports", [])
         output_ports = [p for p in ports if p.get("direction") == "output"]
         output_slot_map[node_id] = {p["id"]: idx for idx, p in enumerate(output_ports)}
+        for p in ports:
+            if p.get("isAutogrowSlot") and p.get("autogrowContainerId"):
+                autogrow_handle_map.setdefault(node_id, {})[p["id"]] = (
+                    f"{p['autogrowContainerId']}.{p['id']}"
+                )
 
     # map: (target_node_id, target_port_id) → resolved value
     # For ComfyUI nodes: [source_node_id, slot_index]
@@ -100,9 +107,11 @@ def convert_reactflow_to_comfy(graph: dict) -> dict:
         class_type = data.get("schemaName", "Unknown")
         inputs: dict = dict(data.get("config", {}))
 
+        node_autogrow = autogrow_handle_map.get(node_id, {})
         for (target_id, target_port), value in link_map.items():
             if target_id == node_id:
-                inputs[target_port] = value
+                key = node_autogrow.get(target_port, target_port)
+                inputs[key] = value
 
         prompt[node_id] = {
             "class_type": class_type,

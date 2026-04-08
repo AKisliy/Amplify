@@ -1,4 +1,5 @@
 from typing import Annotated
+import uuid
 
 from fastapi import APIRouter, Body, Depends, Query, status
 
@@ -12,7 +13,10 @@ from backend_template.entities.job import RunTemplateRequest, RunTemplateRespons
 from backend_template.services.engine_client import EngineClientService
 from backend_template.services.job import JobService
 
-router = APIRouter(prefix="/engine", tags=["Engine"], dependencies=[Depends(_get_user_id)])
+# router = APIRouter(prefix="/engine", tags=["Engine"], dependencies=[Depends(_get_user_id)])
+router = APIRouter(prefix="/engine", tags=["Engine"])
+
+
 
 Service = Annotated[EngineClientService, Depends(EngineClientService)]
 JobSvc = Annotated[JobService, Depends(JobService)]
@@ -64,7 +68,7 @@ async def get_node(
 async def run_template(
     payload: RunTemplateRequest,
     service: JobSvc,
-    user_id: CurrentUserId,
+    # user_id: CurrentUserId,
 ):
     """
     Snapshots the template's current graph into a TemplateVersion, creates a
@@ -72,7 +76,7 @@ async def run_template(
     node status updates via RabbitMQ → WebSocket Gateway → frontend.
     Returns immediately with job_id and prompt_id.
     """
-    return await service.run_template(payload.template_id, user_id)
+    return await service.run_template(payload.template_id, str(uuid.uuid4()))
 
 
 # ── Prompt Submission ─────────────────────────────────────────────────────
