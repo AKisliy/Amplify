@@ -55,6 +55,8 @@ spec:
               value: "{{ .Values.config.rootPath }}"
             - name: USERSERVICE_URL
               value: "{{ .Values.config.userServiceUrl }}"
+            - name: VIDEO_EDITOR_URL
+              value: "{{ .Values.config.videoEditorUrl }}"
           envFrom:
             - secretRef:
                 name: {{ .Values.secret.name }}

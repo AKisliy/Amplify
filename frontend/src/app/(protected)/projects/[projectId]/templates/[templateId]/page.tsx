@@ -354,7 +354,11 @@ export default function TemplateCanvasPage() {
     if (mediaRaw) {
       try {
         const payload = JSON.parse(mediaRaw) as { url: string; mediaType: "image" | "video"; id: string };
-        handleAddNode("MediaInputNode", position, { media_uuid: payload.id, media_type: payload.mediaType });
+        handleAddNode("MediaInputNode", position, {
+          media_uuid: payload.id,
+          media_type: payload.mediaType,
+          media_preview_url: payload.url,
+        });
       } catch { /* invalid payload */ }
     }
   }, [handleAddNode]);
