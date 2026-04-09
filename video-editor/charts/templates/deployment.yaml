@@ -23,6 +23,10 @@ spec:
           resources:
             {{- toYaml . | nindent 12 }}
           {{- end }}
+          ports:
+            - name: http
+              containerPort: {{ .Values.service.port }}
+              protocol: TCP
           env:
             - name: PYTHONUNBUFFERED
               value: "1"

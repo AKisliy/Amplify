@@ -22,7 +22,7 @@ public class RegisterUserCommandHandler(
         // TODO: change to have validator
         if (!result.Succeeded)
         {
-            throw new Exception();
+            throw new Exception(result.Errors.FirstOrDefault() ?? "Failed to create user");
         }
 
         var rawToken = await tokenService.GenerateEmailConfirmationTokenAsync(userId);

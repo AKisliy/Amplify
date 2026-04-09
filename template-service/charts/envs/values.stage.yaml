@@ -12,3 +12,4 @@ config:
   gcpLocation: "global"
   gcpStorageUri: "gs://amplify-media-test"
   userServiceUrl: "http://userservice.test-env.svc.cluster.local/userservice/api"
+  videoEditorUrl: "http://video-editor.test-env.svc.cluster.local:8000"

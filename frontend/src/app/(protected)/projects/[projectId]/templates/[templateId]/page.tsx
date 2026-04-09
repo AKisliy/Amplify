@@ -305,7 +305,7 @@ export default function TemplateCanvasPage() {
       const def = getNodeDef(registry, schemaName);
       if (!def) return;
       let nodeType: "amplify-node" | "preview-node" | "import-media-node" = "amplify-node";
-      if (schemaName === "ImportMediaNode") nodeType = "import-media-node";
+      if (schemaName === "ImportMediaNode" || schemaName === "MediaInputNode") nodeType = "import-media-node";
       else if (PREVIEW_SCHEMA_NAMES.has(schemaName)) nodeType = "preview-node";
       const newNode  = nodeDefToCanvasNode(schemaName, def, position, crypto.randomUUID(), nodeType);
       if (initialConfig) newNode.data.config = { ...newNode.data.config, ...initialConfig };
@@ -353,9 +353,13 @@ export default function TemplateCanvasPage() {
     const mediaRaw = event.dataTransfer.getData("application/amplify-media");
     if (mediaRaw) {
       try {
-        const payload = JSON.parse(mediaRaw) as { url: string; mediaType: "image" | "video" };
-        const configKey = payload.mediaType === "video" ? "video_uuid" : "image_uuid";
-        handleAddNode("ImportMediaNode", position, { [configKey]: payload.url });
+        const payload = JSON.parse(mediaRaw) as { url: string; mediaType: "image" | "video"; id: string };
+        const mediaUuid = payload.id || new URL(payload.url).pathname.split("/").pop() || "";
+        handleAddNode("MediaInputNode", position, {
+          media_uuid: mediaUuid,
+          media_type: payload.mediaType,
+          media_preview_url: payload.url,
+        });
       } catch { /* invalid payload */ }
     }
   }, [handleAddNode]);

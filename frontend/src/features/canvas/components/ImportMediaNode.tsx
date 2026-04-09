@@ -36,8 +36,16 @@ function getMediaUrl(uuidOrUrl: string): string {
 // ---------------------------------------------------------------------------
 
 export function ImportMediaNode({ id, data, selected }: NodeProps<CanvasNode>) {
-  const imageUuid = (data.config?.image_uuid as string | undefined) || "";
-  const videoUuid = (data.config?.video_uuid as string | undefined) || "";
+  // MediaInputNode uses media_uuid + media_type + media_preview_url
+  const mediaType = (data.config?.media_type as "image" | "video" | undefined);
+  const mediaPreviewUrl = (data.config?.media_preview_url as string | undefined) || "";
+
+  // ImportMediaNode uses separate image_uuid / video_uuid
+  const imageUuid = mediaType === "image" && mediaPreviewUrl ? mediaPreviewUrl
+    : (data.config?.image_uuid as string | undefined) || "";
+  const videoUuid = mediaType === "video" && mediaPreviewUrl ? mediaPreviewUrl
+    : (data.config?.video_uuid as string | undefined) || "";
+
   const hasImage = imageUuid && imageUuid.trim() !== "";
   const hasVideo = videoUuid && videoUuid.trim() !== "";
 

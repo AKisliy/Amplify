@@ -50,6 +50,8 @@ spec:
               value: "{{ .Values.worker.mediaSavingPath }}"
             - name: MEDIA_INGEST_URL
               value: "{{ .Values.internalServices.mediaIngest.url }}"
+            - name: FFMPEG_BINARY
+              value: "/usr/bin/ffmpeg"
           envFrom:
             - secretRef:
                 name: {{ .Values.secret.name }}

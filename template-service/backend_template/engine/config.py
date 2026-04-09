@@ -30,4 +30,9 @@ class RabbitMqConfig(ConfigBase):
 gemini_config = GeminiConfig()
 media_ingest_config = MediaIngestConfig()
 engine_config = EngineConfig()
+class VideoEditorConfig(ConfigBase):
+    video_editor_url: str = "http://localhost:8000"
+
+
 rabbitmq_config = RabbitMqConfig()
+video_editor_config = VideoEditorConfig()

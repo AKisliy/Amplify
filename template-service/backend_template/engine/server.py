@@ -48,7 +48,7 @@ class PromptServer():
         self.messages = asyncio.Queue()
         self.client_session:Optional[aiohttp.ClientSession] = None
         self.number = 0
-        self._bg_tasks: set[asyncio.Task] = set()
+
 
         self.app = web.Application()
         self.sockets = dict()
@@ -277,9 +277,10 @@ class PromptServer():
 
         _EXECUTION_EVENTS = {"executing", "execution_cached", "executed", "execution_error", "execution_success"}
         if event in _EXECUTION_EVENTS:
-            task = asyncio.create_task(self._publish_exec_event(event, data))
-            self._bg_tasks.add(task)
-            task.add_done_callback(self._bg_tasks.discard)
+            try:
+                await self._publish_exec_event(event, data)
+            except Exception as e:
+                logging.error(f"Failed to publish execution event: {e}")
 
     async def _publish_exec_event(self, event: str, data: dict) -> None:
         """Publishes execution progress events to RabbitMQ."""

@@ -1,6 +1,8 @@
 import logging
+import subprocess
 
 from moviepy import VideoFileClip, concatenate_videoclips
+from moviepy.config import FFMPEG_BINARY
 
 from editors.base_ugc.context import EditingContext
 from editors.base_ugc.steps.base_step import PipelineStep
@@ -15,10 +17,24 @@ class ConcatenateStep(PipelineStep):
     name = "Merging clips"
 
     def execute(self, ctx: EditingContext) -> None:
-        clips = [
-            format_clip(VideoFileClip(p), TARGET_RESOLUTION, TARGET_FPS)
-            for p in ctx.media_urls
-        ]
+        clips = []
+        for p in ctx.media_urls:
+            try:
+                clips.append(format_clip(VideoFileClip(p), TARGET_RESOLUTION, TARGET_FPS))
+            except Exception as e:
+                logger.error("VideoFileClip failed for %s: %s", p, e)
+                logger.error("FFMPEG_BINARY = %r", FFMPEG_BINARY)
+                try:
+                    result = subprocess.run(
+                        [FFMPEG_BINARY, "-hide_banner", "-i", p],
+                        capture_output=True, text=True, timeout=30
+                    )
+                    logger.error("ffmpeg returncode: %s", result.returncode)
+                    logger.error("ffmpeg stderr:\n%s", result.stderr or "<empty>")
+                    logger.error("ffmpeg stdout:\n%s", result.stdout or "<empty>")
+                except Exception as ffmpeg_err:
+                    logger.error("subprocess.run failed: %s", ffmpeg_err)
+                raise
 
         output_path = ctx.workspace.get_temp_path("mp4")
 

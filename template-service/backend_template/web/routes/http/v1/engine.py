@@ -1,4 +1,5 @@
 from typing import Annotated
+import uuid
 
 from fastapi import APIRouter, Body, Depends, Query, status
 
@@ -13,6 +14,8 @@ from backend_template.services.engine_client import EngineClientService
 from backend_template.services.job import JobService
 
 router = APIRouter(prefix="/engine", tags=["Engine"], dependencies=[Depends(_get_user_id)])
+
+
 
 Service = Annotated[EngineClientService, Depends(EngineClientService)]
 JobSvc = Annotated[JobService, Depends(JobService)]
@@ -72,7 +75,7 @@ async def run_template(
     node status updates via RabbitMQ → WebSocket Gateway → frontend.
     Returns immediately with job_id and prompt_id.
     """
-    return await service.run_template(payload.template_id, user_id)
+    return await service.run_template(payload.template_id, user_id=user_id)
 
 
 # ── Prompt Submission ─────────────────────────────────────────────────────

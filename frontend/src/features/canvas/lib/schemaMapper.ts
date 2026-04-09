@@ -65,7 +65,7 @@ function parseInputPorts(schema: NodeSchemaDef): PortDef[] {
 
         for (let i = 0; i < min; i++) {
           ports.push({
-            id: `${prefix}_${i}`,
+            id: `${prefix}${i}`,
             label: `${prefix.replace(/_/g, " ")} ${i + 1}`,
             portType: "STRING",
             direction: "input",
@@ -75,6 +75,7 @@ function parseInputPorts(schema: NodeSchemaDef): PortDef[] {
             isWidget: false,
             isAutogrowSlot: true,
             autogrowIndex: i,
+            autogrowContainerId: fieldName,
           });
         }
         continue;

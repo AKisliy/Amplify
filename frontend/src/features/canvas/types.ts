@@ -166,6 +166,8 @@ export interface PortDef {
   isAutogrowSlot?: boolean;
   /** Index within its autogrow group (0-based) */
   autogrowIndex?: number;
+  /** Schema field name of the autogrow container (e.g. "media_files") */
+  autogrowContainerId?: string;
 }
 
 // ---------------------------------------------------------------------------

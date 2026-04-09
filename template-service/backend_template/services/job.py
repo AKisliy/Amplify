@@ -56,7 +56,8 @@ class JobService:
 
         # Convert ReactFlow graph to ComfyUI prompt format
         comfy_prompt = convert_reactflow_to_comfy(graph)
-
+        logger.warning(f"Converted comfy graph: {json.dumps(comfy_prompt, indent=2)}")
+        
         job = Job(
             template_version_id=template_version.id,
             status=JobStatus.QUEUED,
@@ -91,7 +92,10 @@ class JobService:
                     json={
                         "prompt": comfy_prompt,
                         "client_id": user_id,
-                        "extra_data": {"job_id": str(job.id)},
+                        "extra_data": {
+                            "job_id": str(job.id),
+                            "extra_pnginfo": {"client_id": user_id},
+                        },
                     },
                     timeout=aiohttp.ClientTimeout(total=30),
                 ) as resp:

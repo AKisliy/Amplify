@@ -107,6 +107,31 @@ export const PREVIEW_SCHEMAS: Record<string, NodeSchemaDef> = {
     essentials_category: null,
   },
 
+  MediaInputNode: {
+    input: {
+      required: {},
+      optional: {},
+    },
+    output: ["STRING"],
+    output_is_list: [false],
+    output_name: ["media_uuid"],
+    output_tooltips: ["Media UUID output"],
+    output_matchtypes: null,
+    name: "MediaInputNode",
+    display_name: "Media Input",
+    description: "Attach a media asset from the Media Library as a canvas input.",
+    python_module: "",
+    category: "amplify/media",
+    output_node: false,
+    deprecated: false,
+    experimental: false,
+    dev_only: false,
+    api_node: false,
+    price_badge: null,
+    search_aliases: null,
+    essentials_category: null,
+  },
+
   ImportMediaNode: {
     input: {
       required: {},

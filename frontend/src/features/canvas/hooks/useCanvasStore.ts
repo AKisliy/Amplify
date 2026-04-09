@@ -140,6 +140,7 @@ export function useCanvasStore({
             isWidget: false,
             isAutogrowSlot: true,
             autogrowIndex: currentCount,
+            autogrowContainerId: connectedPort.autogrowContainerId,
           };
 
           const lastAgIdx = targetNode.data.ports.reduce(

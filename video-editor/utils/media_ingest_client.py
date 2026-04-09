@@ -11,7 +11,7 @@ _BASE_URL = os.getenv("MEDIA_INGEST_URL", "http://media-ingest:5070")
 def get_presigned_url(media_id: str) -> str:
     """Return a presigned download URL for the given media ID."""
     url = f"{_BASE_URL}/api/internal/media/{media_id}/link"
-    response = requests.get(url, params={"linkType": "Presigned"}, timeout=30)
+    response = requests.get(url, params={"linkType": "Presigned", "includeMetadata": "false"}, timeout=30)
     response.raise_for_status()
     return response.json()["link"]
 
