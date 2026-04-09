@@ -11,7 +11,7 @@ public class GoogleStorageLinkGenerator(IApplicationDbContext dbContext, IOption
 {
     public LinkType SupportedLinkType => LinkType.GoogleCloudStorage;
 
-    public async Task<string> GenerateLinkAsync(Guid mediaId, LinkType linkType, CancellationToken cancellationToken = default)
+    public async Task<string> GenerateLinkAsync(Guid mediaId, LinkType linkType, CancellationToken cancellationToken = default, bool includeMetadata = true)
     {
         var mediaFile = await dbContext.MediaFiles.FirstOrDefaultAsync(m => m.Id == mediaId, cancellationToken);
 

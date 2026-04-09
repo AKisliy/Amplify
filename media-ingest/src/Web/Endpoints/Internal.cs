@@ -97,9 +97,9 @@ public class Internal : EndpointGroupBase
         return TypedResults.NoContent();
     }
 
-    public async Task<GetLinkByIdResponse> GetLinkById(ISender sender, Guid mediaId, LinkType linkType)
+    public async Task<GetLinkByIdResponse> GetLinkById(ISender sender, Guid mediaId, LinkType linkType, bool includeMetadata = true)
     {
-        var query = new GetLinkByIdQuery(mediaId, linkType);
+        var query = new GetLinkByIdQuery(mediaId, linkType, includeMetadata);
         var response = await sender.Send(query);
         return response;
     }

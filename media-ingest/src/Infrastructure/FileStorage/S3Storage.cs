@@ -26,18 +26,22 @@ public class S3Storage(
         await minio.RemoveObjectAsync(removeObjectArgs, cancellationToken);
     }
 
-    public async Task<string> GetPresignedUrlAsync(MediaFile mediaFile, TimeSpan validFor, CancellationToken cancellationToken = default)
+    public async Task<string> GetPresignedUrlAsync(MediaFile mediaFile, TimeSpan validFor, CancellationToken cancellationToken = default, bool includeMetadata = true)
     {
         var expiry = validFor.TotalSeconds;
         var args = new PresignedGetObjectArgs()
             .WithBucket(_options.BucketName)
             .WithObject(mediaFile.FileKey)
-            .WithExpiry((int)expiry)
-            .WithHeaders(new Dictionary<string, string>
+            .WithExpiry((int)expiry);
+
+        if (includeMetadata)
+        {
+            args = args.WithHeaders(new Dictionary<string, string>
             {
                 { "Content-Disposition", $"inline; filename=\"{mediaFile.OriginalFileName}\"" },
                 { "Content-Type", mediaFile.ContentType ?? "application/octet-stream" }
             });
+        }
 
         return await minio.PresignedGetObjectAsync(args);
     }

@@ -9,7 +9,7 @@ public class PublicLinkGenerator(
 {
     public LinkType SupportedLinkType => LinkType.Public;
 
-    public async Task<string> GenerateLinkAsync(Guid mediaId, LinkType linkType, CancellationToken cancellationToken)
+    public async Task<string> GenerateLinkAsync(Guid mediaId, LinkType linkType, CancellationToken cancellationToken = default, bool includeMetadata = true)
     {
         var mediaFile = dbContext.MediaFiles.FirstOrDefault(m => m.Id == mediaId);
 
