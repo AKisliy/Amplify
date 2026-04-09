@@ -195,7 +195,9 @@ class BaseUGCEditingNode(IO.ComfyNode):
         if poll_response.status == "FAILURE":
             raise Exception(f"Video editing failed: {poll_response.error}")
 
-        output_media_id = poll_response.result["output_media_id"]
+        output_media_field_name = "outputMediaId"
+
+        output_media_id = poll_response.result[output_media_field_name]
         return IO.NodeOutput(output_media_id, ui={"video_uuid": [output_media_id]})
 
 
