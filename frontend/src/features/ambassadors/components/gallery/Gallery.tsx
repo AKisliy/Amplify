@@ -113,7 +113,7 @@ export function Gallery({ ambassadorId, images, onImagesChange }: GalleryProps) 
       let mediaId: string;
       let mediaUrl: string;
       try {
-        const result = await mediaApi.uploadImage(file);
+        const result = await mediaApi.uploadFile(file);
         mediaId = result.mediaId;
         mediaUrl = mediaApi.getMediaUrl(result.mediaId);
       } catch (err: any) {

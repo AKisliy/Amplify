@@ -52,7 +52,7 @@ export const ambassadorApi = {
    */
   async uploadMedia(file: File): Promise<string> {
     const { mediaApi } = await import("@/features/media/api");
-    const result = await mediaApi.uploadImage(file);
+    const result = await mediaApi.uploadFile(file);
     return result.mediaId;
   },
 
