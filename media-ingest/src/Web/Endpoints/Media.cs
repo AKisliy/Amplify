@@ -1,3 +1,4 @@
+using MediaIngest.Application.Media.Commands.CompleteUploadCommand;
 using MediaIngest.Application.Media.Commands.CreateUploadPresignedUrl;
 using MediaIngest.Application.Media.Queries.GetMedia;
 using Microsoft.AspNetCore.Http.HttpResults;
@@ -19,7 +20,15 @@ public class Media : EndpointGroupBase
         groupBuilder.MapPost("/presigned-upload", GetPresignedUploadUrl)
             .WithSummary("Get presigned upload URL")
             .WithDescription("Registers a new media record and returns a presigned PUT URL for direct S3 upload. To upload to S3 please use exact ContentType header.")
-            .Produces<CreateUploadPresignedUrlDto>(StatusCodes.Status201Created);
+            .Produces<CreateUploadPresignedUrlDto>(StatusCodes.Status201Created)
+            .RequireAuthorization();
+
+        groupBuilder.MapPost("/{mediaId:guid}/upload-completed", CompleteUpload)
+            .WithSummary("Confirm upload completion")
+            .WithDescription("Called by the client after a successful direct S3 upload. Marks the file as uploaded and triggers preprocessing.")
+            .Produces(StatusCodes.Status204NoContent)
+            .ProducesProblem(StatusCodes.Status404NotFound)
+            .RequireAuthorization();
     }
 
     public async Task<RedirectHttpResult> GetMediaById(ISender sender, Guid mediaId)
@@ -32,5 +41,11 @@ public class Media : EndpointGroupBase
     {
         var result = await sender.Send(command);
         return TypedResults.Created($"/api/media/{result.MediaId}", result);
+    }
+
+    public async Task<NoContent> CompleteUpload(ISender sender, Guid mediaId)
+    {
+        await sender.Send(new CompleteUploadCommand(mediaId));
+        return TypedResults.NoContent();
     }
 }

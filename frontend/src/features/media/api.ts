@@ -53,9 +53,11 @@ export const mediaApi = {
   },
 
   /**
-   * Step 2: PUT the file directly to S3/GCS via the presigned URL.
+   * Step 2: PUT the file directly to S3/GCS via the presigned URL,
+   * then confirm the upload to media-ingest.
    */
   async uploadToS3(
+    mediaId: string,
     uploadUrl: string,
     file: File,
     onProgress?: (percent: number) => void
@@ -68,10 +70,11 @@ export const mediaApi = {
         }
       },
     });
+    await api.post(`media/${mediaId}/upload-completed`);
   },
 
   /**
-   * Convenience: get presigned URL then upload. Returns mediaId and type.
+   * Convenience: get presigned URL, upload to S3, then confirm. Returns mediaId and type.
    */
   async uploadFile(
     file: File,
@@ -79,7 +82,7 @@ export const mediaApi = {
   ): Promise<MediaUploadResult & { type: MediaType }> {
     const type = detectMediaType(file);
     const { mediaId, uploadUrl } = await this.getPresignedUpload(file);
-    await this.uploadToS3(uploadUrl, file, onProgress);
+    await this.uploadToS3(mediaId, uploadUrl, file, onProgress);
     return { mediaId, contentType: file.type, type };
   },
 

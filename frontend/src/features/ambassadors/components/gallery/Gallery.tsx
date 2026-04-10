@@ -208,7 +208,7 @@ export function Gallery({ ambassadorId, images, onImagesChange }: GalleryProps) 
         ]);
 
         try {
-          await mediaApi.uploadToS3(uploadUrl, file, (percent) => {
+          await mediaApi.uploadToS3(mediaId, uploadUrl, file, (percent) => {
             setDisplayItems((prev) =>
               prev.map((item) =>
                 item.id === mediaId ? { ...item, progress: percent } : item
