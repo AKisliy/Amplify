@@ -28,4 +28,4 @@ if result_backend:
         database_engine_options={"poolclass": NullPool},
     )
 
-app.conf.imports = ["tasks.create_video"]
+app.conf.imports = ["tasks.create_video", "tasks.process_media"]

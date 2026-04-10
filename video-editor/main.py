@@ -13,6 +13,7 @@ from queues.consumers.get_media_duration_consumer import mediaDurationConsumer
 from queues.consumers.video_hash_consumer import videoHashConsumer
 from queues.consumers.split_consumer import splitConsumer
 from queues.consumers.normalize_video_consumer import normalizeConsumer
+import queues.consumers.process_media_consumer as process_media_consumer
 from pika.adapters.blocking_connection import BlockingChannel
 from dotenv import load_dotenv
 
@@ -27,6 +28,7 @@ def setup_request_consumers(channel: BlockingChannel):
     videoHashConsumer.setup_queue(channel)
     splitConsumer.setup_queue(channel)
     normalizeConsumer.setup_queue(channel)
+    process_media_consumer.setup_queue(channel)
 
 def setup_rabbitmq_connection() -> pika.BlockingConnection:
     amqp_url = os.getenv("AMQP_URL")
