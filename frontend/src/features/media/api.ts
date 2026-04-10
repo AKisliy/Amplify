@@ -41,22 +41,26 @@ export function validateFile(file: File): string | null {
 
 export const mediaApi = {
   /**
-   * Upload any media file via presigned URL (direct-to-S3).
-   * Step 1: POST /api/media/presigned-upload → { mediaId, uploadUrl }
-   * Step 2: PUT <uploadUrl> with raw file bytes
+   * Step 1: Register the file in media-ingest and get a presigned PUT URL.
+   * POST /api/media/presigned-upload → { mediaId, uploadUrl }
    */
-  async uploadFile(
-    file: File,
-    onProgress?: (percent: number) => void
-  ): Promise<MediaUploadResult & { type: MediaType }> {
-    const type = detectMediaType(file);
-
+  async getPresignedUpload(file: File): Promise<{ mediaId: string; uploadUrl: string }> {
     const { data } = await api.post<{ mediaId: string; uploadUrl: string }>(
       "media/presigned-upload",
       { fileName: file.name, contentType: file.type, fileSize: file.size }
     );
+    return data;
+  },
 
-    await axios.put(data.uploadUrl, file, {
+  /**
+   * Step 2: PUT the file directly to S3/GCS via the presigned URL.
+   */
+  async uploadToS3(
+    uploadUrl: string,
+    file: File,
+    onProgress?: (percent: number) => void
+  ): Promise<void> {
+    await axios.put(uploadUrl, file, {
       headers: { "Content-Type": file.type },
       onUploadProgress: (e) => {
         if (onProgress && e.total) {
@@ -64,8 +68,19 @@ export const mediaApi = {
         }
       },
     });
+  },
 
-    return { mediaId: data.mediaId, contentType: file.type, type };
+  /**
+   * Convenience: get presigned URL then upload. Returns mediaId and type.
+   */
+  async uploadFile(
+    file: File,
+    onProgress?: (percent: number) => void
+  ): Promise<MediaUploadResult & { type: MediaType }> {
+    const type = detectMediaType(file);
+    const { mediaId, uploadUrl } = await this.getPresignedUpload(file);
+    await this.uploadToS3(uploadUrl, file, onProgress);
+    return { mediaId, contentType: file.type, type };
   },
 
   /**
