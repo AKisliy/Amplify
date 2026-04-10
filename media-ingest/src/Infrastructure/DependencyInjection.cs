@@ -100,7 +100,6 @@ public static class DependencyInjection
                 );
             options.UseSnakeCaseNamingConvention();
             options.AddInterceptors(sp.GetServices<ISaveChangesInterceptor>());
-            options.UseNpgsql(dbOptions.Default);
         });
 
         services.AddScoped<ApplicationDbContextInitialiser>();

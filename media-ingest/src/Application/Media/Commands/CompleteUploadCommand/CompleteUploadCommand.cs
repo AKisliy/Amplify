@@ -13,10 +13,7 @@ public class CompleteUploadCommandHandler(
     {
         var mediaFile = await dbContext.MediaFiles.FindAsync(new object[] { request.MediaId }, cancellationToken);
 
-        if (mediaFile == null)
-        {
-            throw new NotFoundException(request.MediaId.ToString(), nameof(request.MediaId));
-        }
+        Guard.Against.NotFound(request.MediaId, mediaFile, nameof(request.MediaId));
 
         var fileExists = await fileStorage.FileExistsAsync(mediaFile.FileKey, cancellationToken);
         if (!fileExists)
