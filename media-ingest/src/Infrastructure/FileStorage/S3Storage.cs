@@ -46,6 +46,16 @@ public class S3Storage(
         return await minio.PresignedGetObjectAsync(args);
     }
 
+    public async Task<string> GetPresignedUrlAsync(string fileKey, TimeSpan validFor, CancellationToken cancellationToken = default)
+    {
+        var args = new PresignedGetObjectArgs()
+            .WithBucket(_options.BucketName)
+            .WithObject(fileKey)
+            .WithExpiry((int)validFor.TotalSeconds);
+
+        return await minio.PresignedGetObjectAsync(args);
+    }
+
     public async Task<string> GetPresignedUploadUrlAsync(string fileKey, string contentType, TimeSpan validFor, CancellationToken cancellationToken = default)
     {
         var args = new PresignedPutObjectArgs()

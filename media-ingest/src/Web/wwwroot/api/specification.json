@@ -306,6 +306,15 @@
               "$ref": "#/components/schemas/LinkType"
             },
             "x-position": 2
+          },
+          {
+            "name": "includeMetadata",
+            "in": "query",
+            "schema": {
+              "type": "boolean",
+              "default": true
+            },
+            "x-position": 3
           }
         ],
         "responses": {
@@ -534,6 +543,19 @@
               "format": "guid"
             },
             "x-position": 1
+          },
+          {
+            "name": "variant",
+            "in": "query",
+            "schema": {
+              "default": "Original",
+              "oneOf": [
+                {
+                  "$ref": "#/components/schemas/MediaVariant"
+                }
+              ]
+            },
+            "x-position": 2
           }
         ],
         "responses": {
@@ -557,6 +579,99 @@
             }
           }
         }
+      }
+    },
+    "/api/media/presigned-upload": {
+      "post": {
+        "tags": [
+          "media"
+        ],
+        "summary": "Get presigned upload URL",
+        "description": "Registers a new media record and returns a presigned PUT URL for direct S3 upload. To upload to S3 please use exact ContentType header.",
+        "operationId": "PostApiMediaPresignedUpload",
+        "requestBody": {
+          "x-name": "command",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateUploadPresignedUrlCommand"
+              }
+            }
+          },
+          "required": true,
+          "x-position": 1
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {}
+            }
+          },
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreateUploadPresignedUrlDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "JWT": []
+          }
+        ]
+      }
+    },
+    "/api/media/{mediaId}/upload-completed": {
+      "post": {
+        "tags": [
+          "media"
+        ],
+        "summary": "Confirm upload completion",
+        "description": "Called by the client after a successful direct S3 upload. Marks the file as uploaded and triggers preprocessing.",
+        "operationId": "PostApiMediaUploadCompleted",
+        "parameters": [
+          {
+            "name": "mediaId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "guid"
+            },
+            "x-position": 1
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {}
+            }
+          },
+          "204": {
+            "description": ""
+          },
+          "404": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "JWT": []
+          }
+        ]
       }
     },
     "/api/videos": {
@@ -802,6 +917,20 @@
             "type": "string"
           }
         }
+      },
+      "MediaVariant": {
+        "type": "string",
+        "description": "",
+        "x-enumNames": [
+          "Original",
+          "Medium",
+          "Tiny"
+        ],
+        "enum": [
+          "Original",
+          "Medium",
+          "Tiny"
+        ]
       }
     },
     "securitySchemes": {

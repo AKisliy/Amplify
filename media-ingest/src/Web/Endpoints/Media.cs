@@ -1,6 +1,7 @@
 using MediaIngest.Application.Media.Commands.CompleteUploadCommand;
 using MediaIngest.Application.Media.Commands.CreateUploadPresignedUrl;
 using MediaIngest.Application.Media.Queries.GetMedia;
+using MediaIngest.Domain.Enums;
 using Microsoft.AspNetCore.Http.HttpResults;
 
 namespace MediaIngest.Web.Endpoints;
@@ -31,9 +32,9 @@ public class Media : EndpointGroupBase
             .RequireAuthorization();
     }
 
-    public async Task<RedirectHttpResult> GetMediaById(ISender sender, Guid mediaId)
+    public async Task<RedirectHttpResult> GetMediaById(ISender sender, Guid mediaId, MediaVariant variant = MediaVariant.Original)
     {
-        var mediaDto = await sender.Send(new GetMediaQuery(mediaId));
+        var mediaDto = await sender.Send(new GetMediaQuery(mediaId, variant));
         return TypedResults.Redirect(mediaDto.MediaPath);
     }
 

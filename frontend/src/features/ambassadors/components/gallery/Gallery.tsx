@@ -71,6 +71,7 @@ export function Gallery({ ambassadorId, images, onImagesChange }: GalleryProps) 
 
       return {
         id: displayId,
+        tinyUrl: mediaApi.getMediaUrl(mediaId, "tiny"),
         url: img.imageUrl,
         type: resolveType(img),
         name: "Ambassador media",
@@ -199,6 +200,7 @@ export function Gallery({ ambassadorId, images, onImagesChange }: GalleryProps) 
           {
             id: mediaId,
             url: URL.createObjectURL(file),
+            tinyUrl: "",
             type: mediaType,
             name: file.name,
             size: file.size,
@@ -223,7 +225,7 @@ export function Gallery({ ambassadorId, images, onImagesChange }: GalleryProps) 
           setDisplayItems((prev) =>
             prev.map((item) =>
               item.id === mediaId
-                ? { ...item, url: mediaApi.getMediaUrl(mediaId), progress: 100 }
+                ? { ...item, url: mediaApi.getMediaUrl(mediaId, "medium"), tinyUrl: mediaApi.getMediaUrl(mediaId, "tiny"), progress: 100 }
                 : item
             )
           );

@@ -87,13 +87,11 @@ export const mediaApi = {
   },
 
   /**
-   * Get the public URL for a media item.
-   * Use this as the src for <img> or <video> tags directly.
+   * Get the proxied URL for a media item (same-domain, works with next/image).
+   * variant: "original" | "medium" | "tiny"
    */
-  getMediaUrl(mediaId: string): string {
-    const envUrl =
-      process.env.NEXT_PUBLIC_API_BASE_URL ||
-      "https://staging.alexeykiselev.tech";
-    return `${envUrl}/media/api/media/${mediaId}`;
+  getMediaUrl(mediaId: string, variant: "original" | "medium" | "tiny" = "original"): string {
+    const base = `/media/${mediaId}`;
+    return variant === "original" ? base : `${base}?variant=${variant}`;
   },
 };

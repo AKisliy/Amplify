@@ -14,6 +14,10 @@ const nextConfig: NextConfig = {
         source: "/media/:guid",
         destination: `${process.env.NEXT_PUBLIC_API_BASE_URL}/media/api/media/:guid`,
       },
+      {
+        source: "/media/:guid/:rest*",
+        destination: `${process.env.NEXT_PUBLIC_API_BASE_URL}/media/api/media/:guid/:rest*`,
+      },
     ];
   },
   images: {

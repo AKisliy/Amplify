@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
 import { Trash2, Film, AlertCircle, CheckCircle2, Expand } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -47,17 +48,15 @@ export function MediaCard({ media, onDelete, onOpen, className }: MediaCardProps
           }}
         />
       ) : (
-        // Use native <img> for external/CDN URLs — Next Image requires domain config
-        // eslint-disable-next-line @next/next/no-img-element
-        <img
-          src={media.url}
-          alt={media.name || "Ambassador gallery media"}
-          className="absolute inset-0 h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
-          onError={(e) => {
-            // If CDN URL fails, hide the broken icon gracefully
-            (e.currentTarget as HTMLImageElement).style.display = "none";
-          }}
-        />
+          <Image
+            src={media.url}
+            alt={media.name || "Ambassador gallery media"}
+            fill
+            sizes="(max-width: 768px) 50vw, 25vw"
+            className="object-cover transition-transform duration-300 group-hover:scale-105"
+            blurDataURL={media.tinyUrl}
+            placeholder="blur"
+          />
       )}
 
       {/* Video badge */}
