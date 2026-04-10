@@ -66,6 +66,22 @@ public class S3Storage(
         return Task.FromResult(publicUrl);
     }
 
+    public async Task<bool> FileExistsAsync(string fileKey, CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            var args = new StatObjectArgs()
+                .WithBucket(_options.BucketName)
+                .WithObject(fileKey);
+            var stat = await minio.StatObjectAsync(args, cancellationToken);
+            return true;
+        }
+        catch (ObjectNotFoundException)
+        {
+            return false;
+        }
+    }
+
     public async Task<Stream> OpenFileAsync(string fileKey, CancellationToken cancellationToken = default)
     {
         var bucketName = _options.BucketName;

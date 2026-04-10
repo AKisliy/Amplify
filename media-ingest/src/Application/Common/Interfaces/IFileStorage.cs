@@ -16,5 +16,7 @@ public interface IFileStorage
 
     Task<string> GetPresignedUploadUrlAsync(string fileKey, string contentType, TimeSpan validFor, CancellationToken cancellationToken = default);
 
+    Task<bool> FileExistsAsync(string fileKey, CancellationToken cancellationToken = default);
+
     Task<string> GetPublicUrlAsync(MediaFile mediaFile, CancellationToken cancellationToken = default);
 }

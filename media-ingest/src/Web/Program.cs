@@ -64,6 +64,8 @@ app.Map("/", (HttpContext context) =>
 
 app.MapEndpoints();
 
+app.UseInfrastructure();
+
 app.Run();
 
 public partial class Program { }
