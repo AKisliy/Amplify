@@ -118,9 +118,9 @@ export function MediaAssetsPanel({ isOpen, projectId }: MediaAssetsPanelProps) {
     (e: React.DragEvent<HTMLDivElement>, asset: AmbassadorImage) => {
       const mediaType = asset.imageType === 1 ? "video" : "image";
       const payload: MediaAssetDragPayload = {
-        url: asset.imageUrl,
+        url: mediaApi.getMediaUrl(asset.mediaId, "tiny"),
         mediaType,
-        id: asset.id,
+        id: asset.mediaId,
       };
       e.dataTransfer.setData("application/amplify-media", JSON.stringify(payload));
       e.dataTransfer.effectAllowed = "copy";
@@ -205,7 +205,7 @@ export function MediaAssetsPanel({ isOpen, projectId }: MediaAssetsPanelProps) {
               <div className="grid grid-cols-2 gap-1.5">
                 {images.map((asset) => (
                   <AssetCard
-                    key={asset.id}
+                    key={asset.mediaId}
                     asset={asset}
                     onDragStart={handleDragStart}
                   />
@@ -251,7 +251,7 @@ function AssetCard({
         <div className="relative w-full h-full bg-black">
           {/* Real video thumbnail — browser loads first frame from metadata */}
           <video
-            src={asset.imageUrl}
+            src={mediaApi.getMediaUrl(asset.mediaId)}
             className="w-full h-full object-cover"
             muted
             playsInline
@@ -272,7 +272,7 @@ function AssetCard({
       ) : (
         // eslint-disable-next-line @next/next/no-img-element
         <img
-          src={asset.imageUrl}
+          src={mediaApi.getMediaUrl(asset.mediaId)}
           alt=""
           className="w-full h-full object-cover"
           onError={() => setImgError(true)}

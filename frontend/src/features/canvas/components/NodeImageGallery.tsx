@@ -23,6 +23,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { mediaUrl } from "@/lib/media";
+import { AmplifyImage } from "@/features/media/components/AmplifyImage";
 import type { ImageBatch, ImageViewMode } from "../types";
 import { FullscreenGallery } from "./FullscreenGallery";
 
@@ -54,6 +55,12 @@ export interface NodeImageGalleryProps {
 // Single image card with load state
 // ---------------------------------------------------------------------------
 
+function toAmplifyProps(uuidOrUrl: string): { mediaId?: string; src?: string } {
+  if (!uuidOrUrl) return {};
+  if (uuidOrUrl.startsWith("http") || uuidOrUrl.startsWith("/")) return { src: uuidOrUrl };
+  return { mediaId: uuidOrUrl };
+}
+
 function ImageCard({
   uuid,
   onClick,
@@ -64,7 +71,6 @@ function ImageCard({
   className?: string;
 }) {
   const [status, setStatus] = useState<"loading" | "loaded" | "error">("loading");
-  const url = resolveImgUrl(uuid);
 
   return (
     // eslint-disable-next-line jsx-a11y/click-events-have-key-events
@@ -91,12 +97,12 @@ function ImageCard({
           <span className="text-[9px] text-red-400/40">Error</span>
         </div>
       )}
-      {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img
-        src={url}
+      <AmplifyImage
+        {...toAmplifyProps(uuid)}
         alt=""
+        sizes="(max-width: 768px) 100vw, 200px"
         className={cn(
-          "nodrag nopan nowheel w-full h-full object-cover transition-opacity duration-300",
+          "nodrag nopan nowheel transition-opacity duration-300",
           status === "loaded" ? "opacity-100" : "opacity-0"
         )}
         onLoad={() => setStatus("loaded")}

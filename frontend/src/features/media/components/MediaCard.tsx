@@ -1,10 +1,10 @@
 "use client";
 
-import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
 import { Trash2, Film, AlertCircle, CheckCircle2, Expand } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { AmplifyImage } from "@/features/media/components/AmplifyImage";
 import type { UploadedMedia } from "@/features/media/useMediaUpload";
 
 interface MediaCardProps {
@@ -48,15 +48,13 @@ export function MediaCard({ media, onDelete, onOpen, className }: MediaCardProps
           }}
         />
       ) : (
-          <Image
-            src={media.url}
-            alt={media.name || "Ambassador gallery media"}
-            fill
-            sizes="(max-width: 768px) 50vw, 25vw"
-            className="object-cover transition-transform duration-300 group-hover:scale-105"
-            blurDataURL={media.tinyUrl}
-            placeholder="blur"
-          />
+        <AmplifyImage
+          src={media.url}
+          tinyUrl={media.tinyUrl}
+          alt={media.name || "Ambassador gallery media"}
+          sizes="(max-width: 768px) 50vw, 25vw"
+          className="transition-transform duration-300 group-hover:scale-105"
+        />
       )}
 
       {/* Video badge */}

@@ -35,8 +35,6 @@ function extractMediaId(url: string): string {
 function resolveType(img: AmbassadorImage): MediaType {
   // imageType: 0 = image, 1 = video
   if (img.imageType === 1) return "video";
-  // Fallback: URL heuristic
-  if (img.imageUrl?.toLowerCase()?.match(/\.(mp4|webm|mov)(\?|$)/)) return "video";
   return "image";
 }
 
@@ -62,17 +60,17 @@ export function Gallery({ ambassadorId, images, onImagesChange }: GalleryProps) 
     const committedItems: UploadedMedia[] = images.map((img, i) => {
       // Use mediaId extracted from URL as displayId so it matches the id
       // assigned at upload start — this prevents a key change on refetch.
-      const mediaId = extractMediaId(img.imageUrl);
-      const displayId = mediaId || `persist-${i}-${img.imageUrl?.slice(-8)}`;
+      const mediaId = img.mediaId;
+      const displayId = mediaId;
 
       // Store link-record id (img.id) for DELETE calls.
-      const backendId = img.id || displayId;
+      const backendId = displayId;
       linkIdMapRef.current.set(displayId, backendId);
 
       return {
         id: displayId,
         tinyUrl: mediaApi.getMediaUrl(mediaId, "tiny"),
-        url: img.imageUrl,
+        url: mediaApi.getMediaUrl(mediaId),
         type: resolveType(img),
         name: "Ambassador media",
         size: 0,
