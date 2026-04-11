@@ -20,6 +20,7 @@ import { cn } from "@/lib/utils";
 import { mediaApi, detectMediaType } from "@/features/media/api";
 import { ambassadorApi, projectApi } from "@/features/ambassadors/services/api";
 import type { AmbassadorImage } from "@/features/ambassadors/types";
+import { AmplifyImage } from "@/features/media/components/AmplifyImage";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -270,8 +271,8 @@ function AssetCard({
           <ImageIcon className="w-6 h-6 text-muted-foreground/20" />
         </div>
       ) : (
-        // eslint-disable-next-line @next/next/no-img-element
-        <img
+        <AmplifyImage
+          mediaId={asset.mediaId}
           src={mediaApi.getMediaUrl(asset.mediaId)}
           alt=""
           className="w-full h-full object-cover"
