@@ -20,6 +20,7 @@ import { cn } from "@/lib/utils";
 import { useProjects } from "@/features/ambassadors/hooks/useProjects";
 import { useProjectAssets } from "@/features/ambassadors/hooks/useProjectAssets";
 import type { ProjectAsset } from "@/features/ambassadors/types";
+import { AmplifyImage } from "@/features/media/components/AmplifyImage";
 
 // ---------------------------------------------------------------------------
 // Time-group helpers
@@ -98,14 +99,13 @@ function AssetCard({ asset, projectId }: { asset: ProjectAsset; projectId: strin
             }}
           />
         ) : (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img
+          <AmplifyImage
+            mediaId={asset.mediaId}
             src={asset.mediaUrl}
             alt="Generated asset"
             className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-[1.03]"
           />
         )}
-
         {/* Gradient scrim */}
         <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-200" />
 
