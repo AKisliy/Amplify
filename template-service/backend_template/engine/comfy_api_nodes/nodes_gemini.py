@@ -164,44 +164,68 @@ def get_text_from_response(response: GeminiGenerateContentResponse) -> str:
 
 
 async def upload_images_and_get_uuids(cls: type[IO.ComfyNode], response: GeminiGenerateContentResponse) -> str:
+    import requests
+    import asyncio
+    import logging
+
     image_uuids: list[str] = []
     parts = get_parts_by_type(response, "image/*")
-    
-    upload_url = f"{media_ingest_config.media_ingest_url}/internal/media"
-    
+    base_url = f"{media_ingest_config.media_ingest_url}/internal/media"
+
     for idx, part in enumerate(parts):
         if part.inlineData:
             image_data = base64.b64decode(part.inlineData.data)
-            
+
             ext = "png"
+            content_type = f"image/{ext}"
             if part.inlineData.mimeType:
                 mime = part.inlineData.mimeType.value
                 if "jpeg" in mime or "jpg" in mime:
                     ext = "jpg"
+                    content_type = "image/jpeg"
                 elif "webp" in mime:
                     ext = "webp"
-            
+                    content_type = "image/webp"
+
             filename = f"gemini_output_{uuid.uuid4().hex[:8]}.{ext}"
-            
-            import requests
-            import asyncio
-            import logging
-            
+            file_size = len(image_data)
+
             def safe_sync_upload():
-                resp = requests.post(
-                    upload_url, 
-                    headers={"Accept": "application/json"},
-                    files={"file": (filename, image_data, f"image/{ext}")}
+                # 1. Register and get presigned PUT URL
+                register_resp = requests.post(
+                    f"{base_url}/presigned-upload",
+                    json={"fileName": filename, "contentType": content_type, "fileSize": file_size},
+                    timeout=30,
                 )
-                resp.raise_for_status()
-                return resp.json()
+                register_resp.raise_for_status()
+                data = register_resp.json()
+                media_id: str = data["mediaId"]
+                upload_url: str = data["uploadUrl"]
+
+                # 2. PUT bytes directly to S3
+                put_resp = requests.put(
+                    upload_url,
+                    data=image_data,
+                    headers={"Content-Type": content_type},
+                    timeout=120,
+                )
+                put_resp.raise_for_status()
+
+                # 3. Confirm upload — triggers preprocessing pipeline
+                confirm_resp = requests.post(
+                    f"{base_url}/{media_id}/upload-completed",
+                    timeout=30,
+                )
+                confirm_resp.raise_for_status()
+
+                return media_id
 
             try:
-                # Delegate the blocking IO to a background OS thread to save the event loop
-                json_data = await asyncio.to_thread(safe_sync_upload)
-                image_uuids.append(json_data["mediaId"])
+                # Delegate blocking IO to a background OS thread to save the event loop
+                media_id = await asyncio.to_thread(safe_sync_upload)
+                image_uuids.append(media_id)
             except Exception as e:
-                logging.error(f"Failed to upload to Media Ingest API via requests thread: {e}")
+                logging.error(f"Failed to upload Gemini image to media-ingest: {e}")
                 raise
 
         else:

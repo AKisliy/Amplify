@@ -1,4 +1,5 @@
 import api from "@/lib/axios";
+import { mediaApi } from "@/features/media/api";
 import { Ambassador, CreateAmbassadorPayload, UpdateAmbassadorPayload } from "../types";
 
 const BASE_URL = "/ambassadors";
@@ -27,8 +28,6 @@ export const deleteAmbassador = async (id: string): Promise<void> => {
 };
 
 export const uploadMedia = async (file: File): Promise<string> => {
-  const formData = new FormData();
-  formData.append("file", file);
-  const { data } = await api.post<{ mediaId: string }>("/images", formData);
-  return data.mediaId;
+  const result = await mediaApi.uploadFile(file);
+  return result.mediaId;
 };
