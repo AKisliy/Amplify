@@ -4,14 +4,13 @@
 // AssetDetailPage — Full view of a single generated asset
 // =============================================================================
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 import {
   ArrowLeft,
   ImageIcon,
   Video,
-  Play,
   FileQuestion,
   Send,
   Loader2,
@@ -36,6 +35,7 @@ import type { ProjectAsset, PublicationRecord } from "@/features/ambassadors/typ
 import { getTemplateV1TemplatesTemplateIdGet } from "@/lib/api/template-service";
 import { useHubConnection } from "@/hooks/useHubConnection";
 import { AmplifyImage } from "@/features/media/components/AmplifyImage";
+import { AmplifyVideo } from "@/features/media/components/AmplifyVideo";
 
 type TemplateMeta = { id: string; name: string } | null | undefined;
 
@@ -251,8 +251,6 @@ export default function AssetDetailPage() {
   const [records, setRecords] = useState<PublicationRecord[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [videoPlaying, setVideoPlaying] = useState(false);
-  const videoRef = useRef<HTMLVideoElement>(null);
 
   useEffect(() => {
     if (!assetId) return;
@@ -347,32 +345,12 @@ export default function AssetDetailPage() {
                   isVideo ? "aspect-video" : "aspect-video"
                 )}>
                   {isVideo ? (
-                    <>
-                      <video
-                        ref={videoRef}
-                        src={asset.mediaUrl}
-                        className="w-full h-full object-contain"
-                        preload="none"
-                        playsInline
-                        controls={videoPlaying}
-                        onEnded={() => setVideoPlaying(false)}
-                      />
-                      <AnimatePresence>
-                        {!videoPlaying && (
-                          <motion.button
-                            initial={{ opacity: 0 }}
-                            animate={{ opacity: 1 }}
-                            exit={{ opacity: 0 }}
-                            onClick={() => { setVideoPlaying(true); videoRef.current?.play(); }}
-                            className="absolute inset-0 flex items-center justify-center group"
-                          >
-                            <div className="w-16 h-16 rounded-full bg-black/60 backdrop-blur-sm border border-white/20 flex items-center justify-center group-hover:bg-black/80 group-hover:scale-110 transition-all duration-200">
-                              <Play className="w-6 h-6 text-white ml-0.5" />
-                            </div>
-                          </motion.button>
-                        )}
-                      </AnimatePresence>
-                    </>
+                    <AmplifyVideo
+                      src={asset.mediaUrl}
+                      mode="click-play"
+                      lightbox
+                      className="object-contain"
+                    />
                   ) : (
                     <AmplifyImage 
                       mediaId={asset.mediaId}
