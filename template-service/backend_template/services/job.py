@@ -104,6 +104,25 @@ class JobService:
                         job.status = JobStatus.FAILED
                         await self.db.commit()
                         raise HTTPException(status_code=resp.status, detail=body)
+
+                    # The engine returns HTTP 200 even when some nodes fail
+                    # validation (partial execution). Treat any node_errors as a
+                    # hard failure so the graph is never run in a broken state.
+                    node_errors: dict = body.get("node_errors") or {}
+                    if node_errors:
+                        job.status = JobStatus.FAILED
+                        await self.db.commit()
+                        logger.warning(
+                            f"Graph validation failed for job {job.id}: {node_errors}"
+                        )
+                        raise HTTPException(
+                            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                            detail={
+                                "error": "Graph validation failed",
+                                "node_errors": node_errors,
+                            },
+                        )
+
                     prompt_id: str = body["prompt_id"]
         except aiohttp.ClientConnectorError:
             job.status = JobStatus.FAILED
