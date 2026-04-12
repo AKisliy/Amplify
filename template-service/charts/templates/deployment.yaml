@@ -57,6 +57,8 @@ spec:
               value: "{{ .Values.config.userServiceUrl }}"
             - name: VIDEO_EDITOR_URL
               value: "{{ .Values.config.videoEditorUrl }}"
+            - name: LANGFUSE_HOST
+              value: "{{ .Values.config.langfuseUrl }}"
           envFrom:
             - secretRef:
                 name: {{ .Values.secret.name }}

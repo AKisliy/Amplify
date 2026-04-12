@@ -5,6 +5,10 @@ secrets:
     key: template-service-sa-key-test
   rabbitmqUrl:
     key: rabbitmq-test
+  langfuseSecretKey:
+    key: test-langfuse-secret-key
+  langfusePublicKey:
+    key: test-langfuse-public-key
 
 config:
   mediaIngestUrl: "http://mediaingest.test-env.svc.cluster.local/media/api"
@@ -13,3 +17,4 @@ config:
   gcpStorageUri: "gs://amplify-media-test"
   userServiceUrl: "http://userservice.test-env.svc.cluster.local/userservice/api"
   videoEditorUrl: "http://video-editor.test-env.svc.cluster.local:8000"
+  langfuseUrl: "https://cloud.langfuse.com"
