@@ -56,8 +56,8 @@ export function useMediaUpload(options: UseMediaUploadOptions = {}) {
 
         const finalEntry: UploadedMedia = {
           id: result.mediaId,
-          url: mediaApi.getMediaUrl(result.mediaId, "medium"),
-          tinyUrl: mediaApi.getMediaUrl(result.mediaId, "tiny"),
+          url: mediaApi.getMediaUrl(result.mediaId, "Medium"),
+          tinyUrl: mediaApi.getMediaUrl(result.mediaId, "Tiny"),
           type: result.type,
           name: file.name,
           size: file.size,

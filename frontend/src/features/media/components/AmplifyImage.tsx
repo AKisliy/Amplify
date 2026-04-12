@@ -8,7 +8,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { mediaApi } from "@/features/media/api";
 
-type MediaVariant = "tiny" | "medium" | "original";
+export type MediaVariant = "Tiny" | "Medium" | "Original";
 
 interface AmplifyImageProps {
   /**
@@ -106,7 +106,7 @@ function LightboxPortal({
 export function AmplifyImage({
   mediaId,
   src,
-  variant = "medium",
+  variant = "Medium",
   tinyUrl,
   lightbox = false,
   alt = "",
@@ -118,9 +118,9 @@ export function AmplifyImage({
   const [lightboxOpen, setLightboxOpen] = useState(false);
 
   const resolvedSrc = src ?? (mediaId ? mediaApi.getMediaUrl(mediaId, variant) : "");
-  const resolvedTiny = tinyUrl ?? (mediaId ? mediaApi.getMediaUrl(mediaId, "tiny") : undefined);
+  const resolvedTiny = tinyUrl ?? (mediaId ? mediaApi.getMediaUrl(mediaId, "Tiny") : undefined);
   // For the lightbox always show original quality
-  const lightboxSrc = src ?? (mediaId ? mediaApi.getMediaUrl(mediaId, "original") : resolvedSrc);
+  const lightboxSrc = src ?? (mediaId ? mediaApi.getMediaUrl(mediaId, "Original") : resolvedSrc);
 
   if (!resolvedSrc) return null;
 

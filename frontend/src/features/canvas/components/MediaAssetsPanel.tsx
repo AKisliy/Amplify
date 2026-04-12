@@ -119,7 +119,7 @@ export function MediaAssetsPanel({ isOpen, projectId }: MediaAssetsPanelProps) {
     (e: React.DragEvent<HTMLDivElement>, asset: AmbassadorImage) => {
       const mediaType = asset.imageType === 1 ? "video" : "image";
       const payload: MediaAssetDragPayload = {
-        url: mediaApi.getMediaUrl(asset.mediaId, "tiny"),
+        url: mediaApi.getMediaUrl(asset.mediaId, "Tiny"),
         mediaType,
         id: asset.mediaId,
       };

@@ -69,7 +69,7 @@ export function Gallery({ ambassadorId, images, onImagesChange }: GalleryProps) 
 
       return {
         id: displayId,
-        tinyUrl: mediaApi.getMediaUrl(mediaId, "tiny"),
+        tinyUrl: mediaApi.getMediaUrl(mediaId, "Tiny"),
         url: mediaApi.getMediaUrl(mediaId),
         type: resolveType(img),
         name: "Ambassador media",
@@ -223,7 +223,7 @@ export function Gallery({ ambassadorId, images, onImagesChange }: GalleryProps) 
           setDisplayItems((prev) =>
             prev.map((item) =>
               item.id === mediaId
-                ? { ...item, url: mediaApi.getMediaUrl(mediaId, "medium"), tinyUrl: mediaApi.getMediaUrl(mediaId, "tiny"), progress: 100 }
+                ? { ...item, url: mediaApi.getMediaUrl(mediaId, "Medium"), tinyUrl: mediaApi.getMediaUrl(mediaId, "Tiny"), progress: 100 }
                 : item
             )
           );

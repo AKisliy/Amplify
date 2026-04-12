@@ -1,5 +1,6 @@
 import axios from "axios";
 import api from "@/lib/axios";
+import { MediaVariant } from "./components/AmplifyImage";
 
 export interface MediaUploadResult {
   mediaId: string;
@@ -90,8 +91,8 @@ export const mediaApi = {
    * Get the proxied URL for a media item (same-domain, works with next/image).
    * variant: "original" | "medium" | "tiny"
    */
-  getMediaUrl(mediaId: string, variant: "original" | "medium" | "tiny" = "original"): string {
+  getMediaUrl(mediaId: string, variant: MediaVariant = "Original"): string {
     const base = `/media/${mediaId}`;
-    return variant === "original" ? base : `${base}?variant=${variant}`;
+    return variant === "Original" ? base : `${base}?variant=${variant}`;
   },
 };
