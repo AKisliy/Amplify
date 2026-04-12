@@ -34,6 +34,11 @@ class ProjectTemplateBase(BaseModel):
         description="The ComfyUI-style node graph definition. Defaults to empty object."
     )
 
+    auto_list_ids: list[UUID] = Field(
+        default_factory=list,
+        description="AutoList UUIDs associated with this template for auto-publishing."
+    )
+
 
 # -----------------------------------------------------------------------------
 # 2. The Create Rule (Input Specialization)
@@ -69,8 +74,12 @@ class ProjectTemplateUpdate(BaseModel):
     current_graph_json: dict[str, Any] | None = Field(
         default=None
     )
-    
-    # NOTE: project_id is intentionally omitted. 
+
+    auto_list_ids: list[UUID] | None = Field(
+        default=None
+    )
+
+    # NOTE: project_id is intentionally omitted.
     # You cannot move a template to a different project via Update.
 
 

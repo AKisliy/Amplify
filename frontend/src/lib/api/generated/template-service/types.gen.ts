@@ -140,6 +140,12 @@ export type ProjectTemplateResponse = {
         [key: string]: unknown;
     };
     /**
+     * Auto List Ids
+     *
+     * AutoList UUIDs associated with this template for auto-publishing.
+     */
+    auto_list_ids?: Array<string>;
+    /**
      * Id
      */
     id: string;
@@ -175,6 +181,10 @@ export type ProjectTemplateUpdate = {
     current_graph_json?: {
         [key: string]: unknown;
     } | null;
+    /**
+     * Auto List Ids
+     */
+    auto_list_ids?: Array<string> | null;
 };
 
 /**

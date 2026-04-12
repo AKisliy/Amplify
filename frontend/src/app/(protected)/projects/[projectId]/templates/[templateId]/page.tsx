@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { motion } from "framer-motion";
-import { ArrowLeft, Play, PanelLeft, Image as ImageIcon, Sparkles } from "lucide-react";
+import { ArrowLeft, Play, PanelLeft, Image as ImageIcon, Sparkles, Settings } from "lucide-react";
 import {
   ReactFlow,
   Background,
@@ -39,6 +39,7 @@ import { NodeLibrarySidebar } from "@/features/canvas/components/NodeLibrarySide
 import { MediaAssetsPanel } from "@/features/canvas/components/MediaAssetsPanel";
 import { TemplateMenu } from "@/features/canvas/components/TemplateMenu";
 import { GeneratedMediaPanel } from "@/features/canvas/components/GeneratedMediaPanel";
+import { TemplateSettingsPanel } from "@/features/canvas/components/TemplateSettingsPanel";
 import { useCanvasStore } from "@/features/canvas/hooks/useCanvasStore";
 import { useNodeRegistry } from "@/features/canvas/hooks/useNodeRegistry";
 import { getNodesByCategory, getNodeDef } from "@/features/canvas/registry";
@@ -83,6 +84,8 @@ export default function TemplateCanvasPage() {
   // ── UI state ────────────────────────────────────────────────────────────────
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [sidebarTab,  setSidebarTab]  = useState<SidebarTab>("nodes");
+  const [settingsPanelOpen, setSettingsPanelOpen] = useState(false);
+  const [autoListIds, setAutoListIds] = useState<string[]>([]);
 
   const [contextMenu, setContextMenu] = useState<{
     screenPos: { x: number; y: number };
@@ -100,13 +103,14 @@ export default function TemplateCanvasPage() {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const rfInstanceRef = useRef<any>(null);
 
-  // Fetch template name
+  // Fetch template metadata (name + autoListIds)
   useEffect(() => {
     if (!templateId) return;
     (async () => {
       try {
         const response = await getTemplateV1TemplatesTemplateIdGet({ path: { template_id: templateId } });
         if (response?.data?.name) setTemplateName(response.data.name);
+        if (response?.data?.auto_list_ids) setAutoListIds(response.data.auto_list_ids);
       } catch (err) {
         console.error("Failed to fetch template name:", err);
       }
@@ -369,6 +373,19 @@ export default function TemplateCanvasPage() {
     await submitWorkflow(templateId);
   }, [submitWorkflow, templateId]);
 
+  // ── AutoList settings ────────────────────────────────────────────────────────
+  const handleAutoListIdsChange = useCallback(async (ids: string[]) => {
+    setAutoListIds(ids);
+    try {
+      await updateTemplateV1TemplatesTemplateIdPatch({
+        path: { template_id: templateId },
+        body: { auto_list_ids: ids },
+      });
+    } catch {
+      // Silently fail — UI state is already updated
+    }
+  }, [templateId]);
+
   // ── Port-type compatibility ────────────────────────────────────────────────
   // Defines which source port types can connect to which target port types.
   // COMFY_AUTOGROW_V3 is a wildcard slot that accepts any type.
@@ -548,6 +565,14 @@ export default function TemplateCanvasPage() {
             </span>
           )}
           <Button
+            variant="ghost" size="sm"
+            onClick={() => setSettingsPanelOpen((v) => !v)}
+            className={cn("text-muted-foreground hover:text-foreground w-8 h-8 p-0", settingsPanelOpen && "bg-white/[0.06] text-foreground")}
+            title="Template settings"
+          >
+            <Settings className="w-4 h-4" />
+          </Button>
+          <Button
             size="sm"
             onClick={handleRun}
             disabled={execution.isSubmitting}
@@ -568,7 +593,8 @@ export default function TemplateCanvasPage() {
             : <GeneratedMediaPanel isOpen={sidebarOpen} nodes={nodes} />
         }
 
-        <div className="flex-1" style={{ minHeight: 0 }}>
+        <div className="flex-1 flex" style={{ minHeight: 0 }}>
+          <div className="flex-1" style={{ minHeight: 0 }}>
           <ReactFlow
             nodes={nodesWithCallbacks as any}
             edges={edges}
@@ -604,9 +630,15 @@ export default function TemplateCanvasPage() {
                 if (d?.categoryTag === "video") return "#ef4444";
                 return "#64748b";
               }}
-              
             />
           </ReactFlow>
+          </div>
+          <TemplateSettingsPanel
+            isOpen={settingsPanelOpen}
+            projectId={projectId}
+            autoListIds={autoListIds}
+            onAutoListIdsChange={handleAutoListIdsChange}
+          />
         </div>
       </div>
 
