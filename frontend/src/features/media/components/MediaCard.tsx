@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Trash2, Film, AlertCircle, CheckCircle2, Expand } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { AmplifyImage } from "@/features/media/components/AmplifyImage";
 import type { UploadedMedia } from "@/features/media/useMediaUpload";
 
 interface MediaCardProps {
@@ -47,16 +48,12 @@ export function MediaCard({ media, onDelete, onOpen, className }: MediaCardProps
           }}
         />
       ) : (
-        // Use native <img> for external/CDN URLs — Next Image requires domain config
-        // eslint-disable-next-line @next/next/no-img-element
-        <img
+        <AmplifyImage
           src={media.url}
+          tinyUrl={media.tinyUrl}
           alt={media.name || "Ambassador gallery media"}
-          className="absolute inset-0 h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
-          onError={(e) => {
-            // If CDN URL fails, hide the broken icon gracefully
-            (e.currentTarget as HTMLImageElement).style.display = "none";
-          }}
+          sizes="(max-width: 768px) 50vw, 25vw"
+          className="transition-transform duration-300 group-hover:scale-105"
         />
       )}
 

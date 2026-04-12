@@ -81,8 +81,7 @@ export type PublicationRecord = {
 
 // Ambassador Image types
 export type AmbassadorImage = {
-  id: string;
-  imageUrl: string;
+  mediaId: string;
   imageType: number;
 };
 

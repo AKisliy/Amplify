@@ -8,6 +8,7 @@ secrets:
   s3SecretKey: test-bucket-secret-key
   connectionStringKey: userservice-db-conn 
   rabbitMqConnectionKey: rabbitmq-test
+  hangfireConnectionStringKey: media-ingest-hangfire-db-conn
 
 volumeMounts:
   - name: config-volume

@@ -55,6 +55,18 @@ namespace MediaIngest.Infrastructure.Data.Migrations
                         .HasColumnType("text")
                         .HasColumnName("original_file_name");
 
+                    b.Property<int>("ProcessingStatus")
+                        .HasColumnType("integer")
+                        .HasColumnName("processing_status");
+
+                    b.Property<string>("ThumbnailMediumKey")
+                        .HasColumnType("text")
+                        .HasColumnName("thumbnail_medium_key");
+
+                    b.Property<string>("ThumbnailTinyKey")
+                        .HasColumnType("text")
+                        .HasColumnName("thumbnail_tiny_key");
+
                     b.HasKey("Id")
                         .HasName("pk_media_files");
 

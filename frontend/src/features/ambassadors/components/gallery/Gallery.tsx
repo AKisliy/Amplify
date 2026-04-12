@@ -35,8 +35,6 @@ function extractMediaId(url: string): string {
 function resolveType(img: AmbassadorImage): MediaType {
   // imageType: 0 = image, 1 = video
   if (img.imageType === 1) return "video";
-  // Fallback: URL heuristic
-  if (img.imageUrl?.toLowerCase()?.match(/\.(mp4|webm|mov)(\?|$)/)) return "video";
   return "image";
 }
 
@@ -60,16 +58,19 @@ export function Gallery({ ambassadorId, images, onImagesChange }: GalleryProps) 
 
   useEffect(() => {
     const committedItems: UploadedMedia[] = images.map((img, i) => {
-      const displayId = img.id || extractMediaId(img.imageUrl) || `persist-${i}-${img.imageUrl?.slice(-8)}`;
+      // Use mediaId extracted from URL as displayId so it matches the id
+      // assigned at upload start — this prevents a key change on refetch.
+      const mediaId = img.mediaId;
+      const displayId = mediaId;
 
-      // Always record the backend's own id for the DELETE call.
-      // Priority: img.id (link-record id) → mediaId from URL → GCS UUID from URL
-      const backendId = img.id || extractMediaId(img.imageUrl) || displayId;
+      // Store link-record id (img.id) for DELETE calls.
+      const backendId = displayId;
       linkIdMapRef.current.set(displayId, backendId);
 
       return {
         id: displayId,
-        url: img.imageUrl,
+        tinyUrl: mediaApi.getMediaUrl(mediaId, "Tiny"),
+        url: mediaApi.getMediaUrl(mediaId),
         type: resolveType(img),
         name: "Ambassador media",
         size: 0,
@@ -113,7 +114,7 @@ export function Gallery({ ambassadorId, images, onImagesChange }: GalleryProps) 
       let mediaId: string;
       let mediaUrl: string;
       try {
-        const result = await mediaApi.uploadImage(file);
+        const result = await mediaApi.uploadFile(file);
         mediaId = result.mediaId;
         mediaUrl = mediaApi.getMediaUrl(result.mediaId);
       } catch (err: any) {
@@ -179,45 +180,50 @@ export function Gallery({ ambassadorId, images, onImagesChange }: GalleryProps) 
         }
 
         const mediaType: MediaType = file.type.startsWith("video") ? "video" : "image";
-        const tempId = `temp-${Math.random().toString(36).slice(2)}`;
 
-        const tempEntry: UploadedMedia = {
-          id: tempId,
-          url: URL.createObjectURL(file),
-          type: mediaType,
-          name: file.name,
-          size: file.size,
-          progress: 0,
-          contentType: file.type,
-        };
+        // Get mediaId BEFORE upload starts so the slot has a stable key
+        // that matches what the server will return after refetch.
+        let mediaId: string;
+        let uploadUrl: string;
+        try {
+          ({ mediaId, uploadUrl } = await mediaApi.getPresignedUpload(file));
+        } catch (err: any) {
+          const msg = err?.response?.data?.detail || err?.message || "Failed to initiate upload";
+          toast({ variant: "destructive", title: "Upload failed", description: msg });
+          continue;
+        }
 
-        setDisplayItems((prev) => [...prev, tempEntry]);
+        setDisplayItems((prev) => [
+          ...prev,
+          {
+            id: mediaId,
+            url: URL.createObjectURL(file),
+            tinyUrl: "",
+            type: mediaType,
+            name: file.name,
+            size: file.size,
+            progress: 0,
+            contentType: file.type,
+          },
+        ]);
 
         try {
-          const result = await mediaApi.uploadFile(file, (percent) => {
+          await mediaApi.uploadToS3(mediaId, uploadUrl, file, (percent) => {
             setDisplayItems((prev) =>
               prev.map((item) =>
-                item.id === tempId ? { ...item, progress: percent } : item
+                item.id === mediaId ? { ...item, progress: percent } : item
               )
             );
           });
 
-          // Use imageType 1 for videos
-          const imageType: 0 | 1 = result.type === "video" ? 1 : 0;
-          await ambassadorApi.linkAmbassadorImage(ambassadorId, result.mediaId, imageType);
+          const imageType: 0 | 1 = mediaType === "video" ? 1 : 0;
+          await ambassadorApi.linkAmbassadorImage(ambassadorId, mediaId, imageType);
 
+          // Update URL to CDN — same id, no key change, no animation
           setDisplayItems((prev) =>
             prev.map((item) =>
-              item.id === tempId
-                ? {
-                    id: result.mediaId,
-                    url: mediaApi.getMediaUrl(result.mediaId),
-                    type: result.type,
-                    name: file.name,
-                    size: file.size,
-                    progress: 100,
-                    contentType: file.type,
-                  }
+              item.id === mediaId
+                ? { ...item, url: mediaApi.getMediaUrl(mediaId, "Medium"), tinyUrl: mediaApi.getMediaUrl(mediaId, "Tiny"), progress: 100 }
                 : item
             )
           );
@@ -232,9 +238,7 @@ export function Gallery({ ambassadorId, images, onImagesChange }: GalleryProps) 
           const msg = err?.response?.data?.detail || err?.message || "Upload failed";
           setDisplayItems((prev) =>
             prev.map((item) =>
-              item.id === tempId
-                ? { ...item, error: msg, progress: undefined }
-                : item
+              item.id === mediaId ? { ...item, error: msg, progress: undefined } : item
             )
           );
           toast({ variant: "destructive", title: "Upload failed", description: msg });

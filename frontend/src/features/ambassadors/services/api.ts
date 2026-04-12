@@ -52,7 +52,7 @@ export const ambassadorApi = {
    */
   async uploadMedia(file: File): Promise<string> {
     const { mediaApi } = await import("@/features/media/api");
-    const result = await mediaApi.uploadImage(file);
+    const result = await mediaApi.uploadFile(file);
     return result.mediaId;
   },
 
@@ -62,8 +62,7 @@ export const ambassadorApi = {
   async getAmbassadorImages(id: string): Promise<AmbassadorImage[]> {
     const response = await api.get<any[]>(`/ambassadors/${id}/images`);
     return (response.data ?? []).map((item: any) => ({
-      id: item.id ?? item.Id ?? item.imageId ?? item.ImageId ?? "",
-      imageUrl: item.imageUrl ?? item.ImageUrl ?? item.url ?? item.Url ?? "",
+      mediaId: item.mediaId ?? item.MediaId ?? "",
       imageType: item.imageType ?? item.ImageType ?? 0,
     }));
   },

@@ -1,4 +1,6 @@
 ﻿using System.Reflection;
+using Hangfire;
+using Hangfire.PostgreSql;
 using MediaIngest.Application.Common.Interfaces;
 using MediaIngest.Application.Common.Options;
 using MediaIngest.Application.Media.Commands.Upload;
@@ -9,8 +11,10 @@ using MediaIngest.Infrastructure.Configuration;
 using MediaIngest.Infrastructure.Data;
 using MediaIngest.Infrastructure.Data.Interceptors;
 using MediaIngest.Infrastructure.FileStorage;
+using MediaIngest.Infrastructure.Hangfire;
 using MediaIngest.Infrastructure.LinkGenerators;
 using MediaIngest.Infrastructure.MediaLinkResolvers;
+using Microsoft.AspNetCore.Builder;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Diagnostics;
 using Microsoft.EntityFrameworkCore.Migrations;
@@ -24,6 +28,13 @@ namespace Microsoft.Extensions.DependencyInjection;
 
 public static class DependencyInjection
 {
+    public static IApplicationBuilder UseInfrastructure(this WebApplication app)
+    {
+        app.UseScheduler();
+
+        return app;
+    }
+
     public static void AddInfrastructureServices(this IHostApplicationBuilder builder)
     {
         builder.Services.AddInfrastructureOptions();
@@ -68,6 +79,8 @@ public static class DependencyInjection
                     .AllowAnyMethod()
                     .AllowCredentials()));
         }
+
+        builder.AddScheduler();
     }
 
     private static void AddApplicationDb(this IServiceCollection services)
@@ -87,7 +100,6 @@ public static class DependencyInjection
                 );
             options.UseSnakeCaseNamingConvention();
             options.AddInterceptors(sp.GetServices<ISaveChangesInterceptor>());
-            options.UseNpgsql(dbOptions.Default);
         });
 
         services.AddScoped<ApplicationDbContextInitialiser>();

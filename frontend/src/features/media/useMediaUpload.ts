@@ -5,7 +5,8 @@ import { mediaApi, validateFile, type MediaType } from "@/features/media/api";
 
 export interface UploadedMedia {
   id: string;         // mediaId from backend
-  url: string;        // public CDN URL
+  url: string;        // medium variant URL (or original while processing)
+  tinyUrl: string;    // tiny variant URL for blur placeholder
   type: MediaType;
   name: string;
   size: number;
@@ -35,6 +36,7 @@ export function useMediaUpload(options: UseMediaUploadOptions = {}) {
       const tempId = `temp-${Math.random().toString(36).slice(2)}`;
       const tempEntry: UploadedMedia = {
         id: tempId,
+        tinyUrl: URL.createObjectURL(file),
         url: URL.createObjectURL(file),
         type: file.type.startsWith("video") ? "video" : "image",
         name: file.name,
@@ -54,7 +56,8 @@ export function useMediaUpload(options: UseMediaUploadOptions = {}) {
 
         const finalEntry: UploadedMedia = {
           id: result.mediaId,
-          url: mediaApi.getMediaUrl(result.mediaId),
+          url: mediaApi.getMediaUrl(result.mediaId, "Medium"),
+          tinyUrl: mediaApi.getMediaUrl(result.mediaId, "Tiny"),
           type: result.type,
           name: file.name,
           size: file.size,

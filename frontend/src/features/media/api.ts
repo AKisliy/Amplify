@@ -1,8 +1,9 @@
+import axios from "axios";
 import api from "@/lib/axios";
+import { MediaVariant } from "./components/AmplifyImage";
 
 export interface MediaUploadResult {
   mediaId: string;
-  mediaPath: string;
   contentType: string;
 }
 
@@ -41,83 +42,57 @@ export function validateFile(file: File): string | null {
 
 export const mediaApi = {
   /**
-   * Upload an image. POST /api/images
-   * Accepts JPEG, PNG, WebP, GIF. Max 10 MB.
+   * Step 1: Register the file in media-ingest and get a presigned PUT URL.
+   * POST /api/media/presigned-upload → { mediaId, uploadUrl }
    */
-  async uploadImage(
+  async getPresignedUpload(file: File): Promise<{ mediaId: string; uploadUrl: string }> {
+    const { data } = await api.post<{ mediaId: string; uploadUrl: string }>(
+      "media/presigned-upload",
+      { fileName: file.name, contentType: file.type, fileSize: file.size }
+    );
+    return data;
+  },
+
+  /**
+   * Step 2: PUT the file directly to S3/GCS via the presigned URL,
+   * then confirm the upload to media-ingest.
+   */
+  async uploadToS3(
+    mediaId: string,
+    uploadUrl: string,
     file: File,
     onProgress?: (percent: number) => void
-  ): Promise<MediaUploadResult> {
-    const formData = new FormData();
-    formData.append("file", file);
-    const response = await api.post<MediaUploadResult>("images", formData, {
-      headers: { "Content-Type": "multipart/form-data" },
+  ): Promise<void> {
+    await axios.put(uploadUrl, file, {
+      headers: { "Content-Type": file.type },
       onUploadProgress: (e) => {
         if (onProgress && e.total) {
           onProgress(Math.round((e.loaded * 100) / e.total));
         }
       },
     });
-    
-    const data = response.data as any;
-    return {
-      mediaId: data.mediaId || data.MediaId || "",
-      mediaPath: data.mediaPath || data.MediaPath || "",
-      contentType: data.contentType || data.ContentType || "",
-    };
+    await api.post(`media/${mediaId}/upload-completed`);
   },
 
   /**
-   * Upload a video. POST /api/videos
-   * Accepts MP4, WebM. Max 100 MB.
-   */
-  async uploadVideo(
-    file: File,
-    onProgress?: (percent: number) => void
-  ): Promise<MediaUploadResult> {
-    const formData = new FormData();
-    formData.append("file", file);
-    const response = await api.post<MediaUploadResult>("videos", formData, {
-      headers: { "Content-Type": "multipart/form-data" },
-      onUploadProgress: (e) => {
-        if (onProgress && e.total) {
-          onProgress(Math.round((e.loaded * 100) / e.total));
-        }
-      },
-    });
-
-    const data = response.data as any;
-    return {
-      mediaId: data.mediaId || data.MediaId || "",
-      mediaPath: data.mediaPath || data.MediaPath || "",
-      contentType: data.contentType || data.ContentType || "",
-    };
-  },
-
-  /**
-   * Upload any media file — auto-detects type
+   * Convenience: get presigned URL, upload to S3, then confirm. Returns mediaId and type.
    */
   async uploadFile(
     file: File,
     onProgress?: (percent: number) => void
   ): Promise<MediaUploadResult & { type: MediaType }> {
     const type = detectMediaType(file);
-    const result =
-      type === "video"
-        ? await this.uploadVideo(file, onProgress)
-        : await this.uploadImage(file, onProgress);
-    return { ...result, type };
+    const { mediaId, uploadUrl } = await this.getPresignedUpload(file);
+    await this.uploadToS3(mediaId, uploadUrl, file, onProgress);
+    return { mediaId, contentType: file.type, type };
   },
 
   /**
-   * Get the public CDN URL for a media item.
-   * GET /api/media/{mediaId} — returns a redirect to CDN.
-   * Use this as the src for <img> or <video> tags directly.
+   * Get the proxied URL for a media item (same-domain, works with next/image).
+   * variant: "original" | "medium" | "tiny"
    */
-  getMediaUrl(mediaId: string): string {
-    const envUrl =
-      process.env.NEXT_PUBLIC_API_BASE_URL ||
-      "https://staging.alexeykiselev.tech";
-    return `${envUrl}/media/api/media/${mediaId}`;
+  getMediaUrl(mediaId: string, variant: MediaVariant = "Original"): string {
+    const base = `/media/${mediaId}`;
+    return variant === "Original" ? base : `${base}?variant=${variant}`;
   },
 };

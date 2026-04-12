@@ -35,6 +35,7 @@ import { projectApi } from "@/features/ambassadors/services/api";
 import type { ProjectAsset, PublicationRecord } from "@/features/ambassadors/types";
 import { getTemplateV1TemplatesTemplateIdGet } from "@/lib/api/template-service";
 import { useHubConnection } from "@/hooks/useHubConnection";
+import { AmplifyImage } from "@/features/media/components/AmplifyImage";
 
 type TemplateMeta = { id: string; name: string } | null | undefined;
 
@@ -373,8 +374,12 @@ export default function AssetDetailPage() {
                       </AnimatePresence>
                     </>
                   ) : (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img src={asset.mediaUrl} alt="Generated asset" className="w-full h-full object-contain" />
+                    <AmplifyImage 
+                      mediaId={asset.mediaId}
+                      src={asset.mediaUrl} 
+                      alt="Generated asset" 
+                      className="w-full h-full object-contain" 
+                    />
                   )}
 
                   {/* Type badge */}
