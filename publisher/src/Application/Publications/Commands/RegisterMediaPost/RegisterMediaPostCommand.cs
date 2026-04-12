@@ -11,7 +11,7 @@ public record RegisterMediaPostCommand(
     Guid UserId,
     Guid ProjectId,
     Guid MediaId,
-    Guid? AutoListId = null) : IRequest;
+    List<Guid>? AutoListIds = null) : IRequest;
 
 public class RegisterMediaPostCommandHandler(
     ILogger<RegisterMediaPostCommandHandler> logger,
@@ -34,13 +34,17 @@ public class RegisterMediaPostCommandHandler(
             UserId = request.UserId,
             ProjectId = request.ProjectId,
             MediaId = request.MediaId,
-            AutoListId = request.AutoListId,
         };
 
         dbContext.MediaPosts.Add(post);
 
-        if (request.AutoListId.HasValue)
-            await ScheduleInAutoList(post, request.AutoListId.Value, cancellationToken);
+        if (request.AutoListIds?.Count > 0)
+        {
+            foreach (var autoListId in request.AutoListIds)
+            {
+                await ScheduleInAutoList(post, autoListId, cancellationToken);
+            }
+        }
 
         await dbContext.SaveChangesAsync(cancellationToken);
 
@@ -120,13 +124,13 @@ public class RegisterMediaPostCommandHandler(
     private static IEnumerable<System.DayOfWeek> GetSystemDays(int mask)
     {
         var flags = (Domain.Enums.DayOfWeek)mask;
-        if (flags.HasFlag(Domain.Enums.DayOfWeek.Monday))    yield return System.DayOfWeek.Monday;
-        if (flags.HasFlag(Domain.Enums.DayOfWeek.Tuesday))   yield return System.DayOfWeek.Tuesday;
+        if (flags.HasFlag(Domain.Enums.DayOfWeek.Monday)) yield return System.DayOfWeek.Monday;
+        if (flags.HasFlag(Domain.Enums.DayOfWeek.Tuesday)) yield return System.DayOfWeek.Tuesday;
         if (flags.HasFlag(Domain.Enums.DayOfWeek.Wednesday)) yield return System.DayOfWeek.Wednesday;
-        if (flags.HasFlag(Domain.Enums.DayOfWeek.Thursday))  yield return System.DayOfWeek.Thursday;
-        if (flags.HasFlag(Domain.Enums.DayOfWeek.Friday))    yield return System.DayOfWeek.Friday;
-        if (flags.HasFlag(Domain.Enums.DayOfWeek.Saturday))  yield return System.DayOfWeek.Saturday;
-        if (flags.HasFlag(Domain.Enums.DayOfWeek.Sunday))    yield return System.DayOfWeek.Sunday;
+        if (flags.HasFlag(Domain.Enums.DayOfWeek.Thursday)) yield return System.DayOfWeek.Thursday;
+        if (flags.HasFlag(Domain.Enums.DayOfWeek.Friday)) yield return System.DayOfWeek.Friday;
+        if (flags.HasFlag(Domain.Enums.DayOfWeek.Saturday)) yield return System.DayOfWeek.Saturday;
+        if (flags.HasFlag(Domain.Enums.DayOfWeek.Sunday)) yield return System.DayOfWeek.Sunday;
     }
 
     private static DateTimeOffset NextOccurrence(System.DayOfWeek targetDay, TimeOnly time, DateTimeOffset after)
