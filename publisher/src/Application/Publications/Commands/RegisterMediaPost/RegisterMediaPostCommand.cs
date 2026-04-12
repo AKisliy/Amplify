@@ -72,14 +72,14 @@ public class RegisterMediaPostCommandHandler(
         }
 
         // Find slots already occupied by other scheduled records in this AutoList
-        var occupiedSlots = await dbContext.PublicationRecords
-            .Where(r => r.AutoListEntryId != null &&
-                        r.ScheduledAt != null &&
-                        r.Status == PublicationStatus.Scheduled &&
-                        r.MediaPost.AutoListId == autoListId)
-            .Select(r => r.ScheduledAt!.Value)
-            .Distinct()
-            .ToListAsync(ct);
+        var occupiedSlots = await (
+            from r in dbContext.PublicationRecords
+            join e in dbContext.AutoListEntries on r.AutoListEntryId equals e.Id
+            where r.ScheduledAt != null &&
+                  r.Status == PublicationStatus.Scheduled &&
+                  e.AutoListId == autoListId
+            select r.ScheduledAt!.Value
+        ).Distinct().ToListAsync(ct);
 
         var now = DateTimeOffset.UtcNow;
 
