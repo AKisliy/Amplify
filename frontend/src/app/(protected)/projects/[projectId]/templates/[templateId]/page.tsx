@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { motion } from "framer-motion";
-import { ArrowLeft, Play, PanelLeft, Image as ImageIcon, Sparkles, Settings } from "lucide-react";
+import { ArrowLeft, Play, PanelLeft, Image as ImageIcon, Sparkles } from "lucide-react";
 import {
   ReactFlow,
   Background,
@@ -39,7 +39,8 @@ import { NodeLibrarySidebar } from "@/features/canvas/components/NodeLibrarySide
 import { MediaAssetsPanel } from "@/features/canvas/components/MediaAssetsPanel";
 import { TemplateMenu } from "@/features/canvas/components/TemplateMenu";
 import { GeneratedMediaPanel } from "@/features/canvas/components/GeneratedMediaPanel";
-import { TemplateSettingsPanel } from "@/features/canvas/components/TemplateSettingsPanel";
+import { TemplateSettingsSidebar } from "@/features/canvas/components/TemplateSettingsSidebar";
+import { SidebarProvider, SidebarInset } from "@/components/ui/sidebar";
 import { useCanvasStore } from "@/features/canvas/hooks/useCanvasStore";
 import { useNodeRegistry } from "@/features/canvas/hooks/useNodeRegistry";
 import { getNodesByCategory, getNodeDef } from "@/features/canvas/registry";
@@ -84,7 +85,6 @@ export default function TemplateCanvasPage() {
   // ── UI state ────────────────────────────────────────────────────────────────
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [sidebarTab,  setSidebarTab]  = useState<SidebarTab>("nodes");
-  const [settingsPanelOpen, setSettingsPanelOpen] = useState(false);
   const [autoListIds, setAutoListIds] = useState<string[]>([]);
 
   const [contextMenu, setContextMenu] = useState<{
@@ -565,14 +565,6 @@ export default function TemplateCanvasPage() {
             </span>
           )}
           <Button
-            variant="ghost" size="sm"
-            onClick={() => setSettingsPanelOpen((v) => !v)}
-            className={cn("text-muted-foreground hover:text-foreground w-8 h-8 p-0", settingsPanelOpen && "bg-white/[0.06] text-foreground")}
-            title="Template settings"
-          >
-            <Settings className="w-4 h-4" />
-          </Button>
-          <Button
             size="sm"
             onClick={handleRun}
             disabled={execution.isSubmitting}
@@ -593,8 +585,12 @@ export default function TemplateCanvasPage() {
             : <GeneratedMediaPanel isOpen={sidebarOpen} nodes={nodes} />
         }
 
-        <div className="flex-1 flex" style={{ minHeight: 0 }}>
-          <div className="flex-1" style={{ minHeight: 0 }}>
+        <SidebarProvider
+          defaultOpen={false}
+          className="flex-1 min-h-0 h-full overflow-hidden"
+          style={{ "--sidebar-width": "240px" } as React.CSSProperties}
+        >
+          <SidebarInset className="min-h-0 h-full overflow-hidden">
           <ReactFlow
             nodes={nodesWithCallbacks as any}
             edges={edges}
@@ -632,14 +628,14 @@ export default function TemplateCanvasPage() {
               }}
             />
           </ReactFlow>
-          </div>
-          <TemplateSettingsPanel
-            isOpen={settingsPanelOpen}
+          </SidebarInset>
+
+          <TemplateSettingsSidebar
             projectId={projectId}
             autoListIds={autoListIds}
             onAutoListIdsChange={handleAutoListIdsChange}
           />
-        </div>
+        </SidebarProvider>
       </div>
 
       {/* Floating menus */}
