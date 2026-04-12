@@ -14,5 +14,5 @@ public class AssetRegistered : IAuditableMessage
 
     public string MediaType { get; set; } = string.Empty;
 
-    public Guid? AutoListId { get; set; }
+    public List<Guid> AutoListIds { get; set; } = [];
 }
