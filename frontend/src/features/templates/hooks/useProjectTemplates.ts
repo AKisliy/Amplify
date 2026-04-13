@@ -3,13 +3,19 @@ import { getTemplatesByProjectV1TemplatesProjectProjectIdGet } from "@/lib/api/t
 import type { Template } from "@/features/ambassadors/types";
 import type { ProjectTemplateResponse } from "@/lib/api/generated/template-service";
 
+function getLocalCover(id: string): string | undefined {
+  if (typeof window === "undefined") return undefined;
+  return localStorage.getItem(`template-cover-${id}`) ?? undefined;
+}
+
 function mapToTemplate(dto: ProjectTemplateResponse): Template {
   return {
     id: dto.id,
     name: dto.name,
     description: dto.description,
     projectId: dto.project_id,
-    thumbnailUrl: undefined,
+    // Use API thumbnail_url when available, fall back to localStorage
+    thumbnailUrl: (dto as any).thumbnail_url ?? getLocalCover(dto.id),
     createdAt: dto.created_at,
   };
 }

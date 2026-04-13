@@ -14,6 +14,7 @@ import { useProjects } from "@/features/ambassadors/hooks/useProjects";
 import { useAmbassador } from "@/features/ambassadors/hooks/useAmbassador";
 import { useProjectTemplates } from "@/features/templates/hooks/useProjectTemplates";
 import { WorkflowLibrary } from "@/features/templates/components/WorkflowLibrary";
+import { TemplateCoverUpload } from "@/features/templates/components/TemplateCoverUpload";
 import { useEffect, useState } from "react";
 import {
   Dialog,
@@ -241,8 +242,12 @@ export default function ProjectOverviewPage() {
                     className="cursor-pointer hover:shadow-md hover:border-primary/30 transition-all group border-border/50 h-full"
                     onClick={() => handleOpenTemplate(template.id)}
                   >
-                    {/* Thumbnail */}
-                    <div className="w-full aspect-video bg-muted/60 rounded-t-lg flex items-center justify-center overflow-hidden">
+                    {/* Thumbnail / Cover Upload */}
+                    <div
+                      className="relative w-full aspect-video bg-muted/60 rounded-t-lg overflow-hidden group/cover"
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      {/* Cover image or placeholder icon */}
                       {template.thumbnailUrl ? (
                         // eslint-disable-next-line @next/next/no-img-element
                         <img
@@ -251,8 +256,19 @@ export default function ProjectOverviewPage() {
                           className="w-full h-full object-cover"
                         />
                       ) : (
-                        <LayoutTemplate className="w-10 h-10 text-muted-foreground/40 group-hover:text-primary/40 transition-colors" />
+                        <div className="w-full h-full flex items-center justify-center">
+                          <LayoutTemplate className="w-10 h-10 text-muted-foreground/40 group-hover:text-primary/40 transition-colors" />
+                        </div>
                       )}
+
+                      {/* Camera overlay — appears on hover */}
+                      <div className="absolute inset-0 bg-black/0 group-hover/cover:bg-black/50 transition-all duration-200 flex items-center justify-center opacity-0 group-hover/cover:opacity-100">
+                        <TemplateCoverUpload
+                          templateId={template.id}
+                          initialCoverUrl={template.thumbnailUrl}
+                          variant="overlay"
+                        />
+                      </div>
                     </div>
 
                     <CardHeader className="pt-3 pb-2 px-4">
