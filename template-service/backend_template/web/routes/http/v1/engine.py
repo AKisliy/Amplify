@@ -74,6 +74,11 @@ async def run_template(
     Job + NodeExecution records, submits the graph to ComfyUI, and streams
     node status updates via RabbitMQ → WebSocket Gateway → frontend.
     Returns immediately with job_id and prompt_id.
+
+    Raises **422 Unprocessable Entity** if the graph contains validation
+    errors (e.g. missing required inputs, type mismatches).  The response
+    body includes a structured ``node_errors`` dict so the frontend can
+    highlight the broken nodes.
     """
     return await service.run_template(payload.template_id, user_id=user_id)
 
