@@ -14,11 +14,12 @@ public class Connections : EndpointGroupBase
 
     public override void Map(RouteGroupBuilder groupBuilder)
     {
-        groupBuilder.MapGet("{projectId}/auth-url", GetAuthUrl);
+        groupBuilder.MapGet("{projectId}/auth-url", GetAuthUrl).RequireAuthorization();
+        // OAuth callback: social platform redirects here without Authorization header — must stay public
         groupBuilder.MapPost(Connection);
 
-        groupBuilder.MapGet("{projectId}", GetProjectIntegrations);
-        groupBuilder.MapDelete("{projectId}/accounts/{accountId}", DisconnectAccount);
+        groupBuilder.MapGet("{projectId}", GetProjectIntegrations).RequireAuthorization();
+        groupBuilder.MapDelete("{projectId}/accounts/{accountId}", DisconnectAccount).RequireAuthorization();
     }
 
     public async Task<Ok<AuthUrlResponse>> GetAuthUrl(ISender sender, Guid projectId, SocialProvider provider)

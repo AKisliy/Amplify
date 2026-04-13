@@ -11,9 +11,9 @@ public class AutoListEntries : EndpointGroupBase
 
     public override void Map(RouteGroupBuilder groupBuilder)
     {
-        groupBuilder.MapPost(CreateAutoListEntry);
-        groupBuilder.MapPut(UpdateAutoListEntry, "{id}");
-        groupBuilder.MapDelete(DeleteAutoListEntry, "{id}");
+        groupBuilder.MapPost(CreateAutoListEntry).RequireAuthorization();
+        groupBuilder.MapPut(UpdateAutoListEntry, "{id}").RequireAuthorization();
+        groupBuilder.MapDelete(DeleteAutoListEntry, "{id}").RequireAuthorization();
     }
 
     public async Task<Created<Guid>> CreateAutoListEntry(ISender sender, CreateAutoListEntryCommand command)
