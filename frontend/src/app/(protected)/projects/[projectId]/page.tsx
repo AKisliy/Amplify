@@ -2,7 +2,7 @@
 
 import { useParams, useRouter } from "next/navigation";
 import { motion } from "framer-motion";
-import { User, ArrowRight, LayoutTemplate, Plus, Trash2 } from "lucide-react";
+import { User, ArrowRight, LayoutTemplate, Plus, Trash2, Camera, Image as ImageIcon, X } from "lucide-react";
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -38,6 +38,7 @@ import { Label } from "@/components/ui/label";
 import {
   createTemplateV1TemplatesPost,
   deleteTemplateV1TemplatesTemplateIdDelete,
+  updateTemplateV1TemplatesTemplateIdPatch,
 } from "@/lib/api/template-service";
 import type { ProjectTemplateResponse } from "@/lib/api/generated/template-service";
 
@@ -62,6 +63,7 @@ export default function ProjectOverviewPage() {
   const [ambassadorId, setAmbassadorId] = useState<string | undefined>(undefined);
   const [newTemplateOpen, setNewTemplateOpen] = useState(false);
   const [newTemplateName, setNewTemplateName] = useState("");
+  const [newTemplateCover, setNewTemplateCover] = useState<string | null>(null);
   const [isCreating, setIsCreating] = useState(false);
 
   // Delete state
@@ -78,8 +80,23 @@ export default function ProjectOverviewPage() {
         body: { project_id: projectId, name },
         throwOnError: true,
       });
+
+      // If a cover was selected, patch it immediately
+      if (newTemplateCover && data) {
+        localStorage.setItem(`template-cover-${data.id}`, newTemplateCover);
+        try {
+          await updateTemplateV1TemplatesTemplateIdPatch({
+            path: { template_id: data.id },
+            body: { thumbnail_url: newTemplateCover } as any,
+          });
+        } catch (coverErr) {
+          console.error("Failed to save cover to server:", coverErr);
+        }
+      }
+
       setNewTemplateOpen(false);
       setNewTemplateName("");
+      setNewTemplateCover(null);
       router.push(`/projects/${projectId}/templates/${data!.id}`);
     } catch (err) {
       console.error("Failed to create template:", err);
@@ -329,25 +346,80 @@ export default function ProjectOverviewPage() {
         open={newTemplateOpen}
         onOpenChange={(open) => {
           setNewTemplateOpen(open);
-          if (!open) setNewTemplateName("");
+          if (!open) {
+            setNewTemplateName("");
+            setNewTemplateCover(null);
+          }
         }}
       >
         <DialogContent className="sm:max-w-sm">
           <DialogHeader>
             <DialogTitle>New Template</DialogTitle>
           </DialogHeader>
-          <div className="space-y-2 py-1">
-            <Label htmlFor="template-name">Template name</Label>
-            <Input
-              id="template-name"
-              placeholder="e.g. YouTube Short"
-              value={newTemplateName}
-              onChange={(e) => setNewTemplateName(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === "Enter") handleCreateTemplate();
-              }}
-              autoFocus
-            />
+          <div className="space-y-4 py-2">
+            
+            {/* Cover picker */}
+            <div className="flex flex-col items-center gap-2">
+              <div className="relative group">
+                <input
+                  id="new-template-cover-upload"
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (!file) return;
+                    const reader = new FileReader();
+                    reader.onload = () => setNewTemplateCover(reader.result as string);
+                    reader.readAsDataURL(file);
+                    e.target.value = "";
+                  }}
+                  disabled={isCreating}
+                />
+                <button
+                  type="button"
+                  onClick={() => document.getElementById("new-template-cover-upload")?.click()}
+                  disabled={isCreating}
+                  className="relative w-20 h-20 rounded-xl overflow-hidden border border-white/10 bg-white/[0.04] flex items-center justify-center hover:border-white/20 transition-colors focus:outline-none"
+                >
+                  {newTemplateCover ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={newTemplateCover} alt="Cover" className="absolute inset-0 w-full h-full object-cover" />
+                  ) : (
+                    <ImageIcon className="w-8 h-8 text-white/20 group-hover:text-white/40 transition-colors" />
+                  )}
+
+                  <div className="absolute inset-0 flex flex-col items-center justify-center gap-1 opacity-0 group-hover:opacity-100 bg-black/60 backdrop-blur-[2px] transition-opacity">
+                    <Camera className="w-5 h-5 text-white/80" />
+                    <span className="text-[10px] text-white/60 font-medium">Upload</span>
+                  </div>
+                </button>
+
+                {newTemplateCover && !isCreating && (
+                  <button
+                    onClick={() => setNewTemplateCover(null)}
+                    className="absolute -top-1.5 -right-1.5 w-5 h-5 rounded-full bg-red-500 flex items-center justify-center shadow-md z-10 hover:bg-red-600 transition-colors"
+                  >
+                    <X className="w-3 h-3 text-white" />
+                  </button>
+                )}
+              </div>
+              <Label className="text-xs text-muted-foreground">Template Cover (optional)</Label>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="template-name">Template name</Label>
+              <Input
+                id="template-name"
+                placeholder="e.g. YouTube Short"
+                value={newTemplateName}
+                onChange={(e) => setNewTemplateName(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") handleCreateTemplate();
+                }}
+                autoFocus
+              />
+            </div>
           </div>
           <DialogFooter>
             <Button variant="ghost" onClick={() => setNewTemplateOpen(false)}>
