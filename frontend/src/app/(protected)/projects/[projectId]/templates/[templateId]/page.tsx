@@ -49,7 +49,8 @@ import { getNodesByCategory, getNodeDef } from "@/features/canvas/registry";
 import { nodeDefToCanvasNode } from "@/features/canvas/lib/schemaMapper";
 import { PREVIEW_SCHEMA_NAMES } from "@/features/canvas/registry/preview-schemas";
 import type { CanvasNode, CanvasEdge } from "@/features/canvas/types";
-// (getTemplateV1TemplatesTemplateIdGet imported above)
+import { TemplateCoverUpload } from "@/features/templates/components/TemplateCoverUpload";
+// (getTemplateV1TemplatesTemplateIdGet already imported above)
 
 // ---------------------------------------------------------------------------
 // Node / Edge type registrations
@@ -651,14 +652,23 @@ export default function TemplateCanvasPage() {
 
         <div className="h-4 w-px bg-border" />
 
-        {/* Template name — right-click for Save / Rename */}
-        <span
-          className="text-sm font-medium cursor-context-menu select-none hover:text-primary transition-colors"
-          onContextMenu={(e) => { e.preventDefault(); setTemplateMenuPos({ x: e.clientX, y: e.clientY }); }}
-          title="Right-click for options"
-        >
-          {templateName || `Template ${templateId.slice(0, 8)}…`}
-        </span>
+        {/* Template cover + name — hidden in readonly (readonly shows its own header) */}
+        {!isReadonly && (
+          <>
+            <TemplateCoverUpload
+              templateId={templateId}
+              disabled={false}
+            />
+            {/* Template name — right-click for Save / Rename */}
+            <span
+              className="text-sm font-medium cursor-context-menu select-none hover:text-primary transition-colors max-w-[200px] truncate"
+              onContextMenu={(e) => { e.preventDefault(); setTemplateMenuPos({ x: e.clientX, y: e.clientY }); }}
+              title="Right-click for options"
+            >
+              {templateName || `Template ${templateId.slice(0, 8)}…`}
+            </span>
+          </>
+        )}
 
         <div className="ml-auto flex items-center gap-2">
           {isReadonly ? (
