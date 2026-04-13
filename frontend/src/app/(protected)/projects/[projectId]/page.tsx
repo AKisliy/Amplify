@@ -177,9 +177,7 @@ export default function ProjectOverviewPage() {
           transition={{ delay: 0.08 }}
         >
           <WorkflowLibrary
-            onTemplateClick={(t: ProjectTemplateResponse) =>
-              router.push(`/projects/${projectId}/templates/${t.id}`)
-            }
+            projectId={projectId}
           />
         </motion.div>
 

@@ -5,6 +5,7 @@
 // =============================================================================
 
 import { useRef, useState, useEffect, useCallback } from "react";
+import { useRouter } from "next/navigation";
 import { motion, AnimatePresence, useMotionValue, useSpring, useTransform } from "framer-motion";
 import {
   ChevronLeft,
@@ -271,13 +272,21 @@ function EmptyState() {
 // ---------------------------------------------------------------------------
 
 export interface WorkflowLibraryProps {
+  /** Project whose canvas the readonly preview will open under */
+  projectId: string;
   onTemplateClick?: (template: ProjectTemplateResponse) => void;
   className?: string;
 }
 
-export function WorkflowLibrary({ onTemplateClick, className }: WorkflowLibraryProps) {
+export function WorkflowLibrary({ projectId, onTemplateClick, className }: WorkflowLibraryProps) {
+  const router   = useRouter();
   const scrollRef = useRef<HTMLDivElement>(null);
   const { templates, isLoading } = useGlobalTemplates(40);
+
+  const handleCardClick = useCallback((t: ProjectTemplateResponse) => {
+    onTemplateClick?.(t);
+    router.push(`/projects/${projectId}/templates/${t.id}?readonly=1&src=${t.id}`);
+  }, [projectId, router, onTemplateClick]);
 
   const [canLeft, setCanLeft]   = useState(false);
   const [canRight, setCanRight] = useState(true);
@@ -388,7 +397,7 @@ export function WorkflowLibrary({ onTemplateClick, className }: WorkflowLibraryP
                   key={t.id}
                   template={t}
                   index={i}
-                  onClick={onTemplateClick ?? (() => {})}
+                  onClick={handleCardClick}
                 />
               ))}
         </div>

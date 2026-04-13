@@ -1,9 +1,9 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { useParams, useRouter } from "next/navigation";
-import { motion } from "framer-motion";
-import { ArrowLeft, Play, PanelLeft, Image as ImageIcon, Sparkles } from "lucide-react";
+import { useParams, useRouter, useSearchParams } from "next/navigation";
+import { motion, AnimatePresence } from "framer-motion";
+import { ArrowLeft, Play, PanelLeft, Image as ImageIcon, Sparkles, Eye, Copy, Loader2 } from "lucide-react";
 import {
   ReactFlow,
   Background,
@@ -22,7 +22,11 @@ import { useToast } from "@/hooks/use-toast";
 import { useProjects } from "@/features/ambassadors/hooks/useProjects";
 import { ProjectHeader } from "@/components/ProjectHeader";
 import { useTheme } from "next-themes";
-import { updateTemplateV1TemplatesTemplateIdPatch } from "@/lib/api/template-service";
+import {
+  updateTemplateV1TemplatesTemplateIdPatch,
+  createTemplateV1TemplatesPost,
+  getTemplateV1TemplatesTemplateIdGet,
+} from "@/lib/api/template-service";
 import { useHubConnection } from "@/hooks/useHubConnection";
 import { getReceiverRegister } from "@/lib/api/TypedSignalR.Client";
 import type { IClientReceiver } from "@/lib/api/TypedSignalR.Client/WebSocketGateway.Web.Receivers";
@@ -45,7 +49,7 @@ import { getNodesByCategory, getNodeDef } from "@/features/canvas/registry";
 import { nodeDefToCanvasNode } from "@/features/canvas/lib/schemaMapper";
 import { PREVIEW_SCHEMA_NAMES } from "@/features/canvas/registry/preview-schemas";
 import type { CanvasNode, CanvasEdge } from "@/features/canvas/types";
-import { getTemplateV1TemplatesTemplateIdGet } from "@/lib/api/template-service";
+// (getTemplateV1TemplatesTemplateIdGet imported above)
 
 // ---------------------------------------------------------------------------
 // Node / Edge type registrations
@@ -69,11 +73,86 @@ const SEED_EDGES: CanvasEdge[] = [];
 
 type SidebarTab = "nodes" | "media" | "generated";
 
+// ---------------------------------------------------------------------------
+// Read-only banner
+// ---------------------------------------------------------------------------
+
+function ReadOnlyBanner({
+  templateName,
+  onDuplicate,
+  isDuplicating,
+}: {
+  templateName: string;
+  onDuplicate: () => void;
+  isDuplicating: boolean;
+}) {
+  return (
+    <AnimatePresence>
+      <motion.div
+        initial={{ opacity: 0, y: -16 }}
+        animate={{ opacity: 1, y: 0 }}
+        exit={{ opacity: 0, y: -10 }}
+        transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
+        className="absolute top-4 left-1/2 -translate-x-1/2 z-50 flex items-center gap-3 px-4 py-2.5 rounded-2xl"
+        style={{
+          background: "rgba(15,15,20,0.75)",
+          backdropFilter: "blur(20px)",
+          border: "1px solid rgba(255,255,255,0.10)",
+          boxShadow: "0 8px 32px rgba(0,0,0,0.4), 0 0 0 1px rgba(255,255,255,0.04) inset",
+        }}
+      >
+        {/* Eye icon */}
+        <div className="flex items-center gap-1.5 text-white/40 text-xs shrink-0">
+          <Eye className="w-3.5 h-3.5" />
+          <span>You&apos;re viewing a <em className="not-italic font-semibold text-white/60">read-only</em> version of this workflow</span>
+        </div>
+
+        {/* Divider */}
+        <div className="w-px h-4 bg-white/10 shrink-0" />
+
+        {/* CTA */}
+        <motion.button
+          id="btn-duplicate-to-project"
+          onClick={onDuplicate}
+          disabled={isDuplicating}
+          whileHover={isDuplicating ? {} : { scale: 1.04 }}
+          whileTap={isDuplicating ? {} : { scale: 0.96 }}
+          className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold transition-opacity"
+          style={{
+            background: "linear-gradient(135deg, #7c3aed, #4f46e5)",
+            color: "#fff",
+            opacity: isDuplicating ? 0.7 : 1,
+            boxShadow: "0 2px 12px rgba(124,58,237,0.5)",
+          }}
+        >
+          {isDuplicating ? (
+            <><Loader2 className="w-3 h-3 animate-spin" /> Duplicating…</>
+          ) : (
+            <><Copy className="w-3 h-3" /> Duplicate to My Templates</>
+          )}
+        </motion.button>
+      </motion.div>
+    </AnimatePresence>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Page
+// ---------------------------------------------------------------------------
+
 export default function TemplateCanvasPage() {
-  const params    = useParams();
-  const router    = useRouter();
-  const projectId  = params?.projectId  as string;
-  const templateId = params?.templateId as string;
+  const params       = useParams();
+  const router       = useRouter();
+  const searchParams = useSearchParams();
+  const projectId    = params?.projectId  as string;
+  const templateId   = params?.templateId as string;
+
+  /** true when opened from the workflow library in read-only preview mode */
+  const isReadonly = searchParams?.get("readonly") === "1";
+  /** the original global template id to copy from (may equal templateId) */
+  const srcTemplateId = searchParams?.get("src") ?? templateId;
+
+  const [isDuplicating, setIsDuplicating] = useState(false);
 
   const { resolvedTheme } = useTheme();
   const { projects, isLoading: projectsLoading } = useProjects();
@@ -128,6 +207,35 @@ export default function TemplateCanvasPage() {
 
   const { connection } = useHubConnection();
   const { toast } = useToast();
+
+  // ── Duplicate read-only template → new editable copy ─────────────────────────
+  const handleDuplicate = useCallback(async () => {
+    if (!projectId || isDuplicating) return;
+    setIsDuplicating(true);
+    try {
+      // Fetch the source graph
+      const srcResp = await getTemplateV1TemplatesTemplateIdGet({
+        path: { template_id: srcTemplateId },
+      });
+      const srcData = srcResp?.data;
+      const { data: newTpl } = await createTemplateV1TemplatesPost({
+        body: {
+          project_id: projectId,
+          name: srcData?.name ? `Copy of ${srcData.name}` : "Duplicated Workflow",
+          description: srcData?.description ?? undefined,
+          current_graph_json: srcData?.current_graph_json ?? {},
+        },
+        throwOnError: true,
+      });
+      toast({ title: "Duplicated!", description: `"${newTpl!.name}" added to your templates.`, duration: 5000 });
+      router.push(`/projects/${projectId}/templates/${newTpl!.id}`);
+    } catch (err) {
+      console.error("Duplicate failed:", err);
+      toast({ variant: "destructive", title: "Duplicate failed", description: "Please try again.", duration: 4000 });
+    } finally {
+      setIsDuplicating(false);
+    }
+  }, [projectId, srcTemplateId, isDuplicating, router, toast]);
 
   // ── SignalR: subscribe to node execution events ──────────────────────────────
   useEffect(() => {
@@ -448,8 +556,17 @@ export default function TemplateCanvasPage() {
   );
 
   return (
-    <div className="h-screen bg-background flex flex-col overflow-hidden">
+    <div className="h-screen bg-background flex flex-col overflow-hidden relative">
       <ProjectHeader projects={projects} isLoading={projectsLoading} />
+
+      {/* Read-only floating banner */}
+      {isReadonly && (
+        <ReadOnlyBanner
+          templateName={templateName}
+          onDuplicate={handleDuplicate}
+          isDuplicating={isDuplicating}
+        />
+      )}
 
       {/* Sub-header */}
       <motion.div
@@ -457,42 +574,44 @@ export default function TemplateCanvasPage() {
         animate={{ opacity: 1, y: 0 }}
         className="border-b border-border/50 bg-card/30 px-4 py-3 flex items-center gap-3 shrink-0"
       >
-        {/* Sidebar tab toggles */}
-        <div className="flex items-center gap-0.5">
-          <Button
-            variant="ghost" size="sm"
-            onClick={() => {
-              setSidebarTab("nodes");
-              setSidebarOpen((v) => sidebarTab === "nodes" ? !v : true);
-            }}
-            className={cn("text-muted-foreground hover:text-foreground w-8 h-8 p-0", sidebarOpen && sidebarTab === "nodes" && "bg-white/[0.06] text-foreground")}
-            title="Node library"
-          >
-            <PanelLeft className="w-4 h-4" />
-          </Button>
-          <Button
-            variant="ghost" size="sm"
-            onClick={() => {
-              setSidebarTab("media");
-              setSidebarOpen((v) => sidebarTab === "media" ? !v : true);
-            }}
-            className={cn("text-muted-foreground hover:text-foreground w-8 h-8 p-0", sidebarOpen && sidebarTab === "media" && "bg-white/[0.06] text-foreground")}
-            title="Media assets"
-          >
-            <ImageIcon className="w-4 h-4" />
-          </Button>
-          <Button
-            variant="ghost" size="sm"
-            onClick={() => {
-              setSidebarTab("generated");
-              setSidebarOpen((v) => sidebarTab === "generated" ? !v : true);
-            }}
-            className={cn("text-muted-foreground hover:text-foreground w-8 h-8 p-0", sidebarOpen && sidebarTab === "generated" && "bg-white/[0.06] text-[#ec4899]")}
-            title="Generated media"
-          >
-            <Sparkles className="w-4 h-4" />
-          </Button>
-        </div>
+        {/* Sidebar tab toggles — hidden in readonly mode */}
+        {!isReadonly && (
+          <div className="flex items-center gap-0.5">
+            <Button
+              variant="ghost" size="sm"
+              onClick={() => {
+                setSidebarTab("nodes");
+                setSidebarOpen((v) => sidebarTab === "nodes" ? !v : true);
+              }}
+              className={cn("text-muted-foreground hover:text-foreground w-8 h-8 p-0", sidebarOpen && sidebarTab === "nodes" && "bg-white/[0.06] text-foreground")}
+              title="Node library"
+            >
+              <PanelLeft className="w-4 h-4" />
+            </Button>
+            <Button
+              variant="ghost" size="sm"
+              onClick={() => {
+                setSidebarTab("media");
+                setSidebarOpen((v) => sidebarTab === "media" ? !v : true);
+              }}
+              className={cn("text-muted-foreground hover:text-foreground w-8 h-8 p-0", sidebarOpen && sidebarTab === "media" && "bg-white/[0.06] text-foreground")}
+              title="Media assets"
+            >
+              <ImageIcon className="w-4 h-4" />
+            </Button>
+            <Button
+              variant="ghost" size="sm"
+              onClick={() => {
+                setSidebarTab("generated");
+                setSidebarOpen((v) => sidebarTab === "generated" ? !v : true);
+              }}
+              className={cn("text-muted-foreground hover:text-foreground w-8 h-8 p-0", sidebarOpen && sidebarTab === "generated" && "bg-white/[0.06] text-[#ec4899]")}
+              title="Generated media"
+            >
+              <Sparkles className="w-4 h-4" />
+            </Button>
+          </div>
+        )}
 
         <div className="h-4 w-px bg-border" />
 
@@ -542,58 +661,71 @@ export default function TemplateCanvasPage() {
         </span>
 
         <div className="ml-auto flex items-center gap-2">
-          {execution.activeJobId && (
-            <span className="text-xs text-muted-foreground/60 font-mono">
-              {execution.activeJobId.slice(0, 12)}…
-            </span>
+          {isReadonly ? (
+            <div className="flex items-center gap-1.5 px-3 py-1 rounded-lg bg-white/[0.05] border border-white/[0.08] text-xs text-white/30">
+              <Eye className="w-3 h-3" />
+              Read-only preview
+            </div>
+          ) : (
+            <>
+              {execution.activeJobId && (
+                <span className="text-xs text-muted-foreground/60 font-mono">
+                  {execution.activeJobId.slice(0, 12)}…
+                </span>
+              )}
+              <Button
+                size="sm"
+                onClick={handleRun}
+                disabled={execution.isSubmitting}
+                className="gap-1.5"
+              >
+                <Play className="w-3.5 h-3.5" />
+                {execution.isSubmitting ? "Running…" : "Run"}
+              </Button>
+            </>
           )}
-          <Button
-            size="sm"
-            onClick={handleRun}
-            disabled={execution.isSubmitting}
-            className="gap-1.5"
-          >
-            <Play className="w-3.5 h-3.5" />
-            {execution.isSubmitting ? "Running…" : "Run"}
-          </Button>
         </div>
       </motion.div>
 
       {/* Main area */}
       <div className="flex-1 flex overflow-hidden" style={{ minHeight: 0 }}>
-        {sidebarTab === "nodes"
-          ? <NodeLibrarySidebar isOpen={sidebarOpen} nodesByCategory={nodeLibrary} />
-          : sidebarTab === "media"
-            ? <MediaAssetsPanel   isOpen={sidebarOpen} projectId={projectId} />
-            : <GeneratedMediaPanel isOpen={sidebarOpen} nodes={nodes} />
-        }
+        {!isReadonly && (
+          sidebarTab === "nodes"
+            ? <NodeLibrarySidebar isOpen={sidebarOpen} nodesByCategory={nodeLibrary} />
+            : sidebarTab === "media"
+              ? <MediaAssetsPanel   isOpen={sidebarOpen} projectId={projectId} />
+              : <GeneratedMediaPanel isOpen={sidebarOpen} nodes={nodes} />
+        )}
 
         <div className="flex-1" style={{ minHeight: 0 }}>
           <ReactFlow
             nodes={nodesWithCallbacks as any}
             edges={edges}
-            onNodesChange={onNodesChange}
-            onEdgesChange={onEdgesChange}
-            onConnect={onConnect}
-            isValidConnection={isValidConnection}
-            onConnectStart={handleConnectStart as any}
-            onConnectEnd={handleConnectEnd as any}
+            onNodesChange={isReadonly ? undefined : onNodesChange}
+            onEdgesChange={isReadonly ? undefined : onEdgesChange}
+            onConnect={isReadonly ? undefined : onConnect}
+            isValidConnection={isReadonly ? undefined : isValidConnection}
+            onConnectStart={isReadonly ? undefined : handleConnectStart as any}
+            onConnectEnd={isReadonly ? undefined : handleConnectEnd as any}
             nodeTypes={nodeTypes}
             edgeTypes={edgeTypes}
             onInit={(instance) => { rfInstanceRef.current = instance; }}
-            onPaneContextMenu={handlePaneContextMenu as any}
-            onNodeContextMenu={handleNodeContextMenu as any}
-            onPaneClick={handlePaneClick}
-            onDrop={handleDrop}
-            onDragOver={handleDragOver}
+            onPaneContextMenu={isReadonly ? undefined : handlePaneContextMenu as any}
+            onNodeContextMenu={isReadonly ? undefined : handleNodeContextMenu as any}
+            onPaneClick={isReadonly ? undefined : handlePaneClick}
+            onDrop={isReadonly ? undefined : handleDrop}
+            onDragOver={isReadonly ? undefined : handleDragOver}
+            nodesDraggable={!isReadonly}
+            nodesConnectable={!isReadonly}
+            elementsSelectable={!isReadonly}
+            deleteKeyCode={isReadonly ? null : ["Delete", "Backspace"]}
             fitView
             fitViewOptions={{ padding: 0.18 }}
             proOptions={{ hideAttribution: true }}
             colorMode={resolvedTheme === "dark" ? "dark" : "light"}
-            deleteKeyCode={["Delete", "Backspace"]}
           >
             <Background variant={BackgroundVariant.Dots} gap={22} size={1} color="rgba(255,255,255,0.07)" />
-            <Controls className="!bg-card/60 !border-border/40 !backdrop-blur-sm !rounded-lg" />
+            <Controls className="!bg-card/60 !border-border/40 !backdrop-blur-sm !rounded-lg" showInteractive={!isReadonly} />
             <MiniMap
               zoomable pannable
               className="!bg-card/50 !border-border/30 !backdrop-blur-sm !rounded-lg"
@@ -604,34 +736,35 @@ export default function TemplateCanvasPage() {
                 if (d?.categoryTag === "video") return "#ef4444";
                 return "#64748b";
               }}
-              
             />
           </ReactFlow>
         </div>
       </div>
 
-      {/* Floating menus */}
-      <ContextMenu
-        position={contextMenu?.screenPos ?? null}
-        nodesByCategory={nodeLibrary}
-        onAddNode={(s) => handleAddNode(s, contextMenu?.flowPos ?? { x: 100, y: 100 })}
-        onClose={() => setContextMenu(null)}
-      />
-
-      <NodeContextMenu
-        position={nodeContextMenu?.pos ?? null}
-        onDelete={() => { if (nodeContextMenu) deleteNode(nodeContextMenu.nodeId); }}
-        onClose={() => setNodeContextMenu(null)}
-      />
-
-      <TemplateMenu
-        position={templateMenuPos}
-        templateId={templateId}
-        nodes={nodes}
-        edges={edges}
-        onRename={setTemplateName}
-        onClose={() => setTemplateMenuPos(null)}
-      />
+      {/* Floating menus — disabled in readonly mode */}
+      {!isReadonly && (
+        <>
+          <ContextMenu
+            position={contextMenu?.screenPos ?? null}
+            nodesByCategory={nodeLibrary}
+            onAddNode={(s) => handleAddNode(s, contextMenu?.flowPos ?? { x: 100, y: 100 })}
+            onClose={() => setContextMenu(null)}
+          />
+          <NodeContextMenu
+            position={nodeContextMenu?.pos ?? null}
+            onDelete={() => { if (nodeContextMenu) deleteNode(nodeContextMenu.nodeId); }}
+            onClose={() => setNodeContextMenu(null)}
+          />
+          <TemplateMenu
+            position={templateMenuPos}
+            templateId={templateId}
+            nodes={nodes}
+            edges={edges}
+            onRename={setTemplateName}
+            onClose={() => setTemplateMenuPos(null)}
+          />
+        </>
+      )}
     </div>
   );
 }
