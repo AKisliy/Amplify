@@ -21,6 +21,10 @@ service:
 
 resources: {}
 
+# Resource limits for the ComfyUI engine sidecar container
+engine:
+  resources: {}
+
 livenessProbe:
   httpGet:
     path: /health
