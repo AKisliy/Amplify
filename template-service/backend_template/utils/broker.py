@@ -16,8 +16,11 @@ from backend_template.config import settings
 
 logger = logging.getLogger(__name__)
 
-# The single fanout exchange used for all Library Template lifecycle events.
+# Fanout exchange for Library Template lifecycle events.
 TEMPLATE_EVENTS_EXCHANGE = "template.events"
+
+# Fanout exchange for Project Template lifecycle events.
+PROJECT_TEMPLATE_EVENTS_EXCHANGE = "project_template.events"
 
 
 async def publish_event(exchange_name: str, message: BaseModel) -> None:
