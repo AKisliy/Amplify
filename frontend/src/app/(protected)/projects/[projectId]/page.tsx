@@ -13,6 +13,7 @@ import { useProject } from "@/features/ambassadors/hooks/useProjects";
 import { useProjects } from "@/features/ambassadors/hooks/useProjects";
 import { useAmbassador } from "@/features/ambassadors/hooks/useAmbassador";
 import { useProjectTemplates } from "@/features/templates/hooks/useProjectTemplates";
+import { WorkflowLibrary } from "@/features/templates/components/WorkflowLibrary";
 import { useEffect, useState } from "react";
 import {
   Dialog,
@@ -37,6 +38,7 @@ import {
   createTemplateV1TemplatesPost,
   deleteTemplateV1TemplatesTemplateIdDelete,
 } from "@/lib/api/template-service";
+import type { ProjectTemplateResponse } from "@/lib/api/generated/template-service";
 
 function getInitials(name: string) {
   return name
@@ -165,6 +167,21 @@ export default function ProjectOverviewPage() {
         </motion.div>
 
         <Separator />
+
+        {/* ------------------------------------------------------------------ */}
+        {/* Workflow Library                                                    */}
+        {/* ------------------------------------------------------------------ */}
+        <motion.div
+          initial={{ opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.08 }}
+        >
+          <WorkflowLibrary
+            onTemplateClick={(t: ProjectTemplateResponse) =>
+              router.push(`/projects/${projectId}/templates/${t.id}`)
+            }
+          />
+        </motion.div>
 
         {/* ------------------------------------------------------------------ */}
         {/* Templates section                                                   */}
