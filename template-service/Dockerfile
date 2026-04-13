@@ -32,8 +32,8 @@ RUN poetry install --no-interaction --no-ansi --no-root --without dev
 # This layer invalidates often, but now the dependencies above it are cached!
 COPY . .
 
-# Make script executable
-RUN chmod +x scripts/entrypoint.sh
+# Make scripts executable
+RUN chmod +x scripts/entrypoint.sh scripts/entrypoint-api.sh scripts/entrypoint-engine.sh
 
 # Start
 ENTRYPOINT ["./scripts/entrypoint.sh"]
