@@ -1,5 +1,5 @@
 from sqlalchemy import String, Text
-from sqlalchemy.dialects.postgresql import UUID, JSONB
+from sqlalchemy.dialects.postgresql import UUID, JSONB, ARRAY
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from backend_template.database import Base
@@ -11,13 +11,16 @@ class ProjectTemplate(Base, CommonMixin):
     # User Service Logic
     # We index project_id because we often query "Show me all templates for Project X"
     project_id: Mapped[str] = mapped_column(UUID(as_uuid=True), index=True, nullable=False)
-    
+
     # Metadata
     name: Mapped[str] = mapped_column(String(255), nullable=False)
     description: Mapped[str | None] = mapped_column(Text, nullable=True)
-    
+
     # Auto-save state (The Draft)
     current_graph_json: Mapped[dict] = mapped_column(JSONB, nullable=False, server_default='{}')
+
+    # AutoList associations (UUIDs only, no FK constraint)
+    auto_list_ids: Mapped[list] = mapped_column(ARRAY(UUID(as_uuid=True)), nullable=False, server_default='{}')
 
     # Relationships
     # cascade="all, delete-orphan": If Template is deleted, delete all versions too.

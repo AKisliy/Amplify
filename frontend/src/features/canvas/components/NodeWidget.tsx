@@ -5,7 +5,6 @@
 // Handles STRING (textarea/input), INT/FLOAT (number), BOOLEAN (switch), COMBO (select).
 // =============================================================================
 
-import { useParams } from "next/navigation";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
@@ -17,7 +16,6 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
-import { useAutolists } from "@/features/autolists/hooks/useAutolists";
 import type {
   PortDef,
   StringInputConfig,
@@ -37,25 +35,10 @@ interface NodeWidgetProps {
 
 export function NodeWidget({ port, value, onChange, disabled }: NodeWidgetProps) {
   const label = port.label;
-  const params = useParams();
-  const projectId = params?.projectId as string | undefined;
 
   switch (port.portType) {
     case "STRING": {
       const cfg = port.config as StringInputConfig;
-
-      if (cfg.widget_type === "autolist_picker") {
-        return (
-          <AutoListPickerWidget
-            label={label}
-            tooltip={port.tooltip}
-            projectId={projectId}
-            value={value as string}
-            onChange={onChange}
-            disabled={disabled}
-          />
-        );
-      }
 
       if (cfg.multiline !== false && (cfg.multiline || port.required === "optional")) {
         // Multiline → textarea
@@ -175,63 +158,6 @@ export function NodeWidget({ port, value, onChange, disabled }: NodeWidgetProps)
     default:
       return null;
   }
-}
-
-// ---------------------------------------------------------------------------
-// AutoListPickerWidget — dynamic dropdown fetching AutoLists from publisher
-// ---------------------------------------------------------------------------
-
-interface AutoListPickerWidgetProps {
-  label: string;
-  tooltip?: string;
-  projectId?: string;
-  value: string;
-  onChange: (value: unknown) => void;
-  disabled?: boolean;
-}
-
-function AutoListPickerWidget({
-  label,
-  tooltip,
-  projectId,
-  value,
-  onChange,
-  disabled,
-}: AutoListPickerWidgetProps) {
-  const { autolists, isLoading } = useAutolists(projectId);
-  const currentValue = value || " ";
-
-  return (
-    <WidgetRow label={label} tooltip={tooltip}>
-      <Select
-        value={currentValue}
-        onValueChange={(v) => onChange(v === " " ? "" : v)}
-        disabled={disabled || isLoading || !projectId}
-      >
-        <SelectTrigger
-          className={cn(
-            "nodrag nopan nowheel text-[11px] h-7",
-            "bg-black/20 border-white/[0.06]",
-            "focus:ring-1 focus:ring-white/20"
-          )}
-        >
-          <SelectValue placeholder={isLoading ? "Loading…" : "Select AutoList…"} />
-        </SelectTrigger>
-        <SelectContent>
-          {autolists.map((al) => (
-            <SelectItem key={al.id} value={al.id} className="text-xs">
-              {al.name}
-            </SelectItem>
-          ))}
-          {!isLoading && autolists.length === 0 && (
-            <SelectItem value=" " disabled className="text-xs text-muted-foreground">
-              No AutoLists found
-            </SelectItem>
-          )}
-        </SelectContent>
-      </Select>
-    </WidgetRow>
-  );
 }
 
 // ---------------------------------------------------------------------------

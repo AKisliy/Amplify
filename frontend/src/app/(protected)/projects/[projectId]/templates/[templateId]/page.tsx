@@ -43,6 +43,7 @@ import { NodeLibrarySidebar } from "@/features/canvas/components/NodeLibrarySide
 import { MediaAssetsPanel } from "@/features/canvas/components/MediaAssetsPanel";
 import { TemplateMenu } from "@/features/canvas/components/TemplateMenu";
 import { GeneratedMediaPanel } from "@/features/canvas/components/GeneratedMediaPanel";
+import { TemplateSettingsSidebar } from "@/features/canvas/components/TemplateSettingsSidebar";
 import { useCanvasStore } from "@/features/canvas/hooks/useCanvasStore";
 import { useNodeRegistry } from "@/features/canvas/hooks/useNodeRegistry";
 import { getNodesByCategory, getNodeDef } from "@/features/canvas/registry";
@@ -163,6 +164,7 @@ export default function TemplateCanvasPage() {
   // ── UI state ────────────────────────────────────────────────────────────────
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [sidebarTab,  setSidebarTab]  = useState<SidebarTab>("nodes");
+  const [autoListIds, setAutoListIds] = useState<string[]>([]);
 
   const [contextMenu, setContextMenu] = useState<{
     screenPos: { x: number; y: number };
@@ -180,13 +182,14 @@ export default function TemplateCanvasPage() {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const rfInstanceRef = useRef<any>(null);
 
-  // Fetch template name
+  // Fetch template metadata (name + autoListIds)
   useEffect(() => {
     if (!templateId) return;
     (async () => {
       try {
         const response = await getTemplateV1TemplatesTemplateIdGet({ path: { template_id: templateId } });
         if (response?.data?.name) setTemplateName(response.data.name);
+        if (response?.data?.auto_list_ids) setAutoListIds(response.data.auto_list_ids);
       } catch (err) {
         console.error("Failed to fetch template name:", err);
       }
@@ -478,6 +481,19 @@ export default function TemplateCanvasPage() {
     await submitWorkflow(templateId);
   }, [submitWorkflow, templateId]);
 
+  // ── AutoList settings ────────────────────────────────────────────────────────
+  const handleAutoListIdsChange = useCallback(async (ids: string[]) => {
+    setAutoListIds(ids);
+    try {
+      await updateTemplateV1TemplatesTemplateIdPatch({
+        path: { template_id: templateId },
+        body: { auto_list_ids: ids },
+      });
+    } catch {
+      // Silently fail — UI state is already updated
+    }
+  }, [templateId]);
+
   // ── Port-type compatibility ────────────────────────────────────────────────
   // Defines which source port types can connect to which target port types.
   // COMFY_AUTOGROW_V3 is a wildcard slot that accepts any type.
@@ -707,7 +723,8 @@ export default function TemplateCanvasPage() {
               : <GeneratedMediaPanel isOpen={sidebarOpen} nodes={nodes} />
         )}
 
-        <div className="flex-1" style={{ minHeight: 0 }}>
+        <div className="flex-1 flex" style={{ minHeight: 0 }}>
+          <div className="flex-1" style={{ minHeight: 0 }}>
           <ReactFlow
             nodes={nodesWithCallbacks as any}
             edges={edges}
@@ -748,6 +765,12 @@ export default function TemplateCanvasPage() {
               }}
             />
           </ReactFlow>
+          </div>
+          <TemplateSettingsSidebar
+            projectId={projectId}
+            autoListIds={autoListIds}
+            onAutoListIdsChange={handleAutoListIdsChange}
+          />
         </div>
       </div>
 
