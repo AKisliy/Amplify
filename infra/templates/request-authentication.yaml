@@ -1,0 +1,28 @@
+{{- if .Values.auth.enabled }}
+# RequestAuthentication configures Istio ingress gateway to validate JWT tokens
+# issued by the internal auth service (userservice).
+#
+# PREREQUISITE: Set PILOT_JWT_ENABLE_REMOTE_JWKS=envoy on the istiod deployment
+# so that Envoy fetches JWKS directly from the internal service (not via Pilot).
+# Example via IstioOperator:
+#   components.pilot.k8s.env:
+#   - name: PILOT_JWT_ENABLE_REMOTE_JWKS
+#     value: "envoy"
+apiVersion: security.istio.io/v1
+kind: RequestAuthentication
+metadata:
+  name: amplify-jwt-authn
+  # Must live in istio-system so the selector can target the ingressgateway workload.
+  namespace: istio-system
+spec:
+  selector:
+    matchLabels:
+      istio: ingressgateway
+  jwtRules:
+  - issuer: {{ .Values.auth.issuer | quote }}
+    jwksUri: {{ .Values.auth.jwksUri | quote }}
+    audiences:
+    - {{ .Values.auth.audience | quote }}
+    # Forward the original token to backend services so they can extract claims.
+    forwardOriginalToken: true
+{{- end }}
