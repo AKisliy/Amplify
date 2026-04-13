@@ -2,7 +2,7 @@
 
 import { useParams, useRouter } from "next/navigation";
 import { motion } from "framer-motion";
-import { User, ArrowRight, LayoutTemplate, Plus, Trash2 } from "lucide-react";
+import { User, ArrowRight, LayoutTemplate, Plus, Trash2, Camera, Image as ImageIcon, X } from "lucide-react";
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -13,6 +13,8 @@ import { useProject } from "@/features/ambassadors/hooks/useProjects";
 import { useProjects } from "@/features/ambassadors/hooks/useProjects";
 import { useAmbassador } from "@/features/ambassadors/hooks/useAmbassador";
 import { useProjectTemplates } from "@/features/templates/hooks/useProjectTemplates";
+import { WorkflowLibrary } from "@/features/templates/components/WorkflowLibrary";
+import { TemplateCoverUpload } from "@/features/templates/components/TemplateCoverUpload";
 import { useEffect, useState } from "react";
 import {
   Dialog,
@@ -36,7 +38,9 @@ import { Label } from "@/components/ui/label";
 import {
   createTemplateV1TemplatesPost,
   deleteTemplateV1TemplatesTemplateIdDelete,
+  updateTemplateV1TemplatesTemplateIdPatch,
 } from "@/lib/api/template-service";
+import type { ProjectTemplateResponse } from "@/lib/api/generated/template-service";
 
 function getInitials(name: string) {
   return name
@@ -59,6 +63,7 @@ export default function ProjectOverviewPage() {
   const [ambassadorId, setAmbassadorId] = useState<string | undefined>(undefined);
   const [newTemplateOpen, setNewTemplateOpen] = useState(false);
   const [newTemplateName, setNewTemplateName] = useState("");
+  const [newTemplateCover, setNewTemplateCover] = useState<string | null>(null);
   const [isCreating, setIsCreating] = useState(false);
 
   // Delete state
@@ -75,8 +80,23 @@ export default function ProjectOverviewPage() {
         body: { project_id: projectId, name },
         throwOnError: true,
       });
+
+      // If a cover was selected, patch it immediately
+      if (newTemplateCover && data) {
+        localStorage.setItem(`template-cover-${data.id}`, newTemplateCover);
+        try {
+          await updateTemplateV1TemplatesTemplateIdPatch({
+            path: { template_id: data.id },
+            body: { thumbnail_url: newTemplateCover } as any,
+          });
+        } catch (coverErr) {
+          console.error("Failed to save cover to server:", coverErr);
+        }
+      }
+
       setNewTemplateOpen(false);
       setNewTemplateName("");
+      setNewTemplateCover(null);
       router.push(`/projects/${projectId}/templates/${data!.id}`);
     } catch (err) {
       console.error("Failed to create template:", err);
@@ -167,6 +187,19 @@ export default function ProjectOverviewPage() {
         <Separator />
 
         {/* ------------------------------------------------------------------ */}
+        {/* Workflow Library                                                    */}
+        {/* ------------------------------------------------------------------ */}
+        <motion.div
+          initial={{ opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.08 }}
+        >
+          <WorkflowLibrary
+            projectId={projectId}
+          />
+        </motion.div>
+
+        {/* ------------------------------------------------------------------ */}
         {/* Templates section                                                   */}
         {/* ------------------------------------------------------------------ */}
         <motion.div
@@ -226,8 +259,12 @@ export default function ProjectOverviewPage() {
                     className="cursor-pointer hover:shadow-md hover:border-primary/30 transition-all group border-border/50 h-full"
                     onClick={() => handleOpenTemplate(template.id)}
                   >
-                    {/* Thumbnail */}
-                    <div className="w-full aspect-video bg-muted/60 rounded-t-lg flex items-center justify-center overflow-hidden">
+                    {/* Thumbnail / Cover Upload */}
+                    <div
+                      className="relative w-full aspect-video bg-muted/60 rounded-t-lg overflow-hidden group/cover"
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      {/* Cover image or placeholder icon */}
                       {template.thumbnailUrl ? (
                         // eslint-disable-next-line @next/next/no-img-element
                         <img
@@ -236,8 +273,19 @@ export default function ProjectOverviewPage() {
                           className="w-full h-full object-cover"
                         />
                       ) : (
-                        <LayoutTemplate className="w-10 h-10 text-muted-foreground/40 group-hover:text-primary/40 transition-colors" />
+                        <div className="w-full h-full flex items-center justify-center">
+                          <LayoutTemplate className="w-10 h-10 text-muted-foreground/40 group-hover:text-primary/40 transition-colors" />
+                        </div>
                       )}
+
+                      {/* Camera overlay — appears on hover */}
+                      <div className="absolute inset-0 bg-black/0 group-hover/cover:bg-black/50 transition-all duration-200 flex items-center justify-center opacity-0 group-hover/cover:opacity-100">
+                        <TemplateCoverUpload
+                          templateId={template.id}
+                          initialCoverUrl={template.thumbnailUrl}
+                          variant="overlay"
+                        />
+                      </div>
                     </div>
 
                     <CardHeader className="pt-3 pb-2 px-4">
@@ -298,25 +346,80 @@ export default function ProjectOverviewPage() {
         open={newTemplateOpen}
         onOpenChange={(open) => {
           setNewTemplateOpen(open);
-          if (!open) setNewTemplateName("");
+          if (!open) {
+            setNewTemplateName("");
+            setNewTemplateCover(null);
+          }
         }}
       >
         <DialogContent className="sm:max-w-sm">
           <DialogHeader>
             <DialogTitle>New Template</DialogTitle>
           </DialogHeader>
-          <div className="space-y-2 py-1">
-            <Label htmlFor="template-name">Template name</Label>
-            <Input
-              id="template-name"
-              placeholder="e.g. YouTube Short"
-              value={newTemplateName}
-              onChange={(e) => setNewTemplateName(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === "Enter") handleCreateTemplate();
-              }}
-              autoFocus
-            />
+          <div className="space-y-4 py-2">
+            
+            {/* Cover picker */}
+            <div className="flex flex-col items-center gap-2">
+              <div className="relative group">
+                <input
+                  id="new-template-cover-upload"
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (!file) return;
+                    const reader = new FileReader();
+                    reader.onload = () => setNewTemplateCover(reader.result as string);
+                    reader.readAsDataURL(file);
+                    e.target.value = "";
+                  }}
+                  disabled={isCreating}
+                />
+                <button
+                  type="button"
+                  onClick={() => document.getElementById("new-template-cover-upload")?.click()}
+                  disabled={isCreating}
+                  className="relative w-20 h-20 rounded-xl overflow-hidden border border-white/10 bg-white/[0.04] flex items-center justify-center hover:border-white/20 transition-colors focus:outline-none"
+                >
+                  {newTemplateCover ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={newTemplateCover} alt="Cover" className="absolute inset-0 w-full h-full object-cover" />
+                  ) : (
+                    <ImageIcon className="w-8 h-8 text-white/20 group-hover:text-white/40 transition-colors" />
+                  )}
+
+                  <div className="absolute inset-0 flex flex-col items-center justify-center gap-1 opacity-0 group-hover:opacity-100 bg-black/60 backdrop-blur-[2px] transition-opacity">
+                    <Camera className="w-5 h-5 text-white/80" />
+                    <span className="text-[10px] text-white/60 font-medium">Upload</span>
+                  </div>
+                </button>
+
+                {newTemplateCover && !isCreating && (
+                  <button
+                    onClick={() => setNewTemplateCover(null)}
+                    className="absolute -top-1.5 -right-1.5 w-5 h-5 rounded-full bg-red-500 flex items-center justify-center shadow-md z-10 hover:bg-red-600 transition-colors"
+                  >
+                    <X className="w-3 h-3 text-white" />
+                  </button>
+                )}
+              </div>
+              <Label className="text-xs text-muted-foreground">Template Cover (optional)</Label>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="template-name">Template name</Label>
+              <Input
+                id="template-name"
+                placeholder="e.g. YouTube Short"
+                value={newTemplateName}
+                onChange={(e) => setNewTemplateName(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") handleCreateTemplate();
+                }}
+                autoFocus
+              />
+            </div>
           </div>
           <DialogFooter>
             <Button variant="ghost" onClick={() => setNewTemplateOpen(false)}>

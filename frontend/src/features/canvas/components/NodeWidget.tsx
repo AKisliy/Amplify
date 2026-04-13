@@ -61,11 +61,11 @@ export function NodeWidget({ port, value, onChange, disabled }: NodeWidgetProps)
         // Multiline → textarea
         return (
           <WidgetRow label={label} tooltip={port.tooltip}>
-            <Textarea
+          <Textarea
               value={(value as string) ?? ""}
               onChange={(e) => onChange(e.target.value)}
               className={cn(
-                "nodrag nopan nowheel resize-none text-[11px] min-h-[52px]",
+                "nodrag nopan nowheel resize-none text-[11px] min-h-[52px] max-h-[160px] overflow-y-auto",
                 "bg-black/20 border-white/[0.06] placeholder:text-muted-foreground/30",
                 "focus-visible:ring-1 focus-visible:ring-white/20"
               )}
