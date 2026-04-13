@@ -663,6 +663,11 @@ function VideoEditor({ media }: { media: UploadedMedia }) {
     <div className="flex flex-col h-full">
       {/* ── Video stage ─────────────────────────────────────────────────────── */}
       <div className="flex-1 flex items-center justify-center p-6 relative min-h-0">
+        {/*
+         * Intentional raw <video> — this is a fully custom player with trim
+         * controls, time scrubbing, and play/pause overlay managed by this
+         * component. The functionality far exceeds AmplifyVideo's scope.
+         */}
         <video
           ref={videoRef}
           src={media.url}

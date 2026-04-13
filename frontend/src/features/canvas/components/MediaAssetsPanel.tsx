@@ -250,7 +250,12 @@ function AssetCard({
       {/* Thumbnail */}
       {isVideo ? (
         <div className="relative w-full h-full bg-black">
-          {/* Real video thumbnail — browser loads first frame from metadata */}
+          {/*
+           * Intentional raw <video> — used only as a static thumbnail extractor.
+           * preload="metadata" + onLoadedMetadata seek gives us the first frame
+           * without triggering playback. AmplifyVideo is for interactive playback;
+           * it doesn't expose this thumbnail-scrape pattern.
+           */}
           <video
             src={mediaApi.getMediaUrl(asset.mediaId)}
             className="w-full h-full object-cover"
