@@ -1,2 +1,25 @@
-
-  
+# Istio JWT authentication settings for the staging environment.
+# issuer/audience must match userservice Jwt:Issuer and Jwt:Audience appsettings.
+# jwksUri must be reachable by the Istio ingressgateway within the cluster.
+#
+# PREREQUISITE: Set PILOT_JWT_ENABLE_REMOTE_JWKS=envoy on the istiod deployment
+# so Envoy fetches the JWKS directly from the internal service:
+#   kubectl -n istio-system set env deployment/istiod PILOT_JWT_ENABLE_REMOTE_JWKS=envoy
+auth:
+  enabled: true
+  issuer: "http://userservice.test-env.svc.cluster.local/userservice/api/auth"
+  jwksUri: "http://userservice.test-env.svc.cluster.local/userservice/api/auth/.well-known/jwks.json"
+  audience: "MyAppDevelopmentUsers"
+  # Paths accessible without a valid JWT.
+  publicPaths:
+    # Auth endpoints — must be open for unauthenticated users.
+    - "/userservice/api/auth/register"
+    - "/userservice/api/auth/login"
+    - "/userservice/api/auth/refresh"
+    - "/userservice/api/auth/confirm-email*"
+    - "/userservice/api/auth/forgot-password"
+    - "/userservice/api/auth/reset-password"
+    # JWKS and OpenID discovery — open so Istio can fetch signing keys.
+    - "/userservice/api/auth/.well-known/*"
+    # Liveness/readiness health probes — open for k8s kubelet.
+    - "*/health"
