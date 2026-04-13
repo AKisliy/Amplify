@@ -41,7 +41,7 @@ export function TemplateSettingsSidebar({
       <motion.aside
         animate={{ width: expanded ? SIDEBAR_WIDTH : ICON_STRIP_WIDTH }}
         transition={{ duration: 0.2, ease: "easeInOut" }}
-        className="shrink-0 border-l border-border/40 bg-sidebar text-sidebar-foreground flex flex-col overflow-hidden"
+        className="shrink-0 border-l border-border/40 bg-card/20 text-sidebar-foreground flex flex-col overflow-hidden"
         style={{ minHeight: 0 }}
       >
         {/* Header: toggle button */}
