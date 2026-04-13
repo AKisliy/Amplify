@@ -40,7 +40,6 @@ import { MediaAssetsPanel } from "@/features/canvas/components/MediaAssetsPanel"
 import { TemplateMenu } from "@/features/canvas/components/TemplateMenu";
 import { GeneratedMediaPanel } from "@/features/canvas/components/GeneratedMediaPanel";
 import { TemplateSettingsSidebar } from "@/features/canvas/components/TemplateSettingsSidebar";
-import { SidebarProvider, SidebarInset } from "@/components/ui/sidebar";
 import { useCanvasStore } from "@/features/canvas/hooks/useCanvasStore";
 import { useNodeRegistry } from "@/features/canvas/hooks/useNodeRegistry";
 import { getNodesByCategory, getNodeDef } from "@/features/canvas/registry";
@@ -585,12 +584,8 @@ export default function TemplateCanvasPage() {
             : <GeneratedMediaPanel isOpen={sidebarOpen} nodes={nodes} />
         }
 
-        <SidebarProvider
-          defaultOpen={false}
-          className="flex-1 min-h-0 h-full overflow-hidden"
-          style={{ "--sidebar-width": "240px" } as React.CSSProperties}
-        >
-          <SidebarInset className="min-h-0 h-full overflow-hidden">
+        <div className="flex-1 flex" style={{ minHeight: 0 }}>
+          <div className="flex-1" style={{ minHeight: 0 }}>
           <ReactFlow
             nodes={nodesWithCallbacks as any}
             edges={edges}
@@ -628,14 +623,13 @@ export default function TemplateCanvasPage() {
               }}
             />
           </ReactFlow>
-          </SidebarInset>
-
+          </div>
           <TemplateSettingsSidebar
             projectId={projectId}
             autoListIds={autoListIds}
             onAutoListIdsChange={handleAutoListIdsChange}
           />
-        </SidebarProvider>
+        </div>
       </div>
 
       {/* Floating menus */}
