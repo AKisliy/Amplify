@@ -1,7 +1,7 @@
 "use client";
 
 // =============================================================================
-// WorkflowLibrary — premium horizontal workflow carousel
+// WorkflowLibrary — premium horizontal carousel using /v1/library-templates/
 // =============================================================================
 
 import { useRef, useState, useEffect, useCallback } from "react";
@@ -11,33 +11,36 @@ import {
   ChevronLeft,
   ChevronRight,
   LayoutTemplate,
-  Loader2,
   Sparkles,
   Zap,
   GitBranch,
   ArrowRight,
+  Calendar,
+  ImageOff,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { useGlobalTemplates } from "@/features/templates/hooks/useGlobalTemplates";
-import type { ProjectTemplateResponse } from "@/lib/api/generated/template-service";
+import {
+  useLibraryTemplates,
+  type LibraryTemplate,
+} from "@/features/templates/hooks/useLibraryTemplates";
 
 // ---------------------------------------------------------------------------
 // Constants
 // ---------------------------------------------------------------------------
 
-const CARD_W = 192; // px
-const CARD_H = 120; // px
-const GAP     = 12;  // px
+const CARD_W = 200; // px
+const CARD_H = 130; // px
+const GAP    = 12;  // px
 
 const PALETTES: [string, string, string][] = [
-  ["#7c3aed", "#4f46e5", "#1e1b4b"], // violet → indigo
-  ["#db2777", "#9333ea", "#3b0764"], // pink → purple
-  ["#ea580c", "#dc2626", "#450a0a"], // orange → red
-  ["#0891b2", "#0284c7", "#0c1445"], // cyan → blue
-  ["#059669", "#0d9488", "#052e16"], // emerald → teal
-  ["#d97706", "#b45309", "#1c0a00"], // amber → brown
-  ["#2563eb", "#4f46e5", "#0f0a3c"], // blue → indigo
-  ["#be185d", "#9333ea", "#2d0036"], // rose → violet
+  ["#7c3aed", "#4f46e5", "#1e1b4b"],
+  ["#db2777", "#9333ea", "#3b0764"],
+  ["#ea580c", "#dc2626", "#450a0a"],
+  ["#0891b2", "#0284c7", "#0c1445"],
+  ["#059669", "#0d9488", "#052e16"],
+  ["#d97706", "#b45309", "#1c0a00"],
+  ["#2563eb", "#4f46e5", "#0f0a3c"],
+  ["#be185d", "#9333ea", "#2d0036"],
 ];
 
 function palette(id: string): [string, string, string] {
@@ -45,8 +48,13 @@ function palette(id: string): [string, string, string] {
   return PALETTES[hash % PALETTES.length];
 }
 
+function formatDate(iso: string): string {
+  const d = new Date(iso);
+  return d.toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" });
+}
+
 // ---------------------------------------------------------------------------
-// MagneticCard — 3-D tilt on hover with framer spring
+// WorkflowCard
 // ---------------------------------------------------------------------------
 
 function WorkflowCard({
@@ -54,12 +62,13 @@ function WorkflowCard({
   index,
   onClick,
 }: {
-  template: ProjectTemplateResponse;
+  template: LibraryTemplate;
   index: number;
-  onClick: (t: ProjectTemplateResponse) => void;
+  onClick: (t: LibraryTemplate) => void;
 }) {
   const ref = useRef<HTMLButtonElement>(null);
-  const [hovered, setHovered] = useState(false);
+  const [hovered, setHovered]   = useState(false);
+  const [imgError, setImgError] = useState(false);
 
   const rawX = useMotionValue(0);
   const rawY = useMotionValue(0);
@@ -81,12 +90,8 @@ function WorkflowCard({
   }, [rawX, rawY]);
 
   const [c0, c1, c2] = palette(template.id);
-
-  const nodeCount =
-    template.current_graph_json &&
-    typeof template.current_graph_json === "object"
-      ? Object.keys(template.current_graph_json).length
-      : 0;
+  const hasThumbnail = !!template.thumbnail_url && !imgError;
+  const nodeCount = Object.keys(template.graph_json ?? {}).length;
 
   return (
     <motion.button
@@ -116,34 +121,46 @@ function WorkflowCard({
       onClick={() => onClick(template)}
       className="relative rounded-2xl overflow-hidden cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-white/40"
     >
-      {/* ── Gradient base ── */}
-      <div
-        className="absolute inset-0"
-        style={{
-          background: `radial-gradient(ellipse at 30% 40%, ${c0}cc, ${c1}99 50%, ${c2} 100%)`,
-        }}
-      />
-
-      {/* ── Animated orb ── */}
-      <motion.div
-        animate={hovered ? { scale: 1.6, opacity: 0.35 } : { scale: 1, opacity: 0.15 }}
-        transition={{ duration: 0.5, ease: "easeOut" }}
-        className="absolute -top-6 -right-6 w-24 h-24 rounded-full blur-2xl"
-        style={{ background: c0 }}
-      />
-
-      {/* ── Grid lines (subtle) ── */}
-      <svg
-        className="absolute inset-0 w-full h-full opacity-[0.06]"
-        xmlns="http://www.w3.org/2000/svg"
-      >
-        <defs>
-          <pattern id={`grid-${template.id}`} width="24" height="24" patternUnits="userSpaceOnUse">
-            <path d="M 24 0 L 0 0 0 24" fill="none" stroke="white" strokeWidth="0.5" />
-          </pattern>
-        </defs>
-        <rect width="100%" height="100%" fill={`url(#grid-${template.id})`} />
-      </svg>
+      {/* ── Background: thumbnail OR gradient ── */}
+      {hasThumbnail ? (
+        <>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={template.thumbnail_url!}
+            alt=""
+            onError={() => setImgError(true)}
+            className="absolute inset-0 w-full h-full object-cover"
+            draggable={false}
+          />
+          {/* Darkening overlay so text is always readable */}
+          <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-black/10" />
+        </>
+      ) : (
+        <>
+          <div
+            className="absolute inset-0"
+            style={{
+              background: `radial-gradient(ellipse at 30% 40%, ${c0}cc, ${c1}99 50%, ${c2} 100%)`,
+            }}
+          />
+          {/* Ambient orb */}
+          <motion.div
+            animate={hovered ? { scale: 1.6, opacity: 0.35 } : { scale: 1, opacity: 0.15 }}
+            transition={{ duration: 0.5, ease: "easeOut" }}
+            className="absolute -top-6 -right-6 w-24 h-24 rounded-full blur-2xl"
+            style={{ background: c0 }}
+          />
+          {/* Grid lines */}
+          <svg className="absolute inset-0 w-full h-full opacity-[0.06]" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+              <pattern id={`grid-${template.id}`} width="24" height="24" patternUnits="userSpaceOnUse">
+                <path d="M 24 0 L 0 0 0 24" fill="none" stroke="white" strokeWidth="0.5" />
+              </pattern>
+            </defs>
+            <rect width="100%" height="100%" fill={`url(#grid-${template.id})`} />
+          </svg>
+        </>
+      )}
 
       {/* ── Shimmer sweep on hover ── */}
       <AnimatePresence>
@@ -155,8 +172,7 @@ function WorkflowCard({
             exit={{ opacity: 0 }}
             transition={{ duration: 0.55, ease: "easeInOut" }}
             style={{
-              background:
-                "linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.14) 50%, transparent 100%)",
+              background: "linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.12) 50%, transparent 100%)",
               width: "60%",
             }}
           />
@@ -164,16 +180,16 @@ function WorkflowCard({
       </AnimatePresence>
 
       {/* ── Top-right: icon ── */}
-      <div className="absolute top-3 right-3 opacity-20">
-        <GitBranch className="w-4 h-4 text-white" />
+      <div className="absolute top-2.5 right-2.5 opacity-25">
+        <GitBranch className="w-3.5 h-3.5 text-white" />
       </div>
 
-      {/* ── Top-left: node count pill ── */}
-      {nodeCount > 0 && (
+      {/* ── Top-left: node count pill (only when no thumbnail) ── */}
+      {!hasThumbnail && nodeCount > 0 && (
         <motion.div
           initial={{ opacity: 0, scale: 0.8 }}
           animate={{ opacity: 1, scale: 1 }}
-          className="absolute top-3 left-3 flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-black/30 backdrop-blur-md border border-white/10"
+          className="absolute top-2.5 left-2.5 flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-black/30 backdrop-blur-md border border-white/10"
         >
           <Sparkles className="w-2.5 h-2.5 text-white/60" />
           <span className="text-white/60 text-[9px] font-mono">{nodeCount} nodes</span>
@@ -181,18 +197,28 @@ function WorkflowCard({
       )}
 
       {/* ── Bottom info ── */}
-      <div className="absolute bottom-0 inset-x-0 px-3 pb-3 pt-8 bg-gradient-to-t from-black/60 via-black/20 to-transparent">
+      <div className="absolute bottom-0 inset-x-0 px-3 pb-2.5 pt-8 bg-gradient-to-t from-black/70 via-black/30 to-transparent">
         <p className="text-white text-[12px] font-semibold leading-snug truncate text-left">
           {template.name}
         </p>
-        {template.description && (
-          <p className="text-white/40 text-[9px] truncate text-left mt-0.5 leading-tight">
-            {template.description}
-          </p>
-        )}
+
+        {/* Meta row: description or date */}
+        <div className="flex items-center justify-between mt-0.5 gap-1">
+          {template.description ? (
+            <p className="text-white/40 text-[9px] truncate text-left flex-1 leading-tight">
+              {template.description}
+            </p>
+          ) : (
+            <span />
+          )}
+          <div className="flex items-center gap-0.5 text-white/25 text-[8px] shrink-0">
+            <Calendar className="w-2 h-2" />
+            {formatDate(template.created_at)}
+          </div>
+        </div>
       </div>
 
-      {/* ── Hover: "Open" pill ── */}
+      {/* ── Hover CTA ── */}
       <AnimatePresence>
         {hovered && (
           <motion.div
@@ -202,15 +228,15 @@ function WorkflowCard({
             transition={{ duration: 0.18 }}
             className="absolute inset-0 flex items-center justify-center"
           >
-            <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/15 backdrop-blur-md border border-white/20 text-white text-[11px] font-medium">
+            <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-black/40 backdrop-blur-md border border-white/20 text-white text-[11px] font-medium">
               <Zap className="w-3 h-3" />
-              Open workflow
+              Preview workflow
             </div>
           </motion.div>
         )}
       </AnimatePresence>
 
-      {/* ── Border glow on hover ── */}
+      {/* ── Border glow ── */}
       <motion.div
         className="absolute inset-0 rounded-2xl pointer-events-none"
         animate={
@@ -225,7 +251,7 @@ function WorkflowCard({
 }
 
 // ---------------------------------------------------------------------------
-// Skeleton card
+// Skeleton
 // ---------------------------------------------------------------------------
 
 function SkeletonCard({ index }: { index: number }) {
@@ -240,8 +266,7 @@ function SkeletonCard({ index }: { index: number }) {
       <div
         className="absolute inset-0 -translate-x-full animate-[shimmer_1.6s_infinite]"
         style={{
-          background:
-            "linear-gradient(90deg, transparent, rgba(255,255,255,0.04) 50%, transparent)",
+          background: "linear-gradient(90deg, transparent, rgba(255,255,255,0.04) 50%, transparent)",
           animationDelay: `${index * 0.12}s`,
         }}
       />
@@ -261,7 +286,7 @@ function EmptyState() {
       style={{ width: CARD_W * 2, height: CARD_H, flexShrink: 0 }}
       className="rounded-2xl border border-dashed border-white/[0.08] flex flex-col items-center justify-center gap-2"
     >
-      <LayoutTemplate className="w-6 h-6 text-white/10" />
+      <ImageOff className="w-6 h-6 text-white/10" />
       <p className="text-white/15 text-[11px]">No workflow templates yet</p>
     </motion.div>
   );
@@ -274,19 +299,13 @@ function EmptyState() {
 export interface WorkflowLibraryProps {
   /** Project whose canvas the readonly preview will open under */
   projectId: string;
-  onTemplateClick?: (template: ProjectTemplateResponse) => void;
   className?: string;
 }
 
-export function WorkflowLibrary({ projectId, onTemplateClick, className }: WorkflowLibraryProps) {
-  const router   = useRouter();
+export function WorkflowLibrary({ projectId, className }: WorkflowLibraryProps) {
+  const router    = useRouter();
   const scrollRef = useRef<HTMLDivElement>(null);
-  const { templates, isLoading } = useGlobalTemplates(40);
-
-  const handleCardClick = useCallback((t: ProjectTemplateResponse) => {
-    onTemplateClick?.(t);
-    router.push(`/projects/${projectId}/templates/${t.id}?readonly=1&src=${t.id}`);
-  }, [projectId, router, onTemplateClick]);
+  const { templates, isLoading } = useLibraryTemplates(50);
 
   const [canLeft, setCanLeft]   = useState(false);
   const [canRight, setCanRight] = useState(true);
@@ -309,22 +328,25 @@ export function WorkflowLibrary({ projectId, onTemplateClick, className }: Workf
     });
   };
 
+  const handleCardClick = useCallback((t: LibraryTemplate) => {
+    // Open the global library template in read-only preview mode
+    router.push(`/projects/${projectId}/library-templates/${t.id}?readonly=1`);
+  }, [projectId, router]);
+
   return (
     <div className={cn("space-y-3", className)}>
       {/* ── Header row ── */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2.5">
-          {/* Icon */}
+          {/* Icon with pulse ring */}
           <div className="relative w-7 h-7 rounded-lg bg-gradient-to-br from-violet-500/30 to-indigo-600/20 border border-violet-500/20 flex items-center justify-center shrink-0">
             <LayoutTemplate className="w-3.5 h-3.5 text-violet-300" />
-            {/* pulse ring */}
             <motion.div
               className="absolute inset-0 rounded-lg border border-violet-400/30"
               animate={{ scale: [1, 1.5], opacity: [0.4, 0] }}
               transition={{ duration: 2, repeat: Infinity, ease: "easeOut" }}
             />
           </div>
-
           <div>
             <h3 className="text-sm font-semibold text-white/80 leading-none tracking-tight">
               Workflow Library
@@ -335,12 +357,12 @@ export function WorkflowLibrary({ projectId, onTemplateClick, className }: Workf
           </div>
         </div>
 
-        {/* Controls */}
+        {/* Scroll controls */}
         <div className="flex items-center gap-1">
           {[
-            { dir: "left" as const, can: canLeft,  icon: ChevronLeft,  label: "Scroll left"  },
-            { dir: "right" as const, can: canRight, icon: ChevronRight, label: "Scroll right" },
-          ].map(({ dir, can, icon: Icon, label }) => (
+            { dir: "left"  as const, can: canLeft,  Icon: ChevronLeft,  label: "Scroll left"  },
+            { dir: "right" as const, can: canRight, Icon: ChevronRight, label: "Scroll right" },
+          ].map(({ dir, can, Icon, label }) => (
             <motion.button
               key={dir}
               id={`wf-scroll-${dir}`}
@@ -364,29 +386,23 @@ export function WorkflowLibrary({ projectId, onTemplateClick, className }: Workf
 
       {/* ── Scrollable strip ── */}
       <div className="relative">
-        {/* Left fade */}
+        {/* Left / right edge fades */}
         <motion.div
           className="absolute left-0 top-0 bottom-0 w-10 bg-gradient-to-r from-background to-transparent z-10 pointer-events-none"
           animate={{ opacity: canLeft ? 1 : 0 }}
           transition={{ duration: 0.2 }}
         />
-        {/* Right fade */}
         <motion.div
           className="absolute right-0 top-0 bottom-0 w-10 bg-gradient-to-l from-background to-transparent z-10 pointer-events-none"
           animate={{ opacity: canRight ? 1 : 0 }}
           transition={{ duration: 0.2 }}
         />
 
-        {/* Cards */}
         <div
           ref={scrollRef}
           onScroll={syncArrows}
           className="flex overflow-x-auto pb-2"
-          style={{
-            gap: GAP,
-            scrollbarWidth: "none",
-            msOverflowStyle: "none",
-          }}
+          style={{ gap: GAP, scrollbarWidth: "none", msOverflowStyle: "none" }}
         >
           {isLoading
             ? Array.from({ length: 8 }).map((_, i) => <SkeletonCard key={i} index={i} />)
@@ -412,7 +428,7 @@ export function WorkflowLibrary({ projectId, onTemplateClick, className }: Workf
           className="flex items-center gap-1 text-[10px] text-white/15 select-none"
         >
           <ArrowRight className="w-2.5 h-2.5" />
-          Click a workflow to open it in the canvas editor
+          Click a workflow to preview, then duplicate it to your project
         </motion.p>
       )}
     </div>
