@@ -9,6 +9,7 @@ Also includes a generic StringInputNode for wiring literal string values
 """
 
 import asyncio
+import json
 import logging
 import re
 
@@ -124,6 +125,11 @@ class LangfusePromptNode(IO.ComfyNode):
             ],
             outputs=[
                 IO.String.Output(display_name="compiled_prompt"),
+                IO.String.Output(
+                    display_name="schema",
+                    tooltip="JSON schema extracted from the Langfuse prompt config, "
+                    "if present. Wire to GeminiNode response_schema for structured output.",
+                ),
             ],
         )
 
@@ -184,12 +190,29 @@ class LangfusePromptNode(IO.ComfyNode):
 
         compiled = prompt.compile(**compile_kwargs)
 
+        # Extract structured output schema from prompt config if present.
+        # Supports a flat "schema" key or OpenAI-style "response_format.json_schema.schema".
+        schema_str = ""
+        config = getattr(prompt, "config", None) or {}
+        if isinstance(config, dict):
+            schema_obj = config.get("schema")
+            if schema_obj is None:
+                # Try OpenAI-style nested path
+                rf = config.get("response_format", {})
+                if isinstance(rf, dict):
+                    js = rf.get("json_schema", {})
+                    if isinstance(js, dict):
+                        schema_obj = js.get("schema")
+            if schema_obj is not None:
+                schema_str = json.dumps(schema_obj)
+
         logger.info(
-            "[LangfusePromptNode] Compiled prompt (%d chars)",
+            "[LangfusePromptNode] Compiled prompt (%d chars), schema=%s",
             len(compiled),
+            "present" if schema_str else "absent",
         )
 
-        return IO.NodeOutput(compiled)
+        return IO.NodeOutput(compiled, schema_str)
 
 
 # ── Extension & Entry Point ───────────────────────────────────────────
