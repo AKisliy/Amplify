@@ -5,6 +5,7 @@ import { Trash2, Film, AlertCircle, CheckCircle2, Expand } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { AmplifyImage } from "@/features/media/components/AmplifyImage";
+import { AmplifyVideo } from "@/features/media/components/AmplifyVideo";
 import type { UploadedMedia } from "@/features/media/useMediaUpload";
 
 interface MediaCardProps {
@@ -34,18 +35,10 @@ export function MediaCard({ media, onDelete, onOpen, className }: MediaCardProps
     >
       {/* Media preview */}
       {media.type === "video" ? (
-        <video
+        <AmplifyVideo
           src={media.url}
-          className="absolute inset-0 h-full w-full object-cover"
-          muted
-          playsInline
-          preload="metadata"
-          onMouseEnter={(e) => (e.currentTarget as HTMLVideoElement).play()}
-          onMouseLeave={(e) => {
-            const v = e.currentTarget as HTMLVideoElement;
-            v.pause();
-            v.currentTime = 0;
-          }}
+          mode="hover-play"
+          className="transition-transform duration-300 group-hover:scale-105"
         />
       ) : (
         <AmplifyImage

@@ -22,6 +22,7 @@ import {
   Maximize2,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { AmplifyVideo } from "@/features/media/components/AmplifyVideo";
 import type { CanvasNode, ImageBatch } from "../types";
 import { NodePort } from "./NodePort";
 import { NodeImageGallery } from "./NodeImageGallery";
@@ -213,16 +214,15 @@ function TextPreview({ value }: { value: string }) {
 }
 
 function VideoPreview({ uuid }: { uuid: string }) {
-  const url = uuid.startsWith("http") ? uuid : getMediaUrl(uuid);
+  // Accept either a bare UUID (resolved via media-ingest proxy) or a full URL
+  const isUuid = !uuid.startsWith("http://") && !uuid.startsWith("https://");
 
   return (
-    <div className="rounded-lg overflow-hidden bg-black/25 border border-white/[0.06] aspect-video">
-      {/* eslint-disable-next-line jsx-a11y/media-has-caption */}
-      <video
-        src={url}
-        controls
-        className="nodrag w-full h-full object-contain"
-        preload="metadata"
+    <div className="relative rounded-lg overflow-hidden bg-black/25 border border-white/[0.06] aspect-video">
+      <AmplifyVideo
+        {...(isUuid ? { mediaId: uuid } : { src: uuid })}
+        mode="controls"
+        className="nodrag"
       />
     </div>
   );

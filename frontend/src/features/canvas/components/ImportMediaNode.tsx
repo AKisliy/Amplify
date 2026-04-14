@@ -19,17 +19,7 @@ import { cn } from "@/lib/utils";
 import type { CanvasNode, ImageBatch } from "../types";
 import { NodePort } from "./NodePort";
 import { NodeImageGallery } from "./NodeImageGallery";
-
-// ---------------------------------------------------------------------------
-// Media URL helper
-// ---------------------------------------------------------------------------
-
-function getMediaUrl(uuidOrUrl: string): string {
-  if (uuidOrUrl.startsWith("http://") || uuidOrUrl.startsWith("https://")) return uuidOrUrl;
-  const base =
-    process.env.NEXT_PUBLIC_API_BASE_URL ?? "https://staging.alexeykiselev.tech";
-  return `${base}/media/api/media/${uuidOrUrl}`;
-}
+import { AmplifyVideo } from "@/features/media/components/AmplifyVideo";
 
 // ---------------------------------------------------------------------------
 // Component
@@ -163,16 +153,15 @@ function EmptyMediaPreview() {
 }
 
 function VideoPreview({ uuid }: { uuid: string }) {
-  const url = uuid.startsWith("http") ? uuid : getMediaUrl(uuid);
+  // Accept either a bare UUID (resolved via media-ingest proxy) or a full URL
+  const isUuid = !uuid.startsWith("http://") && !uuid.startsWith("https://");
 
   return (
     <div className="rounded-lg overflow-hidden bg-black/25 border border-white/[0.06] aspect-video mb-2">
-      {/* eslint-disable-next-line jsx-a11y/media-has-caption */}
-      <video
-        src={url}
-        controls
-        className="nodrag w-full h-full object-contain"
-        preload="metadata"
+      <AmplifyVideo
+        {...(isUuid ? { mediaId: uuid } : { src: uuid })}
+        mode="controls"
+        className="nodrag"
       />
     </div>
   );

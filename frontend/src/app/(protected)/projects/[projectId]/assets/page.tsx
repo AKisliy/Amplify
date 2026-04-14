@@ -21,6 +21,7 @@ import { useProjects } from "@/features/ambassadors/hooks/useProjects";
 import { useProjectAssets } from "@/features/ambassadors/hooks/useProjectAssets";
 import type { ProjectAsset } from "@/features/ambassadors/types";
 import { AmplifyImage } from "@/features/media/components/AmplifyImage";
+import { AmplifyVideo } from "@/features/media/components/AmplifyVideo";
 
 // ---------------------------------------------------------------------------
 // Time-group helpers
@@ -85,18 +86,10 @@ function AssetCard({ asset, projectId }: { asset: ProjectAsset; projectId: strin
       {/* Media */}
       <div className="aspect-video relative overflow-hidden bg-black/40">
         {isVideo ? (
-          <video
+          <AmplifyVideo
             src={asset.mediaUrl}
-            className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-[1.03]"
-            muted
-            playsInline
-            preload="metadata"
-            onMouseEnter={(e) => (e.currentTarget as HTMLVideoElement).play()}
-            onMouseLeave={(e) => {
-              const v = e.currentTarget as HTMLVideoElement;
-              v.pause();
-              v.currentTime = 0;
-            }}
+            mode="hover-play"
+            className="transition-transform duration-500 group-hover:scale-[1.03]"
           />
         ) : (
           <AmplifyImage
