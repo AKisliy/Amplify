@@ -1,9 +1,5 @@
-using Flurl;
-using Microsoft.AspNetCore.WebUtilities;
-using Microsoft.Extensions.Options;
-using System.Text;
 using UserService.Application.Common.Interfaces;
-using UserService.Application.Common.Options;
+using UserService.Domain.Events.Auth;
 
 namespace UserService.Application.Auth.Register;
 
@@ -12,8 +8,7 @@ public record RegisterUserCommand(string Email, string Password) : IRequest<Guid
 public class RegisterUserCommandHandler(
     ITokenService tokenService,
     IIdentityService identityService,
-    IOptions<FrontendOptions> frontendOptions,
-    IEmailService emailService) : IRequestHandler<RegisterUserCommand, Guid>
+    IMediator mediator) : IRequestHandler<RegisterUserCommand, Guid>
 {
     public async Task<Guid> Handle(RegisterUserCommand request, CancellationToken cancellationToken)
     {
@@ -27,15 +22,10 @@ public class RegisterUserCommandHandler(
 
         var rawToken = await tokenService.GenerateEmailConfirmationTokenAsync(userId);
 
-        var encodedToken = WebEncoders.Base64UrlEncode(Encoding.UTF8.GetBytes(rawToken));
+        await mediator.Publish(
+            new UserRegisteredEvent(userId, request.Email, rawToken),
+            cancellationToken);
 
-        var baseFrontendUrl = frontendOptions.Value.Url;
-        var emailConfirmationPath = frontendOptions.Value.EmailConfirmationPath;
-
-        var callbackUrl = Url.Combine(baseFrontendUrl, emailConfirmationPath).SetQueryParams(new { userId, code = encodedToken });
-
-        await emailService.SendConfirmationLinkAsync(request.Email, callbackUrl);
         return userId;
     }
 }
-
