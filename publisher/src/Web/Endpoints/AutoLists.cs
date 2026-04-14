@@ -13,11 +13,11 @@ public class AutoLists : EndpointGroupBase
 
     public override void Map(RouteGroupBuilder groupBuilder)
     {
-        groupBuilder.MapPost(CreateAutoList);
-        groupBuilder.MapGet(GetAutoList, "{id}");
+        groupBuilder.MapPost(CreateAutoList).RequireAuthorization();
+        groupBuilder.MapGet(GetAutoList, "{id}").RequireAuthorization();
         groupBuilder.MapGet(GetAutoListsForProject).RequireAuthorization();
-        groupBuilder.MapPut(UpdateAutoList, "{id}");
-        groupBuilder.MapDelete(DeleteAutoList, "{id}");
+        groupBuilder.MapPut(UpdateAutoList, "{id}").RequireAuthorization();
+        groupBuilder.MapDelete(DeleteAutoList, "{id}").RequireAuthorization();
     }
 
     public async Task<Created<Guid>> CreateAutoList(ISender sender, CreateAutoListCommand command)
