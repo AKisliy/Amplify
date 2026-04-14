@@ -10,8 +10,14 @@ from backend_template.entities.project_template import (
     ProjectTemplateResponse,
     ProjectTemplateUpdate,
 )
+from backend_template.entities.events import (
+    ProjectTemplateCreatedEvent,
+    ProjectTemplateUpdatedEvent,
+    ProjectTemplateDeletedEvent,
+)
 from backend_template.repositories.project_template import ProjectTemplateRepository
 from backend_template.repositories.library_template import LibraryTemplateRepository
+from backend_template.utils.broker import PROJECT_TEMPLATE_EVENTS_EXCHANGE, publish_event
 
 
 class ProjectTemplateService:
@@ -49,7 +55,20 @@ class ProjectTemplateService:
         orm_template = await self.repo.create(**template_data)
 
         # 3. Convert ORM Model -> Pydantic Schema (Prevention of Leak)
-        return ProjectTemplateResponse.model_validate(orm_template)
+        response = ProjectTemplateResponse.model_validate(orm_template)
+
+        # 4. Publish lifecycle event (best-effort — failures are only logged)
+        await publish_event(
+            PROJECT_TEMPLATE_EVENTS_EXCHANGE,
+            ProjectTemplateCreatedEvent(
+                template_id=response.id,
+                project_id=response.project_id,
+                name=response.name,
+                description=response.description,
+            ),
+        )
+
+        return response
 
     async def get_template(self, template_id: UUID) -> ProjectTemplateResponse:
         """
@@ -118,7 +137,20 @@ class ProjectTemplateService:
         updated_orm = await self.repo.update(template_id, **update_data)
         
         # 4. Map to Response
-        return ProjectTemplateResponse.model_validate(updated_orm)
+        response = ProjectTemplateResponse.model_validate(updated_orm)
+
+        # 5. Publish lifecycle event (only if at least one field changed)
+        if update_data:
+            await publish_event(
+                PROJECT_TEMPLATE_EVENTS_EXCHANGE,
+                ProjectTemplateUpdatedEvent(
+                    template_id=template_id,
+                    project_id=response.project_id,
+                    changed_fields=update_data,
+                ),
+            )
+
+        return response
 
     async def delete_template(self, template_id: UUID) -> None:
         """
@@ -134,6 +166,15 @@ class ProjectTemplateService:
 
         # 2. Execute Delete
         await self.repo.delete(template_id)
+
+        # 3. Publish lifecycle event
+        await publish_event(
+            PROJECT_TEMPLATE_EVENTS_EXCHANGE,
+            ProjectTemplateDeletedEvent(
+                template_id=template_id,
+                project_id=existing_template.project_id,
+            ),
+        )
 
     async def duplicate_from_library(
         self, library_template_id: UUID, project_id: UUID
@@ -159,5 +200,18 @@ class ProjectTemplateService:
         )
 
         # 3. Return as Pydantic response
-        return ProjectTemplateResponse.model_validate(orm_template)
+        response = ProjectTemplateResponse.model_validate(orm_template)
+
+        # 4. Publish lifecycle event (best-effort)
+        await publish_event(
+            PROJECT_TEMPLATE_EVENTS_EXCHANGE,
+            ProjectTemplateCreatedEvent(
+                template_id=response.id,
+                project_id=response.project_id,
+                name=response.name,
+                description=response.description,
+            ),
+        )
+
+        return response
         

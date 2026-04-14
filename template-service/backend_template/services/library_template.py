@@ -10,13 +10,24 @@ from backend_template.entities.library_template import (
     LibraryTemplateResponse,
     LibraryTemplateUpdate,
 )
+from backend_template.entities.events import (
+    LibraryTemplateCreatedEvent,
+    LibraryTemplateDeletedEvent,
+    LibraryTemplateUpdatedEvent,
+)
 from backend_template.repositories.library_template import LibraryTemplateRepository
+from backend_template.utils.broker import TEMPLATE_EVENTS_EXCHANGE, publish_event
 
 
 class LibraryTemplateService:
     """
     Business Logic Layer for Library Templates.
     Orchestrates data flow between Controller (Schemas) and Repository (ORM).
+
+    After each mutating operation the service publishes a lifecycle event to the
+    ``template.events`` RabbitMQ exchange so downstream services (UserService,
+    etc.) can react without polling.  Publishing is best-effort: a failure logs
+    an error but never rolls back the primary DB operation.
     """
 
     def __init__(
@@ -34,8 +45,7 @@ class LibraryTemplateService:
     ) -> LibraryTemplateResponse:
         """
         Creates a new LibraryTemplate (internal use only).
-        Input: Pydantic Schema
-        Output: Pydantic Schema
+        Publishes a ``template.created`` event on success.
         """
         # 1. Convert Schema to Dictionary for Repository
         template_data = payload.model_dump()
@@ -44,7 +54,20 @@ class LibraryTemplateService:
         orm_template = await self.repo.create(**template_data)
 
         # 3. Convert ORM Model -> Pydantic Schema (Prevention of Leak)
-        return LibraryTemplateResponse.model_validate(orm_template)
+        response = LibraryTemplateResponse.model_validate(orm_template)
+
+        # 4. Publish lifecycle event (best-effort — failures are only logged)
+        await publish_event(
+            TEMPLATE_EVENTS_EXCHANGE,
+            LibraryTemplateCreatedEvent(
+                template_id=response.id,
+                name=response.name,
+                description=response.description,
+                thumbnail_url=response.thumbnail_url,
+            ),
+        )
+
+        return response
 
     async def get_template(self, template_id: UUID) -> LibraryTemplateResponse:
         """
@@ -84,6 +107,7 @@ class LibraryTemplateService:
     ) -> LibraryTemplateResponse:
         """
         Partially updates a library template (internal use only).
+        Publishes a ``template.updated`` event on success.
         """
         # 1. Check Existence first
         existing_template = await self.repo.get_by_id(template_id)
@@ -100,11 +124,24 @@ class LibraryTemplateService:
         updated_orm = await self.repo.update(template_id, **update_data)
 
         # 4. Map to Response
-        return LibraryTemplateResponse.model_validate(updated_orm)
+        response = LibraryTemplateResponse.model_validate(updated_orm)
+
+        # 5. Publish lifecycle event (only if at least one field changed)
+        if update_data:
+            await publish_event(
+                TEMPLATE_EVENTS_EXCHANGE,
+                LibraryTemplateUpdatedEvent(
+                    template_id=template_id,
+                    changed_fields=update_data,
+                ),
+            )
+
+        return response
 
     async def delete_template(self, template_id: UUID) -> None:
         """
         Deletes a library template (internal use only).
+        Publishes a ``template.deleted`` event on success.
         """
         # 1. Check Existence
         existing_template = await self.repo.get_by_id(template_id)
@@ -116,3 +153,9 @@ class LibraryTemplateService:
 
         # 2. Execute Delete
         await self.repo.delete(template_id)
+
+        # 3. Publish lifecycle event
+        await publish_event(
+            TEMPLATE_EVENTS_EXCHANGE,
+            LibraryTemplateDeletedEvent(template_id=template_id),
+        )
