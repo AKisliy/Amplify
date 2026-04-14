@@ -1,2 +1,60 @@
-
-  
+# Istio JWT authentication settings for the staging environment.
+# issuer/audience must match userservice Jwt:Issuer and Jwt:Audience appsettings.
+# jwksUri must be reachable by the Istio ingressgateway within the cluster.
+#
+# PREREQUISITE: Set PILOT_JWT_ENABLE_REMOTE_JWKS=envoy on the istiod deployment
+# so Envoy fetches the JWKS directly from the internal service:
+#   kubectl -n istio-system set env deployment/istiod PILOT_JWT_ENABLE_REMOTE_JWKS=envoy
+auth:
+  enabled: true
+  issuer: "http://userservice.test-env.svc.cluster.local/userservice/api/auth"
+  jwksUri: "http://userservice.test-env.svc.cluster.local/userservice/api/auth/.well-known/jwks.json"
+  audience: "MyAppDevelopmentUsers"
+  # Paths accessible without a valid JWT.
+  #
+  # AUDIT NOTES (2026-04-13) — surveyed every .NET endpoint group across all
+  # services routed through the ingressgateway for RequireAuthorization() /
+  # AllowAnonymous() markers:
+  #
+  # userservice (BasePath: /userservice)
+  #   Auth group: register, login, refresh, forgot/reset-password,
+  #               confirm-email, .well-known/* — all intentionally public. ✅
+  #   All other groups (Projects, ProjectAssets, Ambassadors): RequireAuthorization everywhere. ✅
+  #
+  # media-ingest (BasePath: /media)
+  #   Media.GetMediaById (GET /media/api/media/{id}): no RequireAuthorization. ← INTENTIONAL.
+  #     Browser <video src> / <img src> requests cannot send Authorization headers, so
+  #     this CDN-redirect endpoint must be publicly reachable. Added below.
+  #   Media.GetPresignedUploadUrl / CompleteUpload: RequireAuthorization. ✅
+  #   Internal group (/media/api/internal/media/*): no RequireAuthorization, but these
+  #     are service-to-service only (reached via cluster-internal DNS, not the gateway)
+  #     and are intentionally blocked externally by the DENY policy. ✅
+  #
+  # publisher (BasePath: /publisher)
+  #   Publications: RequireAuthorization on all. ✅
+  #   AutoLists.GetAutoListsForProject: RequireAuthorization. ✅
+  #   AutoLists (Create/Get/Update/Delete), AutoListEntries (all),
+  #   Connections (all): missing RequireAuthorization in .NET code.
+  #     → These look like missing-auth bugs in the application layer.
+  #     → They are NOT added to publicPaths here — the Istio DENY policy
+  #       provides a safety net until the app code is fixed.
+  #     → Tracked separately for fix in publisher service.
+  #
+  # ai-gateway: internal-only service, not routed through the ingressgateway
+  #   (no VirtualService registered). Out of scope for this policy.
+  publicPaths:
+    # Auth endpoints — must be open for unauthenticated users.
+    - "/userservice/api/auth/register"
+    - "/userservice/api/auth/login"
+    - "/userservice/api/auth/refresh"
+    - "/userservice/api/auth/confirm-email*"
+    - "/userservice/api/auth/forgot-password"
+    - "/userservice/api/auth/reset-password"
+    # JWKS and OpenID discovery — open so Istio can fetch signing keys.
+    - "/userservice/api/auth/.well-known/*"
+    # Media CDN redirect — intentionally unauthenticated.
+    # Browser <video>/<img> src attributes cannot carry Authorization headers;
+    # the endpoint only issues a 302 to the actual GCS/CDN URL, no data is served.
+    - "/media/api/media/*"
+    # Liveness/readiness health probes — open for k8s kubelet.
+    - "*/health"

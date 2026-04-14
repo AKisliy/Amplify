@@ -1,0 +1,8 @@
+# Istio JWT authentication settings for production.
+# Fill in when prod JWT issuer / audience / service URLs are finalised.
+# auth:
+#   enabled: true
+#   issuer: "https://auth.amplify-vkr.example.com/api/auth"
+#   jwksUri: "http://userservice.<prod-namespace>.svc.cluster.local/userservice/api/auth/.well-known/jwks.json"
+#   audience: "<prod-audience>"
+#   publicPaths: []   # mirror from stage

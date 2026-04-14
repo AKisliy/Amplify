@@ -1,0 +1,30 @@
+{{- if .Values.auth.enabled }}
+# AuthorizationPolicy denies requests that do not carry a valid JWT principal,
+# except for explicitly listed public paths (auth endpoints, health checks, JWKS).
+#
+# Pair this with request-authentication.yaml — RequestAuthentication only validates
+# tokens when present; AuthorizationPolicy is what actually rejects missing tokens.
+apiVersion: security.istio.io/v1
+kind: AuthorizationPolicy
+metadata:
+  name: amplify-require-jwt
+  # Must live in istio-system to target the ingressgateway workload.
+  namespace: istio-system
+spec:
+  selector:
+    matchLabels:
+      istio: ingressgateway
+  action: DENY
+  rules:
+  - from:
+    - source:
+        # Deny when no JWT principal was extracted (token absent or invalid).
+        notRequestPrincipals: ["*"]
+    to:
+    - operation:
+        # These paths are allowed without a token (login, register, JWKS, health).
+        notPaths:
+        {{- range .Values.auth.publicPaths }}
+        - {{ . | quote }}
+        {{- end }}
+{{- end }}
