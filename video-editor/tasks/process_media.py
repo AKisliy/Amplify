@@ -6,6 +6,7 @@ import tempfile
 from celery_app import app
 from models.messages.media_processing_completed import MediaProcessingCompleted
 from utils.broker.publisher import publish_message
+from utils.media_ingest_client import MediaVariant, upload_media
 from utils.storage.minio_client import get_s3_client, get_presigned_url, upload_from_file
 
 IMAGE_CONTENT_TYPES = {"image/jpeg", "image/png", "image/webp", "image/gif"}
@@ -15,10 +16,6 @@ THUMB_TINY_WIDTH = 16
 THUMB_MEDIUM_WIDTH = 400
 COMPLETED_EXCHANGE = "media-processing-completed"
 
-
-def _derive_key(file_key: str, suffix: str) -> str:
-    base, _ = os.path.splitext(file_key)
-    return f"{base}{suffix}"
 
 
 def _generate_thumbnail(input_url: str, output_path: str, width: int, is_video: bool):
@@ -54,9 +51,6 @@ def process_media(self, media_id: str, file_key: str, content_type: str):
 
     logging.info("Processing media — MediaId=%s FileKey=%s ContentType=%s", media_id, file_key, content_type)
 
-    tiny_key = _derive_key(file_key, "_thumb_tiny.webp")
-    medium_key = _derive_key(file_key, "_thumb_medium.webp")
-
     try:
         input_url = get_presigned_url(client, bucket, file_key)
 
@@ -65,12 +59,12 @@ def process_media(self, media_id: str, file_key: str, content_type: str):
             medium_path = os.path.join(tmp, "medium.webp")
 
             _generate_thumbnail(input_url, tiny_path, THUMB_TINY_WIDTH, is_video)
-            upload_from_file(client, bucket, tiny_key, tiny_path, "image/webp")
-            logging.info("Uploaded tiny thumbnail → %s", tiny_key)
+            upload_media(tiny_path, content_type="image/webp", parent_media_id=media_id, variant=MediaVariant.Tiny)
+            logging.info("Uploaded tiny thumbnail for MediaId=%s", media_id)
 
             _generate_thumbnail(input_url, medium_path, THUMB_MEDIUM_WIDTH, is_video)
-            upload_from_file(client, bucket, medium_key, medium_path, "image/webp")
-            logging.info("Uploaded medium thumbnail → %s", medium_key)
+            upload_media(medium_path, content_type="image/webp", parent_media_id=media_id, variant=MediaVariant.Medium)
+            logging.info("Uploaded medium thumbnail for MediaId=%s", media_id)
 
             if is_video:
                 normalized_path = os.path.join(tmp, "normalized.mp4")
@@ -81,8 +75,7 @@ def process_media(self, media_id: str, file_key: str, content_type: str):
         _publish_result(MediaProcessingCompleted(
             media_id=media_id,
             success=True,
-            thumb_tiny_key=tiny_key,
-            thumb_medium_key=medium_key,
+            error=None
         ))
         logging.info("Media processing complete for MediaId=%s", media_id)
 

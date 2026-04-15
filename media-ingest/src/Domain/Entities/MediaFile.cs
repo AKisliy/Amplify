@@ -1,3 +1,4 @@
+using MediaIngest.Domain.Enums;
 using MediaIngest.Domain.Events;
 
 namespace MediaIngest.Domain.Entities;
@@ -14,19 +15,23 @@ public class MediaFile : BaseAuditableEntity<Guid>
 
     public MediaProcessingStatus ProcessingStatus { get; set; } = MediaProcessingStatus.PendingUpload;
 
-    public string? ThumbnailTinyKey { get; set; }
+    public Guid? ParentMediaId { get; set; }
 
-    public string? ThumbnailMediumKey { get; set; }
+    public MediaVariant? Variant { get; set; }
 
     public void CompleteUpload()
     {
         ProcessingStatus = MediaProcessingStatus.Uploaded;
 
-        AddDomainEvent(new FileUploadCompleted
+        // Variants are already processed — no need to trigger the processing pipeline
+        if (ParentMediaId is null)
         {
-            MediaId = Id,
-            ContentType = ContentType ?? string.Empty,
-            FileKey = FileKey,
-        });
+            AddDomainEvent(new FileUploadCompleted
+            {
+                MediaId = Id,
+                ContentType = ContentType ?? string.Empty,
+                FileKey = FileKey,
+            });
+        }
     }
 }
