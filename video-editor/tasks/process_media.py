@@ -6,8 +6,7 @@ import tempfile
 from celery_app import app
 from models.messages.media_processing_completed import MediaProcessingCompleted
 from utils.broker.publisher import publish_message
-from utils.media_ingest_client import MediaVariant, overwrite_media, upload_media
-from utils.storage.minio_client import get_s3_client, get_presigned_url
+from utils.media_ingest_client import MediaVariant, get_presigned_url, overwrite_media, upload_media
 
 IMAGE_CONTENT_TYPES = {"image/jpeg", "image/png", "image/webp", "image/gif"}
 VIDEO_CONTENT_TYPES = {"video/mp4", "video/webm"}
@@ -45,14 +44,12 @@ def _publish_result(result: MediaProcessingCompleted):
 
 @app.task(name="tasks.process_media", bind=True, max_retries=3, default_retry_delay=30)
 def process_media(self, media_id: str, file_key: str, content_type: str):
-    bucket = os.getenv("MINIO_BUCKET", "media")
-    client = get_s3_client()
     is_video = content_type in VIDEO_CONTENT_TYPES
 
     logging.info("Processing media — MediaId=%s FileKey=%s ContentType=%s", media_id, file_key, content_type)
 
     try:
-        input_url = get_presigned_url(client, bucket, file_key)
+        input_url = get_presigned_url(media_id)
 
         with tempfile.TemporaryDirectory() as tmp:
             tiny_path = os.path.join(tmp, "tiny.webp")
