@@ -119,15 +119,31 @@ export function AmplifyImage({
 
   const resolvedSrc = src ?? (mediaId ? mediaApi.getMediaUrl(mediaId, variant) : "");
   const resolvedTiny = tinyUrl ?? (mediaId ? mediaApi.getMediaUrl(mediaId, "Tiny") : undefined);
-  // For the lightbox always show original quality
   const lightboxSrc = src ?? (mediaId ? mediaApi.getMediaUrl(mediaId, "Original") : resolvedSrc);
 
-  if (!resolvedSrc) return null;
+  const [currentSrc, setCurrentSrc] = useState(resolvedSrc);
+  const [fellBack, setFellBack] = useState(false);
+
+  useEffect(() => {
+    setCurrentSrc(resolvedSrc);
+    setFellBack(false);
+  }, [resolvedSrc]);
+
+  const handleError = () => {
+    if (!fellBack && mediaId && variant !== "Original") {
+      setCurrentSrc(mediaApi.getMediaUrl(mediaId, "Original"));
+      setFellBack(true);
+    } else {
+      onError?.();
+    }
+  };
+
+  if (!currentSrc) return null;
 
   return (
     <>
       <Image
-        src={resolvedSrc}
+        src={currentSrc}
         alt={alt}
         fill
         sizes={sizes}
@@ -140,7 +156,7 @@ export function AmplifyImage({
         placeholder={resolvedTiny ? "blur" : "empty"}
         onClick={lightbox ? () => setLightboxOpen(true) : undefined}
         onLoad={onLoad}
-        onError={onError}
+        onError={handleError}
       />
 
       {lightboxOpen && (
