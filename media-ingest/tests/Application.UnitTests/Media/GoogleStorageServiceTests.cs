@@ -1,3 +1,4 @@
+using MediaIngest.Domain.Enums;
 using MediaIngest.Infrastructure.Configuration;
 using MediaIngest.Infrastructure.Data;
 using MediaIngest.Infrastructure.FileStorage;
@@ -53,6 +54,18 @@ public class GoogleStorageServiceTests
         saved.ShouldNotBeNull();
         saved.FileKey.ShouldBe("videos/test.mp4");
         saved.ContentType.ShouldBe(contentType);
+    }
+
+    [Test]
+    public async Task SaveFileFromGsUriAsync_ValidUri_SetsProcessingStatusToUploaded()
+    {
+        var gsUri = $"gs://{BucketName}/videos/test.mp4";
+
+        var mediaId = await _sut.SaveFileFromGsUriAsync(gsUri, "video/mp4", CancellationToken.None);
+
+        var saved = await _dbContext.MediaFiles.FindAsync(mediaId);
+        saved.ShouldNotBeNull();
+        saved.ProcessingStatus.ShouldBe(MediaProcessingStatus.Uploaded);
     }
 
     [Test]

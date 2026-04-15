@@ -1,3 +1,4 @@
+from enum import StrEnum
 import os
 import logging
 
@@ -6,6 +7,10 @@ import requests
 logger = logging.getLogger(__name__)
 
 _BASE_URL = os.getenv("MEDIA_INGEST_URL", "http://media-ingest:5070")
+
+class MediaVariant(StrEnum):
+    Tiny="Tiny"
+    Medium="Medium"
 
 
 def get_presigned_url(media_id: str) -> str:
@@ -34,16 +39,44 @@ def get_upload_presigned_url(media_id: str) -> str:
     response.raise_for_status()
     return response.json()["uploadUrl"]
 
+def overwrite_media(media_id: str, file_path: str):
+    """Overwrites existing media file"""
+    url = get_upload_presigned_url(media_id)
 
-def upload_media(file_path: str, content_type: str = "video/mp4") -> str:
+    if not os.path.exists(file_path):
+        raise FileNotFoundError(f"No file found: {file_path}")
+
+    with open(file_path, "rb") as f:
+        put_response = requests.put(
+            url,
+            data=f,
+            timeout=300,
+        )
+    put_response.raise_for_status()
+
+    logger.debug("File %s was overwritten", media_id)
+
+
+def upload_media(
+        file_path: str, 
+        content_type: str = "video/mp4", 
+        parent_media_id: str | None = None,
+        variant: MediaVariant | None = None) -> str:
     """Register a new media record, get a presigned PUT URL, upload directly to S3, return media ID."""
     file_name = os.path.basename(file_path)
     file_size = os.path.getsize(file_path)
 
+    body = {"fileName": file_name, "contentType": content_type, "fileSize": file_size}
+
+    if parent_media_id:
+        body["parentMediaId"] = parent_media_id
+    if variant:
+        body["variant"] = variant
+
     # 1. Register in media-ingest and get presigned PUT URL
     response = requests.post(
         f"{_BASE_URL}/api/internal/media/presigned-upload",
-        json={"fileName": file_name, "contentType": content_type, "fileSize": file_size},
+        json=body,
         timeout=30,
     )
     response.raise_for_status()
@@ -60,6 +93,13 @@ def upload_media(file_path: str, content_type: str = "video/mp4") -> str:
             timeout=300,
         )
     put_response.raise_for_status()
+
+    # 3. Confirm upload so media-ingest marks the record as Uploaded
+    complete_response = requests.post(
+        f"{_BASE_URL}/api/internal/media/{media_id}/upload-completed",
+        timeout=30,
+    )
+    complete_response.raise_for_status()
 
     logger.debug("Uploaded %s → media ID %s", file_path, media_id)
     return media_id

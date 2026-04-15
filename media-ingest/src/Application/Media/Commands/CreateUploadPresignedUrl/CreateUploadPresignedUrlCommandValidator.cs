@@ -1,3 +1,6 @@
+using FluentValidation;
+using MediaIngest.Domain.Enums;
+
 namespace MediaIngest.Application.Media.Commands.CreateUploadPresignedUrl;
 
 public class CreateUploadPresignedUrlCommandValidator : AbstractValidator<CreateUploadPresignedUrlCommand>
@@ -16,5 +19,9 @@ public class CreateUploadPresignedUrlCommandValidator : AbstractValidator<Create
         RuleFor(x => x.FileSize)
             .LessThanOrEqualTo(MaxFileSize)
             .WithMessage("File must not exceed 100 MB.");
+
+        RuleFor(x => x.Variant)
+            .NotNull()
+            .When(x => x.ParentMediaId != null);
     }
 }

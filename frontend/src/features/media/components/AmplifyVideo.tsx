@@ -76,10 +76,14 @@ export interface AmplifyVideoProps {
 
 function buildPoster(
   thumbnailId?: string,
-  thumbnailSrc?: string
+  thumbnailSrc?: string,
+  mediaId?: string
 ): string | undefined {
   if (thumbnailSrc) return thumbnailSrc;
   if (thumbnailId) return mediaApi.getMediaUrl(thumbnailId, "Medium");
+  // Fall back to the Medium variant of the video itself — returns 404 if not ready,
+  // in which case the browser simply shows no poster (black frame), which is fine.
+  if (mediaId) return mediaApi.getMediaUrl(mediaId, "Medium");
   return undefined;
 }
 
@@ -418,7 +422,7 @@ export function AmplifyVideo({
   onError,
 }: AmplifyVideoProps) {
   const resolvedSrc = src ?? (mediaId ? mediaApi.getMediaUrl(mediaId, "Original") : "");
-  const poster = buildPoster(thumbnailId, thumbnailSrc);
+  const poster = buildPoster(thumbnailId, thumbnailSrc, mediaId);
 
   // Sensible muted default per mode
   const effectiveMuted = muted ?? (mode === "hover-play" ? true : false);

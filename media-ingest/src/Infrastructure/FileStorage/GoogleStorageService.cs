@@ -28,10 +28,13 @@ public class GoogleStorageService(
 
         var media = new MediaFile
         {
+            // Need this since complete upload is called and it requires Id to be set.
+            Id = Guid.NewGuid(),
             FileKey = fileKey,
             ContentType = contentType,
         };
 
+        media.CompleteUpload();
         dbContext.MediaFiles.Add(media);
 
         await dbContext.SaveChangesAsync(cancellationToken);

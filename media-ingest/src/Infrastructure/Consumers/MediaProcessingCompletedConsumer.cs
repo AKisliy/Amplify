@@ -24,18 +24,12 @@ public class MediaProcessingCompletedConsumer(
             return;
         }
 
-        if (message.Success)
-        {
-            mediaFile.ThumbnailTinyKey = message.ThumbTinyKey;
-            mediaFile.ThumbnailMediumKey = message.ThumbMediumKey;
-            mediaFile.ProcessingStatus = MediaProcessingStatus.Ready;
-            logger.LogInformation("MediaFile {MediaId} processing completed successfully", message.MediaId);
-        }
-        else
-        {
-            mediaFile.ProcessingStatus = MediaProcessingStatus.Failed;
+        mediaFile.ProcessingStatus = message.Success
+            ? MediaProcessingStatus.Ready
+            : MediaProcessingStatus.Failed;
+
+        if (!message.Success)
             logger.LogWarning("MediaFile {MediaId} processing failed: {Error}", message.MediaId, message.Error);
-        }
 
         await dbContext.SaveChangesAsync(context.CancellationToken);
     }
