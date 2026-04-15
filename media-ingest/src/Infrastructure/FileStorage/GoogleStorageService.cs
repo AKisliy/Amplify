@@ -32,6 +32,7 @@ public class GoogleStorageService(
             ContentType = contentType,
         };
 
+        media.CompleteUpload();
         dbContext.MediaFiles.Add(media);
 
         await dbContext.SaveChangesAsync(cancellationToken);
