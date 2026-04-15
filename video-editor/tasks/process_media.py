@@ -6,8 +6,8 @@ import tempfile
 from celery_app import app
 from models.messages.media_processing_completed import MediaProcessingCompleted
 from utils.broker.publisher import publish_message
-from utils.media_ingest_client import MediaVariant, upload_media
-from utils.storage.minio_client import get_s3_client, get_presigned_url, upload_from_file
+from utils.media_ingest_client import MediaVariant, overwrite_media, upload_media
+from utils.storage.minio_client import get_s3_client, get_presigned_url
 
 IMAGE_CONTENT_TYPES = {"image/jpeg", "image/png", "image/webp", "image/gif"}
 VIDEO_CONTENT_TYPES = {"video/mp4", "video/webm"}
@@ -69,7 +69,7 @@ def process_media(self, media_id: str, file_key: str, content_type: str):
             if is_video:
                 normalized_path = os.path.join(tmp, "normalized.mp4")
                 _normalize_video(input_url, normalized_path)
-                upload_from_file(client, bucket, file_key, normalized_path, "video/mp4")
+                overwrite_media(media_id=media_id, file_path=normalized_path)
                 logging.info("Uploaded normalized video → %s", file_key)
 
         _publish_result(MediaProcessingCompleted(

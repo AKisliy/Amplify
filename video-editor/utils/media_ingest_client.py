@@ -39,6 +39,23 @@ def get_upload_presigned_url(media_id: str) -> str:
     response.raise_for_status()
     return response.json()["uploadUrl"]
 
+def overwrite_media(media_id: str, file_path: str):
+    """Overwrites existing media file"""
+    url = get_upload_presigned_url(media_id)
+
+    if not os.path.exists(file_path):
+        raise FileNotFoundError(f"No file found: {file_path}")
+
+    with open(file_path, "rb") as f:
+        put_response = requests.put(
+            url,
+            data=f,
+            timeout=300,
+        )
+    put_response.raise_for_status()
+
+    logger.debug("File %s was overwritten", media_id)
+
 
 def upload_media(
         file_path: str, 
