@@ -3,6 +3,7 @@ API Nodes for Gemini Multimodal LLM Usage via Remote API
 See: https://cloud.google.com/vertex-ai/generative-ai/docs/model-reference/inference
 """
 
+import json
 from enum import Enum
 from fnmatch import fnmatch
 from typing import Literal
@@ -14,6 +15,7 @@ from comfy_api_nodes.apis.gemini import (
     GeminiFileData,
     GeminiGenerateContentRequest,
     GeminiGenerateContentResponse,
+    GeminiGenerationConfig,
     GeminiImageConfig,
     GeminiImageGenerateContentRequest,
     GeminiImageGenerationConfig,
@@ -346,9 +348,31 @@ class GeminiNode(IO.ComfyNode):
                     optional=True,
                     tooltip="Optional video UUID to use as context for the model.",
                 ),
+                IO.String.Input(
+                    "response_schema",
+                    multiline=True,
+                    default="",
+                    optional=True,
+                    tooltip="Optional JSON Schema string. When provided, Gemini returns "
+                    "structured JSON matching this schema. The first array property "
+                    "found is extracted into the 'segments' list output.",
+                    advanced=True,
+                ),
+                IO.Int.Input(
+                    "seed",
+                    default=0,
+                    min=0,
+                    max=2**31 - 1,
+                    tooltip="Change this value to generate a new response. Not sent to the model.",
+                    control_after_generate=True,
+                ),
             ],
             outputs=[
                 IO.String.Output(display_name="text"),
+                IO.String.Output(
+                    display_name="segments",
+                    is_output_list=True,
+                ),
             ],
         )
 
@@ -360,6 +384,8 @@ class GeminiNode(IO.ComfyNode):
         system_prompt: str = "",
         images: IO.Autogrow.Type | None = None,
         video_uuid: str = "",
+        response_schema: str = "",
+        seed: int = 0,
     ) -> IO.NodeOutput:
         prompt = validate_string(prompt, strip_whitespace=True)
 
@@ -387,6 +413,16 @@ class GeminiNode(IO.ComfyNode):
         if system_prompt:
             gemini_system_prompt = GeminiSystemInstructionContent(parts=[GeminiTextPart(text=system_prompt)], role=None)
 
+        # Build generationConfig when structured output is requested
+        generation_config = None
+        response_schema = response_schema.strip() if response_schema else ""
+        if response_schema:
+            schema_dict = json.loads(response_schema)
+            generation_config = GeminiGenerationConfig(
+                responseMimeType="application/json",
+                responseSchema=schema_dict,
+            )
+
         token = get_vertex_ai_access_token()
         
         response = await sync_op(
@@ -403,13 +439,38 @@ class GeminiNode(IO.ComfyNode):
                         parts=parts,
                     )
                 ],
+                generationConfig=generation_config,
                 systemInstruction=gemini_system_prompt,
             ),
             response_model=GeminiGenerateContentResponse,
         )
 
         output_text = get_text_from_response(response) or "Empty response from Gemini model..."
-        return IO.NodeOutput(output_text, ui={"text": [output_text]})
+
+        # Parse structured output into segments list when schema was provided
+        segments: list[str] = []
+        if response_schema:
+            parsed = json.loads(output_text)
+            # Extract the first array property from the response
+            raw_items: list = []
+            if isinstance(parsed, list):
+                raw_items = parsed
+            elif isinstance(parsed, dict):
+                for value in parsed.values():
+                    if isinstance(value, list):
+                        raw_items = value
+                        break
+            # Each item can be a plain string or an object — grab the first string value
+            for item in raw_items:
+                if isinstance(item, str):
+                    segments.append(item.strip())
+                elif isinstance(item, dict):
+                    for v in item.values():
+                        if isinstance(v, str) and v.strip():
+                            segments.append(v.strip())
+                            break
+
+        return IO.NodeOutput(output_text, segments, ui={"text": [output_text]})
 
 class GeminiImageNode(IO.ComfyNode):
 

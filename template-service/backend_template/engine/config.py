@@ -1,7 +1,10 @@
+import os
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
+ENV_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), ".env")
+
 class ConfigBase(BaseSettings):
-    model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8", extra="ignore")
+    model_config = SettingsConfigDict(env_file=ENV_PATH, env_file_encoding="utf-8", extra="ignore")
 
 class GeminiConfig(ConfigBase):
     service_account_key_file: str
@@ -13,7 +16,7 @@ class MediaIngestConfig(ConfigBase):
     media_ingest_url: str = "http://localhost:5070/media/api"
 
 class EngineConfig(ConfigBase):
-    model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8", extra="ignore", env_prefix="ENGINE_")
+    model_config = SettingsConfigDict(env_file=ENV_PATH, env_file_encoding="utf-8", extra="ignore", env_prefix="ENGINE_")
     listen: str = "127.0.0.1"
     port: int = 8188
     verbose: bool = True              

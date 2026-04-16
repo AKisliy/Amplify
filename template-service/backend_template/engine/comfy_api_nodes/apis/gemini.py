@@ -119,6 +119,8 @@ class GeminiGenerationConfig(BaseModel):
     temperature: float | None = Field(None, ge=0.0, le=2.0)
     topK: int | None = Field(None, ge=1)
     topP: float | None = Field(None, ge=0.0, le=1.0)
+    responseMimeType: str | None = Field(None, description="Set to 'application/json' to enable structured output.")
+    responseSchema: dict[str, Any] | None = Field(None, description="JSON Schema that the model output must conform to.")
 
 
 class GeminiImageOutputOptions(BaseModel):
