@@ -71,4 +71,5 @@ def run_rabbitmq():
 rabbitmq_thread = threading.Thread(target=run_rabbitmq, daemon=True)
 rabbitmq_thread.start()
 
-uvicorn.run("api:api", host="0.0.0.0", port=8000)
+root_path = os.getenv("ROOT_PATH", "")
+uvicorn.run("api:api", host="0.0.0.0", port=8000, root_path=root_path, forwarded_allow_ips="*")
