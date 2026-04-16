@@ -59,6 +59,9 @@ releases:
     labels:
       tier: backend
       app: userservice
+    wait: true
+    waitForJobs: true
+    timeout: 300
     values:
       - ./userservice/charts/envs/values.yaml
       - ./userservice/charts/envs/values.yaml.gotmpl
@@ -72,6 +75,9 @@ releases:
     labels:
       tier: backend
       app: publisher
+    wait: true
+    waitForJobs: true
+    timeout: 300
     values:
       - ./publisher/charts/envs/values.yaml
       - ./publisher/charts/envs/values.yaml.gotmpl
@@ -105,6 +111,9 @@ releases:
     labels:
       tier: backend
       app: media-ingest
+    wait: true
+    waitForJobs: true
+    timeout: 300
     values:
       - ./media-ingest/charts/envs/values.yaml
       - ./media-ingest/charts/envs/values.yaml.gotmpl
@@ -118,6 +127,8 @@ releases:
     labels:
       tier: backend
       app: ws-gateway
+    wait: true
+    timeout: 300
     values:
       - ./websocket-gateway/charts/envs/values.yaml
       - ./websocket-gateway/charts/envs/values.yaml.gotmpl
@@ -131,6 +142,8 @@ releases:
     labels:
       tier: backend
       app: video-editor
+    wait: true
+    timeout: 300
     values:
       - ./video-editor/charts/envs/values.yaml
       - ./video-editor/charts/envs/values.yaml.gotmpl
@@ -144,6 +157,8 @@ releases:
     labels:
       tier: backend
       app: ai-gateway
+    wait: true
+    timeout: 300
     values:
       - ./ai-gateway/charts/envs/values.yaml
       - ./ai-gateway/charts/envs/values.yaml.gotmpl
@@ -157,6 +172,8 @@ releases:
     labels:
       tier: backend
       app: template-service
+    wait: true
+    timeout: 300
     values:
       - ./template-service/charts/envs/values.yaml
       - ./template-service/charts/envs/values.yaml.gotmpl
