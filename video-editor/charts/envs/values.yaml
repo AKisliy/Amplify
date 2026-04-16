@@ -67,3 +67,23 @@ secrets:
     key: ""
   s3SecretKey:
     key: ""
+
+virtualService:
+  name: video-editor-vs
+  hosts: []
+  http:
+    timeout: 30s
+    retries:
+      attempts: 3
+      perTryTimeout: 10s
+      retryOn: gateway-error,connect-failure,refused-stream,5xx
+
+gateway:
+  name: amplify-gateway
+
+cors:
+  allowedOrigins: []
+  allowedOriginsRegex: []
+
+config:
+  rootPath: "/video-editor"

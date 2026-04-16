@@ -40,6 +40,8 @@ spec:
               value: "{{ .Values.minio.location }}"
             - name: MEDIA_INGEST_URL
               value: "{{ .Values.internalServices.mediaIngest.url }}"
+            - name: ROOT_PATH
+              value: "{{ .Values.config.rootPath }}"
           envFrom:
             - secretRef:
                 name: {{ .Values.secret.name }}
