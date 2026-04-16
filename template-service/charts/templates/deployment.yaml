@@ -13,6 +13,7 @@ spec:
     metadata:
       annotations:
         instrumentation.opentelemetry.io/inject-python: "python-instrumentation"
+        instrumentation.opentelemetry.io/container-names: "{{ .Chart.Name }},engine"
       labels:
         {{- include "template-service.labels" . | nindent 8 }}
         {{- with .Values.podLabels }}
