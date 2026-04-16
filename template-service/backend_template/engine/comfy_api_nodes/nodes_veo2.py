@@ -30,6 +30,7 @@ MODELS_MAP = {
     "veo-3.1-fast-generate": "veo-3.1-fast-generate-001",
     "veo-3.0-generate-001": "veo-3.0-generate-001",
     "veo-3.0-fast-generate-001": "veo-3.0-fast-generate-001",
+    "veo-3.1-lite-generate-001": "veo-3.1-lite-generate-001",
 }
 
 GEMINI_BASE_ENDPOINT = f"https://aiplatform.googleapis.com/v1/projects/{gemini_config.project_id}/locations/{gemini_config.location}/publishers/google/models"
@@ -420,8 +421,8 @@ class Veo3FirstLastFrameNode(IO.ComfyNode):
                 ),
                 IO.Combo.Input(
                     "model",
-                    options=["veo-3.1-generate", "veo-3.1-fast-generate"],
-                    default="veo-3.1-fast-generate",
+                    options=["veo-3.1-generate", "veo-3.1-fast-generate", "veo-3.1-lite-generate-001"],
+                    default="veo-3.1-lite-generate-001",
                 ),
                 IO.Boolean.Input(
                     "generate_audio",
@@ -445,7 +446,7 @@ class Veo3FirstLastFrameNode(IO.ComfyNode):
         seed: int,
         first_frame_uuid: str | None = None,
         last_frame_uuid: str | None = None,
-        model: str = "veo-3.1-fast-generate",
+        model: str = "veo-3.1-lite-generate-001",
         generate_audio: bool = True,
     ):
         model = MODELS_MAP[model]
