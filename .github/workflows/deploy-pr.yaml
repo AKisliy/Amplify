@@ -18,9 +18,17 @@ jobs:
             ai-gateway: ${{ steps.filter.outputs.ai-gateway }}
         steps:
             - uses: actions/checkout@v4
+              with:
+                  # fetch-depth: 2 is required for HEAD^1 comparison on synchronize events
+                  fetch-depth: 2
             - uses: dorny/paths-filter@v3
               id: filter
               with:
+                  # On 'synchronize' (new commit pushed) compare only the last commit so that
+                  # only services touched by that commit are re-deployed, not the entire PR diff.
+                  # On 'opened'/'reopened' compare against the base branch to catch everything
+                  # that needs an initial deploy.
+                  base: ${{ github.event.action == 'synchronize' && 'HEAD^1' || github.base_ref }}
                   filters: |
                       userservice:
                         - 'userservice/**'
