@@ -1,5 +1,4 @@
 import logging
-import sys
 
 _initialized = False
 
@@ -11,6 +10,6 @@ def setup_logger(log_level='INFO'):
 
     logger = logging.getLogger()
     logger.setLevel(log_level)
-    handler = logging.StreamHandler(sys.stdout)
+    handler = logging.StreamHandler()
     handler.setFormatter(logging.Formatter("%(message)s"))
     logger.addHandler(handler)
