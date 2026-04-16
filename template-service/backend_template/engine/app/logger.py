@@ -7,7 +7,7 @@ def setup_logger(log_level='INFO'):
     if _initialized:
         return
     _initialized = True
-    
+
     logger = logging.getLogger()
     logger.setLevel(log_level)
     handler = logging.StreamHandler()
