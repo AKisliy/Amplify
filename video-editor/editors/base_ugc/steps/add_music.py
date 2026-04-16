@@ -31,10 +31,10 @@ class AddMusicStep(PipelineStep):
 
         final = video.with_audio(mixed_audio)
         final.write_videofile(
-            output_path, 
-            codec="libx264", 
-            audio_codec="aac", 
-            temp_audio_file = ctx.workspace.get_temp_path("mp3"),
+            output_path,
+            codec="libx264",
+            audio_codec="aac",
+            temp_audiofile_path=ctx.workspace.get_temp_path("mp3"),
             logger=None)
 
         video.close()
