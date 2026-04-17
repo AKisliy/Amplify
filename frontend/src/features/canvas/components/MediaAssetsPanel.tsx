@@ -19,7 +19,7 @@ import {
 import { cn } from "@/lib/utils";
 import { mediaApi, detectMediaType } from "@/features/media/api";
 import { ambassadorApi, projectApi } from "@/features/ambassadors/services/api";
-import type { AmbassadorImage } from "@/features/ambassadors/types";
+import type { ReferenceImage } from "@/features/ambassadors/types";
 import { AmplifyImage } from "@/features/media/components/AmplifyImage";
 
 // ---------------------------------------------------------------------------
@@ -46,7 +46,7 @@ interface MediaAssetsPanelProps {
 // ---------------------------------------------------------------------------
 
 export function MediaAssetsPanel({ isOpen, projectId }: MediaAssetsPanelProps) {
-  const [images, setImages] = useState<AmbassadorImage[]>([]);
+  const [images, setImages] = useState<ReferenceImage[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -68,7 +68,7 @@ export function MediaAssetsPanel({ isOpen, projectId }: MediaAssetsPanelProps) {
     setIsLoading(true);
     setError(null);
     try {
-      const data = await ambassadorApi.getAmbassadorImages(ambassadorId);
+      const data = await ambassadorApi.getReferenceImages(ambassadorId);
       setImages(data);
     } catch {
       setError("Failed to load media assets.");
@@ -91,7 +91,7 @@ export function MediaAssetsPanel({ isOpen, projectId }: MediaAssetsPanelProps) {
         await ambassadorApi.linkAmbassadorImage(
           ambassadorId,
           result.mediaId,
-          result.type === "video" ? 1 : 0
+          "other" // TODO: allow user to specify image type
         );
         await fetchImages();
       } catch {
@@ -116,12 +116,12 @@ export function MediaAssetsPanel({ isOpen, projectId }: MediaAssetsPanelProps) {
 
   // Drag start — encode the asset URL + type for the canvas drop handler
   const handleDragStart = useCallback(
-    (e: React.DragEvent<HTMLDivElement>, asset: AmbassadorImage) => {
-      const mediaType = asset.imageType === 1 ? "video" : "image";
+    (e: React.DragEvent<HTMLDivElement>, asset: ReferenceImage) => {
+      const mediaType = "image";
       const payload: MediaAssetDragPayload = {
-        url: mediaApi.getMediaUrl(asset.mediaId, "Tiny"),
+        url: mediaApi.getMediaUrl(asset.media_id, "Tiny"),
         mediaType,
-        id: asset.mediaId,
+        id: asset.media_id,
       };
       e.dataTransfer.setData("application/amplify-media", JSON.stringify(payload));
       e.dataTransfer.effectAllowed = "copy";
@@ -206,7 +206,7 @@ export function MediaAssetsPanel({ isOpen, projectId }: MediaAssetsPanelProps) {
               <div className="grid grid-cols-2 gap-1.5">
                 {images.map((asset) => (
                   <AssetCard
-                    key={asset.mediaId}
+                    key={asset.media_id}
                     asset={asset}
                     onDragStart={handleDragStart}
                   />
@@ -228,10 +228,10 @@ function AssetCard({
   asset,
   onDragStart,
 }: {
-  asset: AmbassadorImage;
-  onDragStart: (e: React.DragEvent<HTMLDivElement>, asset: AmbassadorImage) => void;
+  asset: ReferenceImage;
+  onDragStart: (e: React.DragEvent<HTMLDivElement>, asset: ReferenceImage) => void;
 }) {
-  const isVideo = asset.imageType === 1;
+  const isVideo = false; // For now, we only support images as reference assets. Future: detect media type and show video badge if needed.
   const [imgError, setImgError] = useState(false);
 
   return (
@@ -257,7 +257,7 @@ function AssetCard({
            * it doesn't expose this thumbnail-scrape pattern.
            */}
           <video
-            src={mediaApi.getMediaUrl(asset.mediaId)}
+            src={mediaApi.getMediaUrl(asset.media_id)}
             className="w-full h-full object-cover"
             muted
             playsInline
@@ -277,8 +277,8 @@ function AssetCard({
         </div>
       ) : (
         <AmplifyImage
-          mediaId={asset.mediaId}
-          src={mediaApi.getMediaUrl(asset.mediaId)}
+          mediaId={asset.media_id}
+          src={mediaApi.getMediaUrl(asset.media_id)}
           alt=""
           className="w-full h-full object-cover"
           onError={() => setImgError(true)}

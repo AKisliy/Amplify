@@ -1,9 +1,9 @@
 import { useState, useCallback, useEffect } from "react";
 import { ambassadorApi } from "../services/api";
-import type { AmbassadorImage } from "../types";
+import type { ReferenceImage } from "../types";
 
 export function useAmbassadorImages(ambassadorId?: string | null) {
-  const [images, setImages] = useState<AmbassadorImage[]>([]);
+  const [images, setImages] = useState<ReferenceImage[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -16,10 +16,10 @@ export function useAmbassadorImages(ambassadorId?: string | null) {
     setIsLoading(true);
     setError(null);
     try {
-      const data = await ambassadorApi.getAmbassadorImages(ambassadorId);
+      const data = await ambassadorApi.getReferenceImages(ambassadorId);
       setImages(data);
     } catch (err: any) {
-      console.error("Failed to fetch ambassador images:", err);
+      console.error("Failed to fetch reference images:", err);
       setError(err.message || "Failed to fetch images");
       setImages([]); // Fallback to empty array
     } finally {
