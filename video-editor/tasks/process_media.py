@@ -17,13 +17,29 @@ COMPLETED_EXCHANGE = "media-processing-completed"
 
 
 
+logger = logging.getLogger(__name__)
+
+
+def _run_ffmpeg(cmd: list[str]) -> None:
+    try:
+        subprocess.run(cmd, check=True, capture_output=True)
+    except subprocess.CalledProcessError as exc:
+        logger.error(
+            "ffmpeg failed (rc=%d):\nstdout: %s\nstderr: %s",
+            exc.returncode,
+            exc.stdout.decode(errors="replace"),
+            exc.stderr.decode(errors="replace"),
+        )
+        raise
+
+
 def _generate_thumbnail(input_url: str, output_path: str, width: int, is_video: bool):
     scale_filter = f"scale={width}:-1"
     cmd = ["ffmpeg", "-y", "-i", input_url]
     if is_video:
         cmd += ["-vframes", "1"]
     cmd += ["-vf", scale_filter, output_path]
-    subprocess.run(cmd, check=True, capture_output=True)
+    _run_ffmpeg(cmd)
 
 
 def _normalize_video(input_url: str, output_path: str):
@@ -35,7 +51,7 @@ def _normalize_video(input_url: str, output_path: str):
         "-movflags", "+faststart",
         output_path,
     ]
-    subprocess.run(cmd, check=True, capture_output=True)
+    _run_ffmpeg(cmd)
 
 
 def _publish_result(result: MediaProcessingCompleted):
@@ -46,7 +62,7 @@ def _publish_result(result: MediaProcessingCompleted):
 def process_media(self, media_id: str, file_key: str, content_type: str):
     is_video = content_type in VIDEO_CONTENT_TYPES
 
-    logging.info("Processing media — MediaId=%s FileKey=%s ContentType=%s", media_id, file_key, content_type)
+    logger.info("Processing media — MediaId=%s FileKey=%s ContentType=%s", media_id, file_key, content_type)
 
     try:
         input_url = get_presigned_url(media_id)
@@ -57,27 +73,27 @@ def process_media(self, media_id: str, file_key: str, content_type: str):
 
             _generate_thumbnail(input_url, tiny_path, THUMB_TINY_WIDTH, is_video)
             upload_media(tiny_path, content_type="image/webp", parent_media_id=media_id, variant=MediaVariant.Tiny)
-            logging.info("Uploaded tiny thumbnail for MediaId=%s", media_id)
+            logger.info("Uploaded tiny thumbnail for MediaId=%s", media_id)
 
             _generate_thumbnail(input_url, medium_path, THUMB_MEDIUM_WIDTH, is_video)
             upload_media(medium_path, content_type="image/webp", parent_media_id=media_id, variant=MediaVariant.Medium)
-            logging.info("Uploaded medium thumbnail for MediaId=%s", media_id)
+            logger.info("Uploaded medium thumbnail for MediaId=%s", media_id)
 
             if is_video:
                 normalized_path = os.path.join(tmp, "normalized.mp4")
                 _normalize_video(input_url, normalized_path)
                 overwrite_media(media_id=media_id, file_path=normalized_path)
-                logging.info("Uploaded normalized video → %s", file_key)
+                logger.info("Uploaded normalized video → %s", file_key)
 
         _publish_result(MediaProcessingCompleted(
             media_id=media_id,
             success=True,
             error=None
         ))
-        logging.info("Media processing complete for MediaId=%s", media_id)
+        logger.info("Media processing complete for MediaId=%s", media_id)
 
     except Exception as exc:
-        logging.error("Media processing failed for MediaId=%s: %s", media_id, exc)
+        logger.error("Media processing failed for MediaId=%s: %s", media_id, exc)
 
         if self.request.retries >= self.max_retries:
             _publish_result(MediaProcessingCompleted(
