@@ -79,10 +79,10 @@ export function AmbassadorView({
     }
   };
 
-  // Derive avatar URL from reference_images (prefer portrait, fallback to first)
-  const avatarImage = ambassador?.reference_images.find((img) => img.image_type === "portrait")
-    ?? ambassador?.reference_images[0];
-  const avatarUrl = avatarPreview ?? (avatarImage ? mediaApi.getMediaUrl(avatarImage.media_id) : undefined);
+  // Derive avatar URL from referenceImages (prefer portrait, fallback to first)
+  const avatarImage = ambassador?.referenceImages.find((img) => img.imageType === "portrait")
+    ?? ambassador?.referenceImages[0];
+  const avatarUrl = avatarPreview ?? (avatarImage ? mediaApi.getMediaUrl(avatarImage.mediaId) : undefined);
 
   if (!ambassador && !isLoading) {
     return (
@@ -183,7 +183,7 @@ export function AmbassadorView({
         </Card>
 
         {/* AI info section */}
-        {(ambassador!.appearance_description || ambassador!.voice_description || ambassador!.voice_id) && (
+        {(ambassador!.appearanceDescription || ambassador!.voiceDescription || ambassador!.voiceId) && (
           <Card className="border-border/50">
             <CardHeader className="pb-3">
               <CardTitle className="text-base font-semibold text-muted-foreground uppercase tracking-wide">
@@ -191,37 +191,37 @@ export function AmbassadorView({
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              {ambassador!.appearance_description && (
+              {ambassador!.appearanceDescription && (
                 <div>
                   <p className="text-xs font-medium text-muted-foreground mb-1">Appearance</p>
                   <p className="text-sm leading-relaxed whitespace-pre-wrap">
-                    {ambassador!.appearance_description}
+                    {ambassador!.appearanceDescription}
                   </p>
                 </div>
               )}
 
-              {ambassador!.appearance_description && ambassador!.voice_description && (
+              {ambassador!.appearanceDescription && ambassador!.voiceDescription && (
                 <Separator />
               )}
 
-              {ambassador!.voice_description && (
+              {ambassador!.voiceDescription && (
                 <div>
                   <p className="text-xs font-medium text-muted-foreground mb-1">Voice Style</p>
                   <p className="text-sm leading-relaxed whitespace-pre-wrap">
-                    {ambassador!.voice_description}
+                    {ambassador!.voiceDescription}
                   </p>
                 </div>
               )}
 
-              {(ambassador!.appearance_description || ambassador!.voice_description) && ambassador!.voice_id && (
+              {(ambassador!.appearanceDescription || ambassador!.voiceDescription) && ambassador!.voiceId && (
                 <Separator />
               )}
 
-              {ambassador!.voice_id && (
+              {ambassador!.voiceId && (
                 <div>
                   <p className="text-xs font-medium text-muted-foreground mb-1">Voice ID</p>
                   <code className="text-sm font-mono bg-muted px-2 py-0.5 rounded">
-                    {ambassador!.voice_id}
+                    {ambassador!.voiceId}
                   </code>
                 </div>
               )}
@@ -239,7 +239,7 @@ export function AmbassadorView({
           <CardContent>
             <Gallery
               ambassadorId={ambassador!.id}
-              images={ambassador!.reference_images}
+              images={ambassador!.referenceImages}
               onImagesChange={onImagesChange}
             />
           </CardContent>

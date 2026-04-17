@@ -24,10 +24,11 @@ export const ambassadorApi = {
 
   async createAmbassador(data: CreateAmbassadorDto): Promise<Ambassador> {
     const response = await api.post<Ambassador>("/ambassadors/", {
-      ...data,
-      appearance_description: data.appearance_description || null,
-      voice_description: data.voice_description || null,
-      voice_id: data.voice_id || null,
+      projectId: data.projectId,
+      name: data.name,
+      appearanceDescription: data.appearanceDescription || null,
+      voiceDescription: data.voiceDescription || null,
+      voiceId: data.voiceId || null,
     });
     return response.data;
   },
@@ -53,18 +54,14 @@ export const ambassadorApi = {
     return response.data ?? [];
   },
 
-  /**
-   * Link media to ambassador as a reference image.
-   * image_type: "portrait" | "full_body" | "other"
-   */
   async linkAmbassadorImage(
     ambassadorId: string,
     mediaId: string,
     imageType: "portrait" | "full_body" | "other" = "other"
   ): Promise<ReferenceImage> {
     const response = await api.post<ReferenceImage>(`/ambassadors/${ambassadorId}/images`, {
-      media_id: mediaId,
-      image_type: imageType,
+      mediaId,
+      imageType,
     });
     return response.data;
   },

@@ -2,9 +2,9 @@ import { z } from "zod";
 
 export const ambassadorSchema = z.object({
   name: z.string().min(1, "Name is required").max(255, "Name is too long"),
-  appearance_description: z.string().optional(),
-  voice_description: z.string().optional(),
-  voice_id: z.string().optional(),
+  appearanceDescription: z.string().optional(),
+  voiceDescription: z.string().optional(),
+  voiceId: z.string().optional(),
 });
 
 export type AmbassadorFormValues = z.infer<typeof ambassadorSchema>;

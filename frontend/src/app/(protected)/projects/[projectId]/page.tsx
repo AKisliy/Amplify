@@ -149,10 +149,10 @@ export default function ProjectOverviewPage() {
             <Avatar className="w-16 h-16 border-2 border-border shadow-sm shrink-0">
               {(() => {
                 const img =
-                  ambassador?.reference_images.find((i) => i.image_type === "portrait") ??
-                  ambassador?.reference_images[0];
+                  ambassador?.referenceImages.find((i) => i.imageType === "portrait") ??
+                  ambassador?.referenceImages[0];
                 return img ? (
-                  <AvatarImage src={mediaApi.getMediaUrl(img.media_id)} className="object-cover" />
+                  <AvatarImage src={mediaApi.getMediaUrl(img.mediaId)} className="object-cover" />
                 ) : null;
               })()}
               <AvatarFallback className="text-xl font-semibold bg-primary/10 text-primary">
@@ -163,7 +163,7 @@ export default function ProjectOverviewPage() {
             <div>
               <h2 className="text-xl font-semibold leading-tight">{ambassador?.name || "No Ambassador"}</h2>
               <p className="text-sm text-muted-foreground mt-0.5 max-w-lg line-clamp-2">
-                {ambassador?.appearance_description || "No appearance description set"}
+                {ambassador?.appearanceDescription || "No appearance description set"}
               </p>
             </div>
           </div>

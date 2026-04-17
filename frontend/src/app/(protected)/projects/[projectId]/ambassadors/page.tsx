@@ -28,7 +28,7 @@ export default function ProjectAmbassadorPage() {
 
   const handleCreateAmbassador = async (values: AmbassadorFormValues) => {
     try {
-      await createAmbassador({ ...values, project_id: projectId });
+      await createAmbassador({ ...values, projectId: projectId });
     } catch (error) {
       console.error("Failed to create ambassador", error);
     }

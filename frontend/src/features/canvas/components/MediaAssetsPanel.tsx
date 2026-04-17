@@ -119,9 +119,9 @@ export function MediaAssetsPanel({ isOpen, projectId }: MediaAssetsPanelProps) {
     (e: React.DragEvent<HTMLDivElement>, asset: ReferenceImage) => {
       const mediaType = "image";
       const payload: MediaAssetDragPayload = {
-        url: mediaApi.getMediaUrl(asset.media_id, "Tiny"),
+        url: mediaApi.getMediaUrl(asset.mediaId, "Tiny"),
         mediaType,
-        id: asset.media_id,
+        id: asset.mediaId,
       };
       e.dataTransfer.setData("application/amplify-media", JSON.stringify(payload));
       e.dataTransfer.effectAllowed = "copy";
@@ -206,7 +206,7 @@ export function MediaAssetsPanel({ isOpen, projectId }: MediaAssetsPanelProps) {
               <div className="grid grid-cols-2 gap-1.5">
                 {images.map((asset) => (
                   <AssetCard
-                    key={asset.media_id}
+                    key={asset.mediaId}
                     asset={asset}
                     onDragStart={handleDragStart}
                   />
@@ -257,7 +257,7 @@ function AssetCard({
            * it doesn't expose this thumbnail-scrape pattern.
            */}
           <video
-            src={mediaApi.getMediaUrl(asset.media_id)}
+            src={mediaApi.getMediaUrl(asset.mediaId)}
             className="w-full h-full object-cover"
             muted
             playsInline
@@ -277,8 +277,8 @@ function AssetCard({
         </div>
       ) : (
         <AmplifyImage
-          mediaId={asset.media_id}
-          src={mediaApi.getMediaUrl(asset.media_id)}
+          mediaId={asset.mediaId}
+          src={mediaApi.getMediaUrl(asset.mediaId)}
           alt=""
           className="w-full h-full object-cover"
           onError={() => setImgError(true)}

@@ -25,6 +25,7 @@ Service = Annotated[AmbassadorService, Depends(AmbassadorService)]
 @router.post(
     "/",
     response_model=AmbassadorResponse,
+    response_model_by_alias=True,
     status_code=status.HTTP_201_CREATED,
     summary="Create ambassador for a project",
 )
@@ -32,9 +33,11 @@ async def create_ambassador(payload: AmbassadorCreate, service: Service):
     return await service.create_ambassador(payload)
 
 
+# NOTE: /project/{project_id} must be registered BEFORE /{ambassador_id}
 @router.get(
     "/project/{project_id}",
     response_model=AmbassadorResponse,
+    response_model_by_alias=True,
     status_code=status.HTTP_200_OK,
     summary="Get ambassador by project ID",
 )
@@ -45,6 +48,7 @@ async def get_ambassador_by_project(project_id: UUID, service: Service):
 @router.get(
     "/{ambassador_id}",
     response_model=AmbassadorResponse,
+    response_model_by_alias=True,
     status_code=status.HTTP_200_OK,
     summary="Get ambassador by ID",
 )
@@ -55,6 +59,7 @@ async def get_ambassador(ambassador_id: UUID, service: Service):
 @router.patch(
     "/{ambassador_id}",
     response_model=AmbassadorResponse,
+    response_model_by_alias=True,
     status_code=status.HTTP_200_OK,
     summary="Update ambassador",
 )
@@ -80,6 +85,7 @@ async def delete_ambassador(ambassador_id: UUID, service: Service):
 @router.get(
     "/{ambassador_id}/images",
     response_model=list[ReferenceImageResponse],
+    response_model_by_alias=True,
     status_code=status.HTTP_200_OK,
     summary="List reference images",
 )
@@ -90,6 +96,7 @@ async def list_reference_images(ambassador_id: UUID, service: Service):
 @router.post(
     "/{ambassador_id}/images",
     response_model=ReferenceImageResponse,
+    response_model_by_alias=True,
     status_code=status.HTTP_201_CREATED,
     summary="Add a reference image",
 )

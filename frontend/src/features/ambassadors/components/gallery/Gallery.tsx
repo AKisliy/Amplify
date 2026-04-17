@@ -36,15 +36,15 @@ export function Gallery({ ambassadorId, images, onImagesChange }: GalleryProps) 
 
   useEffect(() => {
     const committedItems: UploadedMedia[] = images.map((img) => {
-      const displayId = img.media_id;
+      const displayId = img.mediaId;
       linkIdMapRef.current.set(displayId, displayId);
 
       return {
         id: displayId,
-        tinyUrl: mediaApi.getMediaUrl(img.media_id, "Tiny"),
-        url: mediaApi.getMediaUrl(img.media_id),
+        tinyUrl: mediaApi.getMediaUrl(img.mediaId, "Tiny"),
+        url: mediaApi.getMediaUrl(img.mediaId),
         type: "image" as const,
-        name: `${img.image_type} image`,
+        name: `${img.imageType} image`,
         size: 0,
         progress: 100,
         contentType: "image/jpeg",

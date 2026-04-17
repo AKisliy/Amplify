@@ -1,32 +1,32 @@
 export type ReferenceImage = {
   id: string;
-  media_id: string;
-  image_type: "portrait" | "full_body" | "other";
+  mediaId: string;
+  imageType: "portrait" | "full_body" | "other";
 };
 
 export type Ambassador = {
   id: string;
   name: string;
-  appearance_description?: string | null;
-  voice_description?: string | null;
-  voice_id?: string | null;
-  reference_images: ReferenceImage[];
+  appearanceDescription?: string | null;
+  voiceDescription?: string | null;
+  voiceId?: string | null;
+  referenceImages: ReferenceImage[];
 };
 
 export type CreateAmbassadorPayload = {
   name: string;
-  project_id: string;
-  appearance_description?: string | null;
-  voice_description?: string | null;
-  voice_id?: string | null;
+  projectId: string;
+  appearanceDescription?: string | null;
+  voiceDescription?: string | null;
+  voiceId?: string | null;
 };
 
 export type UpdateAmbassadorPayload = {
   id: string;
   name?: string | null;
-  appearance_description?: string | null;
-  voice_description?: string | null;
-  voice_id?: string | null;
+  appearanceDescription?: string | null;
+  voiceDescription?: string | null;
+  voiceId?: string | null;
 };
 
 // DTO type aliases

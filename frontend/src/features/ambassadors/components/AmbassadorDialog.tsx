@@ -48,9 +48,9 @@ export function AmbassadorDialog({
     resolver: zodResolver(ambassadorSchema),
     defaultValues: {
       name: "",
-      appearance_description: "",
-      voice_description: "",
-      voice_id: "",
+      appearanceDescription: "",
+      voiceDescription: "",
+      voiceId: "",
     },
   });
 
@@ -58,9 +58,9 @@ export function AmbassadorDialog({
     if (open) {
       reset({
         name: ambassador?.name ?? "",
-        appearance_description: ambassador?.appearance_description ?? "",
-        voice_description: ambassador?.voice_description ?? "",
-        voice_id: ambassador?.voice_id ?? "",
+        appearanceDescription: ambassador?.appearanceDescription ?? "",
+        voiceDescription: ambassador?.voiceDescription ?? "",
+        voiceId: ambassador?.voiceId ?? "",
       });
     }
   }, [ambassador, open, reset]);
@@ -116,16 +116,16 @@ export function AmbassadorDialog({
             transition={{ delay: 0.2 }}
             className="space-y-2"
           >
-            <Label htmlFor="appearance_description">Appearance Description</Label>
+            <Label htmlFor="appearanceDescription">Appearance Description</Label>
             <Textarea
-              id="appearance_description"
+              id="appearanceDescription"
               placeholder="Structured description for AI prompts, e.g. 'Anna, 25yo, long dark hair, light eyes, petite frame...'"
               className="min-h-[100px] resize-none"
-              {...register("appearance_description")}
+              {...register("appearanceDescription")}
             />
-            {errors.appearance_description && (
+            {errors.appearanceDescription && (
               <p className="text-sm text-destructive">
-                {errors.appearance_description.message}
+                {errors.appearanceDescription.message}
               </p>
             )}
           </motion.div>
@@ -136,16 +136,16 @@ export function AmbassadorDialog({
             transition={{ delay: 0.3 }}
             className="space-y-2"
           >
-            <Label htmlFor="voice_description">Voice Description</Label>
+            <Label htmlFor="voiceDescription">Voice Description</Label>
             <Textarea
-              id="voice_description"
+              id="voiceDescription"
               placeholder="Describe the voice style for video generation, e.g. 'Calm, professional, friendly tone...'"
               className="min-h-[80px] resize-none"
-              {...register("voice_description")}
+              {...register("voiceDescription")}
             />
-            {errors.voice_description && (
+            {errors.voiceDescription && (
               <p className="text-sm text-destructive">
-                {errors.voice_description.message}
+                {errors.voiceDescription.message}
               </p>
             )}
           </motion.div>
@@ -156,15 +156,15 @@ export function AmbassadorDialog({
             transition={{ delay: 0.4 }}
             className="space-y-2"
           >
-            <Label htmlFor="voice_id">Voice ID</Label>
+            <Label htmlFor="voiceId">Voice ID</Label>
             <Input
-              id="voice_id"
+              id="voiceId"
               placeholder="TTS library voice ID"
               className="h-11"
-              {...register("voice_id")}
+              {...register("voiceId")}
             />
-            {errors.voice_id && (
-              <p className="text-sm text-destructive">{errors.voice_id.message}</p>
+            {errors.voiceId && (
+              <p className="text-sm text-destructive">{errors.voiceId.message}</p>
             )}
           </motion.div>
 
