@@ -14,7 +14,7 @@ const serviceMap: Record<string, string> = {
     users: "/userservice/api",
     projects: "/userservice/api",
     "project-assets": "/userservice/api",
-    ambassadors: "/userservice/api",
+    ambassadors: "/template/v1",
     autolists: "/publisher/api",
     autolistentry: "/publisher/api",
     connections: "/publisher/api",

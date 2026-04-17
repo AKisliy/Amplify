@@ -48,19 +48,19 @@ export function AmbassadorDialog({
     resolver: zodResolver(ambassadorSchema),
     defaultValues: {
       name: "",
-      biography: "",
-      behavioralPatterns: "",
+      appearance_description: "",
+      voice_description: "",
+      voice_id: "",
     },
   });
 
-  // Reset form when ambassador changes or dialog opens (if we want to clear it)
-  // We use useEffect to update the form values when the `ambassador` prop changes
   useEffect(() => {
     if (open) {
       reset({
-        name: ambassador?.name || "",
-        biography: ambassador?.biography || "",
-        behavioralPatterns: ambassador?.behavioralPatterns || "",
+        name: ambassador?.name ?? "",
+        appearance_description: ambassador?.appearance_description ?? "",
+        voice_description: ambassador?.voice_description ?? "",
+        voice_id: ambassador?.voice_id ?? "",
       });
     }
   }, [ambassador, open, reset]);
@@ -70,7 +70,7 @@ export function AmbassadorDialog({
       await onSubmit(values);
       reset();
       onOpenChange(false);
-    } catch (error) {
+    } catch {
       // Error handling is done in the parent component
     }
   };
@@ -89,7 +89,7 @@ export function AmbassadorDialog({
           </DialogDescription>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit(handleFormSubmit)} className="space-y-6">
+        <form onSubmit={handleSubmit(handleFormSubmit)} className="space-y-5">
           <motion.div
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
@@ -116,16 +116,16 @@ export function AmbassadorDialog({
             transition={{ delay: 0.2 }}
             className="space-y-2"
           >
-            <Label htmlFor="biography">Biography</Label>
+            <Label htmlFor="appearance_description">Appearance Description</Label>
             <Textarea
-              id="biography"
-              placeholder="Tell us about this ambassador..."
-              className="min-h-[120px] resize-none"
-              {...register("biography")}
+              id="appearance_description"
+              placeholder="Structured description for AI prompts, e.g. 'Anna, 25yo, long dark hair, light eyes, petite frame...'"
+              className="min-h-[100px] resize-none"
+              {...register("appearance_description")}
             />
-            {errors.biography && (
+            {errors.appearance_description && (
               <p className="text-sm text-destructive">
-                {errors.biography.message}
+                {errors.appearance_description.message}
               </p>
             )}
           </motion.div>
@@ -136,17 +136,35 @@ export function AmbassadorDialog({
             transition={{ delay: 0.3 }}
             className="space-y-2"
           >
-            <Label htmlFor="behavioralPatterns">Behavioral Patterns</Label>
+            <Label htmlFor="voice_description">Voice Description</Label>
             <Textarea
-              id="behavioralPatterns"
-              placeholder="Describe behavioral patterns..."
-              className="min-h-[120px] resize-none"
-              {...register("behavioralPatterns")}
+              id="voice_description"
+              placeholder="Describe the voice style for video generation, e.g. 'Calm, professional, friendly tone...'"
+              className="min-h-[80px] resize-none"
+              {...register("voice_description")}
             />
-            {errors.behavioralPatterns && (
+            {errors.voice_description && (
               <p className="text-sm text-destructive">
-                {errors.behavioralPatterns.message}
+                {errors.voice_description.message}
               </p>
+            )}
+          </motion.div>
+
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.4 }}
+            className="space-y-2"
+          >
+            <Label htmlFor="voice_id">Voice ID</Label>
+            <Input
+              id="voice_id"
+              placeholder="TTS library voice ID"
+              className="h-11"
+              {...register("voice_id")}
+            />
+            {errors.voice_id && (
+              <p className="text-sm text-destructive">{errors.voice_id.message}</p>
             )}
           </motion.div>
 

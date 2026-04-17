@@ -6,16 +6,15 @@ import { User, Edit, Trash2, Plus, Camera } from "lucide-react";
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
+import { mediaApi } from "@/features/media/api";
 
 import type { Ambassador } from "../types";
 import { AmbassadorDialog } from "./AmbassadorDialog";
 import { CropAvatarDialog } from "./CropAvatarDialog";
 import type { AmbassadorFormValues } from "../schemas/ambassador.schema";
 import { Gallery } from "./gallery/Gallery";
-import { useAmbassadorImages } from "../hooks/useAmbassadorImages";
 
 interface AmbassadorViewProps {
   ambassador: Ambassador | null;
@@ -25,6 +24,7 @@ interface AmbassadorViewProps {
   onUpdateAmbassador: (values: AmbassadorFormValues) => Promise<void>;
   onDeleteAmbassador: () => Promise<void>;
   onAvatarUpload?: (blob: Blob) => Promise<void>;
+  onImagesChange: () => void;
 }
 
 export function AmbassadorView({
@@ -35,11 +35,11 @@ export function AmbassadorView({
   onUpdateAmbassador,
   onDeleteAmbassador,
   onAvatarUpload,
+  onImagesChange,
 }: AmbassadorViewProps) {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
 
-  // Avatar upload state
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [cropSrc, setCropSrc] = useState<string | null>(null);
   const [cropOpen, setCropOpen] = useState(false);
@@ -56,33 +56,21 @@ export function AmbassadorView({
       setCropOpen(true);
     };
     reader.readAsDataURL(file);
-    // reset so the same file can be re-selected
     e.target.value = "";
   }, []);
 
   const handleCropConfirm = useCallback(async (blob: Blob) => {
     if (!onAvatarUpload) return;
-    // Optimistic preview
     const previewUrl = URL.createObjectURL(blob);
     setAvatarPreview(previewUrl);
     await onAvatarUpload(blob);
   }, [onAvatarUpload]);
 
-  // Use the hook to get images if ambassador exists
-  const { images, refreshImages } = useAmbassadorImages(ambassador?.id);
-
-  const getInitials = (name: string) => {
-    return name
-      .split(" ")
-      .map((n) => n[0])
-      .join("")
-      .toUpperCase()
-      .slice(0, 2);
-  };
+  const getInitials = (name: string) =>
+    name.split(" ").map((n) => n[0]).join("").toUpperCase().slice(0, 2);
 
   const handleDelete = async () => {
     if (!confirm("Are you sure you want to delete this ambassador?")) return;
-    
     setIsDeleting(true);
     try {
       await onDeleteAmbassador();
@@ -91,7 +79,11 @@ export function AmbassadorView({
     }
   };
 
-  // Empty state when no ambassador exists
+  // Derive avatar URL from reference_images (prefer portrait, fallback to first)
+  const avatarImage = ambassador?.reference_images.find((img) => img.image_type === "portrait")
+    ?? ambassador?.reference_images[0];
+  const avatarUrl = avatarPreview ?? (avatarImage ? mediaApi.getMediaUrl(avatarImage.media_id) : undefined);
+
   if (!ambassador && !isLoading) {
     return (
       <>
@@ -122,7 +114,6 @@ export function AmbassadorView({
     );
   }
 
-  // Loading state
   if (isLoading) {
     return (
       <div className="flex items-center justify-center py-16">
@@ -131,7 +122,6 @@ export function AmbassadorView({
     );
   }
 
-  // Ambassador exists - show full view
   return (
     <>
       <motion.div
@@ -139,12 +129,11 @@ export function AmbassadorView({
         animate={{ opacity: 1, y: 0 }}
         className="space-y-6"
       >
-        {/* Header Card */}
+        {/* Header card */}
         <Card className="border-border/50">
           <CardHeader className="pb-4">
             <div className="flex items-start justify-between">
               <div className="flex items-center gap-4">
-                {/* Hidden file input */}
                 <input
                   ref={fileInputRef}
                   type="file"
@@ -152,8 +141,6 @@ export function AmbassadorView({
                   className="hidden"
                   onChange={handleFileChange}
                 />
-
-                {/* Clickable avatar */}
                 <button
                   type="button"
                   onClick={handleAvatarClick}
@@ -161,35 +148,22 @@ export function AmbassadorView({
                   title="Change profile photo"
                 >
                   <Avatar className="w-20 h-20 border-2 border-border shadow-sm">
-                    <AvatarImage
-                      src={avatarPreview ?? ambassador!.profileImageUrl ?? undefined}
-                      className="object-cover"
-                      alt={ambassador!.name}
-                    />
+                    <AvatarImage src={avatarUrl} className="object-cover" alt={ambassador!.name} />
                     <AvatarFallback className="text-2xl font-semibold bg-primary/10 text-primary">
                       {getInitials(ambassador!.name)}
                     </AvatarFallback>
                   </Avatar>
-                  {/* Camera overlay */}
                   <span className="absolute inset-0 rounded-full bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
                     <Camera className="w-6 h-6 text-white" />
                   </span>
                 </button>
                 <div>
-                  <h1 className="text-3xl font-bold tracking-tight">
-                    {ambassador!.name}
-                  </h1>
-                  <p className="text-muted-foreground mt-1">
-                    Ambassador for {projectName}
-                  </p>
+                  <h1 className="text-3xl font-bold tracking-tight">{ambassador!.name}</h1>
+                  <p className="text-muted-foreground mt-1">Ambassador for {projectName}</p>
                 </div>
               </div>
               <div className="flex gap-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setDialogOpen(true)}
-                >
+                <Button variant="outline" size="sm" onClick={() => setDialogOpen(true)}>
                   <Edit className="w-4 h-4 mr-2" />
                   Edit
                 </Button>
@@ -208,65 +182,68 @@ export function AmbassadorView({
           </CardHeader>
         </Card>
 
-        {/* Tabs Section */}
-        <Tabs defaultValue="bio" className="w-full">
-          <TabsList className="grid w-full max-w-md grid-cols-2">
-            <TabsTrigger value="bio">Bio</TabsTrigger>
-            <TabsTrigger value="images" disabled={!ambassador}>
-              Images
-            </TabsTrigger>
-          </TabsList>
+        {/* AI info section */}
+        {(ambassador!.appearance_description || ambassador!.voice_description || ambassador!.voice_id) && (
+          <Card className="border-border/50">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-base font-semibold text-muted-foreground uppercase tracking-wide">
+                Generation Settings
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {ambassador!.appearance_description && (
+                <div>
+                  <p className="text-xs font-medium text-muted-foreground mb-1">Appearance</p>
+                  <p className="text-sm leading-relaxed whitespace-pre-wrap">
+                    {ambassador!.appearance_description}
+                  </p>
+                </div>
+              )}
 
-          <TabsContent value="bio" className="mt-6">
-            <Card className="border-border/50">
-              <CardContent className="pt-6 space-y-6">
-                {ambassador!.biography && (
-                  <div>
-                    <h3 className="text-lg font-semibold mb-3">Biography</h3>
-                    <p className="text-muted-foreground leading-relaxed whitespace-pre-wrap">
-                      {ambassador!.biography}
-                    </p>
-                  </div>
-                )}
+              {ambassador!.appearance_description && ambassador!.voice_description && (
+                <Separator />
+              )}
 
-                {ambassador!.biography && ambassador!.behavioralPatterns && (
-                  <Separator />
-                )}
+              {ambassador!.voice_description && (
+                <div>
+                  <p className="text-xs font-medium text-muted-foreground mb-1">Voice Style</p>
+                  <p className="text-sm leading-relaxed whitespace-pre-wrap">
+                    {ambassador!.voice_description}
+                  </p>
+                </div>
+              )}
 
-                {ambassador!.behavioralPatterns && (
-                  <div>
-                    <h3 className="text-lg font-semibold mb-3">
-                      Behavioral Patterns
-                    </h3>
-                    <p className="text-muted-foreground leading-relaxed whitespace-pre-wrap">
-                      {ambassador!.behavioralPatterns}
-                    </p>
-                  </div>
-                )}
+              {(ambassador!.appearance_description || ambassador!.voice_description) && ambassador!.voice_id && (
+                <Separator />
+              )}
 
-                {!ambassador!.biography && !ambassador!.behavioralPatterns && (
-                  <div className="text-center py-8 text-muted-foreground">
-                    No additional information available.
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          </TabsContent>
+              {ambassador!.voice_id && (
+                <div>
+                  <p className="text-xs font-medium text-muted-foreground mb-1">Voice ID</p>
+                  <code className="text-sm font-mono bg-muted px-2 py-0.5 rounded">
+                    {ambassador!.voice_id}
+                  </code>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        )}
 
-          <TabsContent value="images" className="mt-6">
-            <Card className="border-border/50">
-              <CardContent className="pt-6">
-                 {ambassador && (
-                   <Gallery 
-                     ambassadorId={ambassador.id} 
-                     images={images || []} 
-                     onImagesChange={refreshImages || (() => {})} 
-                   />
-                 )}
-              </CardContent>
-            </Card>
-          </TabsContent>
-        </Tabs>
+        {/* Reference images gallery */}
+        <Card className="border-border/50">
+          <CardHeader className="pb-3">
+            <CardTitle className="text-base font-semibold text-muted-foreground uppercase tracking-wide">
+              Reference Images
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <Gallery
+              ambassadorId={ambassador!.id}
+              images={ambassador!.reference_images}
+              onImagesChange={onImagesChange}
+            />
+          </CardContent>
+        </Card>
       </motion.div>
 
       <AmbassadorDialog

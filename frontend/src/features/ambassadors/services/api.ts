@@ -6,137 +6,101 @@ import type {
   Project,
   CreateProjectDto,
   UpdateProjectDto,
-  AmbassadorImage,
+  ReferenceImage,
   ProjectAsset,
   PublicationRecord,
 } from "../types";
 
 export const ambassadorApi = {
-  /**
-   * Get a single ambassador by ID
-   */
   async getAmbassador(id: string): Promise<Ambassador> {
     const response = await api.get<Ambassador>(`/ambassadors/${id}`);
     return response.data;
   },
 
-  /**
-   * Create a new ambassador
-   */
-  async createAmbassador(data: CreateAmbassadorDto): Promise<string> {
-    const payload = {
-      ...data,
-      biography: data.biography || null,
-      behavioralPatterns: data.behavioralPatterns || null,
-    };
-    const response = await api.post<string>("/ambassadors", payload);
+  async getAmbassadorByProject(projectId: string): Promise<Ambassador> {
+    const response = await api.get<Ambassador>(`/ambassadors/project/${projectId}`);
     return response.data;
   },
 
-  /**
-   * Update an existing ambassador
-   */
-  async updateAmbassador(data: UpdateAmbassadorDto): Promise<void> {
-    await api.put(`/ambassadors/${data.id}`, data);
+  async createAmbassador(data: CreateAmbassadorDto): Promise<Ambassador> {
+    const response = await api.post<Ambassador>("/ambassadors/", {
+      ...data,
+      appearance_description: data.appearance_description || null,
+      voice_description: data.voice_description || null,
+      voice_id: data.voice_id || null,
+    });
+    return response.data;
   },
 
-  /**
-   * Delete an ambassador
-   */
+  async updateAmbassador(data: UpdateAmbassadorDto): Promise<Ambassador> {
+    const { id, ...payload } = data;
+    const response = await api.patch<Ambassador>(`/ambassadors/${id}`, payload);
+    return response.data;
+  },
+
   async deleteAmbassador(id: string): Promise<void> {
     await api.delete(`/ambassadors/${id}`);
   },
 
-  /**
-   * Upload media to ingest service — delegates to mediaApi
-   */
   async uploadMedia(file: File): Promise<string> {
     const { mediaApi } = await import("@/features/media/api");
     const result = await mediaApi.uploadFile(file);
     return result.mediaId;
   },
 
-  /**
-   * Get ambassador images
-   */
-  async getAmbassadorImages(id: string): Promise<AmbassadorImage[]> {
-    const response = await api.get<any[]>(`/ambassadors/${id}/images`);
-    return (response.data ?? []).map((item: any) => ({
-      mediaId: item.mediaId ?? item.MediaId ?? "",
-      imageType: item.imageType ?? item.ImageType ?? 0,
-    }));
+  async getReferenceImages(ambassadorId: string): Promise<ReferenceImage[]> {
+    const response = await api.get<ReferenceImage[]>(`/ambassadors/${ambassadorId}/images`);
+    return response.data ?? [];
   },
 
   /**
-   * Link media to ambassador.
-   * imageType: 0 = image, 1 = video
+   * Link media to ambassador as a reference image.
+   * image_type: "portrait" | "full_body" | "other"
    */
   async linkAmbassadorImage(
     ambassadorId: string,
     mediaId: string,
-    imageType: 0 | 1 = 0
-  ): Promise<void> {
-    await api.post(`/ambassadors/${ambassadorId}/images`, {
-      ambassadorId,
-      mediaId,
-      imageType,
+    imageType: "portrait" | "full_body" | "other" = "other"
+  ): Promise<ReferenceImage> {
+    const response = await api.post<ReferenceImage>(`/ambassadors/${ambassadorId}/images`, {
+      media_id: mediaId,
+      image_type: imageType,
     });
+    return response.data;
   },
 
-  /**
-   * Delete image from ambassador gallery
-   */
-  async deleteAmbassadorImage(ambassadorId: string, imageId: string): Promise<void> {
-    await api.delete(`/ambassadors/${ambassadorId}/images/${imageId}`);
+  async deleteAmbassadorImage(ambassadorId: string, mediaId: string): Promise<void> {
+    await api.delete(`/ambassadors/${ambassadorId}/images/${mediaId}`);
   },
 };
 
 export const projectApi = {
-  /**
-   * Get all projects for the current user
-   */
   async getProjects(): Promise<Project[]> {
     const response = await api.get<Project[]>("/projects");
     return response.data;
   },
 
-  /**
-   * Get a single project by ID
-   */
   async getProject(id: string): Promise<Project> {
     const response = await api.get<Project>(`/projects/${id}`);
     return response.data;
   },
 
-  /**
-   * Create a new project
-   */
   async createProject(data: CreateProjectDto): Promise<string> {
-    const payload = {
+    const response = await api.post<string>("/projects", {
       ...data,
-      photo: data.photo || null, // Convert empty string to null
-    };
-    const response = await api.post<string>("/projects", payload);
+      photo: data.photo || null,
+    });
     return response.data;
   },
 
-  /**
-   * Update an existing project
-   */
   async updateProject(data: UpdateProjectDto): Promise<void> {
     await api.put(`/projects/${data.id}`, data);
   },
 
-  /**
-   * Delete a project
-   */
   async deleteProject(id: string): Promise<void> {
     await api.delete(`/projects/${id}`);
   },
 
-  /**
-   * Get project assets (generated media)
-   */
   async getProjectAssets(
     projectId: string,
     params?: { cursor?: string; pageSize?: number }
@@ -148,17 +112,11 @@ export const projectApi = {
     return response.data;
   },
 
-  /**
-   * Get a single project asset by ID
-   */
   async getProjectAsset(assetId: string): Promise<ProjectAsset> {
     const response = await api.get<ProjectAsset>(`/project-assets/item/${assetId}`);
     return response.data;
   },
 
-  /**
-   * Get publication records for a media post (asset)
-   */
   async getMediaPostRecords(assetId: string): Promise<PublicationRecord[]> {
     const response = await api.get<PublicationRecord[]>(
       `/publications/media-posts/${assetId}/records`
@@ -166,4 +124,3 @@ export const projectApi = {
     return response.data;
   },
 };
-
