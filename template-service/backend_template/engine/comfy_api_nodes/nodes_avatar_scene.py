@@ -247,6 +247,7 @@ class AvatarSceneNode(IO.ComfyNode):
         veo_model = MODELS_MAP[veo_model]
         # ── 1. Resolve project → ambassador ──────────────────────────────
         extra_pnginfo = cls.hidden.extra_pnginfo or {}
+        logger.info("[AvatarSceneNode] extra_pnginfo=%r", extra_pnginfo)
         project_id_str: str = extra_pnginfo.get("project_id", "")
         if not project_id_str:
             raise ValueError(
