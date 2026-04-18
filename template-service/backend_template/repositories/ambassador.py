@@ -38,5 +38,16 @@ class AmbassadorRepository(BaseRepository[Ambassador]):
 
 
 class ReferenceImageRepository(BaseRepository[ReferenceImage]):
+
     def __init__(self, db: Annotated[AsyncSession, Depends(get_db)]):
         super().__init__(ReferenceImage, db)
+
+    async def get_by_ambassador_and_media(
+        self, ambassador_id: UUID, media_id: UUID
+    ) -> ReferenceImage | None:
+        query = select(ReferenceImage).where(
+            ReferenceImage.ambassador_id == ambassador_id,
+            ReferenceImage.media_id == media_id,
+        )
+        result = await self.db.execute(query)
+        return result.scalar_one_or_none()
