@@ -94,7 +94,10 @@ class JobService:
                         "client_id": user_id,
                         "extra_data": {
                             "job_id": str(job.id),
-                            "extra_pnginfo": {"client_id": user_id},
+                            "extra_pnginfo": {
+                                "client_id": user_id,
+                                "project_id": str(template.project_id),
+                            },
                         },
                     },
                     timeout=aiohttp.ClientTimeout(total=30),
