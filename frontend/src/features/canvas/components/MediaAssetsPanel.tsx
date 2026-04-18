@@ -18,7 +18,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { mediaApi, detectMediaType } from "@/features/media/api";
-import { ambassadorApi, projectApi } from "@/features/ambassadors/services/api";
+import { ambassadorApi } from "@/features/ambassadors/services/api";
 import type { ReferenceImage } from "@/features/ambassadors/types";
 import { AmplifyImage } from "@/features/media/components/AmplifyImage";
 
@@ -53,29 +53,26 @@ export function MediaAssetsPanel({ isOpen, projectId }: MediaAssetsPanelProps) {
   const [ambassadorId, setAmbassadorId] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Fetch the project once to get ambassadorId
-  useEffect(() => {
-    if (!projectId) return;
-    projectApi
-      .getProject(projectId)
-      .then((p) => setAmbassadorId(p.ambassadorId ?? null))
-      .catch(() => setAmbassadorId(null));
-  }, [projectId]);
-
-  // Fetch ambassador images whenever ambassadorId changes
+  // Fetch ambassador by project — images are included in the response
   const fetchImages = useCallback(async () => {
-    if (!ambassadorId) return;
+    if (!projectId) return;
     setIsLoading(true);
     setError(null);
     try {
-      const data = await ambassadorApi.getReferenceImages(ambassadorId);
-      setImages(data);
-    } catch {
-      setError("Failed to load media assets.");
+      const ambassador = await ambassadorApi.getAmbassadorByProject(projectId);
+      setAmbassadorId(ambassador.id);
+      setImages(ambassador.referenceImages);
+    } catch (err: any) {
+      if (err?.response?.status === 404) {
+        setAmbassadorId(null);
+        setImages([]);
+      } else {
+        setError("Failed to load media assets.");
+      }
     } finally {
       setIsLoading(false);
     }
-  }, [ambassadorId]);
+  }, [projectId]);
 
   useEffect(() => {
     if (isOpen) fetchImages();
@@ -88,11 +85,7 @@ export function MediaAssetsPanel({ isOpen, projectId }: MediaAssetsPanelProps) {
       setIsUploading(true);
       try {
         const result = await mediaApi.uploadFile(file);
-        await ambassadorApi.linkAmbassadorImage(
-          ambassadorId,
-          result.mediaId,
-          "other" // TODO: allow user to specify image type
-        );
+        await ambassadorApi.linkAmbassadorImage(ambassadorId, result.mediaId, "other");
         await fetchImages();
       } catch {
         setError("Upload failed.");
