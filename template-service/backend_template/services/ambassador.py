@@ -84,7 +84,7 @@ class AmbassadorService:
         return ReferenceImageResponse.model_validate(orm_image)
 
     async def delete_reference_image(self, ambassador_id: UUID, media_id: UUID) -> None:
-        orm_image = await self.image_repo.get_by_ambassador_and_media(ambassador_id, media_id)
+        orm_image = await self.image_repo.get_by_id(media_id)
         if not orm_image:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
