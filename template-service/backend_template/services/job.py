@@ -83,6 +83,9 @@ class JobService:
         await self.db.commit()
         await self.db.refresh(job)
 
+        project_id = str(template.project_id)
+        logger.info("Submitting job for project=%s", project_id)
+
         # Submit to engine.  Pass job_id in extra_data so the engine can include
         # it in RabbitMQ events; client_id is the user_id for potential WS routing.
         try:
@@ -96,7 +99,7 @@ class JobService:
                             "job_id": str(job.id),
                             "extra_pnginfo": {
                                 "client_id": user_id,
-                                "project_id": template.project_id,
+                                "project_id": project_id,
                             },
                         },
                     },
