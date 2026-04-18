@@ -520,6 +520,8 @@ class HiddenHolder:
         """UNIQUE_ID is the unique identifier of the node, and matches the id property of the node on the client side. It is commonly used in client-server communications (see messages)."""
         self.prompt = prompt
         """PROMPT is the complete prompt sent by the client to the server. See the prompt object for a full description."""
+        self.extra_pnginfo = extra_pnginfo
+        """EXTRA_PNGINFO is the extra png info passed by the client, contains execution context such as project_id and client_id."""
 
     def __getattr__(self, key: str):
         '''If hidden variable not found, return None.'''
