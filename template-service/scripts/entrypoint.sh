@@ -10,7 +10,7 @@ alembic upgrade head
 
 # 2. Start Engine
 echo "Starting Engine on port 8188..."
-python backend_template/engine/main.py &
+PYTHONPATH=/app python backend_template/engine/main.py &
 
 # 3. Start FastAPI Gateway (foreground, public port)
 exec uvicorn backend_template.web.app:app \
