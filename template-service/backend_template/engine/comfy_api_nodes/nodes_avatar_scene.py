@@ -281,7 +281,7 @@ class AvatarSceneNode(IO.ComfyNode):
         # ── 2. Split transcript into timed segments ───────────────────────
         logger.info("[AvatarSceneNode] Compiling transcript_processor prompt")
         transcript_prompt, schema_str = await _compile_langfuse_prompt(
-            "shared/transcript_processor",
+            "_shared/transcript_processor",
             {"script": transcript},
         )
 
