@@ -3,10 +3,10 @@
 import { AnimatePresence, motion } from "framer-motion";
 import { useToast } from "@/hooks/use-toast";
 import { useCallback, useRef, useState, useEffect } from "react";
+import { Plus } from "lucide-react";
 import { ambassadorApi } from "../../services/api";
 import type { ReferenceImage } from "../../types";
 import { mediaApi } from "@/features/media/api";
-import { MediaDropzone } from "@/features/media/components/MediaDropzone";
 import { MediaCard } from "@/features/media/components/MediaCard";
 import { MediaLightbox } from "@/features/media/components/MediaLightbox";
 import type { UploadedMedia } from "@/features/media/useMediaUpload";
@@ -27,6 +27,7 @@ function extractMediaId(url: string): string {
 
 export function Gallery({ ambassadorId, images, onImagesChange }: GalleryProps) {
   const { toast } = useToast();
+  const inputRef = useRef<HTMLInputElement>(null);
 
   const [displayItems, setDisplayItems] = useState<UploadedMedia[]>([]);
   const [lightboxOpen, setLightboxOpen] = useState(false);
@@ -38,7 +39,6 @@ export function Gallery({ ambassadorId, images, onImagesChange }: GalleryProps) 
     const committedItems: UploadedMedia[] = images.map((img) => {
       const displayId = img.mediaId;
       linkIdMapRef.current.set(displayId, displayId);
-
       return {
         id: displayId,
         tinyUrl: mediaApi.getMediaUrl(img.mediaId, "Tiny"),
@@ -201,6 +201,12 @@ export function Gallery({ ambassadorId, images, onImagesChange }: GalleryProps) 
     [ambassadorId, onImagesChange, toast]
   );
 
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files ?? []);
+    if (files.length) handleFiles(files);
+    e.target.value = "";
+  };
+
   const handleDelete = useCallback(
     async (id: string) => {
       try {
@@ -241,35 +247,41 @@ export function Gallery({ ambassadorId, images, onImagesChange }: GalleryProps) 
   const readyItems = displayItems.filter((item) => !item.error && item.progress === 100);
 
   return (
-    <div className="space-y-6">
-      <MediaDropzone onFiles={handleFiles} />
+    <div>
+      <input
+        ref={inputRef}
+        type="file"
+        accept="image/jpeg,image/png,image/webp,image/gif"
+        multiple
+        className="hidden"
+        onChange={handleInputChange}
+      />
 
-      <AnimatePresence mode="popLayout">
-        {displayItems.length > 0 ? (
-          <motion.div layout className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
-            <AnimatePresence mode="popLayout">
-              {displayItems.map((item, i) => (
-                <MediaCard
-                  key={item.id || `card-${i}`}
-                  media={item}
-                  onDelete={!item.error ? handleDelete : undefined}
-                  onOpen={handleOpen}
-                />
-              ))}
-            </AnimatePresence>
-          </motion.div>
-        ) : (
-          <motion.div
-            key="empty"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="py-8 text-center text-sm text-muted-foreground"
-          >
-            No images yet — drag files above or click to browse.
-          </motion.div>
-        )}
-      </AnimatePresence>
+      <motion.div layout className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
+        <AnimatePresence mode="popLayout">
+          {displayItems.map((item, i) => (
+            <MediaCard
+              key={item.id || `card-${i}`}
+              media={item}
+              onDelete={!item.error ? handleDelete : undefined}
+              onOpen={handleOpen}
+            />
+          ))}
+        </AnimatePresence>
+
+        {/* Upload card — always last in the grid */}
+        <motion.button
+          layout
+          type="button"
+          onClick={() => inputRef.current?.click()}
+          className="aspect-square rounded-xl border-2 border-dashed border-border/50 bg-muted/20 flex items-center justify-center text-muted-foreground hover:border-primary/50 hover:text-primary hover:bg-primary/5 transition-colors"
+          whileHover={{ scale: 1.03 }}
+          whileTap={{ scale: 0.97 }}
+          transition={{ type: "spring", stiffness: 300, damping: 20 }}
+        >
+          <Plus className="w-6 h-6" />
+        </motion.button>
+      </motion.div>
 
       <MediaLightbox
         items={readyItems}

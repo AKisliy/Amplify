@@ -114,7 +114,7 @@ export function AmbassadorView({
     );
   }
 
-  if (isLoading) {
+  if (isLoading && !ambassador) {
     return (
       <div className="flex items-center justify-center py-16">
         <div className="text-muted-foreground">Loading...</div>
