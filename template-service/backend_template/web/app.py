@@ -6,7 +6,7 @@ from fastapi import FastAPI
 
 from backend_template.services.job_consumer import consume_job_events
 from backend_template.web.filters.endpoint_filter import EndpointFilter
-from backend_template.web.routes.http.v1 import project_template, engine, library_template, ambassador, manual_review
+from backend_template.web.routes.http.v1 import project_template, engine, library_template, ambassador, manual_review, brand
 from backend_template.web.routes.http.internal import library_template as internal_library_template
 
 
@@ -31,6 +31,7 @@ app.include_router(engine.router, prefix="/v1")
 app.include_router(library_template.router, prefix="/v1")
 app.include_router(ambassador.router, prefix="/v1")
 app.include_router(manual_review.router, prefix="/v1")
+app.include_router(brand.router, prefix="/v1")
 app.include_router(internal_library_template.router, prefix="/internal")
 
 @app.get("/health")
