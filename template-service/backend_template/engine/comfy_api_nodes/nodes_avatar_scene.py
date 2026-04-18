@@ -70,8 +70,14 @@ GEMINI_BASE_ENDPOINT = (
     f"/locations/{gemini_config.location}/publishers/google/models"
 )
 
-VEO_MODEL = "veo-2.0-generate-001"
 AVERAGE_DURATION_VIDEO_GEN = 32  # seconds — for progress estimation
+
+MODELS_MAP = {
+    "veo-3.1-generate": "veo-3.1-generate-001",
+    "veo-3.1-fast-generate": "veo-3.1-fast-generate-001",
+    "veo-3.0-generate-001": "veo-3.0-generate-001",
+    "veo-3.0-fast-generate-001": "veo-3.0-fast-generate-001",
+}
 
 # Fallback JSON schema for transcript segmentation used when the Langfuse
 # prompt does not carry its own schema in the config.
@@ -196,6 +202,18 @@ class AvatarSceneNode(IO.ComfyNode):
                     tooltip="Aspect ratio of the output videos.",
                 ),
                 IO.Combo.Input(
+                    "veo_model",
+                    options=[
+                        "veo-3.1-generate",
+                        "veo-3.1-fast-generate",
+                        "veo-3.0-generate-001",
+                        "veo-3.0-fast-generate-001",
+                    ],
+                    default="veo-3.0-generate-001",
+                    tooltip="Veo 3 model used for video generation.",
+                    optional=True,
+                ),
+                IO.Combo.Input(
                     "gemini_model",
                     options=[
                         "gemini-2.5-flash-preview-04-17",
@@ -223,8 +241,10 @@ class AvatarSceneNode(IO.ComfyNode):
         media_uuid: str,
         transcript: str,
         aspect_ratio: str = "16:9",
+        veo_model: str = "veo-3.0-generate-001",
         gemini_model: str = "gemini-2.5-flash-preview-04-17",
     ) -> IO.NodeOutput:
+        veo_model = MODELS_MAP[veo_model]
         # ── 1. Resolve project → ambassador ──────────────────────────────
         extra_pnginfo = cls.hidden.extra_pnginfo or {}
         project_id_str: str = extra_pnginfo.get("project_id", "")
@@ -325,11 +345,10 @@ class AvatarSceneNode(IO.ComfyNode):
 
         for i, seg in enumerate(segments):
             script_segment: str = seg.get("script_segment", "")
-            duration_seconds: int = max(5, min(8, int(seg.get("duration_seconds", 5))))
 
             logger.info(
-                "[AvatarSceneNode] Segment %d/%d — script=%d chars, duration=%ds",
-                i + 1, len(segments), len(script_segment), duration_seconds,
+                "[AvatarSceneNode] Segment %d/%d — script=%d chars",
+                i + 1, len(segments), len(script_segment),
             )
 
             veo_prompt, _ = await _compile_langfuse_prompt(
@@ -344,20 +363,20 @@ class AvatarSceneNode(IO.ComfyNode):
             initial_response: VeoGenVidResponse = await sync_op(
                 cls,
                 ApiEndpoint(
-                    path=f"{GEMINI_BASE_ENDPOINT}/{VEO_MODEL}:predictLongRunning",
+                    path=f"{GEMINI_BASE_ENDPOINT}/{veo_model}:predictLongRunning",
                     method="POST",
                     headers={"Authorization": f"Bearer {get_vertex_ai_access_token()}"},
                 ),
                 response_model=VeoGenVidResponse,
                 data=VeoGenVidRequest(
                     instances=[VeoRequestInstance(
-                        prompt=veo_prompt, 
+                        prompt=veo_prompt,
                         image=VeoRequestInstanceImage(gcsUri=gcs_uri, mimeType="image/png", bytesBase64Encoded=None),
                         lastFrame=None)],
                     parameters=VeoRequestParameters(
                         aspectRatio=aspect_ratio,
                         personGeneration="ALLOW",
-                        durationSeconds=duration_seconds,
+                        durationSeconds=8,
                         enhancePrompt=True,
                         storageUri=gemini_config.storage_uri,
                         generateAudio=True,
@@ -369,7 +388,7 @@ class AvatarSceneNode(IO.ComfyNode):
             poll_response: VeoGenVidPollResponse = await poll_op(
                 cls,
                 ApiEndpoint(
-                    path=f"{GEMINI_BASE_ENDPOINT}/{VEO_MODEL}:fetchPredictOperation",
+                    path=f"{GEMINI_BASE_ENDPOINT}/{veo_model}:fetchPredictOperation",
                     method="POST",
                     headers={"Authorization": f"Bearer {get_vertex_ai_access_token()}"},
                 ),
