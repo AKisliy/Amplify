@@ -96,7 +96,7 @@ class JobService:
                             "job_id": str(job.id),
                             "extra_pnginfo": {
                                 "client_id": user_id,
-                                "project_id": str(template.project_id),
+                                "project_id": template.project_id,
                             },
                         },
                     },
