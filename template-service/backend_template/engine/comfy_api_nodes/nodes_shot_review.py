@@ -71,12 +71,12 @@ class ShotReviewNode(IO.ComfyNode):
                 "user can preview and trim each shot before approving."
             ),
             is_output_node=False,
+            is_input_list=True,
             hidden=[Hidden.unique_id, Hidden.extra_pnginfo],
             inputs=[
                 IO.String.Input(
                     "video_uuids",
                     force_input=True,
-                    is_list=True,
                     tooltip="List of video media_ids from AvatarSceneNode.",
                 ),
                 IO.Boolean.Input(
@@ -103,8 +103,11 @@ class ShotReviewNode(IO.ComfyNode):
     async def execute(
         cls,
         video_uuids: list[str],
-        auto_confirm: bool = False,
+        auto_confirm: list[bool] | None = None,
     ) -> IO.NodeOutput:
+        # is_input_list=True → all inputs arrive as lists; unwrap the scalar
+        should_confirm = bool(auto_confirm[0]) if auto_confirm else False
+        auto_confirm = should_confirm  # type: ignore[assignment]
         extra_pnginfo = cls.hidden.extra_pnginfo or {}
         logger.info("[ShotReviewNode] extra_pnginfo=%r", extra_pnginfo)
 
