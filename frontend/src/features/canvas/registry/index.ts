@@ -14,6 +14,7 @@ export { PREVIEW_SCHEMAS } from "./preview-schemas";
 /** Map a raw category string to one of our normalised category tags */
 export function resolveCategoryTag(category: string): NodeCategory {
   const lower = category.toLowerCase();
+  if (lower.includes("manual")) return "manual";
   if (lower.includes("output") || lower.includes("preview")) return "utility";
   if (lower.includes("publish") || lower.includes("amplify")) return "utility";
   if (lower.includes("video")) return "video";
@@ -51,6 +52,7 @@ export function getNodesByCategory(
     image: [],
     video: [],
     utility: [],
+    manual: []
   };
   for (const item of getNodeLibrary(registry)) {
     result[item.categoryTag].push(item);

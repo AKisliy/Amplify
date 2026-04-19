@@ -39,17 +39,19 @@ def get_upload_presigned_url(media_id: str) -> str:
     response.raise_for_status()
     return response.json()["uploadUrl"]
 
-def overwrite_media(media_id: str, file_path: str):
-    """Overwrites existing media file"""
+def overwrite_media(media_id: str, file_path: str, content_type: str = "video/mp4"):
+    """Overwrites existing media file, preserving the correct Content-Type in GCS/S3."""
     url = get_upload_presigned_url(media_id)
 
     if not os.path.exists(file_path):
         raise FileNotFoundError(f"No file found: {file_path}")
 
+    file_size = os.path.getsize(file_path)
     with open(file_path, "rb") as f:
         put_response = requests.put(
             url,
             data=f,
+            headers={"Content-Type": content_type, "Content-Length": str(file_size)},
             timeout=300,
         )
     put_response.raise_for_status()

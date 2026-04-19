@@ -1,43 +1,48 @@
 import { useState, useCallback, useEffect } from "react";
-import * as ambassadorApi from "../services/ambassador.service";
-import { Ambassador, CreateAmbassadorPayload, UpdateAmbassadorPayload } from "../types";
+import { ambassadorApi } from "../services/api";
+import type { Ambassador, CreateAmbassadorPayload, UpdateAmbassadorPayload } from "../types";
 
-export function useAmbassador(ambassadorId?: string | null) {
+export function useAmbassador(projectId?: string | null) {
   const [ambassador, setAmbassador] = useState<Ambassador | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const fetchAmbassador = useCallback(async () => {
-    if (!ambassadorId) {
-        setAmbassador(null);
-        return;
+    if (!projectId) {
+      setAmbassador(null);
+      return;
     }
-    
+
     setIsLoading(true);
     setError(null);
     try {
-      const data = await ambassadorApi.getAmbassador(ambassadorId);
+      const data = await ambassadorApi.getAmbassadorByProject(projectId);
       setAmbassador(data);
     } catch (err: any) {
-      console.error(err);
-      setError(err.message || "Failed to fetch ambassador");
+      // 404 means no ambassador yet — not an error state
+      if (err?.response?.status === 404) {
+        setAmbassador(null);
+      } else {
+        console.error(err);
+        setError(err.message || "Failed to fetch ambassador");
+      }
     } finally {
       setIsLoading(false);
     }
-  }, [ambassadorId]);
+  }, [projectId]);
 
   useEffect(() => {
     fetchAmbassador();
   }, [fetchAmbassador]);
 
-  const createAmbassador = async (payload: CreateAmbassadorPayload) => {
+  const createAmbassador = async (payload: CreateAmbassadorPayload): Promise<void> => {
     setIsLoading(true);
     setError(null);
     try {
-      const id = await ambassadorApi.createAmbassador(payload);
-      return id;
+      const created = await ambassadorApi.createAmbassador(payload);
+      setAmbassador(created);
     } catch (err: any) {
-      const msg = err?.response?.data?.title || err.message || "Failed to create ambassador";
+      const msg = err?.response?.data?.detail || err.message || "Failed to create ambassador";
       setError(msg);
       throw err;
     } finally {
@@ -45,14 +50,14 @@ export function useAmbassador(ambassadorId?: string | null) {
     }
   };
 
-  const updateAmbassador = async (payload: UpdateAmbassadorPayload) => {
+  const updateAmbassador = async (payload: UpdateAmbassadorPayload): Promise<void> => {
     setIsLoading(true);
     setError(null);
     try {
-      await ambassadorApi.updateAmbassador(payload);
-      setAmbassador((prev) => prev ? { ...prev, ...payload } : null);
+      const updated = await ambassadorApi.updateAmbassador(payload);
+      setAmbassador(updated);
     } catch (err: any) {
-      const msg = err?.response?.data?.title || err.message || "Failed to update ambassador";
+      const msg = err?.response?.data?.detail || err.message || "Failed to update ambassador";
       setError(msg);
       throw err;
     } finally {
@@ -60,14 +65,14 @@ export function useAmbassador(ambassadorId?: string | null) {
     }
   };
 
-  const deleteAmbassador = async (id: string) => {
+  const deleteAmbassador = async (id: string): Promise<void> => {
     setIsLoading(true);
     setError(null);
     try {
       await ambassadorApi.deleteAmbassador(id);
       setAmbassador(null);
     } catch (err: any) {
-      const msg = err?.response?.data?.title || err.message || "Failed to delete ambassador";
+      const msg = err?.response?.data?.detail || err.message || "Failed to delete ambassador";
       setError(msg);
       throw err;
     } finally {
@@ -82,6 +87,6 @@ export function useAmbassador(ambassadorId?: string | null) {
     createAmbassador,
     updateAmbassador,
     deleteAmbassador,
-    refetch: fetchAmbassador
+    refetch: fetchAmbassador,
   };
 }

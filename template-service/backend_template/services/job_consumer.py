@@ -28,6 +28,7 @@ _STATUS_MAP: dict[str, NodeStatus] = {
     "SUCCESS": NodeStatus.SUCCESS,
     "CACHED": NodeStatus.SUCCESS,
     "FAILURE": NodeStatus.FAILURE,
+    "WAITING_FOR_REVIEW": NodeStatus.WAITING_FOR_REVIEW,
 }
 
 # ---------------------------------------------------------------------------

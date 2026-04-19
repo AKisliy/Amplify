@@ -8,4 +8,5 @@
 set -e
 
 echo "Starting ComfyUI Engine on port 8188..."
+export PYTHONPATH=/app
 exec python backend_template/engine/main.py

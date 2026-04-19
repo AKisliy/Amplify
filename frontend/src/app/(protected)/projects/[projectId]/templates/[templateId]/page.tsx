@@ -44,6 +44,7 @@ import { MediaAssetsPanel } from "@/features/canvas/components/MediaAssetsPanel"
 import { TemplateMenu } from "@/features/canvas/components/TemplateMenu";
 import { GeneratedMediaPanel } from "@/features/canvas/components/GeneratedMediaPanel";
 import { TemplateSettingsSidebar } from "@/features/canvas/components/TemplateSettingsSidebar";
+import { ShotReviewDialog } from "@/features/canvas/components/ShotReviewDialog";
 import { useCanvasStore } from "@/features/canvas/hooks/useCanvasStore";
 import { useNodeRegistry } from "@/features/canvas/hooks/useNodeRegistry";
 import { getNodesByCategory, getNodeDef } from "@/features/canvas/registry";
@@ -251,6 +252,7 @@ export default function TemplateCanvasPage() {
           status === "RUNNING" ? "processing"
           : status === "SUCCESS" || status === "CACHED" ? "success"
           : status === "FAILURE" ? "error"
+          : status === "WAITING_FOR_REVIEW" ? "waiting_for_review"
           : "idle";
 
         setNodeStatus(nodeId, mapped, error ?? undefined);
@@ -398,6 +400,12 @@ export default function TemplateCanvasPage() {
     [deleteNode]
   );
 
+  const [reviewNodeId, setReviewNodeId] = useState<string | null>(null);
+  const handleReviewCb = useCallback(
+    (nodeId: string) => () => setReviewNodeId(nodeId),
+    []
+  );
+
   const nodesWithCallbacks: CanvasNode[] = useMemo(
     () => nodes.map((node) => ({
       ...node,
@@ -405,6 +413,7 @@ export default function TemplateCanvasPage() {
         ...node.data,
         onUpdateConfig: handleUpdateConfig(node.id),
         onDeleteNode:   handleDeleteNodeCb(node.id),
+        onReview:       handleReviewCb(node.id),
       },
     })) as CanvasNode[],
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -797,6 +806,14 @@ export default function TemplateCanvasPage() {
             onClose={() => setTemplateMenuPos(null)}
           />
         </>
+      )}
+
+      {/* Shot review fullscreen dialog */}
+      {reviewNodeId && execution.activeJobId && (
+        <ShotReviewDialog
+          jobId={execution.activeJobId}
+          onClose={() => setReviewNodeId(null)}
+        />
       )}
     </div>
   );

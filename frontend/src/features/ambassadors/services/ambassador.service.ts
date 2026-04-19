@@ -1,30 +1,27 @@
-import api from "@/lib/axios";
 import { mediaApi } from "@/features/media/api";
-import { Ambassador, CreateAmbassadorPayload, UpdateAmbassadorPayload } from "../types";
+import { ambassadorApi } from "./api";
+import type { Ambassador, CreateAmbassadorPayload, UpdateAmbassadorPayload } from "../types";
 
 const BASE_URL = "/ambassadors";
 
 export const getAmbassador = async (id: string): Promise<Ambassador> => {
-  const { data } = await api.get<Ambassador>(`${BASE_URL}/${id}`);
-  return data;
+  return ambassadorApi.getAmbassador(id);
 };
 
-export const createAmbassador = async (payload: CreateAmbassadorPayload): Promise<string> => {
-  const sanitizedPayload = {
-    ...payload,
-    biography: payload.biography || null,
-    behavioralPatterns: payload.behavioralPatterns || null,
-  };
-  const { data } = await api.post<string>(BASE_URL, sanitizedPayload);
-  return data;
+export const getAmbassadorByProject = async (projectId: string): Promise<Ambassador> => {
+  return ambassadorApi.getAmbassadorByProject(projectId);
 };
 
-export const updateAmbassador = async ({ id, ...payload }: UpdateAmbassadorPayload): Promise<void> => {
-  await api.put(`${BASE_URL}/${id}`, { id, ...payload });
+export const createAmbassador = async (payload: CreateAmbassadorPayload): Promise<Ambassador> => {
+  return ambassadorApi.createAmbassador(payload);
+};
+
+export const updateAmbassador = async (payload: UpdateAmbassadorPayload): Promise<Ambassador> => {
+  return ambassadorApi.updateAmbassador(payload);
 };
 
 export const deleteAmbassador = async (id: string): Promise<void> => {
-  await api.delete(`${BASE_URL}/${id}`);
+  return ambassadorApi.deleteAmbassador(id);
 };
 
 export const uploadMedia = async (file: File): Promise<string> => {

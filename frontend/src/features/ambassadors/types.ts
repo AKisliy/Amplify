@@ -1,27 +1,35 @@
+export type ReferenceImage = {
+  id: string;
+  mediaId: string;
+  imageType: "portrait" | "full_body" | "other";
+};
+
 export type Ambassador = {
   id: string;
   name: string;
-  biography?: string | null;
-  behavioralPatterns?: string | null;
-  profileImageUrl?: string | null;
+  appearanceDescription?: string | null;
+  voiceDescription?: string | null;
+  voiceId?: string | null;
+  referenceImages: ReferenceImage[];
 };
 
 export type CreateAmbassadorPayload = {
   name: string;
-  biography?: string | null;
-  behavioralPatterns?: string | null;
   projectId: string;
+  appearanceDescription?: string | null;
+  voiceDescription?: string | null;
+  voiceId?: string | null;
 };
 
 export type UpdateAmbassadorPayload = {
   id: string;
-  name: string;
-  biography?: string | null;
-  behavioralPatterns?: string | null;
-  profileImageId?: string | null;
+  name?: string | null;
+  appearanceDescription?: string | null;
+  voiceDescription?: string | null;
+  voiceId?: string | null;
 };
 
-// DTO type aliases for API compatibility
+// DTO type aliases
 export type CreateAmbassadorDto = CreateAmbassadorPayload;
 export type UpdateAmbassadorDto = UpdateAmbassadorPayload;
 
@@ -77,12 +85,6 @@ export type PublicationRecord = {
   publicUrl?: string | null;
   createdAt?: string | null;
   socialAccount: SocialAccountSummary;
-};
-
-// Ambassador Image types
-export type AmbassadorImage = {
-  mediaId: string;
-  imageType: number;
 };
 
 // Template types

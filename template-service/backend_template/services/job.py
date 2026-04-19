@@ -83,6 +83,9 @@ class JobService:
         await self.db.commit()
         await self.db.refresh(job)
 
+        project_id = str(template.project_id)
+        logger.info(f"Submitting job for project={project_id}")
+
         # Submit to engine.  Pass job_id in extra_data so the engine can include
         # it in RabbitMQ events; client_id is the user_id for potential WS routing.
         try:
@@ -94,7 +97,11 @@ class JobService:
                         "client_id": user_id,
                         "extra_data": {
                             "job_id": str(job.id),
-                            "extra_pnginfo": {"client_id": user_id},
+                            "extra_pnginfo": {
+                                "client_id": user_id,
+                                "project_id": project_id,
+                                "job_id": str(job.id),
+                            },
                         },
                     },
                     timeout=aiohttp.ClientTimeout(total=30),

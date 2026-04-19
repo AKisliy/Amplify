@@ -30,11 +30,14 @@ def setup_request_consumers(channel: BlockingChannel):
     normalizeConsumer.setup_queue(channel)
     process_media_consumer.setup_queue(channel)
 
+HEARTBEAT = 60  # seconds — keeps SSL connection alive through proxies / Istio
+
+
 def setup_rabbitmq_connection() -> pika.BlockingConnection:
     amqp_url = os.getenv("AMQP_URL")
     if amqp_url:
         params = pika.URLParameters(amqp_url)
-        params.heartbeat = 0
+        params.heartbeat = HEARTBEAT
     else:
         username = os.getenv("RABBITMQ_DEFAULT_USER", "guest")
         password = os.getenv("RABBITMQ_DEFAULT_PASS", "guest")
@@ -43,7 +46,7 @@ def setup_rabbitmq_connection() -> pika.BlockingConnection:
         params = pika.ConnectionParameters(
             host=host, port=port,
             credentials=pika.PlainCredentials(username, password),
-            heartbeat=0,
+            heartbeat=HEARTBEAT,
         )
     return pika.BlockingConnection(params)
 
@@ -60,12 +63,21 @@ load_dotenv()
 
 
 def run_rabbitmq():
-    connection = setup_rabbitmq_connection()
-    channel = connection.channel()
-    setup_request_consumers(channel)
-    setup_create_video_queue(channel)
-    logging.info("Waiting for messages")
-    channel.start_consuming()
+    retry_delay = 5
+    while True:
+        try:
+            connection = setup_rabbitmq_connection()
+            channel = connection.channel()
+            setup_request_consumers(channel)
+            setup_create_video_queue(channel)
+            logging.info("Waiting for messages")
+            retry_delay = 5  # reset on successful connection
+            channel.start_consuming()
+        except Exception as exc:
+            logging.error("RabbitMQ connection lost (%s), reconnecting in %ss...", exc, retry_delay)
+            import time
+            time.sleep(retry_delay)
+            retry_delay = min(retry_delay * 2, 60)  # exponential backoff, cap at 60s
 
 
 rabbitmq_thread = threading.Thread(target=run_rabbitmq, daemon=True)

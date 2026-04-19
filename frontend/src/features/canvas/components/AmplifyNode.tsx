@@ -16,6 +16,8 @@ import {
   AlertCircle,
   Clock,
   Images,
+  Eye,
+  UserCheck,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { CanvasNode, CanvasNodeData, NodeCategory, NodeExecutionStatus, PortDef, ImageBatch } from "../types";
@@ -32,13 +34,15 @@ const CATEGORY_COLORS: Record<NodeCategory, string> = {
   image:   "#ec4899",
   video:   "#ef4444",
   utility: "#64748b",
+  manual:  "#f97316",
 };
 
 const CATEGORY_ICONS: Record<NodeCategory, React.FC<{ className?: string }>> = {
-  text:    ({ className }) => <Bot    className={className} />,
+  text:    ({ className }) => <Bot       className={className} />,
   image:   ({ className }) => <ImageIcon className={className} />,
   video:   ({ className }) => <VideoIcon className={className} />,
-  utility: ({ className }) => <Wrench className={className} />,
+  utility: ({ className }) => <Wrench    className={className} />,
+  manual:  ({ className }) => <UserCheck className={className} />,
 };
 
 // ---------------------------------------------------------------------------
@@ -82,6 +86,12 @@ const STATUS_CONFIG: Record<NodeExecutionStatus, StatusConfig> = {
     label: "error",
     barClass: "bg-red-500/60",
     glow: "#ef444444",
+  },
+  waiting_for_review: {
+    icon: <Eye className="w-3 h-3" />,
+    label: "review needed",
+    barClass: "bg-orange-500/50 animate-pulse",
+    glow: "#f9731644",
   },
 };
 
@@ -206,11 +216,12 @@ export function AmplifyNode({ id, data, selected }: NodeProps<CanvasNode>) {
         <div
           className={cn(
             "flex items-center gap-1 px-2 py-0.5 rounded-full text-[9px] font-medium shrink-0 transition-all",
-            data.status === "idle"       && "bg-white/5 text-white/30",
-            data.status === "queued"     && "bg-amber-500/20 text-amber-400",
-            data.status === "processing" && "bg-blue-500/20 text-blue-400",
-            data.status === "success"    && "bg-green-500/20 text-green-400",
-            data.status === "error"      && "bg-red-500/20 text-red-400",
+            data.status === "idle"               && "bg-white/5 text-white/30",
+            data.status === "queued"             && "bg-amber-500/20 text-amber-400",
+            data.status === "processing"         && "bg-blue-500/20 text-blue-400",
+            data.status === "success"            && "bg-green-500/20 text-green-400",
+            data.status === "error"              && "bg-red-500/20 text-red-400",
+            data.status === "waiting_for_review" && "bg-orange-500/20 text-orange-400 animate-pulse",
           )}
         >
           {statusCfg.icon}
@@ -338,6 +349,27 @@ export function AmplifyNode({ id, data, selected }: NodeProps<CanvasNode>) {
           batches={outputHistory}
           nodeName={data.displayName}
         />
+      )}
+
+      {/* ----------------------------------------------------------------- */}
+      {/* Waiting for review — action banner */}
+      {/* ----------------------------------------------------------------- */}
+      {data.status === "waiting_for_review" && (
+        <div className="mx-3 mb-1 mt-1 px-2 py-2 rounded-md bg-orange-500/10 border border-orange-500/20 flex items-center justify-between gap-2">
+          <p className="text-[10px] text-orange-300/80 leading-snug">
+            Waiting for your review
+          </p>
+          <button
+            className={cn(
+              "nodrag shrink-0 flex items-center gap-1 px-2 py-1 rounded text-[10px] font-medium",
+              "bg-orange-500/20 text-orange-300 hover:bg-orange-500/30 transition-colors"
+            )}
+            onClick={() => (data.onReview as (() => void) | undefined)?.()}
+          >
+            <Eye className="w-3 h-3" />
+            Review
+          </button>
+        </div>
       )}
 
       {/* ----------------------------------------------------------------- */}

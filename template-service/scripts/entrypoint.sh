@@ -10,6 +10,7 @@ alembic upgrade head
 
 # 2. Start Engine
 echo "Starting Engine on port 8188..."
+export PYTHONPATH=/app
 python backend_template/engine/main.py &
 
 # 3. Start FastAPI Gateway (foreground, public port)

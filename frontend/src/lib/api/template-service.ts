@@ -25,3 +25,36 @@ export async function runTemplate(templateId: string): Promise<RunTemplateRespon
   );
   return response.data;
 }
+
+// ── Manual review ──────────────────────────────────────────────────────────────
+
+export interface ManualReviewTask {
+  id: string;
+  jobId: string;
+  nodeId: string;
+  nodeType: string;
+  status: string;
+  autoConfirm: boolean;
+  payload: Record<string, unknown>;
+  decision: Record<string, unknown> | null;
+}
+
+export async function getManualReviewPendingByJob(
+  jobId: string
+): Promise<ManualReviewTask | null> {
+  const response = await api.get<ManualReviewTask | null>(
+    `${apiBase}/template/v1/review/job/${jobId}/pending`
+  );
+  return response.data ?? null;
+}
+
+export async function completeManualReview(
+  taskId: string,
+  decision: Record<string, unknown>
+): Promise<ManualReviewTask> {
+  const response = await api.post<ManualReviewTask>(
+    `${apiBase}/template/v1/review/${taskId}/complete`,
+    { decision }
+  );
+  return response.data;
+}

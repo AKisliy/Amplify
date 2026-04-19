@@ -18,8 +18,8 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { mediaApi, detectMediaType } from "@/features/media/api";
-import { ambassadorApi, projectApi } from "@/features/ambassadors/services/api";
-import type { AmbassadorImage } from "@/features/ambassadors/types";
+import { ambassadorApi } from "@/features/ambassadors/services/api";
+import type { ReferenceImage } from "@/features/ambassadors/types";
 import { AmplifyImage } from "@/features/media/components/AmplifyImage";
 
 // ---------------------------------------------------------------------------
@@ -46,36 +46,33 @@ interface MediaAssetsPanelProps {
 // ---------------------------------------------------------------------------
 
 export function MediaAssetsPanel({ isOpen, projectId }: MediaAssetsPanelProps) {
-  const [images, setImages] = useState<AmbassadorImage[]>([]);
+  const [images, setImages] = useState<ReferenceImage[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [ambassadorId, setAmbassadorId] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Fetch the project once to get ambassadorId
-  useEffect(() => {
-    if (!projectId) return;
-    projectApi
-      .getProject(projectId)
-      .then((p) => setAmbassadorId(p.ambassadorId ?? null))
-      .catch(() => setAmbassadorId(null));
-  }, [projectId]);
-
-  // Fetch ambassador images whenever ambassadorId changes
+  // Fetch ambassador by project — images are included in the response
   const fetchImages = useCallback(async () => {
-    if (!ambassadorId) return;
+    if (!projectId) return;
     setIsLoading(true);
     setError(null);
     try {
-      const data = await ambassadorApi.getAmbassadorImages(ambassadorId);
-      setImages(data);
-    } catch {
-      setError("Failed to load media assets.");
+      const ambassador = await ambassadorApi.getAmbassadorByProject(projectId);
+      setAmbassadorId(ambassador.id);
+      setImages(ambassador.referenceImages);
+    } catch (err: any) {
+      if (err?.response?.status === 404) {
+        setAmbassadorId(null);
+        setImages([]);
+      } else {
+        setError("Failed to load media assets.");
+      }
     } finally {
       setIsLoading(false);
     }
-  }, [ambassadorId]);
+  }, [projectId]);
 
   useEffect(() => {
     if (isOpen) fetchImages();
@@ -88,11 +85,7 @@ export function MediaAssetsPanel({ isOpen, projectId }: MediaAssetsPanelProps) {
       setIsUploading(true);
       try {
         const result = await mediaApi.uploadFile(file);
-        await ambassadorApi.linkAmbassadorImage(
-          ambassadorId,
-          result.mediaId,
-          result.type === "video" ? 1 : 0
-        );
+        await ambassadorApi.linkAmbassadorImage(ambassadorId, result.mediaId, "other");
         await fetchImages();
       } catch {
         setError("Upload failed.");
@@ -116,8 +109,8 @@ export function MediaAssetsPanel({ isOpen, projectId }: MediaAssetsPanelProps) {
 
   // Drag start — encode the asset URL + type for the canvas drop handler
   const handleDragStart = useCallback(
-    (e: React.DragEvent<HTMLDivElement>, asset: AmbassadorImage) => {
-      const mediaType = asset.imageType === 1 ? "video" : "image";
+    (e: React.DragEvent<HTMLDivElement>, asset: ReferenceImage) => {
+      const mediaType = "image";
       const payload: MediaAssetDragPayload = {
         url: mediaApi.getMediaUrl(asset.mediaId, "Tiny"),
         mediaType,
@@ -228,10 +221,10 @@ function AssetCard({
   asset,
   onDragStart,
 }: {
-  asset: AmbassadorImage;
-  onDragStart: (e: React.DragEvent<HTMLDivElement>, asset: AmbassadorImage) => void;
+  asset: ReferenceImage;
+  onDragStart: (e: React.DragEvent<HTMLDivElement>, asset: ReferenceImage) => void;
 }) {
-  const isVideo = asset.imageType === 1;
+  const isVideo = false; // For now, we only support images as reference assets. Future: detect media type and show video badge if needed.
   const [imgError, setImgError] = useState(false);
 
   return (

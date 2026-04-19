@@ -3,10 +3,10 @@
 import { AnimatePresence, motion } from "framer-motion";
 import { useToast } from "@/hooks/use-toast";
 import { useCallback, useRef, useState, useEffect } from "react";
+import { Plus } from "lucide-react";
 import { ambassadorApi } from "../../services/api";
-import type { AmbassadorImage } from "../../types";
-import { mediaApi, type MediaType } from "@/features/media/api";
-import { MediaDropzone } from "@/features/media/components/MediaDropzone";
+import type { ReferenceImage } from "../../types";
+import { mediaApi } from "@/features/media/api";
 import { MediaCard } from "@/features/media/components/MediaCard";
 import { MediaLightbox } from "@/features/media/components/MediaLightbox";
 import type { UploadedMedia } from "@/features/media/useMediaUpload";
@@ -14,73 +14,44 @@ import { validateFile } from "@/features/media/api";
 
 interface GalleryProps {
   ambassadorId: string;
-  images: AmbassadorImage[];
+  images: ReferenceImage[];
   onImagesChange: () => void;
 }
 
-/**
- * Extract a UUID from any URL — matches /api/media/{uuid} but also any
- * path segment that looks like a UUID (e.g. GCS storage paths).
- */
 function extractMediaId(url: string): string {
-  // Prefer /api/media/{uuid} pattern first
   const apiMatch = url?.match(/\/api\/media\/([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})/i)?.[1];
   if (apiMatch) return apiMatch;
-  // Fall back to any UUID-shaped path segment (covers GCS URLs)
   const anyMatch = url?.match(/\/([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})/i)?.[1];
   return anyMatch ?? "";
 }
 
-/** Map backend imageType number to MediaType */
-function resolveType(img: AmbassadorImage): MediaType {
-  // imageType: 0 = image, 1 = video
-  if (img.imageType === 1) return "video";
-  return "image";
-}
-
 export function Gallery({ ambassadorId, images, onImagesChange }: GalleryProps) {
   const { toast } = useToast();
+  const inputRef = useRef<HTMLInputElement>(null);
 
   const [displayItems, setDisplayItems] = useState<UploadedMedia[]>([]);
-
-  // Lightbox state
   const [lightboxOpen, setLightboxOpen] = useState(false);
   const [lightboxIndex, setLightboxIndex] = useState(0);
 
-  /**
-   * Maps the display-item id → the backend link-record id used for DELETE.
-   * Kept in a ref so handleDelete always sees the latest value without
-   * creating stale closure problems.
-   */
   const linkIdMapRef = useRef<Map<string, string>>(new Map());
 
-  // ── Sync committed images → display items ──────────────────────────────────
-
   useEffect(() => {
-    const committedItems: UploadedMedia[] = images.map((img, i) => {
-      // Use mediaId extracted from URL as displayId so it matches the id
-      // assigned at upload start — this prevents a key change on refetch.
-      const mediaId = img.mediaId;
-      const displayId = mediaId;
-
-      // Store link-record id (img.id) for DELETE calls.
-      const backendId = displayId;
-      linkIdMapRef.current.set(displayId, backendId);
-
+    const committedItems: UploadedMedia[] = images.map((img) => {
+      const displayId = img.mediaId;
+      linkIdMapRef.current.set(displayId, displayId);
       return {
         id: displayId,
-        tinyUrl: mediaApi.getMediaUrl(mediaId, "Tiny"),
-        url: mediaApi.getMediaUrl(mediaId),
-        type: resolveType(img),
-        name: "Ambassador media",
+        tinyUrl: mediaApi.getMediaUrl(img.mediaId, "Tiny"),
+        url: mediaApi.getMediaUrl(img.mediaId),
+        type: "image" as const,
+        name: `${img.imageType} image`,
         size: 0,
         progress: 100,
-        contentType: img.imageType === 1 ? "video/mp4" : "image/jpeg",
+        contentType: "image/jpeg",
       };
     });
 
     setDisplayItems((prev) => {
-      // Keep items still uploading (progress < 100 and no error)
       const uploading = prev.filter(
         (item) => item.progress !== undefined && item.progress < 100 && !item.error
       );
@@ -90,8 +61,6 @@ export function Gallery({ ambassadorId, images, onImagesChange }: GalleryProps) 
       ];
     });
   }, [images]);
-
-  // ── Open lightbox ──────────────────────────────────────────────────────────
 
   const handleOpen = useCallback(
     (id: string) => {
@@ -104,13 +73,10 @@ export function Gallery({ ambassadorId, images, onImagesChange }: GalleryProps) 
     [displayItems]
   );
 
-  // ── Replace media after in-lightbox edit ───────────────────────────────────
-
   const handleReplaceMedia = useCallback(
     async (oldId: string, blob: Blob, mimeType: string) => {
       const file = new File([blob], "edited.jpg", { type: mimeType });
 
-      // 1. Upload the edited blob as a new image
       let mediaId: string;
       let mediaUrl: string;
       try {
@@ -123,16 +89,14 @@ export function Gallery({ ambassadorId, images, onImagesChange }: GalleryProps) 
         throw err;
       }
 
-      // 2. Link new media to ambassador
       try {
-        await ambassadorApi.linkAmbassadorImage(ambassadorId, mediaId, 0);
+        await ambassadorApi.linkAmbassadorImage(ambassadorId, mediaId, "other");
       } catch (err: any) {
-        const msg = err?.response?.data?.detail || err?.message || "Failed to link image to ambassador";
+        const msg = err?.response?.data?.detail || err?.message || "Failed to link image";
         toast({ variant: "destructive", title: "Link failed", description: msg });
         throw err;
       }
 
-      // 3. Unlink old media from ambassador (best-effort — new image is already saved)
       try {
         await ambassadorApi.deleteAmbassadorImage(ambassadorId, oldId);
       } catch (err: any) {
@@ -142,7 +106,6 @@ export function Gallery({ ambassadorId, images, onImagesChange }: GalleryProps) 
           title: "Cleanup warning",
           description: "Your edited image was saved, but the old one could not be removed automatically.",
         });
-        // Don't re-throw — the core operation succeeded
       }
 
       return { mediaId, mediaUrl };
@@ -150,11 +113,8 @@ export function Gallery({ ambassadorId, images, onImagesChange }: GalleryProps) 
     [ambassadorId, toast]
   );
 
-  // ── Handle save callback from lightbox ─────────────────────────────────────
-
   const handleSave = useCallback(
     (oldId: string, newId: string, newUrl: string) => {
-      // Update display items immediately (optimistic)
       setDisplayItems((prev) =>
         prev.map((item) =>
           item.id === oldId
@@ -168,8 +128,6 @@ export function Gallery({ ambassadorId, images, onImagesChange }: GalleryProps) 
     [onImagesChange, toast]
   );
 
-  // ── Upload handler ─────────────────────────────────────────────────────────
-
   const handleFiles = useCallback(
     async (files: File[]) => {
       for (const file of files) {
@@ -179,10 +137,6 @@ export function Gallery({ ambassadorId, images, onImagesChange }: GalleryProps) 
           continue;
         }
 
-        const mediaType: MediaType = file.type.startsWith("video") ? "video" : "image";
-
-        // Get mediaId BEFORE upload starts so the slot has a stable key
-        // that matches what the server will return after refetch.
         let mediaId: string;
         let uploadUrl: string;
         try {
@@ -199,7 +153,7 @@ export function Gallery({ ambassadorId, images, onImagesChange }: GalleryProps) 
             id: mediaId,
             url: URL.createObjectURL(file),
             tinyUrl: "",
-            type: mediaType,
+            type: "image" as const,
             name: file.name,
             size: file.size,
             progress: 0,
@@ -216,23 +170,22 @@ export function Gallery({ ambassadorId, images, onImagesChange }: GalleryProps) 
             );
           });
 
-          const imageType: 0 | 1 = mediaType === "video" ? 1 : 0;
-          await ambassadorApi.linkAmbassadorImage(ambassadorId, mediaId, imageType);
+          await ambassadorApi.linkAmbassadorImage(ambassadorId, mediaId, "other");
 
-          // Update URL to CDN — same id, no key change, no animation
           setDisplayItems((prev) =>
             prev.map((item) =>
               item.id === mediaId
-                ? { ...item, url: mediaApi.getMediaUrl(mediaId, "Medium"), tinyUrl: mediaApi.getMediaUrl(mediaId, "Tiny"), progress: 100 }
+                ? {
+                    ...item,
+                    url: mediaApi.getMediaUrl(mediaId, "Medium"),
+                    tinyUrl: mediaApi.getMediaUrl(mediaId, "Tiny"),
+                    progress: 100,
+                  }
                 : item
             )
           );
 
-          toast({
-            title: `${mediaType === "video" ? "Video" : "Image"} uploaded`,
-            description: `${file.name} has been added to the gallery.`,
-          });
-
+          toast({ title: "Image uploaded", description: `${file.name} has been added to the gallery.` });
           onImagesChange();
         } catch (err: any) {
           const msg = err?.response?.data?.detail || err?.message || "Upload failed";
@@ -248,19 +201,21 @@ export function Gallery({ ambassadorId, images, onImagesChange }: GalleryProps) 
     [ambassadorId, onImagesChange, toast]
   );
 
-  // ── Delete handler ──────────────────────────────────────────────────────────
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files ?? []);
+    if (files.length) handleFiles(files);
+    e.target.value = "";
+  };
 
   const handleDelete = useCallback(
     async (id: string) => {
       try {
         const isTemp = id.startsWith("temp-");
         if (!isTemp) {
-          // Use the backend link-record id stored in the ref map, fallback to display id
           const backendId = linkIdMapRef.current.get(id) || id;
           try {
             await ambassadorApi.deleteAmbassadorImage(ambassadorId, backendId);
           } catch (firstErr: any) {
-            // If the link-record id failed, try the media UUID extracted from the URL
             const status = firstErr?.response?.status;
             if (status === 500 || status === 404 || status === 400) {
               const item = displayItems.find((i) => i.id === id);
@@ -279,7 +234,7 @@ export function Gallery({ ambassadorId, images, onImagesChange }: GalleryProps) 
         setDisplayItems((prev) => prev.filter((item) => item.id !== id));
         if (!isTemp) {
           onImagesChange();
-          toast({ title: "Deleted", description: "Media removed from gallery." });
+          toast({ title: "Deleted", description: "Image removed from gallery." });
         }
       } catch (err: any) {
         const msg = err?.response?.data?.detail || err?.message || "Please try again.";
@@ -289,43 +244,45 @@ export function Gallery({ ambassadorId, images, onImagesChange }: GalleryProps) 
     [ambassadorId, displayItems, onImagesChange, toast]
   );
 
-  // Items that can appear in the lightbox (fully uploaded, no error)
-  const readyItems = displayItems.filter(
-    (item) => !item.error && item.progress === 100
-  );
+  const readyItems = displayItems.filter((item) => !item.error && item.progress === 100);
 
   return (
-    <div className="space-y-6">
-      <MediaDropzone onFiles={handleFiles} acceptVideo />
+    <div>
+      <input
+        ref={inputRef}
+        type="file"
+        accept="image/jpeg,image/png,image/webp,image/gif"
+        multiple
+        className="hidden"
+        onChange={handleInputChange}
+      />
 
-      <AnimatePresence mode="popLayout">
-        {displayItems.length > 0 ? (
-          <motion.div layout className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
-            <AnimatePresence mode="popLayout">
-              {displayItems.map((item, i) => (
-                <MediaCard
-                  key={item.id || `card-${i}`}
-                  media={item}
-                  onDelete={!item.error ? handleDelete : undefined}
-                  onOpen={handleOpen}
-                />
-              ))}
-            </AnimatePresence>
-          </motion.div>
-        ) : (
-          <motion.div
-            key="empty"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="py-8 text-center text-sm text-muted-foreground"
-          >
-            No media yet — drag files above or click to browse.
-          </motion.div>
-        )}
-      </AnimatePresence>
+      <motion.div layout className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
+        <AnimatePresence mode="popLayout">
+          {displayItems.map((item, i) => (
+            <MediaCard
+              key={item.id || `card-${i}`}
+              media={item}
+              onDelete={!item.error ? handleDelete : undefined}
+              onOpen={handleOpen}
+            />
+          ))}
+        </AnimatePresence>
 
-      {/* Full-screen lightbox + editor */}
+        {/* Upload card — always last in the grid */}
+        <motion.button
+          layout
+          type="button"
+          onClick={() => inputRef.current?.click()}
+          className="aspect-square rounded-xl border-2 border-dashed border-border/50 bg-muted/20 flex items-center justify-center text-muted-foreground hover:border-primary/50 hover:text-primary hover:bg-primary/5 transition-colors"
+          whileHover={{ scale: 1.03 }}
+          whileTap={{ scale: 0.97 }}
+          transition={{ type: "spring", stiffness: 300, damping: 20 }}
+        >
+          <Plus className="w-6 h-6" />
+        </motion.button>
+      </motion.div>
+
       <MediaLightbox
         items={readyItems}
         initialIndex={lightboxIndex}

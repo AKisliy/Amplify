@@ -12,10 +12,11 @@ import { ProjectHeader } from "@/components/ProjectHeader";
 import { useProject } from "@/features/ambassadors/hooks/useProjects";
 import { useProjects } from "@/features/ambassadors/hooks/useProjects";
 import { useAmbassador } from "@/features/ambassadors/hooks/useAmbassador";
+import { mediaApi } from "@/features/media/api";
 import { useProjectTemplates } from "@/features/templates/hooks/useProjectTemplates";
 import { WorkflowLibrary } from "@/features/templates/components/WorkflowLibrary";
 import { TemplateCoverUpload } from "@/features/templates/components/TemplateCoverUpload";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import {
   Dialog,
   DialogContent,
@@ -60,7 +61,6 @@ export default function ProjectOverviewPage() {
   const { projects, isLoading: projectsLoading } = useProjects();
   const { templates, isLoading: templatesLoading, refetch } = useProjectTemplates(projectId);
 
-  const [ambassadorId, setAmbassadorId] = useState<string | undefined>(undefined);
   const [newTemplateOpen, setNewTemplateOpen] = useState(false);
   const [newTemplateName, setNewTemplateName] = useState("");
   const [newTemplateCover, setNewTemplateCover] = useState<string | null>(null);
@@ -122,22 +122,6 @@ export default function ProjectOverviewPage() {
     }
   };
 
-  useEffect(() => {
-    if (project) {
-      // Debug log to verify if backend returns ambassadorId
-      console.log("Project loaded:", project);
-      if (project.ambassadorId) {
-        setAmbassadorId(project.ambassadorId);
-        return;
-      }
-    }
-
-    if (projectId) {
-      const storedId = localStorage.getItem(`project_ambassador_${projectId}`);
-      if (storedId) setAmbassadorId(storedId);
-    }
-  }, [projectId, project]);
-
   const handleViewAmbassador = () => {
     router.push(`/projects/${projectId}/ambassadors`);
   };
@@ -146,7 +130,7 @@ export default function ProjectOverviewPage() {
     router.push(`/projects/${projectId}/templates/${templateId}`);
   };
 
-  const { ambassador } = useAmbassador(ambassadorId);
+  const { ambassador } = useAmbassador(projectId);
 
   return (
     <div className="min-h-screen bg-background">
@@ -163,16 +147,23 @@ export default function ProjectOverviewPage() {
         >
           <div className="flex items-center gap-4">
             <Avatar className="w-16 h-16 border-2 border-border shadow-sm shrink-0">
-              <AvatarImage src={ambassador?.profileImageUrl ?? undefined} className="object-cover" />
+              {(() => {
+                const img =
+                  ambassador?.referenceImages.find((i) => i.imageType === "portrait") ??
+                  ambassador?.referenceImages[0];
+                return img ? (
+                  <AvatarImage src={mediaApi.getMediaUrl(img.mediaId)} className="object-cover" />
+                ) : null;
+              })()}
               <AvatarFallback className="text-xl font-semibold bg-primary/10 text-primary">
-                {getInitials(ambassador?.name || "Ambassador Name")}
+                {getInitials(ambassador?.name || "A")}
               </AvatarFallback>
             </Avatar>
 
             <div>
-              <h2 className="text-xl font-semibold leading-tight">{ambassador?.name || "Ambassador Name"}</h2>
+              <h2 className="text-xl font-semibold leading-tight">{ambassador?.name || "No Ambassador"}</h2>
               <p className="text-sm text-muted-foreground mt-0.5 max-w-lg line-clamp-2">
-                {ambassador?.biography || "Ambassador Biography"}
+                {ambassador?.appearanceDescription || "No appearance description set"}
               </p>
             </div>
           </div>
