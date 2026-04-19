@@ -16,8 +16,6 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
     public const string DefaultSchemaName = "userservice";
 
     public DbSet<Project> Projects => Set<Project>();
-    public DbSet<Ambassador> Ambassadors => Set<Ambassador>();
-    public DbSet<AmbassadorImage> AmbassadorImages => Set<AmbassadorImage>();
     public DbSet<ProjectAsset> ProjectAssets => Set<ProjectAsset>();
     public DbSet<DataProtectionKey> DataProtectionKeys => Set<DataProtectionKey>();
 
