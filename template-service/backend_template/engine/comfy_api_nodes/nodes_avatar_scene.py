@@ -428,7 +428,7 @@ class AvatarSceneNode(IO.ComfyNode):
             raise Exception(f"No video returned for segment {i + 1}.")
 
         logger.info("[AvatarSceneNode] All %d segment(s) generated", len(video_uuids))
-        return IO.NodeOutput(video_uuids)
+        return IO.NodeOutput(video_uuids, ui={"video_uuids": video_uuids})
 
 
 # ── Extension & Entry Point ───────────────────────────────────────────

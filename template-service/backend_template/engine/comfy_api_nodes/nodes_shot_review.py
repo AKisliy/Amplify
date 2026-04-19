@@ -70,7 +70,7 @@ class ShotReviewNode(IO.ComfyNode):
                 "confirmation. The frontend shows a fullscreen timeline where the "
                 "user can preview and trim each shot before approving."
             ),
-            is_output_node=False,
+            is_output_node=True,
             is_input_list=True,
             hidden=[Hidden.unique_id, Hidden.extra_pnginfo],
             inputs=[
@@ -153,7 +153,7 @@ class ShotReviewNode(IO.ComfyNode):
 
         if auto_confirm:
             logger.info("[ShotReviewNode] auto_confirm=True, resolving immediately")
-            return IO.NodeOutput(video_uuids, "{}")
+            return IO.NodeOutput(video_uuids, "{}", ui={"video_uuids": video_uuids})
 
         # ── Notify frontend via RabbitMQ → WS Gateway ────────────────────
         user_id: str = extra_pnginfo.get("client_id", "")
@@ -186,7 +186,7 @@ class ShotReviewNode(IO.ComfyNode):
                     task_id,
                     decision_str,
                 )
-                return IO.NodeOutput(video_uuids, decision_str)
+                return IO.NodeOutput(video_uuids, decision_str, ui={"video_uuids": video_uuids})
 
             logger.debug(
                 "[ShotReviewNode] Task %s status=%r, still waiting …",
