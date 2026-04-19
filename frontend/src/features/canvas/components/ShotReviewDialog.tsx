@@ -86,13 +86,13 @@ export function ShotReviewDialog({ jobId, onClose }: ShotReviewDialogProps) {
     if (!taskId) return;
     setIsSubmitting(true);
     try {
-      await completeManualReview(taskId, {
-        trims: trims.map((t, i) => ({
-          videoUuid: videoUuids[i],
-          trimStart: parseFloat(t.start.toFixed(2)),
-          trimEnd: parseFloat(t.end.toFixed(2)),
-        })),
-      });
+      const decision = Object.fromEntries(
+        trims.map((t, i) => [
+          videoUuids[i],
+          { trimStart: parseFloat(t.start.toFixed(2)), trimEnd: parseFloat(t.end.toFixed(2)) },
+        ])
+      );
+      await completeManualReview(taskId, decision);
       onClose();
     } catch {
       setError("Failed to submit decision. Please try again.");

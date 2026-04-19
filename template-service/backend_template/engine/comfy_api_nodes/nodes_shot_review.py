@@ -13,14 +13,15 @@ Flow
 3. If ``auto_confirm=True`` → resolve immediately with an empty decision.
 4. Otherwise poll the database every few seconds until the task reaches
    ``status="completed"`` (set by the frontend via ``POST /review/{id}/complete``).
-5. Return the original ``video_uuids`` list and the user's ``decision`` JSON
-   string so downstream nodes can apply trim points.
+5. Merge the user's decision into ``extra_pnginfo["shot_decisions"]`` so that
+   downstream nodes (e.g. VideoEditorNode) can read trim points without an
+   explicit wire connection. Multiple ShotReviewNodes merge their decisions.
+6. Return the original ``video_uuids`` list as the sole output.
 """
 
 from __future__ import annotations
 
 import asyncio
-import json
 import logging
 from uuid import UUID
 
@@ -92,10 +93,6 @@ class ShotReviewNode(IO.ComfyNode):
                     is_output_list=True,
                     tooltip="Same video UUIDs passed through after review.",
                 ),
-                IO.String.Output(
-                    display_name="decision",
-                    tooltip="User's decision as a JSON string (trim points per shot).",
-                ),
             ],
         )
 
@@ -153,7 +150,9 @@ class ShotReviewNode(IO.ComfyNode):
 
         if auto_confirm:
             logger.info("[ShotReviewNode] auto_confirm=True, resolving immediately")
-            return IO.NodeOutput(video_uuids, "{}", ui={"video_uuids": video_uuids})
+            existing = extra_pnginfo.get("shot_decisions", {})
+            extra_pnginfo["shot_decisions"] = {**existing}
+            return IO.NodeOutput(video_uuids, ui={"video_uuids": video_uuids})
 
         # ── Notify frontend via RabbitMQ → WS Gateway ────────────────────
         user_id: str = extra_pnginfo.get("client_id", "")
@@ -180,13 +179,15 @@ class ShotReviewNode(IO.ComfyNode):
                 raise ValueError(f"Review task {task_id} was deleted while waiting.")
 
             if task.status == "completed":
-                decision_str = json.dumps(task.decision or {})
+                decision = task.decision or {}
                 logger.info(
                     "[ShotReviewNode] Task %s completed — decision=%s",
                     task_id,
-                    decision_str,
+                    decision,
                 )
-                return IO.NodeOutput(video_uuids, decision_str, ui={"video_uuids": video_uuids})
+                existing = extra_pnginfo.get("shot_decisions", {})
+                extra_pnginfo["shot_decisions"] = {**existing, **decision}
+                return IO.NodeOutput(video_uuids, ui={"video_uuids": video_uuids})
 
             logger.debug(
                 "[ShotReviewNode] Task %s status=%r, still waiting …",
