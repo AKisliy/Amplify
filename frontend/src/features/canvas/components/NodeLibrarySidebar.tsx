@@ -14,6 +14,7 @@ import {
   Search,
   Bot,
   ImageIcon,
+  UserCheck,
   VideoIcon,
   Wrench,
   ChevronDown,
@@ -31,6 +32,7 @@ import type { NodeLibraryItem, NodeCategory } from "../types";
 const CATEGORY_ICONS: Record<NodeCategory, React.FC<{ className?: string }>> = {
   text:    ({ className }) => <Bot       className={className} />,
   image:   ({ className }) => <ImageIcon className={className} />,
+  manual:  ({ className }) => <UserCheck className={className} />,
   video:   ({ className }) => <VideoIcon className={className} />,
   utility: ({ className }) => <Wrench    className={className} />,
 };
@@ -40,9 +42,10 @@ const CATEGORY_COLORS: Record<NodeCategory, string> = {
   image:   "#ec4899",
   video:   "#ef4444",
   utility: "#64748b",
+  manual:  "#f97316",
 };
 
-const CATEGORY_ORDER: NodeCategory[] = ["text", "image", "video", "utility"];
+const CATEGORY_ORDER: NodeCategory[] = ["text", "image", "video", "manual", "utility"];
 
 // ---------------------------------------------------------------------------
 // Props

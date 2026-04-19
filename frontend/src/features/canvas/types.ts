@@ -179,10 +179,11 @@ export type NodeExecutionStatus =
   | "queued"
   | "processing"
   | "success"
-  | "error";
+  | "error"
+  | "waiting_for_review";
 
 /** Category tag used for colour-coding and grouping in the node library */
-export type NodeCategory = "text" | "image" | "video" | "utility";
+export type NodeCategory = "text" | "image" | "video" | "utility" | "manual";
 
 /** The three view modes for the node image gallery */
 export type ImageViewMode = "single" | "batch" | "all";

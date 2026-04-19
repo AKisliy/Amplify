@@ -100,6 +100,7 @@ class JobService:
                             "extra_pnginfo": {
                                 "client_id": user_id,
                                 "project_id": project_id,
+                                "job_id": str(job.id),
                             },
                         },
                     },

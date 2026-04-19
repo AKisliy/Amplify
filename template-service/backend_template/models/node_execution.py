@@ -11,6 +11,7 @@ class NodeStatus(str, enum.Enum):
     RUNNING = "RUNNING"
     SUCCESS = "SUCCESS"
     FAILURE = "FAILURE"
+    WAITING_FOR_REVIEW = "WAITING_FOR_REVIEW"
 
 class NodeExecution(Base, CommonMixin):
     __tablename__ = "node_executions"
