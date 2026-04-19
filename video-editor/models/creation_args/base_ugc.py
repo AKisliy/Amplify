@@ -1,4 +1,4 @@
-from typing import List, Literal, Optional
+from typing import Dict, List, Literal, Optional
 from pydantic import Field, model_validator
 
 from models.broker_model import BrokerModel
@@ -19,6 +19,11 @@ class MusicSettings(BrokerModel):
     volume: float
 
 
+class TrimDecision(BrokerModel):
+    trim_start: float
+    trim_end: float
+
+
 class BaseUgcArgs(BrokerModel):
     format_type: Literal["base-ugc"]
     media_files: List[str] = Field(min_length=1)
@@ -29,6 +34,7 @@ class BaseUgcArgs(BrokerModel):
     captions_settings: Optional[CaptionsSettings] = None
     add_music: bool = False
     music_settings: Optional[MusicSettings] = None
+    trim_decisions: Optional[Dict[str, TrimDecision]] = None
 
     @model_validator(mode="after")
     def validate_optional_settings(self) -> "BaseUgcArgs":
