@@ -39,7 +39,7 @@ class AddCaptionsStep(PipelineStep):
             font=DEFAULT_FONT,
             font_size=font_size,
             color='white', 
-            margin=(50, 5, 50, 0),
+            margin=(0, 0, 0, 0),
             method="caption",
             text_align='center',
             size=(900, None), 
@@ -51,7 +51,7 @@ class AddCaptionsStep(PipelineStep):
 
         voiceover_subs = SubtitlesClip(srt_path, make_textclip=generator)
 
-        captioned_video = CompositeVideoClip([video, voiceover_subs.with_position(('center', 800))])
+        captioned_video = CompositeVideoClip([video, voiceover_subs.with_position(('center', 1075))])
 
         output_path = ctx.workspace.get_temp_path("mp4")
         
