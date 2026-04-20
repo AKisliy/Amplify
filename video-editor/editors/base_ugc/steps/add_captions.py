@@ -36,8 +36,8 @@ class AddCaptionsStep(PipelineStep):
 
         generator = lambda txt: TextClip(
             text=txt,
-            font=font,
-            font_size=DEFAULT_FONT,
+            font=DEFAULT_FONT,
+            font_size=font_size,
             color='white', 
             margin=(50, 5, 50, 0),
             method="caption",
