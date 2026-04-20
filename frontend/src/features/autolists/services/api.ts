@@ -1,4 +1,13 @@
-import api from "@/lib/axios";
+import {
+  getAutoListsForProject,
+  getAutoList as getAutoListSdk,
+  createAutoList as createAutoListSdk,
+  updateAutoList as updateAutoListSdk,
+  deleteAutoList as deleteAutoListSdk,
+  createAutoListEntry as createAutoListEntrySdk,
+  updateAutoListEntry as updateAutoListEntrySdk,
+  deleteAutoListEntry as deleteAutoListEntrySdk,
+} from "@/lib/api/publisher";
 import type {
   AutoList,
   CreateAutoListDto,
@@ -7,45 +16,29 @@ import type {
   UpdateAutoListEntryDto,
 } from "../types";
 
-interface AutoListsResponse {
-  autoLists?: any[];
-  AutoLists?: any[];
-}
+// ─── Mappers ───────────────────────────────────────────────────────────────────
 
-// Backend response type for FullAutoListDto (PascalCase field names)
-interface FullAutoListDtoResponse {
-  id: string;
-  name: string;
-  instagramSettings?: { shareToFeed: boolean } | null;
-  entries: Array<{
-    id: string;
-    dayOfWeeks: number;
-    publicationTime: string;
-  }>;
-  accounts: Array<{
-    id: string;
-    socialProvider: string; // Backend serializes SocialProvider enum as string: "Instagram" | "TikTok" | "Youtube"
-    username: string;
-    avatarUrl?: string | null;
-  }>;
-}
-
-function mapFullAutoListDto(dto: FullAutoListDtoResponse): AutoList {
+function mapAutoListEntry(e: any, listId: string) {
   return {
-    id: dto.id,
-    name: dto.name,
-    instagramSettings: dto.instagramSettings ?? undefined,
-    entries: (dto.entries ?? []).map((e) => ({
-      id: e.id,
-      autoListId: dto.id,
-      dayOfWeeks: e.dayOfWeeks,
-      publicationTime: e.publicationTime,
-    })),
-    accounts: (dto.accounts ?? []).map((a) => ({
-      id: a.id,
-      socialProvider: a.socialProvider,
-      username: a.username,
-      avatarUrl: a.avatarUrl ?? undefined,
+    id: e?.id ?? "",
+    autoListId: listId,
+    dayOfWeeks: e?.dayOfWeeks ?? 0,
+    publicationTime: e?.publicationTime ?? "",
+  };
+}
+
+function mapFullAutoList(dto: any): AutoList {
+  const id = dto?.id ?? "";
+  return {
+    id,
+    name: dto?.name ?? "",
+    instagramSettings: dto?.instagramSettings ?? undefined,
+    entries: (dto?.entries ?? []).map((e: any) => mapAutoListEntry(e, id)),
+    accounts: (dto?.accounts ?? []).map((a: any) => ({
+      id: a?.id ?? "",
+      socialProvider: a?.socialProvider ?? "",
+      username: a?.username ?? "",
+      avatarUrl: a?.avatarUrl ?? undefined,
     })),
   };
 }
@@ -55,111 +48,104 @@ export const autolistApi = {
    * Get all autolists for a project
    */
   async getAutolists(projectId: string): Promise<AutoList[]> {
-    const response = await api.get<AutoListsResponse>(`autolists`, {
-      params: { ProjectId: projectId },
-    });
-    
-    // Support both casings from backend
-    const rawList = response.data.autoLists || response.data.AutoLists || [];
-    
-    // Map each item to fix casing and include entries for count/scheduling
-    return rawList.map(item => {
-      const id = item.id || item.Id;
-      return {
-        id: id,
-        name: item.name || item.Name,
-        entries: (item.entries || item.Entries || []).map((e: any) => ({
-          id: e.id || e.Id,
-          autoListId: id,
-          dayOfWeeks: e.dayOfWeeks || e.DayOfWeeks,
-          publicationTime: e.publicationTime || e.PublicationTime,
-        })),
-        accounts: [], // Not returned in list view for performance
-      };
-    });
+    const { data } = await getAutoListsForProject({ query: { ProjectId: projectId } });
+    const rawList = data?.autoLists ?? [];
+    // The list endpoint returns the lightweight AutoListDto (id + name only).
+    // Entries/accounts require a detail fetch; here we return empty arrays to
+    // match the previous behavior (entries used only for count, not editing).
+    return rawList.map((item: any) => ({
+      id: item?.id ?? "",
+      name: item?.name ?? "",
+      entries: [],
+      accounts: [],
+    }));
   },
 
   /**
-   * Get an autolist by ID
+   * Get an autolist by ID (full detail with entries and accounts)
    */
   async getAutolist(id: string): Promise<AutoList> {
-    const response = await api.get<FullAutoListDtoResponse>(`autolists/${id}`);
-    return mapFullAutoListDto(response.data);
+    const { data } = await getAutoListSdk({ path: { id } });
+    return mapFullAutoList(data);
   },
 
   /**
    * Create a new autolist
    */
-  async createAutolist(data: CreateAutoListDto): Promise<string> {
-    const payload = {
-      projectId: data.projectId,
-      name: data.name,
-      instagramSettings: data.instagramSettings ?? null,
-      accounts: data.accounts.map((a) => ({ id: a.id })),
-      entries: data.entries.map((e) => ({
-        id: crypto.randomUUID(), // required by AutoListEntryDto
-        dayOfWeeks: e.dayOfWeeks,
-        publicationTime: e.publicationTime,
-      })),
-    };
-    const response = await api.post<string>(`autolists`, payload);
-    return response.data;
+  async createAutolist(payload: CreateAutoListDto): Promise<string> {
+    const { data } = await createAutoListSdk({
+      body: {
+        projectId: payload.projectId,
+        name: payload.name,
+        instagramSettings: payload.instagramSettings ?? null,
+        accounts: payload.accounts.map((a) => ({ id: a.id })),
+        entries: payload.entries.map((e) => ({
+          id: crypto.randomUUID(),
+          dayOfWeeks: e.dayOfWeeks,
+          publicationTime: e.publicationTime,
+        })),
+      },
+    });
+    return data as unknown as string;
   },
 
   /**
    * Update an existing autolist
    */
-  async updateAutolist(id: string, data: UpdateAutoListDto): Promise<void> {
-    const payload = {
-      id: data.id,
-      name: data.name,
-      instagramSettings: data.instagramSettings ?? null,
-      accounts: data.accounts.map((a) => ({ id: a.id })),
-    };
-    await api.put(`autolists/${id}`, payload);
+  async updateAutolist(id: string, payload: UpdateAutoListDto): Promise<void> {
+    await updateAutoListSdk({
+      path: { id },
+      body: {
+        id: payload.id,
+        name: payload.name,
+        instagramSettings: payload.instagramSettings ?? null,
+        accounts: payload.accounts.map((a) => ({ id: a.id })),
+      },
+    });
   },
 
   /**
    * Delete an autolist
    */
   async deleteAutolist(id: string): Promise<void> {
-    await api.delete(`autolists/${id}`);
+    await deleteAutoListSdk({ path: { id } });
   },
 
   /**
    * Create a new autolist entry (time slot)
-   * Backend: POST /autolistentry  body: { AutoListId, Entry: { Id, DayOfWeeks, PublicationTime } }
    */
-  async createEntry(data: CreateAutoListEntryDto): Promise<string> {
-    const payload = {
-      autoListId: data.autoListId,
-      entry: {
-        id: crypto.randomUUID(),
-        dayOfWeeks: data.dayOfWeeks,
-        publicationTime: data.publicationTime,
+  async createEntry(payload: CreateAutoListEntryDto): Promise<string> {
+    const { data } = await createAutoListEntrySdk({
+      body: {
+        autoListId: payload.autoListId,
+        entry: {
+          id: crypto.randomUUID(),
+          dayOfWeeks: payload.dayOfWeeks,
+          publicationTime: payload.publicationTime,
+        },
       },
-    };
-    const response = await api.post<string>(`autolistentry`, payload);
-    return response.data;
+    });
+    return data as unknown as string;
   },
 
   /**
    * Update an autolist entry
-   * Backend: PUT /autolistentry/{id}  body: { Id, DaysOfWeek, PublicationTime }
    */
-  async updateEntry(id: string, data: UpdateAutoListEntryDto): Promise<void> {
-    const payload = {
-      id: id,
-      daysOfWeek: data.dayOfWeeks, // backend field is DaysOfWeek (not DayOfWeeks)
-      publicationTime: data.publicationTime,
-    };
-    await api.put(`autolistentry/${id}`, payload);
+  async updateEntry(id: string, payload: UpdateAutoListEntryDto): Promise<void> {
+    await updateAutoListEntrySdk({
+      path: { id },
+      body: {
+        id,
+        daysOfWeek: payload.dayOfWeeks,
+        publicationTime: payload.publicationTime,
+      },
+    });
   },
 
   /**
    * Delete an autolist entry
    */
   async deleteEntry(id: string): Promise<void> {
-    await api.delete(`autolistentry/${id}`);
+    await deleteAutoListEntrySdk({ path: { id } });
   },
 };

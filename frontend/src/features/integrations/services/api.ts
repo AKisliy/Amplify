@@ -1,29 +1,32 @@
-import api from "@/lib/axios";
-import { IntegrationsResponse, AuthUrlResponse } from "../types";
+import {
+  getApiConnectionsAuthUrl,
+  connection as connectSdk,
+  getApiConnections,
+  deleteApiConnectionsAccounts,
+  type SocialProvider,
+} from "@/lib/api/publisher";
+import { IntegrationsResponse } from "../types";
 
 export const integrationsApi = {
-    async getAuthUrl(projectId: string, provider: string): Promise<string> {
-        const response = await api.get<AuthUrlResponse>(`connections/${projectId}/auth-url`, {
-            params: { provider } 
-        });
-        return response.data.authUrl;
-    },
+  async getAuthUrl(projectId: string, provider: string): Promise<string> {
+    const { data } = await getApiConnectionsAuthUrl({
+      path: { projectId },
+      query: { provider: provider as SocialProvider },
+    });
+    return (data as any)?.authUrl ?? "";
+  },
 
-    async connect(code: string, state: string): Promise<void> {
-        const cleanState = state.replace(/#_$/, "");
-        
-        await api.post(`connections`, { 
-            code, 
-            state: cleanState 
-        });
-    },
+  async connect(code: string, state: string): Promise<void> {
+    const cleanState = state.replace(/#_$/, "");
+    await connectSdk({ query: { code, state: cleanState } });
+  },
 
-    async getIntegrations(projectId: string): Promise<IntegrationsResponse> {
-        const response = await api.get<IntegrationsResponse>(`connections/${projectId}`);
-        return response.data;
-    },
+  async getIntegrations(projectId: string): Promise<IntegrationsResponse> {
+    const { data } = await getApiConnections({ path: { projectId } });
+    return data as unknown as IntegrationsResponse;
+  },
 
-    async disconnectAccount(projectId: string, accountId: string): Promise<void> {
-        await api.delete(`connections/${projectId}/accounts/${accountId}`);
-    }
+  async disconnectAccount(projectId: string, accountId: string): Promise<void> {
+    await deleteApiConnectionsAccounts({ path: { projectId, accountId } });
+  },
 };
