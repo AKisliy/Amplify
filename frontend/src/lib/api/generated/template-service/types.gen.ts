@@ -71,6 +71,116 @@ export type HistoryEntry = {
 };
 
 /**
+ * LibraryTemplateCreate
+ *
+ * Fields required to CREATE a new library template (internal use only).
+ * Inherits everything from Base.
+ */
+export type LibraryTemplateCreate = {
+    /**
+     * Name
+     *
+     * The display name of the library template card.
+     */
+    name: string;
+    /**
+     * Description
+     *
+     * Optional description of what this template does.
+     */
+    description?: string | null;
+    /**
+     * Graph Json
+     *
+     * The static ComfyUI-style node graph definition.
+     */
+    graph_json?: {
+        [key: string]: unknown;
+    };
+    /**
+     * Thumbnail Url
+     *
+     * Signed HTTPS URL to the template's thumbnail image on GCS.
+     */
+    thumbnail_url?: string | null;
+};
+
+/**
+ * LibraryTemplateResponse
+ *
+ * The full representation returned to the client.
+ * Inherits from Base (Shared fields) + Adds System fields (ID, Timestamps).
+ */
+export type LibraryTemplateResponse = {
+    /**
+     * Name
+     *
+     * The display name of the library template card.
+     */
+    name: string;
+    /**
+     * Description
+     *
+     * Optional description of what this template does.
+     */
+    description?: string | null;
+    /**
+     * Graph Json
+     *
+     * The static ComfyUI-style node graph definition.
+     */
+    graph_json?: {
+        [key: string]: unknown;
+    };
+    /**
+     * Thumbnail Url
+     *
+     * Signed HTTPS URL to the template's thumbnail image on GCS.
+     */
+    thumbnail_url?: string | null;
+    /**
+     * Id
+     */
+    id: string;
+    /**
+     * Created At
+     */
+    created_at: string;
+    /**
+     * Updated At
+     */
+    updated_at: string;
+};
+
+/**
+ * LibraryTemplateUpdate
+ *
+ * Fields allowed to be UPDATED (internal use only).
+ * CRITICAL: Inherits from BaseModel, NOT LibraryTemplateBase.
+ * All fields are optional (None) to support PATCH operations.
+ */
+export type LibraryTemplateUpdate = {
+    /**
+     * Name
+     */
+    name?: string | null;
+    /**
+     * Description
+     */
+    description?: string | null;
+    /**
+     * Graph Json
+     */
+    graph_json?: {
+        [key: string]: unknown;
+    } | null;
+    /**
+     * Thumbnail Url
+     */
+    thumbnail_url?: string | null;
+};
+
+/**
  * ProjectTemplateCreate
  *
  * Fields required to CREATE a new template.
@@ -140,12 +250,6 @@ export type ProjectTemplateResponse = {
         [key: string]: unknown;
     };
     /**
-     * Auto List Ids
-     *
-     * AutoList UUIDs associated with this template for auto-publishing.
-     */
-    auto_list_ids?: Array<string>;
-    /**
      * Id
      */
     id: string;
@@ -181,10 +285,6 @@ export type ProjectTemplateUpdate = {
     current_graph_json?: {
         [key: string]: unknown;
     } | null;
-    /**
-     * Auto List Ids
-     */
-    auto_list_ids?: Array<string> | null;
 };
 
 /**
@@ -492,6 +592,44 @@ export type GetTemplatesByProjectV1TemplatesProjectProjectIdGetResponses = {
 
 export type GetTemplatesByProjectV1TemplatesProjectProjectIdGetResponse = GetTemplatesByProjectV1TemplatesProjectProjectIdGetResponses[keyof GetTemplatesByProjectV1TemplatesProjectProjectIdGetResponses];
 
+export type DuplicateFromLibraryV1TemplatesFromLibraryPostData = {
+    body?: never;
+    path?: never;
+    query: {
+        /**
+         * Library Template Id
+         *
+         * UUID of the source LibraryTemplate to clone
+         */
+        library_template_id: string;
+        /**
+         * Project Id
+         *
+         * UUID of the target Project to create the template in
+         */
+        project_id: string;
+    };
+    url: '/v1/templates/from-library';
+};
+
+export type DuplicateFromLibraryV1TemplatesFromLibraryPostErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type DuplicateFromLibraryV1TemplatesFromLibraryPostError = DuplicateFromLibraryV1TemplatesFromLibraryPostErrors[keyof DuplicateFromLibraryV1TemplatesFromLibraryPostErrors];
+
+export type DuplicateFromLibraryV1TemplatesFromLibraryPostResponses = {
+    /**
+     * Successful Response
+     */
+    201: ProjectTemplateResponse;
+};
+
+export type DuplicateFromLibraryV1TemplatesFromLibraryPostResponse = DuplicateFromLibraryV1TemplatesFromLibraryPostResponses[keyof DuplicateFromLibraryV1TemplatesFromLibraryPostResponses];
+
 export type GetAllNodesV1EngineNodesGetData = {
     body?: never;
     path?: never;
@@ -649,6 +787,161 @@ export type ClearHistoryV1EngineHistoryPostResponses = {
      */
     200: unknown;
 };
+
+export type ListLibraryTemplatesV1LibraryTemplatesGetData = {
+    body?: never;
+    path?: never;
+    query?: {
+        /**
+         * Skip
+         *
+         * Number of records to skip
+         */
+        skip?: number;
+        /**
+         * Limit
+         *
+         * Max records to return
+         */
+        limit?: number;
+    };
+    url: '/v1/library-templates/';
+};
+
+export type ListLibraryTemplatesV1LibraryTemplatesGetErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type ListLibraryTemplatesV1LibraryTemplatesGetError = ListLibraryTemplatesV1LibraryTemplatesGetErrors[keyof ListLibraryTemplatesV1LibraryTemplatesGetErrors];
+
+export type ListLibraryTemplatesV1LibraryTemplatesGetResponses = {
+    /**
+     * Response List Library Templates V1 Library Templates  Get
+     *
+     * Successful Response
+     */
+    200: Array<LibraryTemplateResponse>;
+};
+
+export type ListLibraryTemplatesV1LibraryTemplatesGetResponse = ListLibraryTemplatesV1LibraryTemplatesGetResponses[keyof ListLibraryTemplatesV1LibraryTemplatesGetResponses];
+
+export type GetLibraryTemplateV1LibraryTemplatesTemplateIdGetData = {
+    body?: never;
+    path: {
+        /**
+         * Template Id
+         */
+        template_id: string;
+    };
+    query?: never;
+    url: '/v1/library-templates/{template_id}';
+};
+
+export type GetLibraryTemplateV1LibraryTemplatesTemplateIdGetErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type GetLibraryTemplateV1LibraryTemplatesTemplateIdGetError = GetLibraryTemplateV1LibraryTemplatesTemplateIdGetErrors[keyof GetLibraryTemplateV1LibraryTemplatesTemplateIdGetErrors];
+
+export type GetLibraryTemplateV1LibraryTemplatesTemplateIdGetResponses = {
+    /**
+     * Successful Response
+     */
+    200: LibraryTemplateResponse;
+};
+
+export type GetLibraryTemplateV1LibraryTemplatesTemplateIdGetResponse = GetLibraryTemplateV1LibraryTemplatesTemplateIdGetResponses[keyof GetLibraryTemplateV1LibraryTemplatesTemplateIdGetResponses];
+
+export type CreateLibraryTemplateInternalLibraryTemplatesPostData = {
+    body: LibraryTemplateCreate;
+    path?: never;
+    query?: never;
+    url: '/internal/library-templates/';
+};
+
+export type CreateLibraryTemplateInternalLibraryTemplatesPostErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type CreateLibraryTemplateInternalLibraryTemplatesPostError = CreateLibraryTemplateInternalLibraryTemplatesPostErrors[keyof CreateLibraryTemplateInternalLibraryTemplatesPostErrors];
+
+export type CreateLibraryTemplateInternalLibraryTemplatesPostResponses = {
+    /**
+     * Successful Response
+     */
+    201: LibraryTemplateResponse;
+};
+
+export type CreateLibraryTemplateInternalLibraryTemplatesPostResponse = CreateLibraryTemplateInternalLibraryTemplatesPostResponses[keyof CreateLibraryTemplateInternalLibraryTemplatesPostResponses];
+
+export type DeleteLibraryTemplateInternalLibraryTemplatesTemplateIdDeleteData = {
+    body?: never;
+    path: {
+        /**
+         * Template Id
+         */
+        template_id: string;
+    };
+    query?: never;
+    url: '/internal/library-templates/{template_id}';
+};
+
+export type DeleteLibraryTemplateInternalLibraryTemplatesTemplateIdDeleteErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type DeleteLibraryTemplateInternalLibraryTemplatesTemplateIdDeleteError = DeleteLibraryTemplateInternalLibraryTemplatesTemplateIdDeleteErrors[keyof DeleteLibraryTemplateInternalLibraryTemplatesTemplateIdDeleteErrors];
+
+export type DeleteLibraryTemplateInternalLibraryTemplatesTemplateIdDeleteResponses = {
+    /**
+     * Successful Response
+     */
+    204: void;
+};
+
+export type DeleteLibraryTemplateInternalLibraryTemplatesTemplateIdDeleteResponse = DeleteLibraryTemplateInternalLibraryTemplatesTemplateIdDeleteResponses[keyof DeleteLibraryTemplateInternalLibraryTemplatesTemplateIdDeleteResponses];
+
+export type UpdateLibraryTemplateInternalLibraryTemplatesTemplateIdPatchData = {
+    body: LibraryTemplateUpdate;
+    path: {
+        /**
+         * Template Id
+         */
+        template_id: string;
+    };
+    query?: never;
+    url: '/internal/library-templates/{template_id}';
+};
+
+export type UpdateLibraryTemplateInternalLibraryTemplatesTemplateIdPatchErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type UpdateLibraryTemplateInternalLibraryTemplatesTemplateIdPatchError = UpdateLibraryTemplateInternalLibraryTemplatesTemplateIdPatchErrors[keyof UpdateLibraryTemplateInternalLibraryTemplatesTemplateIdPatchErrors];
+
+export type UpdateLibraryTemplateInternalLibraryTemplatesTemplateIdPatchResponses = {
+    /**
+     * Successful Response
+     */
+    200: LibraryTemplateResponse;
+};
+
+export type UpdateLibraryTemplateInternalLibraryTemplatesTemplateIdPatchResponse = UpdateLibraryTemplateInternalLibraryTemplatesTemplateIdPatchResponses[keyof UpdateLibraryTemplateInternalLibraryTemplatesTemplateIdPatchResponses];
 
 export type HealthCheckHealthGetData = {
     body?: never;

@@ -190,7 +190,9 @@ export default function TemplateCanvasPage() {
       try {
         const response = await getTemplateV1TemplatesTemplateIdGet({ path: { template_id: templateId } });
         if (response?.data?.name) setTemplateName(response.data.name);
-        if (response?.data?.auto_list_ids) setAutoListIds(response.data.auto_list_ids);
+        // auto_list_ids is present at runtime but not yet in the OpenAPI spec
+        const d = response?.data as any;
+        if (d?.auto_list_ids) setAutoListIds(d.auto_list_ids);
       } catch (err) {
         console.error("Failed to fetch template name:", err);
       }
@@ -496,7 +498,8 @@ export default function TemplateCanvasPage() {
     try {
       await updateTemplateV1TemplatesTemplateIdPatch({
         path: { template_id: templateId },
-        body: { auto_list_ids: ids },
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        body: { auto_list_ids: ids } as any,
       });
     } catch {
       // Silently fail — UI state is already updated

@@ -1,5 +1,13 @@
-import api from "@/lib/axios";
 import { decodeJwt } from "@/lib/jwt";
+import {
+  postApiAuthRegister,
+  getApiAuthConfirmEmail,
+  loginUser,
+  refreshToken as refreshTokenSdk,
+  postApiAuthForgotPassword,
+  postApiAuthResetPassword,
+  postApiAuthLogout,
+} from "@/lib/api/userservice";
 import {
   RegisterPayload,
   LoginPayload,
@@ -11,8 +19,6 @@ import {
   AuthUser,
 } from "../types";
 
-const AUTH_BASE = "/auth";
-
 // =====================
 // Register
 // =====================
@@ -20,11 +26,8 @@ const AUTH_BASE = "/auth";
 export const register = async (
   payload: RegisterPayload,
 ): Promise<ApiSuccessResponse> => {
-  const { data } = await api.post<ApiSuccessResponse>(
-    `${AUTH_BASE}/register`,
-    payload,
-  );
-  return data;
+  await postApiAuthRegister({ body: { email: payload.email, password: payload.password } });
+  return { success: true };
 };
 
 // =====================
@@ -34,11 +37,8 @@ export const register = async (
 export const confirmEmail = async (
   params: ConfirmEmailParams,
 ): Promise<ApiSuccessResponse> => {
-  const { data } = await api.get<ApiSuccessResponse>(
-    `${AUTH_BASE}/confirm-email`,
-    { params },
-  );
-  return data;
+  await getApiAuthConfirmEmail({ query: { UserId: params.userId, Code: params.code } });
+  return { success: true };
 };
 
 // =====================
@@ -46,8 +46,22 @@ export const confirmEmail = async (
 // =====================
 
 export const login = async (payload: LoginPayload): Promise<AuthResponse> => {
-  const { data } = await api.post<AuthResponse>(`${AUTH_BASE}/login`, payload);
-  return data;
+  const { data } = await loginUser({
+    body: { email: payload.email, password: payload.password },
+  });
+  // Map generated LoginResponse → local AuthResponse shape
+  const accessToken = data?.accessToken ?? "";
+  const refreshToken = data?.refreshToken ?? "";
+  const decoded = decodeJwt(accessToken);
+  return {
+    id: decoded?.sub ?? decoded?.["http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier"] ?? "",
+    email: decoded?.email ?? decoded?.["http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress"] ?? payload.email,
+    roles: (decoded?.role as string[] | string | undefined)
+      ? [].concat(decoded.role as any)
+      : [],
+    accessToken,
+    refreshToken,
+  };
 };
 
 // =====================
@@ -60,12 +74,21 @@ export const refreshToken = async (): Promise<AuthResponse | null> => {
     const currentAccessToken = localStorage.getItem("accessToken");
     if (!currentRefreshToken || !currentAccessToken) return null;
 
-    const { data } = await api.post<AuthResponse>(
-      `${AUTH_BASE}/refresh`,
-      { accessToken: currentAccessToken, refreshToken: currentRefreshToken }
-    );
+    const { data } = await refreshTokenSdk({
+      body: { accessToken: currentAccessToken, refreshToken: currentRefreshToken },
+    });
 
-    return data;
+    const accessToken = data?.accessToken ?? "";
+    const newRefreshToken = data?.refreshToken ?? "";
+    const decoded = decodeJwt(accessToken);
+
+    return {
+      id: decoded?.sub ?? "",
+      email: decoded?.email ?? decoded?.["http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress"] ?? "",
+      roles: [],
+      accessToken,
+      refreshToken: newRefreshToken,
+    };
   } catch (error: any) {
     if (error?.response?.status === 401) {
       return null;
@@ -81,11 +104,8 @@ export const refreshToken = async (): Promise<AuthResponse | null> => {
 export const forgotPassword = async (
   payload: ForgotPasswordPayload,
 ): Promise<ApiSuccessResponse> => {
-  const { data } = await api.post<ApiSuccessResponse>(
-    `${AUTH_BASE}/forgot-password`,
-    payload,
-  );
-  return data;
+  await postApiAuthForgotPassword({ body: { email: payload.email } });
+  return { success: true };
 };
 
 // =====================
@@ -95,11 +115,14 @@ export const forgotPassword = async (
 export const resetPassword = async (
   payload: ResetPasswordPayload,
 ): Promise<ApiSuccessResponse> => {
-  const { data } = await api.post<ApiSuccessResponse>(
-    `${AUTH_BASE}/reset-password`,
-    payload,
-  );
-  return data;
+  await postApiAuthResetPassword({
+    body: {
+      email: payload.email,
+      resetCode: payload.resetCode,
+      newPassword: payload.newPassword,
+    },
+  });
+  return { success: true };
 };
 
 // =====================
@@ -107,5 +130,5 @@ export const resetPassword = async (
 // =====================
 
 export const logout = async (): Promise<void> => {
-  await api.post(`${AUTH_BASE}/logout`);
+  await postApiAuthLogout();
 };
