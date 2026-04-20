@@ -1,15 +1,17 @@
 import logging
 
-from moviepy import TextClip, CompositeVideoClip, VideoFileClip
-
 from editors.base_ugc.context import EditingContext
 from editors.base_ugc.steps.base_step import PipelineStep
 from utils.ai_gateway_client import transcribe
-from moviepy.video.tools.subtitles import SubtitlesClip
+from utils.ffmpeg_utils import FFmpegCommandExecutor
 
 logger = logging.getLogger(__name__)
 
 DEFAULT_FONT = "Mont-Regular"
+# For 1080x1920: MarginV is distance from bottom edge.
+# 1920 - 1075 = 845 puts text baseline at y=1075 from top.
+_MARGIN_V = 845
+
 
 class AddCaptionsStep(PipelineStep):
     name = "Adding captions"
@@ -29,45 +31,35 @@ class AddCaptionsStep(PipelineStep):
         srt_path = ctx.workspace.get_temp_path("srt")
         with open(srt_path, "w", encoding="utf-8") as f:
             f.write(srt_text.strip() + "\n")
-        
-        logger.info(f"Wrote captions to {srt_path}")
 
+        logger.info("Wrote captions to %s", srt_path)
         ctx.srt_path = srt_path
 
-        generator = lambda txt: TextClip(
-            text=txt,
-            font=DEFAULT_FONT,
-            font_size=font_size,
-            color='white', 
-            margin=(0, 0, 0, 0),
-            method="caption",
-            text_align='center',
-            size=(900, None), 
-            interline=6,
-            stroke_color='black',
-            stroke_width=4
+        # ASS force_style reference:
+        # Alignment=2  → bottom-center
+        # MarginV      → px from bottom edge
+        # BorderStyle=1, Outline → text outline (CapCut-style)
+        force_style = (
+            f"FontName={font},"
+            f"FontSize={font_size},"
+            f"PrimaryColour=&H00FFFFFF,"   # white
+            f"OutlineColour=&H00000000,"   # black outline
+            f"BorderStyle=1,"
+            f"Outline=4,"
+            f"Alignment=2,"
+            f"MarginV={_MARGIN_V}"
         )
-        video = VideoFileClip(ctx.current_video_path)
-
-        voiceover_subs = SubtitlesClip(srt_path, make_textclip=generator)
-
-        captioned_video = CompositeVideoClip([video, voiceover_subs.with_position(('center', 1075))])
 
         output_path = ctx.workspace.get_temp_path("mp4")
-        
-        logger.info(f"Adding captions to {ctx.current_video_path} into {output_path}...")
+        logger.info("Burning captions into %s → %s", ctx.current_video_path, output_path)
 
-        captioned_video.write_videofile(
-            output_path, 
-            codec="libx264", 
-            audio_codec="aac", 
-            logger=None,
-            temp_audiofile_path=ctx.workspace.base_path
-        )
-
-        captioned_video.close()
-        video.close()
+        FFmpegCommandExecutor().execute([
+            "ffmpeg", "-y",
+            "-i", ctx.current_video_path,
+            "-vf", f"subtitles={srt_path}:force_style='{force_style}'",
+            "-c:v", "libx264",
+            "-c:a", "copy",
+            output_path,
+        ])
 
         ctx.current_video_path = output_path
-        ctx.srt_path = srt_path
-
