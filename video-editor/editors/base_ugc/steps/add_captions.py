@@ -12,7 +12,7 @@ logger = logging.getLogger(__name__)
 
 FONTS_DIR = os.path.join(os.path.dirname(__file__), "../../../fonts")
 _FONT_FILES = {
-    entry.stem: entry.path
+    os.path.splitext(entry.name)[0]: entry.path
     for entry in os.scandir(FONTS_DIR)
     if entry.name.endswith(".ttf")
 }
