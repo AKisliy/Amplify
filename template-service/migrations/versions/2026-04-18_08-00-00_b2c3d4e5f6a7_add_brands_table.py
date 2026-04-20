@@ -1,7 +1,7 @@
 """add brands table
 
 Revision ID: b2c3d4e5f6a7
-Revises: c5d6e7f8a9b1
+Revises: d6e7f8a9b1c2
 Create Date: 2026-04-18 08:00:00.000000
 
 """
@@ -12,7 +12,7 @@ from alembic import op
 from sqlalchemy.dialects import postgresql
 
 revision: str = 'b2c3d4e5f6a7'
-down_revision: Union[str, Sequence[str], None] = 'c5d6e7f8a9b1'
+down_revision: Union[str, Sequence[str], None] = 'd6e7f8a9b1c2'
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
 
