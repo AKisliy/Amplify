@@ -17,7 +17,6 @@ imagedominantcolor==1.0.1
 imagedominantcolour==1.0.2
 ImageHash==4.3.2
 imageio==2.37.0
-ffmpeg-python==0.2.0
 imageio-ffmpeg==0.6.0
 iniconfig==2.1.0
 kombu==5.5.4
