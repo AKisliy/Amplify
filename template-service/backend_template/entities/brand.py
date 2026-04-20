@@ -60,3 +60,6 @@ class BrandResponse(BrandBase):
     updated_at: datetime
 
     model_config = ConfigDict(from_attributes=True)
+
+
+__all__ = ["BrandBase", "BrandCreate", "BrandUpdate", "BrandResponse"]
