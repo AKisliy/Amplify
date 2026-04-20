@@ -22,7 +22,8 @@ class AddCaptionsStep(PipelineStep):
 
         settings = ctx.args.captions_settings
         language = settings.language if settings else None
-        font = settings.font if settings and settings.font else DEFAULT_FONT
+        # font = settings.font if settings and settings.font else DEFAULT_FONT
+        font = DEFAULT_FONT
         font_size = settings.font_size if settings else 50
         logger.info("Using font %r size %d", font, font_size)
 
