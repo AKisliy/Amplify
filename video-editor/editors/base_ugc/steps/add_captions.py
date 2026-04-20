@@ -10,7 +10,7 @@ from moviepy.video.tools.subtitles import SubtitlesClip
 
 logger = logging.getLogger(__name__)
 
-FONTS_DIR = os.path.join(os.path.dirname(__file__), "../../../../fonts")
+FONTS_DIR = os.path.join(os.path.dirname(__file__), "../../../fonts")
 _FONT_FILES = {
     entry.stem: entry.path
     for entry in os.scandir(FONTS_DIR)
