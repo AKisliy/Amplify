@@ -1,9 +1,10 @@
 import logging
 
+import ffmpeg
+
 from editors.base_ugc.context import EditingContext
 from editors.base_ugc.steps.base_step import PipelineStep
 from utils.ai_gateway_client import transcribe
-from utils.ffmpeg_utils import FFmpegCommandExecutor
 
 logger = logging.getLogger(__name__)
 
@@ -22,7 +23,6 @@ class AddCaptionsStep(PipelineStep):
 
         settings = ctx.args.captions_settings
         language = settings.language if settings else None
-        # font = settings.font if settings and settings.font else DEFAULT_FONT
         font = DEFAULT_FONT
         font_size = settings.font_size if settings else 50
         logger.info("Using font %r size %d", font, font_size)
@@ -40,27 +40,34 @@ class AddCaptionsStep(PipelineStep):
         # Alignment=2  → bottom-center
         # MarginV      → px from bottom edge
         # BorderStyle=1, Outline → text outline (CapCut-style)
-        force_style = (
-            f"FontName={font},"
-            f"FontSize={font_size},"
-            f"PrimaryColour=&H00FFFFFF,"   # white
-            f"OutlineColour=&H00000000,"   # black outline
-            f"BorderStyle=1,"
-            f"Outline=4,"
-            f"Alignment=2,"
-            f"MarginV={_MARGIN_V}"
-        )
+        force_style = ",".join([
+            f"FontName={font}",
+            f"FontSize={font_size}",
+            "PrimaryColour=&H00FFFFFF",   # white
+            "OutlineColour=&H00000000",   # black outline
+            "BorderStyle=1",
+            "Outline=4",
+            "Alignment=2",
+            f"MarginV={_MARGIN_V}",
+        ])
 
         output_path = ctx.workspace.get_temp_path("mp4")
         logger.info("Burning captions into %s → %s", ctx.current_video_path, output_path)
 
-        FFmpegCommandExecutor().execute([
-            "ffmpeg", "-y",
-            "-i", ctx.current_video_path,
-            "-vf", f"subtitles={srt_path}:force_style='{force_style}'",
-            "-c:v", "libx264",
-            "-c:a", "copy",
-            output_path,
-        ])
+        try:
+            src = ffmpeg.input(ctx.current_video_path)
+            video = src.video.filter("subtitles", srt_path, force_style=force_style)
+            out, err = (
+                ffmpeg
+                .output(video, src.audio, output_path, vcodec="libx264", acodec="copy")
+                .overwrite_output()
+                .run(capture_stdout=True, capture_stderr=True)
+            )
+            if err:
+                logger.info("ffmpeg stderr:\n%s", err.decode("utf-8", errors="replace"))
+        except ffmpeg.Error as e:
+            stderr = e.stderr.decode("utf-8", errors="replace") if e.stderr else ""
+            logger.error("ffmpeg error:\n%s", stderr)
+            raise RuntimeError(f"ffmpeg failed while burning captions: {stderr}") from e
 
         ctx.current_video_path = output_path

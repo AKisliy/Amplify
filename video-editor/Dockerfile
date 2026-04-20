@@ -15,6 +15,9 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 COPY . .
 
-RUN cp fonts/*.ttf /usr/share/fonts/truetype/ && fc-cache -f -v
+# Install custom fonts so libass (fontconfig provider) can find them by name
+RUN mkdir -p /usr/share/fonts/truetype/custom \
+    && cp fonts/*.ttf /usr/share/fonts/truetype/custom/ \
+    && fc-cache -f
 
 CMD ["python", "main.py"]
