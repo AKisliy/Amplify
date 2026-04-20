@@ -28,7 +28,7 @@ class AddCaptionsStep(PipelineStep):
 
         srt_path = ctx.workspace.get_temp_path("srt")
         with open(srt_path, "w", encoding="utf-8") as f:
-            f.write(srt_text.strip())
+            f.write(srt_text.strip() + "\n")
         
         logger.info(f"Wrote captions to {srt_path}")
 
