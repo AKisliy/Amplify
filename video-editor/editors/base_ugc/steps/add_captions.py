@@ -9,6 +9,8 @@ from moviepy.video.tools.subtitles import SubtitlesClip
 
 logger = logging.getLogger(__name__)
 
+DEFAULT_FONT = "Mont-Regular"
+
 class AddCaptionsStep(PipelineStep):
     name = "Adding captions"
 
@@ -18,6 +20,9 @@ class AddCaptionsStep(PipelineStep):
 
         settings = ctx.args.captions_settings
         language = settings.language if settings else None
+        font = settings.font if settings and settings.font else DEFAULT_FONT
+        font_size = settings.font_size if settings else 50
+        logger.info("Using font %r size %d", font, font_size)
 
         srt_text = transcribe(ctx.intermediate_presigned_url, language)
 
@@ -31,8 +36,8 @@ class AddCaptionsStep(PipelineStep):
 
         generator = lambda txt: TextClip(
             text=txt,
-            font='Mont-Black',
-            font_size=50,
+            font=DEFAULT_FONT,
+            font_size=font_size,
             color='white', 
             margin=(50, 5, 50, 0),
             method="caption",
