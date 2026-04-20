@@ -1,5 +1,4 @@
 import logging
-import os
 
 from moviepy import TextClip, CompositeVideoClip, VideoFileClip
 
@@ -10,13 +9,7 @@ from moviepy.video.tools.subtitles import SubtitlesClip
 
 logger = logging.getLogger(__name__)
 
-FONTS_DIR = os.path.join(os.path.dirname(__file__), "../../../fonts")
-_FONT_FILES = {
-    os.path.splitext(entry.name)[0]: entry.path
-    for entry in os.scandir(FONTS_DIR)
-    if entry.name.endswith(".ttf")
-}
-DEFAULT_FONT = os.path.join(FONTS_DIR, "Mont-Regular.ttf")
+DEFAULT_FONT = "Mont-Regular"
 
 class AddCaptionsStep(PipelineStep):
     name = "Adding captions"
@@ -27,10 +20,9 @@ class AddCaptionsStep(PipelineStep):
 
         settings = ctx.args.captions_settings
         language = settings.language if settings else None
-        font_name = settings.font if settings else None
+        font = settings.font if settings and settings.font else DEFAULT_FONT
         font_size = settings.font_size if settings else 50
-        font_path = _FONT_FILES.get(font_name, DEFAULT_FONT) if font_name else DEFAULT_FONT
-        logger.info("Using font %r → %s", font_name, font_path)
+        logger.info("Using font %r size %d", font, font_size)
 
         srt_text = transcribe(ctx.intermediate_presigned_url, language)
 
@@ -44,8 +36,8 @@ class AddCaptionsStep(PipelineStep):
 
         generator = lambda txt: TextClip(
             text=txt,
-            font="Mont-Regular.ttf",
-            font_size=font_size,
+            font=font,
+            font_size=DEFAULT_FONT,
             color='white', 
             margin=(50, 5, 50, 0),
             method="caption",
