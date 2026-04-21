@@ -79,7 +79,9 @@ class TextSplitNode(IO.ComfyNode):
 
 class TextJoinNode(IO.ComfyNode):
     """
-    Joins a list of strings into a single string for previewing list outputs.
+    Joins a list of strings or integers into a single string for previewing list outputs.
+    Both inputs are optional — connect whichever list you want to inspect.
+    If both are connected, integers are appended after texts.
     """
 
     @classmethod
@@ -88,18 +90,28 @@ class TextJoinNode(IO.ComfyNode):
             node_id="TextJoinNode",
             display_name="Text Join",
             category="util",
-            description="Join a list of text into a single string. Useful for previewing.",
+            description=(
+                "Join a list of strings or integers into a single string for previewing. "
+                "Connect a string list, an integer list, or both."
+            ),
             is_input_list=True,
             inputs=[
                 IO.String.Input(
-                    "texts", 
-                    force_input=True, 
-                    tooltip="List of texts to join"
+                    "texts",
+                    force_input=True,
+                    optional=True,
+                    tooltip="Optional list of strings to join (e.g. segments from GeminiNode)",
+                ),
+                IO.Int.Input(
+                    "integers",
+                    force_input=True,
+                    optional=True,
+                    tooltip="Optional list of integers to join (e.g. duration_seconds from GeminiNode)",
                 ),
                 IO.String.Input(
-                    "separator", 
-                    default="\\n---\\n", 
-                    tooltip="String used to separate the joined texts"
+                    "separator",
+                    default="\\n---\\n",
+                    tooltip="String used to separate the joined items",
                 ),
             ],
             outputs=[
@@ -110,10 +122,22 @@ class TextJoinNode(IO.ComfyNode):
         )
 
     @classmethod
-    async def execute(cls, texts: list[str], separator: list[str]) -> IO.NodeOutput:
+    async def execute(
+        cls,
+        separator: list[str],
+        texts: list[str] | None = None,
+        integers: list[int] | None = None,
+    ) -> IO.NodeOutput:
         sep = separator[0] if separator else "\n---\n"
         sep_str = sep.replace("\\n", "\n")
-        joined = sep_str.join(texts)
+
+        items: list[str] = []
+        if texts:
+            items.extend(str(t) for t in texts)
+        if integers:
+            items.extend(str(i) for i in integers)
+
+        joined = sep_str.join(items) if items else "(no input connected)"
         return IO.NodeOutput(joined, ui={"text": [joined]})
 
 

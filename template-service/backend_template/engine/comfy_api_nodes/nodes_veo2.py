@@ -1,5 +1,6 @@
 import base64
 import asyncio
+import logging
 
 from comfy_api.latest import IO, ComfyExtension
 from typing_extensions import override
@@ -16,6 +17,8 @@ from comfy_api_nodes.util import (
     ApiEndpoint,
     poll_op,
     sync_op,
+    RAIFilteredError,
+    VeoTransientError,
 )
 
 from comfy_api_nodes.util import get_vertex_ai_access_token, fetch_media_uri_from_ingest, register_media_uri_with_ingest
@@ -34,6 +37,14 @@ MODELS_MAP = {
 }
 
 GEMINI_BASE_ENDPOINT = f"https://aiplatform.googleapis.com/v1/projects/{gemini_config.project_id}/locations/{gemini_config.location}/publishers/google/models"
+
+_RAI_MAX_ATTEMPTS = 3
+_RAI_RETRY_BASE_DELAY = 5.0        # delays: 5s, 10s
+
+_TRANSIENT_MAX_ATTEMPTS = 5
+_TRANSIENT_RETRY_BASE_DELAY = 30.0  # delays: 30s, 60s, 120s, 240s
+
+logger = logging.getLogger(__name__)
 
 
 
@@ -436,33 +447,28 @@ class Veo3FirstLastFrameNode(IO.ComfyNode):
         )
 
     @classmethod
-    async def execute(
+    async def _run_veo_generation(
         cls,
+        *,
+        model: str,
         prompt: str,
         negative_prompt: str,
         resolution: str,
         aspect_ratio: str,
         duration: int,
         seed: int,
-        first_frame_uuid: str | None = None,
-        last_frame_uuid: str | None = None,
-        model: str = "veo-3.1-lite-generate-001",
-        generate_audio: bool = True,
-    ):
-        model = MODELS_MAP[model]
+        generate_audio: bool,
+        first_frame_uri: str | None,
+        last_frame_uri: str | None,
+        attempt: int,
+    ) -> str:
+        """
+        Submit one Veo generation request and wait for completion.
 
-        first_frame_task = (
-            asyncio.create_task(fetch_media_uri_from_ingest(cls, first_frame_uuid))
-            if first_frame_uuid else None
-        )
-        last_frame_task = (
-            asyncio.create_task(fetch_media_uri_from_ingest(cls, last_frame_uuid))
-            if last_frame_uuid else None
-        )
-
-        first_frame_uri = await first_frame_task if first_frame_task else None
-        last_frame_uri = await last_frame_task if last_frame_task else None
-
+        Returns the registered MediaIngest media_id on success.
+        Raises RAIFilteredError when the generated video is blocked by RAI filters.
+        All other failures propagate as-is.
+        """
         initial_response = await sync_op(
             cls,
             ApiEndpoint(
@@ -487,20 +493,21 @@ class Veo3FirstLastFrameNode(IO.ComfyNode):
                     aspectRatio=aspect_ratio,
                     personGeneration="ALLOW",
                     durationSeconds=duration,
-                    enhancePrompt=True,  # cannot be False for Veo3
+                    enhancePrompt=True,
                     seed=seed,
                     generateAudio=generate_audio,
                     negativePrompt=negative_prompt,
                     resolution=resolution,
-                    storageUri=gemini_config.storage_uri
+                    storageUri=gemini_config.storage_uri,
                 ),
             ),
         )
+
         poll_response = await poll_op(
             cls,
-            ApiEndpoint(    
-                path=f"{GEMINI_BASE_ENDPOINT}/{model}:fetchPredictOperation", 
-                method="POST", 
+            ApiEndpoint(
+                path=f"{GEMINI_BASE_ENDPOINT}/{model}:fetchPredictOperation",
+                method="POST",
                 headers={"Authorization": f"Bearer {get_vertex_ai_access_token()}"}
             ),
             response_model=VeoGenVidPollResponse,
@@ -513,25 +520,126 @@ class Veo3FirstLastFrameNode(IO.ComfyNode):
         )
 
         if poll_response.error:
-            raise Exception(f"Veo API error: {poll_response.error.message} (code: {poll_response.error.code})")
+            code = poll_response.error.code
+            message = poll_response.error.message
+            if code in VeoTransientError.RETRYABLE_CODES:
+                raise VeoTransientError(message=message, code=code)
+            raise Exception(f"Veo API error: {message} (code: {code})")
 
         response = poll_response.response
         filtered_count = response.raiMediaFilteredCount
         if filtered_count:
             reasons = response.raiMediaFilteredReasons or []
-            reason_part = f": {reasons[0]}" if reasons else ""
-            raise Exception(
-                f"Content blocked by Google's Responsible AI filters{reason_part} "
-                f"({filtered_count} video{'s' if filtered_count != 1 else ''} filtered)."
-            )
+            raise RAIFilteredError(reasons=reasons, attempt=attempt)
 
         if response.videos:
             video = response.videos[0]
             if video.gcsUri:
-                media_id = await register_media_uri_with_ingest(cls, video.gcsUri, "video/mp4")
-                return IO.NodeOutput(media_id, ui={"video_uuid": [media_id]})
+                return await register_media_uri_with_ingest(cls, video.gcsUri, "video/mp4")
             raise Exception("Video returned but no data or URL was provided")
         raise Exception("Video generation completed but no video was returned")
+
+    @classmethod
+    async def execute(
+        cls,
+        prompt: str,
+        negative_prompt: str,
+        resolution: str,
+        aspect_ratio: str,
+        duration: int,
+        seed: int,
+        first_frame_uuid: str | None = None,
+        last_frame_uuid: str | None = None,
+        model: str = "veo-3.1-lite-generate-001",
+        generate_audio: bool = True,
+    ):
+        model = MODELS_MAP[model]
+
+        # Resolve frame URIs once — they are stable across RAI retry attempts.
+        first_frame_task = (
+            asyncio.create_task(fetch_media_uri_from_ingest(cls, first_frame_uuid))
+            if first_frame_uuid else None
+        )
+        last_frame_task = (
+            asyncio.create_task(fetch_media_uri_from_ingest(cls, last_frame_uuid))
+            if last_frame_uuid else None
+        )
+        first_frame_uri = await first_frame_task if first_frame_task else None
+        last_frame_uri = await last_frame_task if last_frame_task else None
+
+        last_rai_error: RAIFilteredError | None = None
+        transient_attempt = 0
+
+        while True:
+            last_rai_error = None
+            try:
+                for attempt in range(1, _RAI_MAX_ATTEMPTS + 1):
+                    try:
+                        media_id = await cls._run_veo_generation(
+                            model=model,
+                            prompt=prompt,
+                            negative_prompt=negative_prompt,
+                            resolution=resolution,
+                            aspect_ratio=aspect_ratio,
+                            duration=duration,
+                            seed=seed,
+                            generate_audio=generate_audio,
+                            first_frame_uri=first_frame_uri,
+                            last_frame_uri=last_frame_uri,
+                            attempt=attempt,
+                        )
+                        return IO.NodeOutput(media_id, ui={"video_uuid": [media_id]})
+
+                    except RAIFilteredError as e:
+                        last_rai_error = e
+                        logger.warning(
+                            "[Veo3FirstLastFrameNode] RAI filter triggered (attempt %d/%d). "
+                            "Reasons: %s",
+                            attempt,
+                            _RAI_MAX_ATTEMPTS,
+                            e.reasons,
+                        )
+                        if attempt < _RAI_MAX_ATTEMPTS:
+                            await asyncio.sleep(_RAI_RETRY_BASE_DELAY * (2 ** (attempt - 1)))
+
+                break  # RAI exhausted normally — exit while loop to return fallback
+
+            except VeoTransientError as e:
+                transient_attempt += 1
+                logger.warning(
+                    "[Veo3FirstLastFrameNode] Veo unavailable (gRPC %d), "
+                    "transient attempt %d/%d: %s",
+                    e.code,
+                    transient_attempt,
+                    _TRANSIENT_MAX_ATTEMPTS,
+                    e.message,
+                )
+                if transient_attempt >= _TRANSIENT_MAX_ATTEMPTS:
+                    logger.error(
+                        "[Veo3FirstLastFrameNode] Veo unavailable after %d transient attempts. "
+                        "Giving up.\nPrompt: %s",
+                        _TRANSIENT_MAX_ATTEMPTS,
+                        prompt,
+                    )
+                    raise
+                delay = _TRANSIENT_RETRY_BASE_DELAY * (2 ** (transient_attempt - 1))
+                logger.info(
+                    "[Veo3FirstLastFrameNode] Waiting %.0fs before retry...", delay
+                )
+                await asyncio.sleep(delay)
+
+        # RAI exhausted — log and return designated fallback placeholder.
+        logger.error(
+            "[Veo3FirstLastFrameNode] RAI filter exhausted after %d attempts. "
+            "Returning fallback UUID.\nPrompt: %s\nFinal reasons: %s",
+            _RAI_MAX_ATTEMPTS,
+            prompt,
+            last_rai_error.reasons if last_rai_error else [],
+        )
+        fallback = gemini_config.rai_fallback_video_uuid
+        return IO.NodeOutput(fallback, ui={"video_uuid": [fallback]})
+
+
 
 class VeoExtension(ComfyExtension):
     @override
