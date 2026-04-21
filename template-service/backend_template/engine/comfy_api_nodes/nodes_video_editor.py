@@ -201,10 +201,204 @@ class BaseUGCEditingNode(IO.ComfyNode):
         return IO.NodeOutput(output_media_id, ui={"video_uuid": [output_media_id]})
 
 
+class BatchUGCEditingNode(IO.ComfyNode):
+    """
+    Merges auto-batched video clips from one or more scene branches into a single video.
+
+    Each autogrow slot accepts the `video_uuid` output of one Veo branch.
+    With is_input_list=True, ComfyUI delivers each branch's full batch as a list,
+    so the node receives all clips without triggering N separate executions.
+
+    Clips are merged in slot order — all clips from slot 1 first, then slot 2, etc.
+    This gives you explicit control over scene ordering in the final video.
+
+    Example:
+        video_uuid_1 → [scene1_shot1, scene1_shot2, scene1_shot3]
+        video_uuid_2 → [scene2_shot1, scene2_shot2]
+        Result:        [s1_v1, s1_v2, s1_v3, s2_v1, s2_v2]
+    """
+
+    @classmethod
+    def define_schema(cls):
+        return IO.Schema(
+            node_id="BatchUGCEditingNode",
+            display_name="Batch UGC Editing",
+            category="amplify/video editing",
+            description=(
+                "Merges auto-batched video clips from multiple scene branches into one video. "
+                "Wire each scene's Veo video_uuid output to a separate slot. "
+                "Clips are merged in slot order (scene 1 → scene 2 → …)."
+            ),
+            is_output_node=True,
+            is_input_list=True,
+            inputs=[
+                IO.Autogrow.Input(
+                    "scenes",
+                    template=IO.Autogrow.TemplatePrefix(
+                        IO.String.Input(
+                            "video_uuid",
+                            force_input=True,
+                            tooltip="Connect a Veo node's video_uuid output. All batch clips from this scene are collected in generation order.",
+                        ),
+                        prefix="video_uuid_",
+                        min=1,
+                        max=10,
+                    ),
+                    tooltip=(
+                        "One slot per scene branch. "
+                        "All clips from slot 1 are merged before slot 2, preserving scene order."
+                    ),
+                ),
+                IO.Boolean.Input(
+                    "remove_silence",
+                    default=False,
+                    tooltip="Remove silence/pauses from videos",
+                ),
+                IO.Boolean.Input(
+                    "add_captions",
+                    default=False,
+                    tooltip="Add auto-generated captions to the video",
+                ),
+                IO.String.Input(
+                    "caption_font",
+                    default="Arial",
+                    optional=True,
+                    advanced=True,
+                    tooltip="Font name for captions",
+                ),
+                IO.Int.Input(
+                    "caption_font_size",
+                    default=48,
+                    min=8,
+                    max=200,
+                    display_mode=IO.NumberDisplay.number,
+                    optional=True,
+                    advanced=True,
+                    tooltip="Font size for captions",
+                ),
+                IO.Boolean.Input(
+                    "add_music",
+                    default=False,
+                    tooltip="Add background music to the video",
+                ),
+                IO.String.Input(
+                    "music_id",
+                    force_input=True,
+                    optional=True,
+                    tooltip="Audio file UUID from Media Ingest",
+                ),
+                IO.Int.Input(
+                    "music_volume",
+                    default=50,
+                    min=0,
+                    max=100,
+                    display_mode=IO.NumberDisplay.slider,
+                    optional=True,
+                    advanced=True,
+                    tooltip="Background music volume (0–100)",
+                ),
+            ],
+            outputs=[
+                IO.String.Output(display_name="video_uuid"),
+            ],
+            hidden=[Hidden.unique_id, Hidden.extra_pnginfo],
+        )
+
+    @classmethod
+    async def execute(
+        cls,
+        # is_input_list=True: each autogrow slot value arrives as a list[str] from
+        # the connected Veo auto-batch. Scalar inputs arrive as single-element lists.
+        scenes: dict[str, list[str] | str] | None = None,
+        remove_silence: list[bool] | None = None,
+        add_captions: list[bool] | None = None,
+        caption_font: list[str] | None = None,
+        caption_font_size: list[int] | None = None,
+        add_music: list[bool] | None = None,
+        music_id: list[str] | None = None,
+        music_volume: list[int] | None = None,
+    ) -> IO.NodeOutput:
+        # Flatten scenes dict in slot order: [s1_v1, s1_v2, s1_v3, s2_v1, s2_v2, …]
+        media_list: list[str] = []
+        if scenes:
+            for value in scenes.values():
+                if isinstance(value, list):
+                    media_list.extend(uid for uid in value if uid)
+                elif isinstance(value, str) and value:
+                    media_list.append(value)
+
+        if not media_list:
+            raise ValueError(
+                "No clips found. Connect at least one Veo node's video_uuid output "
+                "to a scene slot."
+            )
+
+        _remove_silence    = remove_silence[0]    if remove_silence    else False
+        _add_captions      = add_captions[0]      if add_captions      else False
+        _caption_font      = caption_font[0]      if caption_font      else "Arial"
+        _caption_font_size = caption_font_size[0] if caption_font_size else 48
+        _add_music         = add_music[0]         if add_music         else False
+        _music_id          = music_id[0]          if music_id          else None
+        _music_volume      = music_volume[0]      if music_volume      else 50
+
+        node_id = cls.hidden.unique_id or ""
+        extra_pnginfo = cls.hidden.extra_pnginfo or {}
+        user_id = extra_pnginfo.get("client_id", "")
+
+        base_url = video_editor_config.video_editor_url
+
+        request = SubmitTaskRequest(
+            video_id=str(uuid.uuid4()),
+            node_id=node_id,
+            user_id=user_id,
+            creation_args=BaseUgcCreationArgs(
+                media_files=media_list,
+                remove_silence=_remove_silence,
+                add_captions=_add_captions,
+                captions_settings=CaptionsSettings(
+                    font=_caption_font,
+                    font_size=_caption_font_size,
+                ) if _add_captions else None,
+                add_music=_add_music,
+                music_settings=MusicSettings(
+                    music_id=_music_id,
+                    volume=_music_volume / 100.0,
+                ) if _add_music and _music_id else None,
+            ),
+        )
+
+        submit_response = await sync_op(
+            cls,
+            ApiEndpoint(path=f"{base_url}/tasks", method="POST"),
+            response_model=SubmitTaskResponse,
+            data=request,
+            wait_label="Submitting batch video editing task...",
+        )
+
+        poll_response = await poll_op(
+            cls,
+            ApiEndpoint(path=f"{base_url}/tasks/{submit_response.task_id}", method="GET"),
+            response_model=TaskStatusResponse,
+            status_extractor=lambda r: r.status.lower(),
+            completed_statuses=["success"],
+            failed_statuses=["failure", "revoked"],
+            queued_statuses=["pending", "received", "retry"],
+            poll_interval=3.0,
+            estimated_duration=120,
+        )
+
+        if poll_response.status == "FAILURE":
+            raise Exception(f"Video editing failed: {poll_response.error}")
+
+        output_media_id = poll_response.result["outputMediaId"]
+        return IO.NodeOutput(output_media_id, ui={"video_uuid": [output_media_id]})
+
+
+
 class VideoEditorExtension(ComfyExtension):
     @override
     async def get_node_list(self) -> list[type[IO.ComfyNode]]:
-        return [BaseUGCEditingNode]
+        return [BaseUGCEditingNode, BatchUGCEditingNode]
 
 
 async def comfy_entrypoint() -> VideoEditorExtension:

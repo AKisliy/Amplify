@@ -18,6 +18,8 @@ from .request_utils import (
 
 from .broker import publish_event
 
+from .common_exceptions import RAIFilteredError, VeoTransientError
+
 __all__ = [
     # API client
     "ApiEndpoint",

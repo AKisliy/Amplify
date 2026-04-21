@@ -11,6 +11,11 @@ class GeminiConfig(ConfigBase):
     project_id: str
     location: str
     storage_uri: str
+    # UUID of a pre-registered placeholder video in MediaIngest.
+    # Returned when Veo's RAI filter blocks a prompt after all retry attempts.
+    # This video must never be deleted — it acts as a visual marker in batches
+    # to identify which prompt was persistently filtered.
+    rai_fallback_video_uuid: str = "019da1f0-5775-74ae-91df-35661193c6d1"
 
 class MediaIngestConfig(ConfigBase):
     media_ingest_url: str = "http://localhost:5070/media/api"

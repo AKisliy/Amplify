@@ -43,6 +43,34 @@ from comfy_api_nodes.util import get_vertex_ai_access_token, fetch_media_uri_fro
 
 GEMINI_BASE_ENDPOINT = f"https://aiplatform.googleapis.com/v1/projects/{gemini_config.project_id}/locations/{gemini_config.location}/publishers/google/models"
 
+# ---------------------------------------------------------------------------
+# Pacing zone table — empirically calibrated from avatar video experiments.
+# Green: target zone. Yellow: acceptable. Outside yellow: red (avoid).
+# ---------------------------------------------------------------------------
+PACING_ZONES: dict[int, dict[str, tuple[int, int]]] = {
+    4: {"green": (70, 80),   "yellow": (65, 85)},
+    6: {"green": (105, 120), "yellow": (98, 128)},
+    8: {"green": (140, 160), "yellow": (130, 170)},
+}
+
+
+def best_duration_for_chars(char_count: int) -> int:
+    """
+    Given a segment's character count, return the video duration (4, 6, or 8 s)
+    whose pacing zone best fits it.
+
+    Priority: green zone first, then yellow, then longest available (8 s).
+    """
+    for dur in [4, 6, 8]:
+        lo, hi = PACING_ZONES[dur]["green"]
+        if lo <= char_count <= hi:
+            return dur
+    for dur in [4, 6, 8]:
+        lo, hi = PACING_ZONES[dur]["yellow"]
+        if lo <= char_count <= hi:
+            return dur
+    return 8  # fallback: give the avatar as much time as possible
+
 
 class GeminiModel(str, Enum):
     """
@@ -373,6 +401,10 @@ class GeminiNode(IO.ComfyNode):
                     display_name="segments",
                     is_output_list=True,
                 ),
+                IO.Int.Output(
+                    display_name="duration_seconds",
+                    is_output_list=True,
+                ),
             ],
         )
 
@@ -447,8 +479,15 @@ class GeminiNode(IO.ComfyNode):
 
         output_text = get_text_from_response(response) or "Empty response from Gemini model..."
 
-        # Parse structured output into segments list when schema was provided
+        # Parse structured output into segments and duration_seconds when schema was provided.
+        # Handles three schema shapes:
+        #   1. No schema                          → both lists empty.
+        #   2. {script_segment}                   → segments populated; duration derived via
+        #                                            Python char-count post-processing.
+        #   3. {script_segment, duration_seconds} → same — LLM-suggested duration is ignored;
+        #                                            Python char count always wins for accuracy.
         segments: list[str] = []
+        duration_seconds: list[int] = []
         if response_schema:
             parsed = json.loads(output_text)
             # Extract the first array property from the response
@@ -460,17 +499,57 @@ class GeminiNode(IO.ComfyNode):
                     if isinstance(value, list):
                         raw_items = value
                         break
-            # Each item can be a plain string or an object — grab the first string value
             for item in raw_items:
                 if isinstance(item, str):
-                    segments.append(item.strip())
+                    # Plain-string schema
+                    seg = item.strip()
+                    segments.append(seg)
+                    duration_seconds.append(best_duration_for_chars(len(seg)))
                 elif isinstance(item, dict):
-                    for v in item.values():
-                        if isinstance(v, str) and v.strip():
-                            segments.append(v.strip())
-                            break
+                    if "script_segment" in item:
+                        seg = item["script_segment"].strip()
+                        segments.append(seg)
+                        if "duration_seconds" in item:
+                            # Trust Gemini's duration choice — it has full segment context.
+                            # best_duration_for_chars is only a fallback for schemas without
+                            # a duration field, not an override of an explicit model decision.
+                            try:
+                                dur = int(item["duration_seconds"])
+                                if dur not in (4, 6, 8):
+                                    dur = best_duration_for_chars(len(seg))
+                            except (ValueError, TypeError):
+                                dur = best_duration_for_chars(len(seg))
+                            duration_seconds.append(dur)
+                        else:
+                            # script_segment-only schema — compute duration from char count.
+                            duration_seconds.append(best_duration_for_chars(len(seg)))
+                    else:
+                        # Unknown schema shape — grab the first non-empty string value.
+                        for v in item.values():
+                            if isinstance(v, str) and v.strip():
+                                seg = v.strip()
+                                segments.append(seg)
+                                duration_seconds.append(best_duration_for_chars(len(seg)))
+                                break
 
-        return IO.NodeOutput(output_text, segments, ui={"text": [output_text]})
+        # Safety net: model returned an empty segments array despite a non-empty transcript.
+        # This happens when the input is shorter than the minimum yellow zone (65 chars for 4 s)
+        # and the model treats it as "no valid segments". Fall back to a single segment so
+        # downstream nodes always receive at least one item.
+        # Duration is hardcoded to 4 — this branch only fires for very short transcripts,
+        # so the shortest clip is the only sensible choice. (best_duration_for_chars would
+        # incorrectly return 8 as its out-of-zone fallback here.)
+        if response_schema and not segments and output_text.strip():
+            seg = output_text.strip()
+            # logger.warning(
+            #     "[GeminiNode] Model returned empty segments for a %d-char transcript. "
+            #     "Falling back to a single 4-second segment.",
+            #     len(seg),
+            # )
+            segments = [seg]
+            duration_seconds = [4]
+
+        return IO.NodeOutput(output_text, segments, duration_seconds, ui={"text": [output_text]})
 
 class GeminiImageNode(IO.ComfyNode):
 
