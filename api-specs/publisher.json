@@ -24,9 +24,7 @@
     },
     "/api/autolistentry": {
       "post": {
-        "tags": [
-          "autolistentry"
-        ],
+        "tags": ["autolistentry"],
         "operationId": "CreateAutoListEntry",
         "requestBody": {
           "x-name": "command",
@@ -62,9 +60,7 @@
     },
     "/api/autolistentry/{id}": {
       "put": {
-        "tags": [
-          "autolistentry"
-        ],
+        "tags": ["autolistentry"],
         "operationId": "UpdateAutoListEntry",
         "parameters": [
           {
@@ -105,9 +101,7 @@
         ]
       },
       "delete": {
-        "tags": [
-          "autolistentry"
-        ],
+        "tags": ["autolistentry"],
         "operationId": "DeleteAutoListEntry",
         "parameters": [
           {
@@ -135,9 +129,7 @@
     },
     "/api/autolists": {
       "post": {
-        "tags": [
-          "autolists"
-        ],
+        "tags": ["autolists"],
         "operationId": "CreateAutoList",
         "requestBody": {
           "x-name": "command",
@@ -171,9 +163,7 @@
         ]
       },
       "get": {
-        "tags": [
-          "autolists"
-        ],
+        "tags": ["autolists"],
         "operationId": "GetAutoListsForProject",
         "parameters": [
           {
@@ -208,9 +198,7 @@
     },
     "/api/autolists/{id}": {
       "get": {
-        "tags": [
-          "autolists"
-        ],
+        "tags": ["autolists"],
         "operationId": "GetAutoList",
         "parameters": [
           {
@@ -243,9 +231,7 @@
         ]
       },
       "put": {
-        "tags": [
-          "autolists"
-        ],
+        "tags": ["autolists"],
         "operationId": "UpdateAutoList",
         "parameters": [
           {
@@ -286,9 +272,7 @@
         ]
       },
       "delete": {
-        "tags": [
-          "autolists"
-        ],
+        "tags": ["autolists"],
         "operationId": "DeleteAutoList",
         "parameters": [
           {
@@ -316,9 +300,7 @@
     },
     "/api/connections/{projectId}/auth-url": {
       "get": {
-        "tags": [
-          "connections"
-        ],
+        "tags": ["connections"],
         "operationId": "GetApiConnectionsAuthUrl",
         "parameters": [
           {
@@ -362,9 +344,7 @@
     },
     "/api/connections": {
       "post": {
-        "tags": [
-          "connections"
-        ],
+        "tags": ["connections"],
         "operationId": "Connection",
         "requestBody": {
           "x-name": "command",
@@ -394,9 +374,7 @@
     },
     "/api/connections/{projectId}": {
       "get": {
-        "tags": [
-          "connections"
-        ],
+        "tags": ["connections"],
         "operationId": "GetApiConnections",
         "parameters": [
           {
@@ -431,9 +409,7 @@
     },
     "/api/connections/{projectId}/accounts/{accountId}": {
       "delete": {
-        "tags": [
-          "connections"
-        ],
+        "tags": ["connections"],
         "operationId": "DeleteApiConnectionsAccounts",
         "parameters": [
           {
@@ -471,9 +447,7 @@
     },
     "/api/publications/video": {
       "post": {
-        "tags": [
-          "publications"
-        ],
+        "tags": ["publications"],
         "operationId": "PostApiPublicationsVideo",
         "requestBody": {
           "x-name": "request",
@@ -511,9 +485,7 @@
     },
     "/api/publications/media-posts/{mediaPostId}/records": {
       "get": {
-        "tags": [
-          "publications"
-        ],
+        "tags": ["publications"],
         "operationId": "GetApiPublicationsMediaPostsRecords",
         "parameters": [
           {
@@ -709,16 +681,8 @@
       "SocialProvider": {
         "type": "string",
         "description": "",
-        "x-enumNames": [
-          "Instagram",
-          "TikTok",
-          "Youtube"
-        ],
-        "enum": [
-          "Instagram",
-          "TikTok",
-          "Youtube"
-        ]
+        "x-enumNames": ["Instagram", "TikTok", "Youtube"],
+        "enum": ["Instagram", "TikTok", "Youtube"]
       },
       "AutoListsVm": {
         "type": "object",
@@ -868,14 +832,8 @@
       "PublicationType": {
         "type": "string",
         "description": "",
-        "x-enumNames": [
-          "Manual",
-          "AutoList"
-        ],
-        "enum": [
-          "Manual",
-          "AutoList"
-        ]
+        "x-enumNames": ["Manual", "AutoList"],
+        "enum": ["Manual", "AutoList"]
       },
       "PublicationRecordResponseDto": {
         "type": "object",
@@ -932,13 +890,7 @@
           "Published",
           "Failed"
         ],
-        "enum": [
-          "None",
-          "Scheduled",
-          "Processing",
-          "Published",
-          "Failed"
-        ]
+        "enum": ["None", "Scheduled", "Processing", "Published", "Failed"]
       },
       "PublishVideoCommand": {
         "type": "object",
