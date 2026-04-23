@@ -12,7 +12,7 @@ secrets:
 
 config:
   mediaIngestUrl: "http://mediaingest.test-env.svc.cluster.local/media/api"
-  gcpProjectId: "proven-aviary-484307-c9"
+  gcpProjectId: "project-d72a81f9-0097-4b5b-a62"
   gcpLocation: "global"
   gcpStorageUri: "gs://amplify-media-test"
   userServiceUrl: "http://userservice.test-env.svc.cluster.local/userservice/api"
