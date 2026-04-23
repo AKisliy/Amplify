@@ -20,7 +20,7 @@ appConfig:
     Host: "storage.googleapis.com"
     AccessKey: ""
     SecretKey: ""
-    BucketName: "amplify-media-test"
+    BucketName: "amplify-media-test-2"
     UseSsl: true
     PublicBucketUrl: "https://media.alexeykiselev.tech/"
   YtDlp:
