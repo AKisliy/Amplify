@@ -12,8 +12,10 @@ spec:
   template:
     metadata:
       annotations:
+        {{- if .Values.otel.injectPython }}
         instrumentation.opentelemetry.io/inject-python: "python-instrumentation"
         instrumentation.opentelemetry.io/container-names: "{{ .Chart.Name }},engine"
+        {{- end }}
       labels:
         {{- include "template-service.labels" . | nindent 8 }}
         {{- with .Values.podLabels }}

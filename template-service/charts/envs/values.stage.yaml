@@ -1,3 +1,6 @@
+otel:
+  injectPython: false
+
 secrets:
   postgresDsn:
     key: template-service-db-conn-test
