@@ -180,8 +180,11 @@ class BaseUGCEditingNode(IO.ComfyNode):
         trim_decisions: dict[str, TrimDecision] | None = None
         if raw_decisions:
             trim_decisions = {
-                media_id: TrimDecision(**values)
-                for media_id, values in raw_decisions.items()
+                media_id: TrimDecision(
+                    trim_start=v["trimStart"],
+                    trim_end=v["trimEnd"],
+                )
+                for media_id, v in raw_decisions.items()
             }
 
         base_url = video_editor_config.video_editor_url
@@ -380,6 +383,17 @@ class BatchUGCEditingNode(IO.ComfyNode):
         extra_pnginfo = cls.hidden.extra_pnginfo or {}
         user_id = extra_pnginfo.get("client_id", "")
 
+        raw_decisions: dict | None = extra_pnginfo.get("shot_decisions")
+        trim_decisions: dict[str, TrimDecision] | None = None
+        if raw_decisions:
+            trim_decisions = {
+                media_id: TrimDecision(
+                    trim_start=v["trimStart"],
+                    trim_end=v["trimEnd"],
+                )
+                for media_id, v in raw_decisions.items()
+            }
+
         base_url = video_editor_config.video_editor_url
 
         request = SubmitTaskRequest(
@@ -399,6 +413,7 @@ class BatchUGCEditingNode(IO.ComfyNode):
                     music_id=_music_id,
                     volume=_music_volume / 100.0,
                 ) if _add_music and _music_id else None,
+                trim_decisions=trim_decisions,
             ),
         )
 
