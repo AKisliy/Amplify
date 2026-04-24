@@ -14,7 +14,6 @@ public class GetUserProjectsQueryHandler(IApplicationDbContext dbContext, IUser 
     {
         // TODO: Add user ID presence check
         var projects = await dbContext.Projects
-            .Include(x => x.Ambassador)
             .Where(x => x.UserId == user.Id)
             .OrderByDescending(x => x.Created)
             .ToListAsync(cancellationToken);
