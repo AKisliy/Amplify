@@ -2,7 +2,7 @@
 
 import type { Client, Options as Options2, TDataShape } from './client';
 import { client } from './client.gen';
-import type { ClearHistoryV1EngineHistoryPostData, ClearHistoryV1EngineHistoryPostErrors, ClearHistoryV1EngineHistoryPostResponses, CreateTemplateV1TemplatesPostData, CreateTemplateV1TemplatesPostErrors, CreateTemplateV1TemplatesPostResponses, DeleteTemplateV1TemplatesTemplateIdDeleteData, DeleteTemplateV1TemplatesTemplateIdDeleteErrors, DeleteTemplateV1TemplatesTemplateIdDeleteResponses, GetAllHistoryV1EngineHistoryGetData, GetAllHistoryV1EngineHistoryGetErrors, GetAllHistoryV1EngineHistoryGetResponses, GetAllNodesV1EngineNodesGetData, GetAllNodesV1EngineNodesGetResponses, GetNodeV1EngineNodesNodeClassGetData, GetNodeV1EngineNodesNodeClassGetErrors, GetNodeV1EngineNodesNodeClassGetResponses, GetPromptHistoryV1EngineHistoryPromptIdGetData, GetPromptHistoryV1EngineHistoryPromptIdGetErrors, GetPromptHistoryV1EngineHistoryPromptIdGetResponses, GetTemplatesByProjectV1TemplatesProjectProjectIdGetData, GetTemplatesByProjectV1TemplatesProjectProjectIdGetErrors, GetTemplatesByProjectV1TemplatesProjectProjectIdGetResponses, GetTemplateV1TemplatesTemplateIdGetData, GetTemplateV1TemplatesTemplateIdGetErrors, GetTemplateV1TemplatesTemplateIdGetResponses, HealthCheckHealthGetData, HealthCheckHealthGetResponses, ListTemplatesV1TemplatesGetData, ListTemplatesV1TemplatesGetErrors, ListTemplatesV1TemplatesGetResponses, SubmitPromptV1EnginePromptPostData, SubmitPromptV1EnginePromptPostErrors, SubmitPromptV1EnginePromptPostResponses, UpdateTemplateV1TemplatesTemplateIdPatchData, UpdateTemplateV1TemplatesTemplateIdPatchErrors, UpdateTemplateV1TemplatesTemplateIdPatchResponses } from './types.gen';
+import type { ClearHistoryV1EngineHistoryPostData, ClearHistoryV1EngineHistoryPostErrors, ClearHistoryV1EngineHistoryPostResponses, CreateLibraryTemplateInternalLibraryTemplatesPostData, CreateLibraryTemplateInternalLibraryTemplatesPostErrors, CreateLibraryTemplateInternalLibraryTemplatesPostResponses, CreateTemplateV1TemplatesPostData, CreateTemplateV1TemplatesPostErrors, CreateTemplateV1TemplatesPostResponses, DeleteLibraryTemplateInternalLibraryTemplatesTemplateIdDeleteData, DeleteLibraryTemplateInternalLibraryTemplatesTemplateIdDeleteErrors, DeleteLibraryTemplateInternalLibraryTemplatesTemplateIdDeleteResponses, DeleteTemplateV1TemplatesTemplateIdDeleteData, DeleteTemplateV1TemplatesTemplateIdDeleteErrors, DeleteTemplateV1TemplatesTemplateIdDeleteResponses, DuplicateFromLibraryV1TemplatesFromLibraryPostData, DuplicateFromLibraryV1TemplatesFromLibraryPostErrors, DuplicateFromLibraryV1TemplatesFromLibraryPostResponses, GetAllHistoryV1EngineHistoryGetData, GetAllHistoryV1EngineHistoryGetErrors, GetAllHistoryV1EngineHistoryGetResponses, GetAllNodesV1EngineNodesGetData, GetAllNodesV1EngineNodesGetResponses, GetLibraryTemplateV1LibraryTemplatesTemplateIdGetData, GetLibraryTemplateV1LibraryTemplatesTemplateIdGetErrors, GetLibraryTemplateV1LibraryTemplatesTemplateIdGetResponses, GetNodeV1EngineNodesNodeClassGetData, GetNodeV1EngineNodesNodeClassGetErrors, GetNodeV1EngineNodesNodeClassGetResponses, GetPromptHistoryV1EngineHistoryPromptIdGetData, GetPromptHistoryV1EngineHistoryPromptIdGetErrors, GetPromptHistoryV1EngineHistoryPromptIdGetResponses, GetTemplatesByProjectV1TemplatesProjectProjectIdGetData, GetTemplatesByProjectV1TemplatesProjectProjectIdGetErrors, GetTemplatesByProjectV1TemplatesProjectProjectIdGetResponses, GetTemplateV1TemplatesTemplateIdGetData, GetTemplateV1TemplatesTemplateIdGetErrors, GetTemplateV1TemplatesTemplateIdGetResponses, HealthCheckHealthGetData, HealthCheckHealthGetResponses, ListLibraryTemplatesV1LibraryTemplatesGetData, ListLibraryTemplatesV1LibraryTemplatesGetErrors, ListLibraryTemplatesV1LibraryTemplatesGetResponses, ListTemplatesV1TemplatesGetData, ListTemplatesV1TemplatesGetErrors, ListTemplatesV1TemplatesGetResponses, SubmitPromptV1EnginePromptPostData, SubmitPromptV1EnginePromptPostErrors, SubmitPromptV1EnginePromptPostResponses, UpdateLibraryTemplateInternalLibraryTemplatesTemplateIdPatchData, UpdateLibraryTemplateInternalLibraryTemplatesTemplateIdPatchErrors, UpdateLibraryTemplateInternalLibraryTemplatesTemplateIdPatchResponses, UpdateTemplateV1TemplatesTemplateIdPatchData, UpdateTemplateV1TemplatesTemplateIdPatchErrors, UpdateTemplateV1TemplatesTemplateIdPatchResponses } from './types.gen';
 
 export type Options<TData extends TDataShape = TDataShape, ThrowOnError extends boolean = boolean> = Options2<TData, ThrowOnError> & {
     /**
@@ -91,6 +91,18 @@ export const getTemplatesByProjectV1TemplatesProjectProjectIdGet = <ThrowOnError
 });
 
 /**
+ * Duplicate a Library Template into a Project
+ *
+ * Duplicates a read-only Library Template into a new editable Project Template.
+ * No JSON body required — the backend fetches the source template and copies its graph.
+ */
+export const duplicateFromLibraryV1TemplatesFromLibraryPost = <ThrowOnError extends boolean = false>(options: Options<DuplicateFromLibraryV1TemplatesFromLibraryPostData, ThrowOnError>) => (options.client ?? client).post<DuplicateFromLibraryV1TemplatesFromLibraryPostResponses, DuplicateFromLibraryV1TemplatesFromLibraryPostErrors, ThrowOnError>({
+    responseType: 'json',
+    url: '/v1/templates/from-library',
+    ...options
+});
+
+/**
  * Get all node schemas
  *
  * Returns the full schema (inputs, outputs, metadata) for every
@@ -168,6 +180,66 @@ export const clearHistoryV1EngineHistoryPost = <ThrowOnError extends boolean = f
     headers: {
         'Content-Type': 'application/json',
         ...options?.headers
+    }
+});
+
+/**
+ * List Library Templates
+ *
+ * Lists all available library template cards with pagination.
+ */
+export const listLibraryTemplatesV1LibraryTemplatesGet = <ThrowOnError extends boolean = false>(options?: Options<ListLibraryTemplatesV1LibraryTemplatesGetData, ThrowOnError>) => (options?.client ?? client).get<ListLibraryTemplatesV1LibraryTemplatesGetResponses, ListLibraryTemplatesV1LibraryTemplatesGetErrors, ThrowOnError>({
+    responseType: 'json',
+    url: '/v1/library-templates/',
+    ...options
+});
+
+/**
+ * Get Library Template by ID
+ *
+ * Retrieves a specific library template by its UUID.
+ */
+export const getLibraryTemplateV1LibraryTemplatesTemplateIdGet = <ThrowOnError extends boolean = false>(options: Options<GetLibraryTemplateV1LibraryTemplatesTemplateIdGetData, ThrowOnError>) => (options.client ?? client).get<GetLibraryTemplateV1LibraryTemplatesTemplateIdGetResponses, GetLibraryTemplateV1LibraryTemplatesTemplateIdGetErrors, ThrowOnError>({
+    responseType: 'json',
+    url: '/v1/library-templates/{template_id}',
+    ...options
+});
+
+/**
+ * Create a Library Template
+ *
+ * Creates a new library template card (internal use only).
+ */
+export const createLibraryTemplateInternalLibraryTemplatesPost = <ThrowOnError extends boolean = false>(options: Options<CreateLibraryTemplateInternalLibraryTemplatesPostData, ThrowOnError>) => (options.client ?? client).post<CreateLibraryTemplateInternalLibraryTemplatesPostResponses, CreateLibraryTemplateInternalLibraryTemplatesPostErrors, ThrowOnError>({
+    responseType: 'json',
+    url: '/internal/library-templates/',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+/**
+ * Delete a Library Template
+ *
+ * Deletes a library template from the library (internal use only).
+ */
+export const deleteLibraryTemplateInternalLibraryTemplatesTemplateIdDelete = <ThrowOnError extends boolean = false>(options: Options<DeleteLibraryTemplateInternalLibraryTemplatesTemplateIdDeleteData, ThrowOnError>) => (options.client ?? client).delete<DeleteLibraryTemplateInternalLibraryTemplatesTemplateIdDeleteResponses, DeleteLibraryTemplateInternalLibraryTemplatesTemplateIdDeleteErrors, ThrowOnError>({ url: '/internal/library-templates/{template_id}', ...options });
+
+/**
+ * Update a Library Template
+ *
+ * Partially updates a library template (internal use only).
+ * Only fields sent in the payload will be updated.
+ */
+export const updateLibraryTemplateInternalLibraryTemplatesTemplateIdPatch = <ThrowOnError extends boolean = false>(options: Options<UpdateLibraryTemplateInternalLibraryTemplatesTemplateIdPatchData, ThrowOnError>) => (options.client ?? client).patch<UpdateLibraryTemplateInternalLibraryTemplatesTemplateIdPatchResponses, UpdateLibraryTemplateInternalLibraryTemplatesTemplateIdPatchErrors, ThrowOnError>({
+    responseType: 'json',
+    url: '/internal/library-templates/{template_id}',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
     }
 });
 
