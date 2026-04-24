@@ -6,7 +6,7 @@ import { Check, ChevronLeft, ChevronRight, Loader2, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
   completeManualReview,
-  getManualReviewPendingByJob,
+  getManualReviewByJobAndNode,
 } from "@/lib/api/template-service";
 import { mediaApi } from "@/features/media/api";
 
@@ -20,12 +20,13 @@ interface TrimState {
 
 interface ShotReviewDialogProps {
   jobId: string;
+  nodeId: string;
   onClose: () => void;
 }
 
 // ---------------------------------------------------------------------------
 
-export function ShotReviewDialog({ jobId, onClose }: ShotReviewDialogProps) {
+export function ShotReviewDialog({ jobId, nodeId, onClose }: ShotReviewDialogProps) {
   const [taskId, setTaskId] = useState<string | null>(null);
   const [videoUuids, setVideoUuids] = useState<string[]>([]);
   const [selectedIndex, setSelectedIndex] = useState(0);
@@ -40,7 +41,7 @@ export function ShotReviewDialog({ jobId, onClose }: ShotReviewDialogProps) {
     let cancelled = false;
     (async () => {
       try {
-        const task = await getManualReviewPendingByJob(jobId);
+        const task = await getManualReviewByJobAndNode(jobId, nodeId);
         if (cancelled) return;
         if (!task) { setError("No pending review task found."); return; }
         const uuids = (
@@ -56,7 +57,7 @@ export function ShotReviewDialog({ jobId, onClose }: ShotReviewDialogProps) {
       }
     })();
     return () => { cancelled = true; };
-  }, [jobId]);
+  }, [jobId, nodeId]);
 
   // Update duration when video metadata loads
   const handleVideoLoaded = () => {
