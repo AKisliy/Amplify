@@ -35,6 +35,11 @@ class MusicSettings(BaseModel):
     volume: float
 
 
+class TrimDecision(BaseModel):
+    trim_start: float
+    trim_end: float
+
+
 class BaseUgcCreationArgs(BaseModel):
     format_type: str = "base-ugc"
     media_files: list[str]
@@ -43,6 +48,7 @@ class BaseUgcCreationArgs(BaseModel):
     captions_settings: CaptionsSettings | None = None
     add_music: bool = False
     music_settings: MusicSettings | None = None
+    trim_decisions: dict[str, TrimDecision] | None = None
 
 
 class SubmitTaskRequest(BaseModel):
@@ -64,6 +70,7 @@ class BaseUGCEditingNode(IO.ComfyNode):
             category="amplify/video editing",
             description="Merges video clips with optional silence removal, captions, and background music.",
             is_output_node=True,
+            is_input_list=True,
             inputs=[
                 IO.Autogrow.Input(
                     "media_files",
@@ -133,22 +140,52 @@ class BaseUGCEditingNode(IO.ComfyNode):
     @classmethod
     async def execute(
         cls,
-        media_files: dict[str, Any],
-        remove_silence: bool = False,
-        add_captions: bool = False,
-        caption_font: str = "Arial",
-        caption_font_size: int = 48,
-        add_music: bool = False,
-        music_id: str | None = None,
-        music_volume: int = 50,
+        media_files: dict[str, list[str] | str],
+        remove_silence: list[bool] | None = None,
+        add_captions: list[bool] | None = None,
+        caption_font: list[str] | None = None,
+        caption_font_size: list[int] | None = None,
+        add_music: list[bool] | None = None,
+        music_id: list[str | None] | None = None,
+        music_volume: list[int] | None = None,
     ) -> IO.NodeOutput:
-        media_list = [v for v in media_files.values() if v is not None]
+        # is_input_list=True — each autogrow slot may carry a full list (from a
+        # list-output node like ShotReviewNode); flatten all slots in order.
+        media_list: list[str] = []
+        for v in media_files.values():
+            if v is None:
+                continue
+            if isinstance(v, list):
+                media_list.extend(v)
+            else:
+                media_list.append(v)
+
+        # Scalar inputs arrive as single-element lists; unwrap them.
+        _remove_silence = remove_silence[0] if remove_silence else False
+        _add_captions = add_captions[0] if add_captions else False
+        _caption_font = caption_font[0] if caption_font else "Arial"
+        _caption_font_size = caption_font_size[0] if caption_font_size else 48
+        _add_music = add_music[0] if add_music else False
+        _music_id = music_id[0] if music_id else None
+        _music_volume = music_volume[0] if music_volume else 50
+
         if not media_list:
             raise ValueError("At least one media file is required")
 
         node_id = cls.hidden.unique_id or ""
         extra_pnginfo = cls.hidden.extra_pnginfo or {}
         user_id = extra_pnginfo.get("client_id", "")
+
+        raw_decisions: dict | None = extra_pnginfo.get("shot_decisions")
+        trim_decisions: dict[str, TrimDecision] | None = None
+        if raw_decisions:
+            trim_decisions = {
+                media_id: TrimDecision(
+                    trim_start=v["trimStart"],
+                    trim_end=v["trimEnd"],
+                )
+                for media_id, v in raw_decisions.items()
+            }
 
         base_url = video_editor_config.video_editor_url
 
@@ -158,17 +195,18 @@ class BaseUGCEditingNode(IO.ComfyNode):
             user_id=user_id,
             creation_args=BaseUgcCreationArgs(
                 media_files=media_list,
-                remove_silence=remove_silence,
-                add_captions=add_captions,
+                remove_silence=_remove_silence,
+                add_captions=_add_captions,
                 captions_settings=CaptionsSettings(
-                    font=caption_font,
-                    font_size=caption_font_size,
-                ) if add_captions else None,
-                add_music=add_music,
+                    font=_caption_font,
+                    font_size=_caption_font_size,
+                ) if _add_captions else None,
+                add_music=_add_music,
                 music_settings=MusicSettings(
-                    music_id=music_id,
-                    volume=music_volume / 100.0,
-                ) if add_music and music_id else None,
+                    music_id=_music_id,
+                    volume=_music_volume / 100.0,
+                ) if _add_music and _music_id else None,
+                trim_decisions=trim_decisions,
             ),
         )
 
@@ -345,6 +383,17 @@ class BatchUGCEditingNode(IO.ComfyNode):
         extra_pnginfo = cls.hidden.extra_pnginfo or {}
         user_id = extra_pnginfo.get("client_id", "")
 
+        raw_decisions: dict | None = extra_pnginfo.get("shot_decisions")
+        trim_decisions: dict[str, TrimDecision] | None = None
+        if raw_decisions:
+            trim_decisions = {
+                media_id: TrimDecision(
+                    trim_start=v["trimStart"],
+                    trim_end=v["trimEnd"],
+                )
+                for media_id, v in raw_decisions.items()
+            }
+
         base_url = video_editor_config.video_editor_url
 
         request = SubmitTaskRequest(
@@ -364,6 +413,7 @@ class BatchUGCEditingNode(IO.ComfyNode):
                     music_id=_music_id,
                     volume=_music_volume / 100.0,
                 ) if _add_music and _music_id else None,
+                trim_decisions=trim_decisions,
             ),
         )
 

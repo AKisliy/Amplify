@@ -1,13 +1,18 @@
 import logging
 
-from moviepy import TextClip, CompositeVideoClip, VideoFileClip
-
 from editors.base_ugc.context import EditingContext
 from editors.base_ugc.steps.base_step import PipelineStep
 from utils.ai_gateway_client import transcribe
-from moviepy.video.tools.subtitles import SubtitlesClip
+from utils.ffmpeg_utils import FFmpegCommandExecutor
 
 logger = logging.getLogger(__name__)
+
+DEFAULT_FONT = "Mont-Regular"
+# ffmpeg converts SRT→ASS internally with PlayResY=288 (libass default).
+# MarginV must be in that coordinate space: value * (1920/288) = actual px from bottom.
+# 50 → ~333px from bottom on a 1920px video.
+_MARGIN_V = 50
+
 
 class AddCaptionsStep(PipelineStep):
     name = "Adding captions"
@@ -18,51 +23,47 @@ class AddCaptionsStep(PipelineStep):
 
         settings = ctx.args.captions_settings
         language = settings.language if settings else None
+        font = DEFAULT_FONT
+        font_size = settings.font_size if settings else 16
+        logger.info("Using font %r size %d", font, font_size)
 
         srt_text = transcribe(ctx.intermediate_presigned_url, language)
 
         srt_path = ctx.workspace.get_temp_path("srt")
         with open(srt_path, "w", encoding="utf-8") as f:
-            f.write(srt_text.strip())
-        
-        logger.info(f"Wrote captions to {srt_path}")
+            f.write(srt_text.strip() + "\n")
 
+        logger.info("Wrote captions to %s", srt_path)
         ctx.srt_path = srt_path
 
-        generator = lambda txt: TextClip(
-            text=txt,
-            font='Mont-Black',
-            font_size=50,
-            color='white', 
-            margin=(50, 5, 50, 0),
-            method="caption",
-            text_align='center',
-            size=(900, None), 
-            interline=6,
-            stroke_color='black',
-            stroke_width=4
-        )
-        video = VideoFileClip(ctx.current_video_path)
-
-        voiceover_subs = SubtitlesClip(srt_path, make_textclip=generator)
-
-        captioned_video = CompositeVideoClip([video, voiceover_subs.with_position(('center', 800))])
+        # ASS force_style reference:
+        # Alignment=2    → bottom-center anchor; MarginV pushes up from bottom
+        # BorderStyle=1, Outline=4 → text outline (CapCut-style)
+        force_style = ",".join([
+            f"FontName={font}",
+            f"FontSize={font_size}",
+            "PrimaryColour=&H00FFFFFF",
+            "OutlineColour=&H00000000",
+            "BorderStyle=1",
+            # "Outline=4",
+            "Alignment=2",
+            f"MarginV={_MARGIN_V}",
+        ])
+        # ffmpeg filter chain uses comma as separator — escape commas inside the value.
+        # Do NOT escape '=' — those are libass key=value separators, not ffmpeg ones.
+        force_style_escaped = force_style.replace(",", "\\,")
+        vf = f"subtitles={srt_path}:force_style={force_style_escaped}"
 
         output_path = ctx.workspace.get_temp_path("mp4")
-        
-        logger.info(f"Adding captions to {ctx.current_video_path} into {output_path}...")
+        logger.info("Burning captions into %s → %s", ctx.current_video_path, output_path)
+        logger.info("vf: %s", vf)
 
-        captioned_video.write_videofile(
-            output_path, 
-            codec="libx264", 
-            audio_codec="aac", 
-            logger=None,
-            temp_audiofile_path=ctx.workspace.base_path
-        )
-
-        captioned_video.close()
-        video.close()
+        # Use -vf (not filter_complex) so ffmpeg auto-maps audio through unchanged.
+        FFmpegCommandExecutor().execute([
+            "ffmpeg", "-y",
+            "-i", ctx.current_video_path,
+            "-vf", vf,
+            output_path,
+        ])
 
         ctx.current_video_path = output_path
-        ctx.srt_path = srt_path
-

@@ -815,6 +815,7 @@ export default function TemplateCanvasPage() {
       {reviewNodeId && execution.activeJobId && (
         <ShotReviewDialog
           jobId={execution.activeJobId}
+          nodeId={reviewNodeId}
           onClose={() => setReviewNodeId(null)}
         />
       )}
