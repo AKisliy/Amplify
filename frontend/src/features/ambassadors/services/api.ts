@@ -10,17 +10,16 @@ import {
 
 import {
   addReferenceImageV1AmbassadorsAmbassadorIdImagesPost,
+  AmbassadorResponse,
   createAmbassadorV1AmbassadorsPost,
   deleteAmbassadorV1AmbassadorsAmbassadorIdDelete,
   deleteReferenceImageV1AmbassadorsAmbassadorIdImagesMediaIdDelete,
   getAmbassadorByProjectV1AmbassadorsProjectProjectIdGet,
   getAmbassadorV1AmbassadorsAmbassadorIdGet,
   listReferenceImagesV1AmbassadorsAmbassadorIdImagesGet,
-  client as templateServiceClient,
   updateAmbassadorV1AmbassadorsAmbassadorIdPatch
 } from "@/lib/api/template-service"
-// Publication records endpoint is not yet in the publisher spec — keep on axios
-import api from "@/lib/axios";
+
 import type {
   Project,
   CreateProjectDto,
@@ -38,12 +37,11 @@ import { getApiPublicationsMediaPostsRecords, PublicationRecordResponseDto } fro
 // The generated AmbassadorDto uses different field names than our domain type.
 // These mappers keep the transformation in one place.
 
-function mapAmbassador(dto: any): Ambassador {
+function mapAmbassador(dto: AmbassadorResponse): Ambassador {
   return {
     id: dto?.id ?? "",
     name: dto?.name ?? "",
-    // Backend field "biography" → local "appearanceDescription"
-    appearanceDescription: dto?.biography ?? dto?.appearanceDescription ?? null,
+    appearanceDescription: dto?.appearanceDescription ?? null,
     voiceDescription: dto?.voiceDescription ?? null,
     voiceId: dto?.voiceId ?? null,
     referenceImages: [], // populated separately via getAmbassadorImages
@@ -103,11 +101,19 @@ function mapPublicationRecord(dto: PublicationRecordResponseDto): PublicationRec
 export const ambassadorApi = {
   async getAmbassador(id: string): Promise<Ambassador> {
     const { data } = await getAmbassadorV1AmbassadorsAmbassadorIdGet({ path: { ambassador_id: id } });
+
+    if (!data) {
+      throw new Error("Ambassador not found");
+    }
+
     return mapAmbassador(data);
   },
 
   async getAmbassadorByProject(projectId: string): Promise<Ambassador> {
     const { data } = await getAmbassadorByProjectV1AmbassadorsProjectProjectIdGet({ path: { project_id: projectId } });
+    if (!data) {
+      throw new Error("Ambassador not found");
+    }
     return mapAmbassador(data);
   },
 
@@ -121,6 +127,11 @@ export const ambassadorApi = {
         appearanceDescription: data.appearanceDescription ?? null,
       },
     });
+
+    if (!dto) {
+      throw new Error("Failed to create ambassador");
+    }
+
     return mapAmbassador(dto);
   },
 
@@ -137,6 +148,9 @@ export const ambassadorApi = {
         // and `undefined` if they are not included in the payload. This depends on how the backend API handles updates
       },
     });
+    if (!dto) {
+      throw new Error("Failed to update ambassador");
+    }
     return mapAmbassador(dto);
   },
 
