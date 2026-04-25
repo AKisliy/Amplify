@@ -23,8 +23,8 @@ STYLES: dict[str, CaptionStyle] = {
     "default": CaptionStyle(
         code="default",
         name="Default",
-        font_name="Mont-Regular",
-        font_size=16,
+        font_name="Mont",
+        font_size=72,
         bold=False,
         primary_color="&H00FFFFFF",   # white
         outline_color="&H00000000",   # black
@@ -36,8 +36,8 @@ STYLES: dict[str, CaptionStyle] = {
     "bold": CaptionStyle(
         code="bold",
         name="Bold",
-        font_name="Mont-Regular",
-        font_size=20,
+        font_name="Mont",
+        font_size=18,
         bold=True,
         primary_color="&H00FFFFFF",   # white
         outline_color="&H00000000",   # black
@@ -49,8 +49,8 @@ STYLES: dict[str, CaptionStyle] = {
     "minimal": CaptionStyle(
         code="minimal",
         name="Minimal",
-        font_name="Mont-Regular",
-        font_size=14,
+        font_name="Mont",
+        font_size=18,
         bold=False,
         primary_color="&H00FFFFFF",   # white
         outline_color="&H00000000",   # black
@@ -62,8 +62,8 @@ STYLES: dict[str, CaptionStyle] = {
     "yellow": CaptionStyle(
         code="yellow",
         name="Yellow",
-        font_name="Mont-Regular",
-        font_size=16,
+        font_name="Mont",
+        font_size=18,
         bold=True,
         primary_color="&H0000FFFF",   # yellow (ABGR: R=FF G=FF B=00)
         outline_color="&H00000000",   # black
@@ -75,8 +75,8 @@ STYLES: dict[str, CaptionStyle] = {
     "box": CaptionStyle(
         code="box",
         name="Box",
-        font_name="Mont-Regular",
-        font_size=14,
+        font_name="Mont",
+        font_size=18,
         bold=False,
         primary_color="&H00FFFFFF",   # white text
         outline_color="&H00000000",
