@@ -38,13 +38,23 @@ import { getApiPublicationsMediaPostsRecords, PublicationRecordResponseDto } fro
 // These mappers keep the transformation in one place.
 
 function mapAmbassador(dto: AmbassadorResponse): Ambassador {
+  const imageTypeMap: Record<string, "portrait" | "full_body" | "other"> = {
+    Portrait: "portrait",
+    "Full Body": "full_body",
+    Other: "other",
+  }
+
   return {
     id: dto?.id ?? "",
     name: dto?.name ?? "",
     appearanceDescription: dto?.appearanceDescription ?? null,
     voiceDescription: dto?.voiceDescription ?? null,
     voiceId: dto?.voiceId ?? null,
-    referenceImages: [], // populated separately via getAmbassadorImages
+    referenceImages: (dto?.referenceImages ?? []).map((img) => ({
+      id: img.id ?? "",
+      mediaId: img.mediaId ?? img.id ?? "",
+      imageType: imageTypeMap[img.imageType] ?? "other",
+    })),
   };
 }
 
