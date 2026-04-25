@@ -25,7 +25,7 @@ export function VideoTrimTimeline({
 }: VideoTrimTimelineProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [frames, setFrames] = useState<string[]>([]);
-  const draggingRef = useRef<"start" | "end" | null>(null);
+  const draggingRef = useRef<"start" | "end" | "playhead" | null>(null);
 
   // Refs to avoid stale closures in mousemove handler
   const trimStartRef = useRef(trimStart);
@@ -101,10 +101,13 @@ export function VideoTrimTimeline({
         const newStart = Math.min(t, trimEndRef.current - 0.1);
         onTrimChange(newStart, trimEndRef.current);
         onSeek(newStart);
-      } else {
+      } else if (draggingRef.current === "end") {
         const newEnd = Math.max(t, trimStartRef.current + 0.1);
         onTrimChange(trimStartRef.current, newEnd);
         onSeek(newEnd);
+      } else if (draggingRef.current === "playhead") {
+        const clamped = Math.max(trimStartRef.current, Math.min(t, trimEndRef.current));
+        onSeek(clamped);
       }
     };
 
@@ -124,13 +127,14 @@ export function VideoTrimTimeline({
   const playPct = pct(Math.max(trimStart, Math.min(currentTime, trimEnd)));
 
   return (
+    // Outer container: no overflow-hidden so handles at edges aren't clipped
     <div
       ref={containerRef}
-      className="relative w-full rounded-lg overflow-hidden select-none"
+      className="relative w-full select-none"
       style={{ height: 56 }}
     >
-      {/* Filmstrip */}
-      <div className="absolute inset-0 flex">
+      {/* Filmstrip — own overflow-hidden so frames are clipped to rounded rect */}
+      <div className="absolute inset-0 rounded-lg overflow-hidden flex">
         {frames.length > 0
           ? frames.map((src, i) =>
               src
@@ -140,19 +144,19 @@ export function VideoTrimTimeline({
           : Array.from({ length: FRAME_COUNT }).map((_, i) => (
               <div key={i} className="h-full flex-1 bg-white/[0.04] border-r border-white/5 last:border-0 animate-pulse" />
             ))}
+
+        {/* Darkened regions outside trim (inside filmstrip so they're clipped too) */}
+        <div className="absolute inset-y-0 left-0 bg-black/65 pointer-events-none" style={{ width: `${startPct}%` }} />
+        <div className="absolute inset-y-0 right-0 bg-black/65 pointer-events-none" style={{ width: `${100 - endPct}%` }} />
+
+        {/* Active trim region border */}
+        <div
+          className="absolute inset-y-0 border-t-2 border-b-2 border-orange-500 pointer-events-none"
+          style={{ left: `${startPct}%`, width: `${endPct - startPct}%` }}
+        />
       </div>
 
-      {/* Darkened regions outside trim */}
-      <div className="absolute inset-y-0 left-0 bg-black/65 pointer-events-none" style={{ width: `${startPct}%` }} />
-      <div className="absolute inset-y-0 right-0 bg-black/65 pointer-events-none" style={{ width: `${100 - endPct}%` }} />
-
-      {/* Active trim region border */}
-      <div
-        className="absolute inset-y-0 border-t-2 border-b-2 border-orange-500 pointer-events-none"
-        style={{ left: `${startPct}%`, width: `${endPct - startPct}%` }}
-      />
-
-      {/* Start handle */}
+      {/* Start handle — outside filmstrip div, never clipped */}
       <div
         className="absolute inset-y-0 w-4 bg-orange-500 cursor-ew-resize flex items-center justify-center gap-px rounded-l-sm z-10"
         style={{ left: `${startPct}%`, transform: "translateX(-100%)" }}
@@ -162,7 +166,7 @@ export function VideoTrimTimeline({
         <div className="w-px h-4 bg-white/70 rounded-full" />
       </div>
 
-      {/* End handle */}
+      {/* End handle — outside filmstrip div, never clipped */}
       <div
         className="absolute inset-y-0 w-4 bg-orange-500 cursor-ew-resize flex items-center justify-center gap-px rounded-r-sm z-10"
         style={{ left: `${endPct}%` }}
@@ -172,11 +176,14 @@ export function VideoTrimTimeline({
         <div className="w-px h-4 bg-white/70 rounded-full" />
       </div>
 
-      {/* Playhead */}
+      {/* Playhead — draggable */}
       <div
-        className="absolute inset-y-0 w-0.5 bg-white shadow-[0_0_6px_rgba(255,255,255,0.6)] pointer-events-none z-20"
+        className="absolute inset-y-0 w-3 cursor-ew-resize z-20 flex items-center justify-center"
         style={{ left: `${playPct}%`, transform: "translateX(-50%)" }}
-      />
+        onMouseDown={(e) => { e.preventDefault(); draggingRef.current = "playhead"; }}
+      >
+        <div className="w-0.5 h-full bg-white shadow-[0_0_6px_rgba(255,255,255,0.6)]" />
+      </div>
     </div>
   );
 }
