@@ -23,7 +23,7 @@ STYLES: dict[str, CaptionStyle] = {
     "default": CaptionStyle(
         code="default",
         name="Default",
-        font_name="Mont",
+        font_name="Rubik Storm",
         font_size=72,
         bold=False,
         primary_color="&H00FFFFFF",   # white
