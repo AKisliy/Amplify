@@ -25,7 +25,7 @@ def test_add_captions_produces_video_with_same_duration(mock_transcribe, sample_
         format_type="base-ugc",
         media_files=["f.mp4"],
         add_captions=True,
-        captions_settings=CaptionsSettings(font="Mont-Regular", font_size=18),
+        captions_settings=CaptionsSettings(style_code="default"),
     )
     ctx = EditingContext(video_id="test", args=args, workspace=EditingWorkspace(OUTPUT_DIR))
     ctx.current_video_path = sample_video_with_audio
@@ -49,7 +49,7 @@ def test_add_captions_writes_srt(mock_transcribe, make_context, sample_video_wit
         format_type="base-ugc",
         media_files=["f.mp4"],
         add_captions=True,
-        captions_settings=CaptionsSettings(font="Mont-Regular", font_size=50),
+        captions_settings=CaptionsSettings(style_code="bold"),
     )
     ctx = make_context(args)
     ctx.current_video_path = sample_video_with_audio

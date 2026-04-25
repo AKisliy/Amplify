@@ -782,6 +782,8 @@ export default function TemplateCanvasPage() {
             projectId={projectId}
             autoListIds={autoListIds}
             onAutoListIdsChange={handleAutoListIdsChange}
+            nodes={nodes}
+            updateNodeConfig={updateNodeConfig}
           />
         </div>
       </div>
