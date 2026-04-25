@@ -17,10 +17,10 @@ import {
   GripVertical,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { mediaApi, detectMediaType } from "@/features/media/api";
-import { ambassadorApi } from "@/features/ambassadors/services/api";
+import { mediaApi } from "@/features/media/api";
 import type { ReferenceImage } from "@/features/ambassadors/types";
 import { AmplifyImage } from "@/features/media/components/AmplifyImage";
+import { ambassadorApi } from "@/features/ambassadors/services/api";
 
 // ---------------------------------------------------------------------------
 // Types

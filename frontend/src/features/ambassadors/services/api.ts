@@ -1,11 +1,5 @@
 import {
-  getAmbassador as getAmbassadorSdk,
-  createAmbassador as createAmbassadorSdk,
-  updateAmbassador as updateAmbassadorSdk,
-  deleteAmbassador as deleteAmbassadorSdk,
-  getAmbassadorImages as getAmbassadorImagesSdk,
-  addAmbassadorImage as addAmbassadorImageSdk,
-  deleteAmbassadorImage as deleteAmbassadorImageSdk,
+  getProjectAsset as getProjectAssetSdk,
   getUserProjects,
   getProject as getProjectSdk,
   createProject as createProjectSdk,
@@ -13,19 +7,32 @@ import {
   deleteProject as deleteProjectSdk,
   getProjectAssets as getProjectAssetsSdk,
 } from "@/lib/api/userservice";
+
+import {
+  addReferenceImageV1AmbassadorsAmbassadorIdImagesPost,
+  createAmbassadorV1AmbassadorsPost,
+  deleteAmbassadorV1AmbassadorsAmbassadorIdDelete,
+  deleteReferenceImageV1AmbassadorsAmbassadorIdImagesMediaIdDelete,
+  getAmbassadorByProjectV1AmbassadorsProjectProjectIdGet,
+  getAmbassadorV1AmbassadorsAmbassadorIdGet,
+  listReferenceImagesV1AmbassadorsAmbassadorIdImagesGet,
+  client as templateServiceClient,
+  updateAmbassadorV1AmbassadorsAmbassadorIdPatch
+} from "@/lib/api/template-service"
 // Publication records endpoint is not yet in the publisher spec — keep on axios
 import api from "@/lib/axios";
 import type {
-  Ambassador,
-  CreateAmbassadorDto,
-  UpdateAmbassadorDto,
   Project,
   CreateProjectDto,
   UpdateProjectDto,
-  ReferenceImage,
   ProjectAsset,
   PublicationRecord,
+  Ambassador,
+  ReferenceImage,
+  CreateAmbassadorDto,
+  UpdateAmbassadorDto,
 } from "../types";
+import { getApiPublicationsMediaPostsRecords, PublicationRecordResponseDto } from "@/lib/api/publisher";
 
 // ─── Mappers ───────────────────────────────────────────────────────────────────
 // The generated AmbassadorDto uses different field names than our domain type.
@@ -72,33 +79,46 @@ function mapReferenceImage(dto: any): ReferenceImage {
   };
 }
 
+function mapPublicationRecord(dto: PublicationRecordResponseDto): PublicationRecord {
+  return {
+    id: dto?.id ?? "",
+    status: dto?.status ?? "None",
+    provider: dto?.provider ?? "Unknown",
+    publicationType: dto?.publicationType ?? "Manual",
+    scheduledAt: dto?.scheduledAt ?? null,
+    publishedAt: dto?.publishedAt ?? null,
+    publicUrl: dto?.publicUrl ?? null,
+    createdAt: null, // Not provided by the API
+    socialAccount: {
+      id: dto?.socialAccount?.id ?? "",
+      socialProvider: dto?.socialAccount?.socialProvider ?? "Unknown",
+      username: dto?.socialAccount?.username ?? "",
+      avatarUrl: dto?.socialAccount?.avatarUrl ?? null,
+    },
+  }
+}
+
 // ─── Ambassador API ────────────────────────────────────────────────────────────
 
 export const ambassadorApi = {
   async getAmbassador(id: string): Promise<Ambassador> {
-    const { data } = await getAmbassadorSdk({ path: { id } });
+    const { data } = await getAmbassadorV1AmbassadorsAmbassadorIdGet({ path: { ambassador_id: id } });
     return mapAmbassador(data);
   },
 
   async getAmbassadorByProject(projectId: string): Promise<Ambassador> {
-    // The spec doesn't expose a "by project" endpoint  — fall back to the
-    // project DTO's ambassadorId and then fetch the ambassador directly.
-    const { data: project } = await getProjectSdk({ path: { id: projectId } });
-    if (!project?.ambassadorId) {
-      throw new Error(`No ambassador found for project ${projectId}`);
-    }
-    const { data } = await getAmbassadorSdk({ path: { id: project.ambassadorId } });
+    const { data } = await getAmbassadorByProjectV1AmbassadorsProjectProjectIdGet({ path: { project_id: projectId } });
     return mapAmbassador(data);
   },
 
   async createAmbassador(data: CreateAmbassadorDto): Promise<Ambassador> {
-    const { data: dto } = await createAmbassadorSdk({
+    const { data: dto } = await createAmbassadorV1AmbassadorsPost({
       body: {
         projectId: data.projectId,
         name: data.name,
-        biography: data.appearanceDescription ?? null,
         voiceDescription: data.voiceDescription ?? null,
-        // voiceId is not yet in the generated spec
+        voiceId: data.voiceId ?? null,
+        appearanceDescription: data.appearanceDescription ?? null,
       },
     });
     return mapAmbassador(dto);
@@ -106,20 +126,22 @@ export const ambassadorApi = {
 
   async updateAmbassador(payload: UpdateAmbassadorDto): Promise<Ambassador> {
     const { id, ...rest } = payload;
-    const { data: dto } = await updateAmbassadorSdk({
-      path: { id },
+    const { data: dto } = await updateAmbassadorV1AmbassadorsAmbassadorIdPatch({
+      path: { ambassador_id: id },
       body: {
         name: rest.name ?? undefined,
-        biography: rest.appearanceDescription ?? null,
+        appearanceDescription: rest.appearanceDescription ?? null,
         voiceDescription: rest.voiceDescription ?? null,
-        // voiceId is not yet in the generated UpdateAmbassadorCommand spec
+        voiceId: rest.voiceId ?? null,
+        // Note: We use `?? null` for optional fields to explicitly send null if they are set to null,
+        // and `undefined` if they are not included in the payload. This depends on how the backend API handles updates
       },
     });
     return mapAmbassador(dto);
   },
 
   async deleteAmbassador(id: string): Promise<void> {
-    await deleteAmbassadorSdk({ path: { id } });
+    await deleteAmbassadorV1AmbassadorsAmbassadorIdDelete({ path: { ambassador_id: id } });
   },
 
   async uploadMedia(file: File): Promise<string> {
@@ -129,7 +151,7 @@ export const ambassadorApi = {
   },
 
   async getReferenceImages(ambassadorId: string): Promise<ReferenceImage[]> {
-    const { data } = await getAmbassadorImagesSdk({ path: { id: ambassadorId } });
+    const { data } = await listReferenceImagesV1AmbassadorsAmbassadorIdImagesGet({ path: { ambassador_id: ambassadorId } });
     return (data ?? []).map(mapReferenceImage);
   },
 
@@ -138,21 +160,15 @@ export const ambassadorApi = {
     mediaId: string,
     imageType: "portrait" | "full_body" | "other" = "other"
   ): Promise<ReferenceImage> {
-    // Map local imageType to the generated ImageType enum ('Portrait' | 'FullBody' | 'Other')
-    const imageTypeMap: Record<string, "Portrait" | "FullBody" | "Other"> = {
-      portrait: "Portrait",
-      full_body: "FullBody",
-      other: "Other",
-    };
-    const { data: dto } = await addAmbassadorImageSdk({
-      path: { id: ambassadorId },
-      body: { mediaId, imageType: imageTypeMap[imageType] ?? "Other" },
+    const { data: dto } = await addReferenceImageV1AmbassadorsAmbassadorIdImagesPost({
+      path: { ambassador_id: ambassadorId },
+      body: { mediaId, imageType: imageType },
     });
     return mapReferenceImage(dto);
   },
 
   async deleteAmbassadorImage(ambassadorId: string, mediaId: string): Promise<void> {
-    await deleteAmbassadorImageSdk({ path: { id: ambassadorId, imageId: mediaId } });
+    await deleteReferenceImageV1AmbassadorsAmbassadorIdImagesMediaIdDelete({ path: { ambassador_id: ambassadorId, media_id: mediaId } });
   },
 };
 
@@ -210,16 +226,13 @@ export const projectApi = {
   },
 
   async getProjectAsset(assetId: string): Promise<ProjectAsset> {
-    // The spec does not have a single-asset endpoint; fall back to axios.
-    const response = await api.get<ProjectAsset>(`/project-assets/item/${assetId}`);
-    return response.data;
+    const response = await getProjectAssetSdk({ path: { id: assetId } });
+    return mapProjectAsset(response.data ?? {})
   },
 
   async getMediaPostRecords(assetId: string): Promise<PublicationRecord[]> {
     // This endpoint is not yet in the publisher OpenAPI spec — kept as manual call.
-    const response = await api.get<PublicationRecord[]>(
-      `/publications/media-posts/${assetId}/records`
-    );
-    return response.data;
+    const response = await getApiPublicationsMediaPostsRecords({ path: { mediaPostId: assetId } });
+    return (response.data ?? []).map(mapPublicationRecord)
   },
 };

@@ -52,7 +52,12 @@
               }
             }
           }
-        }
+        },
+        "security": [
+          {
+            "JWT": []
+          }
+        ]
       }
     },
     "/api/autolistentry/{id}": {
@@ -92,7 +97,12 @@
           "400": {
             "description": ""
           }
-        }
+        },
+        "security": [
+          {
+            "JWT": []
+          }
+        ]
       },
       "delete": {
         "tags": [
@@ -115,7 +125,12 @@
           "204": {
             "description": ""
           }
-        }
+        },
+        "security": [
+          {
+            "JWT": []
+          }
+        ]
       }
     },
     "/api/autolists": {
@@ -148,7 +163,12 @@
               }
             }
           }
-        }
+        },
+        "security": [
+          {
+            "JWT": []
+          }
+        ]
       },
       "get": {
         "tags": [
@@ -215,7 +235,12 @@
               }
             }
           }
-        }
+        },
+        "security": [
+          {
+            "JWT": []
+          }
+        ]
       },
       "put": {
         "tags": [
@@ -253,7 +278,12 @@
           "400": {
             "description": ""
           }
-        }
+        },
+        "security": [
+          {
+            "JWT": []
+          }
+        ]
       },
       "delete": {
         "tags": [
@@ -276,7 +306,12 @@
           "204": {
             "description": ""
           }
-        }
+        },
+        "security": [
+          {
+            "JWT": []
+          }
+        ]
       }
     },
     "/api/connections/{projectId}/auth-url": {
@@ -317,7 +352,12 @@
               }
             }
           }
-        }
+        },
+        "security": [
+          {
+            "JWT": []
+          }
+        ]
       }
     },
     "/api/connections": {
@@ -326,29 +366,28 @@
           "connections"
         ],
         "operationId": "Connection",
-        "parameters": [
-          {
-            "name": "state",
-            "in": "query",
-            "required": true,
-            "schema": {
-              "type": "string"
-            },
-            "x-position": 1
+        "requestBody": {
+          "x-name": "command",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateNewConnection"
+              }
+            }
           },
-          {
-            "name": "code",
-            "in": "query",
-            "required": true,
-            "schema": {
-              "type": "string"
-            },
-            "x-position": 2
-          }
-        ],
+          "required": true,
+          "x-position": 1
+        },
         "responses": {
           "200": {
-            "description": ""
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ConnectionResult"
+                }
+              }
+            }
           }
         }
       }
@@ -382,7 +421,12 @@
               }
             }
           }
-        }
+        },
+        "security": [
+          {
+            "JWT": []
+          }
+        ]
       }
     },
     "/api/connections/{projectId}/accounts/{accountId}": {
@@ -417,7 +461,12 @@
           "204": {
             "description": ""
           }
-        }
+        },
+        "security": [
+          {
+            "JWT": []
+          }
+        ]
       }
     },
     "/api/publications/video": {
@@ -451,6 +500,46 @@
           },
           "400": {
             "description": ""
+          }
+        },
+        "security": [
+          {
+            "JWT": []
+          }
+        ]
+      }
+    },
+    "/api/publications/media-posts/{mediaPostId}/records": {
+      "get": {
+        "tags": [
+          "publications"
+        ],
+        "operationId": "GetApiPublicationsMediaPostsRecords",
+        "parameters": [
+          {
+            "name": "mediaPostId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "guid"
+            },
+            "x-position": 1
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/PublicationRecordResponseDto"
+                  }
+                }
+              }
+            }
           }
         },
         "security": [
@@ -653,6 +742,12 @@
           },
           "name": {
             "type": "string"
+          },
+          "entries": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AutoListEntryDto"
+            }
           }
         }
       },
@@ -688,6 +783,31 @@
         "additionalProperties": false,
         "properties": {
           "authUrl": {
+            "type": "string"
+          }
+        }
+      },
+      "ConnectionResult": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "connectionId": {
+            "type": "string",
+            "format": "guid"
+          },
+          "redirectUrl": {
+            "type": "string"
+          }
+        }
+      },
+      "CreateNewConnection": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "state": {
+            "type": "string"
+          },
+          "code": {
             "type": "string"
           }
         }
@@ -770,6 +890,19 @@
           },
           "status": {
             "$ref": "#/components/schemas/PublicationStatus"
+          },
+          "scheduledAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "publishedAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "publicationType": {
+            "$ref": "#/components/schemas/PublicationType"
           },
           "publicUrl": {
             "type": "string",

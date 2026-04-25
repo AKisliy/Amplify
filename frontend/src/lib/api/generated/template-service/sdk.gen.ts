@@ -2,7 +2,7 @@
 
 import type { Client, Options as Options2, TDataShape } from './client';
 import { client } from './client.gen';
-import type { ClearHistoryV1EngineHistoryPostData, ClearHistoryV1EngineHistoryPostErrors, ClearHistoryV1EngineHistoryPostResponses, CreateLibraryTemplateInternalLibraryTemplatesPostData, CreateLibraryTemplateInternalLibraryTemplatesPostErrors, CreateLibraryTemplateInternalLibraryTemplatesPostResponses, CreateTemplateV1TemplatesPostData, CreateTemplateV1TemplatesPostErrors, CreateTemplateV1TemplatesPostResponses, DeleteLibraryTemplateInternalLibraryTemplatesTemplateIdDeleteData, DeleteLibraryTemplateInternalLibraryTemplatesTemplateIdDeleteErrors, DeleteLibraryTemplateInternalLibraryTemplatesTemplateIdDeleteResponses, DeleteTemplateV1TemplatesTemplateIdDeleteData, DeleteTemplateV1TemplatesTemplateIdDeleteErrors, DeleteTemplateV1TemplatesTemplateIdDeleteResponses, DuplicateFromLibraryV1TemplatesFromLibraryPostData, DuplicateFromLibraryV1TemplatesFromLibraryPostErrors, DuplicateFromLibraryV1TemplatesFromLibraryPostResponses, GetAllHistoryV1EngineHistoryGetData, GetAllHistoryV1EngineHistoryGetErrors, GetAllHistoryV1EngineHistoryGetResponses, GetAllNodesV1EngineNodesGetData, GetAllNodesV1EngineNodesGetResponses, GetLibraryTemplateV1LibraryTemplatesTemplateIdGetData, GetLibraryTemplateV1LibraryTemplatesTemplateIdGetErrors, GetLibraryTemplateV1LibraryTemplatesTemplateIdGetResponses, GetNodeV1EngineNodesNodeClassGetData, GetNodeV1EngineNodesNodeClassGetErrors, GetNodeV1EngineNodesNodeClassGetResponses, GetPromptHistoryV1EngineHistoryPromptIdGetData, GetPromptHistoryV1EngineHistoryPromptIdGetErrors, GetPromptHistoryV1EngineHistoryPromptIdGetResponses, GetTemplatesByProjectV1TemplatesProjectProjectIdGetData, GetTemplatesByProjectV1TemplatesProjectProjectIdGetErrors, GetTemplatesByProjectV1TemplatesProjectProjectIdGetResponses, GetTemplateV1TemplatesTemplateIdGetData, GetTemplateV1TemplatesTemplateIdGetErrors, GetTemplateV1TemplatesTemplateIdGetResponses, HealthCheckHealthGetData, HealthCheckHealthGetResponses, ListLibraryTemplatesV1LibraryTemplatesGetData, ListLibraryTemplatesV1LibraryTemplatesGetErrors, ListLibraryTemplatesV1LibraryTemplatesGetResponses, ListTemplatesV1TemplatesGetData, ListTemplatesV1TemplatesGetErrors, ListTemplatesV1TemplatesGetResponses, SubmitPromptV1EnginePromptPostData, SubmitPromptV1EnginePromptPostErrors, SubmitPromptV1EnginePromptPostResponses, UpdateLibraryTemplateInternalLibraryTemplatesTemplateIdPatchData, UpdateLibraryTemplateInternalLibraryTemplatesTemplateIdPatchErrors, UpdateLibraryTemplateInternalLibraryTemplatesTemplateIdPatchResponses, UpdateTemplateV1TemplatesTemplateIdPatchData, UpdateTemplateV1TemplatesTemplateIdPatchErrors, UpdateTemplateV1TemplatesTemplateIdPatchResponses } from './types.gen';
+import type { AddReferenceImageV1AmbassadorsAmbassadorIdImagesPostData, AddReferenceImageV1AmbassadorsAmbassadorIdImagesPostErrors, AddReferenceImageV1AmbassadorsAmbassadorIdImagesPostResponses, ClearHistoryV1EngineHistoryPostData, ClearHistoryV1EngineHistoryPostErrors, ClearHistoryV1EngineHistoryPostResponses, CompleteTaskV1ReviewTaskIdCompletePostData, CompleteTaskV1ReviewTaskIdCompletePostErrors, CompleteTaskV1ReviewTaskIdCompletePostResponses, CreateAmbassadorV1AmbassadorsPostData, CreateAmbassadorV1AmbassadorsPostErrors, CreateAmbassadorV1AmbassadorsPostResponses, CreateLibraryTemplateInternalLibraryTemplatesPostData, CreateLibraryTemplateInternalLibraryTemplatesPostErrors, CreateLibraryTemplateInternalLibraryTemplatesPostResponses, CreateTaskV1ReviewPostData, CreateTaskV1ReviewPostErrors, CreateTaskV1ReviewPostResponses, CreateTemplateV1TemplatesPostData, CreateTemplateV1TemplatesPostErrors, CreateTemplateV1TemplatesPostResponses, DeleteAmbassadorV1AmbassadorsAmbassadorIdDeleteData, DeleteAmbassadorV1AmbassadorsAmbassadorIdDeleteErrors, DeleteAmbassadorV1AmbassadorsAmbassadorIdDeleteResponses, DeleteLibraryTemplateInternalLibraryTemplatesTemplateIdDeleteData, DeleteLibraryTemplateInternalLibraryTemplatesTemplateIdDeleteErrors, DeleteLibraryTemplateInternalLibraryTemplatesTemplateIdDeleteResponses, DeleteReferenceImageV1AmbassadorsAmbassadorIdImagesMediaIdDeleteData, DeleteReferenceImageV1AmbassadorsAmbassadorIdImagesMediaIdDeleteErrors, DeleteReferenceImageV1AmbassadorsAmbassadorIdImagesMediaIdDeleteResponses, DeleteTemplateV1TemplatesTemplateIdDeleteData, DeleteTemplateV1TemplatesTemplateIdDeleteErrors, DeleteTemplateV1TemplatesTemplateIdDeleteResponses, DuplicateFromLibraryV1TemplatesFromLibraryPostData, DuplicateFromLibraryV1TemplatesFromLibraryPostErrors, DuplicateFromLibraryV1TemplatesFromLibraryPostResponses, GetAllHistoryV1EngineHistoryGetData, GetAllHistoryV1EngineHistoryGetErrors, GetAllHistoryV1EngineHistoryGetResponses, GetAllNodesV1EngineNodesGetData, GetAllNodesV1EngineNodesGetResponses, GetAmbassadorByProjectV1AmbassadorsProjectProjectIdGetData, GetAmbassadorByProjectV1AmbassadorsProjectProjectIdGetErrors, GetAmbassadorByProjectV1AmbassadorsProjectProjectIdGetResponses, GetAmbassadorV1AmbassadorsAmbassadorIdGetData, GetAmbassadorV1AmbassadorsAmbassadorIdGetErrors, GetAmbassadorV1AmbassadorsAmbassadorIdGetResponses, GetByJobAndNodeV1ReviewJobJobIdNodeNodeIdGetData, GetByJobAndNodeV1ReviewJobJobIdNodeNodeIdGetErrors, GetByJobAndNodeV1ReviewJobJobIdNodeNodeIdGetResponses, GetLibraryTemplateV1LibraryTemplatesTemplateIdGetData, GetLibraryTemplateV1LibraryTemplatesTemplateIdGetErrors, GetLibraryTemplateV1LibraryTemplatesTemplateIdGetResponses, GetNodeV1EngineNodesNodeClassGetData, GetNodeV1EngineNodesNodeClassGetErrors, GetNodeV1EngineNodesNodeClassGetResponses, GetPromptHistoryV1EngineHistoryPromptIdGetData, GetPromptHistoryV1EngineHistoryPromptIdGetErrors, GetPromptHistoryV1EngineHistoryPromptIdGetResponses, GetTaskV1ReviewTaskIdGetData, GetTaskV1ReviewTaskIdGetErrors, GetTaskV1ReviewTaskIdGetResponses, GetTemplatesByProjectV1TemplatesProjectProjectIdGetData, GetTemplatesByProjectV1TemplatesProjectProjectIdGetErrors, GetTemplatesByProjectV1TemplatesProjectProjectIdGetResponses, GetTemplateV1TemplatesTemplateIdGetData, GetTemplateV1TemplatesTemplateIdGetErrors, GetTemplateV1TemplatesTemplateIdGetResponses, HealthCheckHealthGetData, HealthCheckHealthGetResponses, ListLibraryTemplatesV1LibraryTemplatesGetData, ListLibraryTemplatesV1LibraryTemplatesGetErrors, ListLibraryTemplatesV1LibraryTemplatesGetResponses, ListReferenceImagesV1AmbassadorsAmbassadorIdImagesGetData, ListReferenceImagesV1AmbassadorsAmbassadorIdImagesGetErrors, ListReferenceImagesV1AmbassadorsAmbassadorIdImagesGetResponses, ListTemplatesV1TemplatesGetData, ListTemplatesV1TemplatesGetErrors, ListTemplatesV1TemplatesGetResponses, RunTemplateV1EngineRunPostData, RunTemplateV1EngineRunPostErrors, RunTemplateV1EngineRunPostResponses, SubmitPromptV1EnginePromptPostData, SubmitPromptV1EnginePromptPostErrors, SubmitPromptV1EnginePromptPostResponses, UpdateAmbassadorV1AmbassadorsAmbassadorIdPatchData, UpdateAmbassadorV1AmbassadorsAmbassadorIdPatchErrors, UpdateAmbassadorV1AmbassadorsAmbassadorIdPatchResponses, UpdateLibraryTemplateInternalLibraryTemplatesTemplateIdPatchData, UpdateLibraryTemplateInternalLibraryTemplatesTemplateIdPatchErrors, UpdateLibraryTemplateInternalLibraryTemplatesTemplateIdPatchResponses, UpdateTemplateV1TemplatesTemplateIdPatchData, UpdateTemplateV1TemplatesTemplateIdPatchErrors, UpdateTemplateV1TemplatesTemplateIdPatchResponses } from './types.gen';
 
 export type Options<TData extends TDataShape = TDataShape, ThrowOnError extends boolean = boolean> = Options2<TData, ThrowOnError> & {
     /**
@@ -25,6 +25,7 @@ export type Options<TData extends TDataShape = TDataShape, ThrowOnError extends 
  */
 export const listTemplatesV1TemplatesGet = <ThrowOnError extends boolean = false>(options?: Options<ListTemplatesV1TemplatesGetData, ThrowOnError>) => (options?.client ?? client).get<ListTemplatesV1TemplatesGetResponses, ListTemplatesV1TemplatesGetErrors, ThrowOnError>({
     responseType: 'json',
+    security: [{ scheme: 'bearer', type: 'http' }],
     url: '/v1/templates/',
     ...options
 });
@@ -37,6 +38,7 @@ export const listTemplatesV1TemplatesGet = <ThrowOnError extends boolean = false
  */
 export const createTemplateV1TemplatesPost = <ThrowOnError extends boolean = false>(options: Options<CreateTemplateV1TemplatesPostData, ThrowOnError>) => (options.client ?? client).post<CreateTemplateV1TemplatesPostResponses, CreateTemplateV1TemplatesPostErrors, ThrowOnError>({
     responseType: 'json',
+    security: [{ scheme: 'bearer', type: 'http' }],
     url: '/v1/templates/',
     ...options,
     headers: {
@@ -50,7 +52,11 @@ export const createTemplateV1TemplatesPost = <ThrowOnError extends boolean = fal
  *
  * Deletes a template and all its associated history (versions/jobs).
  */
-export const deleteTemplateV1TemplatesTemplateIdDelete = <ThrowOnError extends boolean = false>(options: Options<DeleteTemplateV1TemplatesTemplateIdDeleteData, ThrowOnError>) => (options.client ?? client).delete<DeleteTemplateV1TemplatesTemplateIdDeleteResponses, DeleteTemplateV1TemplatesTemplateIdDeleteErrors, ThrowOnError>({ url: '/v1/templates/{template_id}', ...options });
+export const deleteTemplateV1TemplatesTemplateIdDelete = <ThrowOnError extends boolean = false>(options: Options<DeleteTemplateV1TemplatesTemplateIdDeleteData, ThrowOnError>) => (options.client ?? client).delete<DeleteTemplateV1TemplatesTemplateIdDeleteResponses, DeleteTemplateV1TemplatesTemplateIdDeleteErrors, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/v1/templates/{template_id}',
+    ...options
+});
 
 /**
  * Get Template by ID
@@ -59,6 +65,7 @@ export const deleteTemplateV1TemplatesTemplateIdDelete = <ThrowOnError extends b
  */
 export const getTemplateV1TemplatesTemplateIdGet = <ThrowOnError extends boolean = false>(options: Options<GetTemplateV1TemplatesTemplateIdGetData, ThrowOnError>) => (options.client ?? client).get<GetTemplateV1TemplatesTemplateIdGetResponses, GetTemplateV1TemplatesTemplateIdGetErrors, ThrowOnError>({
     responseType: 'json',
+    security: [{ scheme: 'bearer', type: 'http' }],
     url: '/v1/templates/{template_id}',
     ...options
 });
@@ -71,6 +78,7 @@ export const getTemplateV1TemplatesTemplateIdGet = <ThrowOnError extends boolean
  */
 export const updateTemplateV1TemplatesTemplateIdPatch = <ThrowOnError extends boolean = false>(options: Options<UpdateTemplateV1TemplatesTemplateIdPatchData, ThrowOnError>) => (options.client ?? client).patch<UpdateTemplateV1TemplatesTemplateIdPatchResponses, UpdateTemplateV1TemplatesTemplateIdPatchErrors, ThrowOnError>({
     responseType: 'json',
+    security: [{ scheme: 'bearer', type: 'http' }],
     url: '/v1/templates/{template_id}',
     ...options,
     headers: {
@@ -86,6 +94,7 @@ export const updateTemplateV1TemplatesTemplateIdPatch = <ThrowOnError extends bo
  */
 export const getTemplatesByProjectV1TemplatesProjectProjectIdGet = <ThrowOnError extends boolean = false>(options: Options<GetTemplatesByProjectV1TemplatesProjectProjectIdGetData, ThrowOnError>) => (options.client ?? client).get<GetTemplatesByProjectV1TemplatesProjectProjectIdGetResponses, GetTemplatesByProjectV1TemplatesProjectProjectIdGetErrors, ThrowOnError>({
     responseType: 'json',
+    security: [{ scheme: 'bearer', type: 'http' }],
     url: '/v1/templates/project/{project_id}',
     ...options
 });
@@ -98,6 +107,7 @@ export const getTemplatesByProjectV1TemplatesProjectProjectIdGet = <ThrowOnError
  */
 export const duplicateFromLibraryV1TemplatesFromLibraryPost = <ThrowOnError extends boolean = false>(options: Options<DuplicateFromLibraryV1TemplatesFromLibraryPostData, ThrowOnError>) => (options.client ?? client).post<DuplicateFromLibraryV1TemplatesFromLibraryPostResponses, DuplicateFromLibraryV1TemplatesFromLibraryPostErrors, ThrowOnError>({
     responseType: 'json',
+    security: [{ scheme: 'bearer', type: 'http' }],
     url: '/v1/templates/from-library',
     ...options
 });
@@ -110,6 +120,7 @@ export const duplicateFromLibraryV1TemplatesFromLibraryPost = <ThrowOnError exte
  */
 export const getAllNodesV1EngineNodesGet = <ThrowOnError extends boolean = false>(options?: Options<GetAllNodesV1EngineNodesGetData, ThrowOnError>) => (options?.client ?? client).get<GetAllNodesV1EngineNodesGetResponses, unknown, ThrowOnError>({
     responseType: 'json',
+    security: [{ scheme: 'bearer', type: 'http' }],
     url: '/v1/engine/nodes',
     ...options
 });
@@ -122,8 +133,33 @@ export const getAllNodesV1EngineNodesGet = <ThrowOnError extends boolean = false
  */
 export const getNodeV1EngineNodesNodeClassGet = <ThrowOnError extends boolean = false>(options: Options<GetNodeV1EngineNodesNodeClassGetData, ThrowOnError>) => (options.client ?? client).get<GetNodeV1EngineNodesNodeClassGetResponses, GetNodeV1EngineNodesNodeClassGetErrors, ThrowOnError>({
     responseType: 'json',
+    security: [{ scheme: 'bearer', type: 'http' }],
     url: '/v1/engine/nodes/{node_class}',
     ...options
+});
+
+/**
+ * Run a template
+ *
+ * Snapshots the template's current graph into a TemplateVersion, creates a
+ * Job + NodeExecution records, submits the graph to ComfyUI, and streams
+ * node status updates via RabbitMQ → WebSocket Gateway → frontend.
+ * Returns immediately with job_id and prompt_id.
+ *
+ * Raises **422 Unprocessable Entity** if the graph contains validation
+ * errors (e.g. missing required inputs, type mismatches).  The response
+ * body includes a structured ``node_errors`` dict so the frontend can
+ * highlight the broken nodes.
+ */
+export const runTemplateV1EngineRunPost = <ThrowOnError extends boolean = false>(options: Options<RunTemplateV1EngineRunPostData, ThrowOnError>) => (options.client ?? client).post<RunTemplateV1EngineRunPostResponses, RunTemplateV1EngineRunPostErrors, ThrowOnError>({
+    responseType: 'json',
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/v1/engine/run',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
 });
 
 /**
@@ -135,6 +171,7 @@ export const getNodeV1EngineNodesNodeClassGet = <ThrowOnError extends boolean = 
  */
 export const submitPromptV1EnginePromptPost = <ThrowOnError extends boolean = false>(options: Options<SubmitPromptV1EnginePromptPostData, ThrowOnError>) => (options.client ?? client).post<SubmitPromptV1EnginePromptPostResponses, SubmitPromptV1EnginePromptPostErrors, ThrowOnError>({
     responseType: 'json',
+    security: [{ scheme: 'bearer', type: 'http' }],
     url: '/v1/engine/prompt',
     ...options,
     headers: {
@@ -151,6 +188,7 @@ export const submitPromptV1EnginePromptPost = <ThrowOnError extends boolean = fa
  */
 export const getPromptHistoryV1EngineHistoryPromptIdGet = <ThrowOnError extends boolean = false>(options: Options<GetPromptHistoryV1EngineHistoryPromptIdGetData, ThrowOnError>) => (options.client ?? client).get<GetPromptHistoryV1EngineHistoryPromptIdGetResponses, GetPromptHistoryV1EngineHistoryPromptIdGetErrors, ThrowOnError>({
     responseType: 'json',
+    security: [{ scheme: 'bearer', type: 'http' }],
     url: '/v1/engine/history/{prompt_id}',
     ...options
 });
@@ -163,6 +201,7 @@ export const getPromptHistoryV1EngineHistoryPromptIdGet = <ThrowOnError extends 
  */
 export const getAllHistoryV1EngineHistoryGet = <ThrowOnError extends boolean = false>(options?: Options<GetAllHistoryV1EngineHistoryGetData, ThrowOnError>) => (options?.client ?? client).get<GetAllHistoryV1EngineHistoryGetResponses, GetAllHistoryV1EngineHistoryGetErrors, ThrowOnError>({
     responseType: 'json',
+    security: [{ scheme: 'bearer', type: 'http' }],
     url: '/v1/engine/history',
     ...options
 });
@@ -175,6 +214,7 @@ export const getAllHistoryV1EngineHistoryGet = <ThrowOnError extends boolean = f
  */
 export const clearHistoryV1EngineHistoryPost = <ThrowOnError extends boolean = false>(options?: Options<ClearHistoryV1EngineHistoryPostData, ThrowOnError>) => (options?.client ?? client).post<ClearHistoryV1EngineHistoryPostResponses, ClearHistoryV1EngineHistoryPostErrors, ThrowOnError>({
     responseType: 'json',
+    security: [{ scheme: 'bearer', type: 'http' }],
     url: '/v1/engine/history',
     ...options,
     headers: {
@@ -202,6 +242,144 @@ export const listLibraryTemplatesV1LibraryTemplatesGet = <ThrowOnError extends b
 export const getLibraryTemplateV1LibraryTemplatesTemplateIdGet = <ThrowOnError extends boolean = false>(options: Options<GetLibraryTemplateV1LibraryTemplatesTemplateIdGetData, ThrowOnError>) => (options.client ?? client).get<GetLibraryTemplateV1LibraryTemplatesTemplateIdGetResponses, GetLibraryTemplateV1LibraryTemplatesTemplateIdGetErrors, ThrowOnError>({
     responseType: 'json',
     url: '/v1/library-templates/{template_id}',
+    ...options
+});
+
+/**
+ * Create ambassador for a project
+ */
+export const createAmbassadorV1AmbassadorsPost = <ThrowOnError extends boolean = false>(options: Options<CreateAmbassadorV1AmbassadorsPostData, ThrowOnError>) => (options.client ?? client).post<CreateAmbassadorV1AmbassadorsPostResponses, CreateAmbassadorV1AmbassadorsPostErrors, ThrowOnError>({
+    responseType: 'json',
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/v1/ambassadors/',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+/**
+ * Get ambassador by project ID
+ */
+export const getAmbassadorByProjectV1AmbassadorsProjectProjectIdGet = <ThrowOnError extends boolean = false>(options: Options<GetAmbassadorByProjectV1AmbassadorsProjectProjectIdGetData, ThrowOnError>) => (options.client ?? client).get<GetAmbassadorByProjectV1AmbassadorsProjectProjectIdGetResponses, GetAmbassadorByProjectV1AmbassadorsProjectProjectIdGetErrors, ThrowOnError>({
+    responseType: 'json',
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/v1/ambassadors/project/{project_id}',
+    ...options
+});
+
+/**
+ * Delete ambassador
+ */
+export const deleteAmbassadorV1AmbassadorsAmbassadorIdDelete = <ThrowOnError extends boolean = false>(options: Options<DeleteAmbassadorV1AmbassadorsAmbassadorIdDeleteData, ThrowOnError>) => (options.client ?? client).delete<DeleteAmbassadorV1AmbassadorsAmbassadorIdDeleteResponses, DeleteAmbassadorV1AmbassadorsAmbassadorIdDeleteErrors, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/v1/ambassadors/{ambassador_id}',
+    ...options
+});
+
+/**
+ * Get ambassador by ID
+ */
+export const getAmbassadorV1AmbassadorsAmbassadorIdGet = <ThrowOnError extends boolean = false>(options: Options<GetAmbassadorV1AmbassadorsAmbassadorIdGetData, ThrowOnError>) => (options.client ?? client).get<GetAmbassadorV1AmbassadorsAmbassadorIdGetResponses, GetAmbassadorV1AmbassadorsAmbassadorIdGetErrors, ThrowOnError>({
+    responseType: 'json',
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/v1/ambassadors/{ambassador_id}',
+    ...options
+});
+
+/**
+ * Update ambassador
+ */
+export const updateAmbassadorV1AmbassadorsAmbassadorIdPatch = <ThrowOnError extends boolean = false>(options: Options<UpdateAmbassadorV1AmbassadorsAmbassadorIdPatchData, ThrowOnError>) => (options.client ?? client).patch<UpdateAmbassadorV1AmbassadorsAmbassadorIdPatchResponses, UpdateAmbassadorV1AmbassadorsAmbassadorIdPatchErrors, ThrowOnError>({
+    responseType: 'json',
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/v1/ambassadors/{ambassador_id}',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+/**
+ * List reference images
+ */
+export const listReferenceImagesV1AmbassadorsAmbassadorIdImagesGet = <ThrowOnError extends boolean = false>(options: Options<ListReferenceImagesV1AmbassadorsAmbassadorIdImagesGetData, ThrowOnError>) => (options.client ?? client).get<ListReferenceImagesV1AmbassadorsAmbassadorIdImagesGetResponses, ListReferenceImagesV1AmbassadorsAmbassadorIdImagesGetErrors, ThrowOnError>({
+    responseType: 'json',
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/v1/ambassadors/{ambassador_id}/images',
+    ...options
+});
+
+/**
+ * Add a reference image
+ */
+export const addReferenceImageV1AmbassadorsAmbassadorIdImagesPost = <ThrowOnError extends boolean = false>(options: Options<AddReferenceImageV1AmbassadorsAmbassadorIdImagesPostData, ThrowOnError>) => (options.client ?? client).post<AddReferenceImageV1AmbassadorsAmbassadorIdImagesPostResponses, AddReferenceImageV1AmbassadorsAmbassadorIdImagesPostErrors, ThrowOnError>({
+    responseType: 'json',
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/v1/ambassadors/{ambassador_id}/images',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+/**
+ * Remove a reference image
+ */
+export const deleteReferenceImageV1AmbassadorsAmbassadorIdImagesMediaIdDelete = <ThrowOnError extends boolean = false>(options: Options<DeleteReferenceImageV1AmbassadorsAmbassadorIdImagesMediaIdDeleteData, ThrowOnError>) => (options.client ?? client).delete<DeleteReferenceImageV1AmbassadorsAmbassadorIdImagesMediaIdDeleteResponses, DeleteReferenceImageV1AmbassadorsAmbassadorIdImagesMediaIdDeleteErrors, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/v1/ambassadors/{ambassador_id}/images/{media_id}',
+    ...options
+});
+
+/**
+ * Create a manual review task (called by nodes)
+ */
+export const createTaskV1ReviewPost = <ThrowOnError extends boolean = false>(options: Options<CreateTaskV1ReviewPostData, ThrowOnError>) => (options.client ?? client).post<CreateTaskV1ReviewPostResponses, CreateTaskV1ReviewPostErrors, ThrowOnError>({
+    responseType: 'json',
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/v1/review/',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+/**
+ * Get review task status (polled by nodes)
+ */
+export const getTaskV1ReviewTaskIdGet = <ThrowOnError extends boolean = false>(options: Options<GetTaskV1ReviewTaskIdGetData, ThrowOnError>) => (options.client ?? client).get<GetTaskV1ReviewTaskIdGetResponses, GetTaskV1ReviewTaskIdGetErrors, ThrowOnError>({
+    responseType: 'json',
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/v1/review/{task_id}',
+    ...options
+});
+
+/**
+ * Submit user decision for a review task
+ */
+export const completeTaskV1ReviewTaskIdCompletePost = <ThrowOnError extends boolean = false>(options: Options<CompleteTaskV1ReviewTaskIdCompletePostData, ThrowOnError>) => (options.client ?? client).post<CompleteTaskV1ReviewTaskIdCompletePostResponses, CompleteTaskV1ReviewTaskIdCompletePostErrors, ThrowOnError>({
+    responseType: 'json',
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/v1/review/{task_id}/complete',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+/**
+ * Get the review task for a specific job + node (used by frontend to show UI)
+ */
+export const getByJobAndNodeV1ReviewJobJobIdNodeNodeIdGet = <ThrowOnError extends boolean = false>(options: Options<GetByJobAndNodeV1ReviewJobJobIdNodeNodeIdGetData, ThrowOnError>) => (options.client ?? client).get<GetByJobAndNodeV1ReviewJobJobIdNodeNodeIdGetResponses, GetByJobAndNodeV1ReviewJobJobIdNodeNodeIdGetErrors, ThrowOnError>({
+    responseType: 'json',
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/v1/review/job/{job_id}/node/{node_id}',
     ...options
 });
 
