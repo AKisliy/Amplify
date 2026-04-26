@@ -65,6 +65,17 @@ async def get_pending_by_job(job_id: UUID, service: Service):
     return await service.get_pending_by_job(job_id)
 
 
+@router.get(
+    "/job/{job_id}/node/{node_id}",
+    response_model=ManualReviewTaskResponse | None,
+    response_model_by_alias=True,
+    status_code=status.HTTP_200_OK,
+    summary="Get the review task for a specific job + node (used by frontend to show UI)",
+)
+async def get_by_job_and_node(job_id: UUID, node_id: UUID, service: Service):
+    return await service.get_by_job_and_node(job_id, node_id)
+
+
 @router.post(
     "/{task_id}/regenerate-shot",
     response_model=ManualReviewTaskResponse,
