@@ -97,7 +97,7 @@ function mapPublicationRecord(dto: PublicationRecordResponseDto): PublicationRec
     publishedAt: dto?.publishedAt ?? null,
     publicUrl: dto?.publicUrl ?? null,
     createdAt: null,
-    description: (dto as any)?.description ?? null,
+    description: dto?.description ?? null,
     socialAccount: {
       id: dto?.socialAccount?.id ?? "",
       socialProvider: dto?.socialAccount?.socialProvider ?? "Unknown",
