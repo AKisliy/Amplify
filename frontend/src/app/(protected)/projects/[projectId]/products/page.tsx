@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import {
   Plus, Package, Tag, Pencil, Trash2, X,
@@ -38,6 +38,8 @@ import {
   createBrandV1BrandsPost, updateBrandV1BrandsBrandIdPatch,
   deleteBrandV1BrandsBrandIdDelete,
 } from "@/lib/api/template-service";
+
+const BRAND_NONE = "__none__";
 
 const PLATFORMS: { value: string; label: string }[] = [
   { value: "tiktok-shop", label: "TikTok Shop" },
@@ -159,43 +161,40 @@ function BrandsSheet() {
 // Product editor sheet
 // ---------------------------------------------------------------------------
 
-interface ProductSheetProps {
-  product: ProductResponse | null; // null = create mode
+
+type ProductMutations = Pick<
+  ReturnType<typeof useProducts>,
+  "createProduct" | "updateProduct" | "addImage" | "removeImage" | "addStoreLink" | "removeStoreLink"
+>;
+
+function ProductSheet({
+  product, open, onClose, onCreated, brands,
+  createProduct, updateProduct, addImage, removeImage, addStoreLink, removeStoreLink,
+}: {
+  product: ProductResponse | null;
   open: boolean;
   onClose: () => void;
+  onCreated: (p: ProductResponse) => void;
   brands: BrandResponse[];
-}
-
-function ProductSheet({ product, open, onClose, brands }: ProductSheetProps) {
-  const { createProduct, updateProduct, addImage, removeImage, addStoreLink, removeStoreLink } = useProducts();
-
-  // Basic fields
-  const [name, setName] = useState(product?.name ?? "");
-  const [description, setDescription] = useState(product?.description ?? "");
-  const BRAND_NONE = "__none__";
-  const [brandId, setBrandId] = useState(product?.brand_id ?? BRAND_NONE);
+} & ProductMutations) {
+  const [name, setName] = useState("");
+  const [description, setDescription] = useState("");
+  const [brandId, setBrandId] = useState(BRAND_NONE);
   const [isSaving, setIsSaving] = useState(false);
-
-  // New link form
   const [newPlatform, setNewPlatform] = useState("");
   const [newUrl, setNewUrl] = useState("");
   const [isAddingLink, setIsAddingLink] = useState(false);
-
-  // Image upload
   const [isUploadingImage, setIsUploadingImage] = useState(false);
 
-  // Sync fields when product changes
-  const resetFields = (p: ProductResponse | null) => {
-    setName(p?.name ?? "");
-    setDescription(p?.description ?? "");
-    setBrandId(p?.brand_id ?? BRAND_NONE);
+  // Sync fields whenever the sheet opens or switches to a different product
+  useEffect(() => {
+    if (!open) return;
+    setName(product?.name ?? "");
+    setDescription(product?.description ?? "");
+    setBrandId(product?.brand_id ?? BRAND_NONE);
     setNewPlatform("");
     setNewUrl("");
-  };
-
-  const handleOpenChange = (o: boolean) => {
-    if (!o) { onClose(); }
-  };
+  }, [open, product]);
 
   const handleSaveBasic = async () => {
     if (!name.trim()) return;
@@ -209,8 +208,8 @@ function ProductSheet({ product, open, onClose, brands }: ProductSheetProps) {
       if (product) {
         await updateProduct(product.id, payload);
       } else {
-        await createProduct(payload as any);
-        onClose();
+        const created = await createProduct(payload as any);
+        onCreated(created); // keep sheet open in edit mode
       }
     } catch (err) {
       console.error(err);
@@ -249,47 +248,16 @@ function ProductSheet({ product, open, onClose, brands }: ProductSheetProps) {
   const isEditMode = !!product;
 
   return (
-    <Sheet open={open} onOpenChange={handleOpenChange}>
+    <Sheet open={open} onOpenChange={(o) => { if (!o) onClose(); }}>
       <SheetContent className="w-[480px] sm:w-[520px] flex flex-col gap-0 p-0 overflow-y-auto">
         <SheetHeader className="px-6 py-4 border-b border-border/50 shrink-0">
-          <SheetTitle>{isEditMode ? "Edit Product" : "New Product"}</SheetTitle>
+          <SheetTitle>{isEditMode ? product.name : "New Product"}</SheetTitle>
         </SheetHeader>
 
         <div className="flex-1 overflow-y-auto px-6 py-5 space-y-6">
-          {/* Basic info */}
-          <div className="space-y-4">
-            <div className="space-y-1.5">
-              <Label>Name</Label>
-              <Input placeholder="e.g. Wireless Headphones" value={name} onChange={e => setName(e.target.value)} />
-            </div>
-            <div className="space-y-1.5">
-              <Label>Description</Label>
-              <Textarea placeholder="Product description — will be injected into generation prompts." value={description} onChange={e => setDescription(e.target.value)} rows={3} />
-            </div>
-            <div className="space-y-1.5">
-              <Label>Brand</Label>
-              <Select value={brandId} onValueChange={setBrandId}>
-                <SelectTrigger>
-                  <SelectValue placeholder="No brand" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value={BRAND_NONE}>No brand</SelectItem>
-                  {brands.map(b => <SelectItem key={b.id} value={b.id}>{b.name}</SelectItem>)}
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-
-          <div className="flex justify-end">
-            <Button onClick={handleSaveBasic} disabled={!name.trim() || isSaving} size="sm">
-              {isSaving ? "Saving…" : isEditMode ? "Save changes" : "Create"}
-            </Button>
-          </div>
-
-          {/* Images — only in edit mode */}
+          {/* Images — top in edit mode */}
           {isEditMode && (
             <>
-              <Separator />
               <div className="space-y-3">
                 <div className="flex items-center justify-between">
                   <Label className="text-sm font-medium">Images</Label>
@@ -326,8 +294,43 @@ function ProductSheet({ product, open, onClose, brands }: ProductSheetProps) {
                   </div>
                 )}
               </div>
+              <Separator />
+            </>
+          )}
 
-              {/* Store links */}
+          {/* Basic info */}
+          <div className="space-y-4">
+            <div className="space-y-1.5">
+              <Label>Name</Label>
+              <Input placeholder="e.g. Wireless Headphones" value={name} onChange={e => setName(e.target.value)} />
+            </div>
+            <div className="space-y-1.5">
+              <Label>Description</Label>
+              <Textarea placeholder="Product description — will be injected into generation prompts." value={description} onChange={e => setDescription(e.target.value)} rows={3} />
+            </div>
+            <div className="space-y-1.5">
+              <Label>Brand</Label>
+              <Select value={brandId} onValueChange={setBrandId}>
+                <SelectTrigger>
+                  <SelectValue placeholder="No brand" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value={BRAND_NONE}>No brand</SelectItem>
+                  {brands.map(b => <SelectItem key={b.id} value={b.id}>{b.name}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+
+          <div className="flex justify-end">
+            <Button onClick={handleSaveBasic} disabled={!name.trim() || isSaving} size="sm">
+              {isSaving ? "Saving…" : isEditMode ? "Save changes" : "Create"}
+            </Button>
+          </div>
+
+          {/* Store links — only in edit mode */}
+          {isEditMode && (
+            <>
               <Separator />
               <div className="space-y-3">
                 <Label className="text-sm font-medium">Store links</Label>
@@ -452,7 +455,11 @@ function ProductCard({
 // ---------------------------------------------------------------------------
 
 export default function ProductsPage() {
-  const { products, isLoading, deleteProduct } = useProducts();
+  const {
+    products, isLoading,
+    createProduct, updateProduct, deleteProduct,
+    addImage, removeImage, addStoreLink, removeStoreLink,
+  } = useProducts();
   const { brands } = useBrands();
 
   const [sheetOpen, setSheetOpen] = useState(false);
@@ -532,7 +539,14 @@ export default function ProductsPage() {
         product={editingProduct}
         open={sheetOpen}
         onClose={() => setSheetOpen(false)}
+        onCreated={(p) => setEditingProduct(p)}
         brands={brands}
+        createProduct={createProduct}
+        updateProduct={updateProduct}
+        addImage={addImage}
+        removeImage={removeImage}
+        addStoreLink={addStoreLink}
+        removeStoreLink={removeStoreLink}
       />
 
       {/* Delete confirmation */}
