@@ -61,6 +61,7 @@ export type AutoListsVm = {
 export type AutoListDto = {
     id?: string;
     name?: string;
+    entries?: Array<AutoListEntryDto>;
 };
 
 export type UpdateAutoListCommand = {
@@ -72,6 +73,16 @@ export type UpdateAutoListCommand = {
 
 export type AuthUrlResponse = {
     authUrl?: string;
+};
+
+export type ConnectionResult = {
+    connectionId?: string;
+    redirectUrl?: string;
+};
+
+export type CreateNewConnection = {
+    state?: string;
+    code?: string;
 };
 
 export type ConnectionsVm = {
@@ -95,6 +106,9 @@ export type PublicationRecordResponseDto = {
     id?: string;
     provider?: SocialProvider;
     status?: PublicationStatus;
+    scheduledAt?: string | null;
+    publishedAt?: string | null;
+    publicationType?: PublicationType;
     publicUrl?: string | null;
     socialAccount?: FullSocialAccountDto;
 };
@@ -263,18 +277,17 @@ export type GetApiConnectionsAuthUrlResponses = {
 export type GetApiConnectionsAuthUrlResponse = GetApiConnectionsAuthUrlResponses[keyof GetApiConnectionsAuthUrlResponses];
 
 export type ConnectionData = {
-    body?: never;
+    body: CreateNewConnection;
     path?: never;
-    query: {
-        state: string;
-        code: string;
-    };
+    query?: never;
     url: '/api/connections';
 };
 
 export type ConnectionResponses = {
-    200: unknown;
+    200: ConnectionResult;
 };
+
+export type ConnectionResponse = ConnectionResponses[keyof ConnectionResponses];
 
 export type GetApiConnectionsData = {
     body?: never;
@@ -323,3 +336,18 @@ export type PostApiPublicationsVideoResponses = {
 };
 
 export type PostApiPublicationsVideoResponse = PostApiPublicationsVideoResponses[keyof PostApiPublicationsVideoResponses];
+
+export type GetApiPublicationsMediaPostsRecordsData = {
+    body?: never;
+    path: {
+        mediaPostId: string;
+    };
+    query?: never;
+    url: '/api/publications/media-posts/{mediaPostId}/records';
+};
+
+export type GetApiPublicationsMediaPostsRecordsResponses = {
+    200: Array<PublicationRecordResponseDto>;
+};
+
+export type GetApiPublicationsMediaPostsRecordsResponse = GetApiPublicationsMediaPostsRecordsResponses[keyof GetApiPublicationsMediaPostsRecordsResponses];

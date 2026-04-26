@@ -4,45 +4,6 @@ export type ClientOptions = {
     baseURL: `${string}://${string}/userservice` | (string & {});
 };
 
-export type CreateAmbassadorCommand = {
-    name?: string;
-    biography?: string | null;
-    behavioralPatterns?: string | null;
-    voiceDescription?: string | null;
-    projectId?: string;
-};
-
-export type UpdateAmbassadorCommand = {
-    id?: string;
-    name?: string;
-    biography?: string | null;
-    behavioralPatterns?: string | null;
-    voiceDescription?: string | null;
-    profileImageId?: string | null;
-};
-
-export type AmbassadorDto = {
-    id?: string;
-    name?: string;
-    biography?: string | null;
-    behavioralPatterns?: string | null;
-    profileImageUrl?: string | null;
-    voiceDescription?: string | null;
-};
-
-export type AmbassadorImageDto = {
-    imageUrl?: string | null;
-    imageType?: ImageType;
-};
-
-export type ImageType = 'Other' | 'FullBody' | 'Portrait';
-
-export type AddAmbassadorImageCommand = {
-    ambassadorId?: string;
-    mediaId?: string;
-    imageType?: ImageType;
-};
-
 export type RegisterUserCommand = {
     email?: string;
     password?: string;
@@ -79,9 +40,15 @@ export type CursorPagedListOfProjectAssetDto = {
 };
 
 export type ProjectAssetDto = {
+    id?: string;
+    mediaId?: string;
+    templateId?: string | null;
+    mediaType?: AssetMediaType;
     mediaUrl?: string;
     createdAt?: string;
 };
+
+export type AssetMediaType = 'Image' | 'Video';
 
 export type AssetLifetime = 'Intermediate' | 'Permanent';
 
@@ -103,124 +70,7 @@ export type ProjectDto = {
     name?: string;
     description?: string | null;
     photo?: string | null;
-    ambassadorId?: string | null;
 };
-
-export type CreateAmbassadorData = {
-    body: CreateAmbassadorCommand;
-    path?: never;
-    query?: never;
-    url: '/api/ambassadors';
-};
-
-export type CreateAmbassadorResponses = {
-    201: string;
-};
-
-export type CreateAmbassadorResponse = CreateAmbassadorResponses[keyof CreateAmbassadorResponses];
-
-export type DeleteAmbassadorData = {
-    body?: never;
-    path: {
-        id: string;
-    };
-    query?: never;
-    url: '/api/ambassadors/{id}';
-};
-
-export type DeleteAmbassadorResponses = {
-    204: void;
-};
-
-export type DeleteAmbassadorResponse = DeleteAmbassadorResponses[keyof DeleteAmbassadorResponses];
-
-export type GetAmbassadorData = {
-    body?: never;
-    path: {
-        id: string;
-    };
-    query?: never;
-    url: '/api/ambassadors/{id}';
-};
-
-export type GetAmbassadorResponses = {
-    200: AmbassadorDto;
-};
-
-export type GetAmbassadorResponse = GetAmbassadorResponses[keyof GetAmbassadorResponses];
-
-export type UpdateAmbassadorData = {
-    body: UpdateAmbassadorCommand;
-    path: {
-        id: string;
-    };
-    query?: never;
-    url: '/api/ambassadors/{id}';
-};
-
-export type UpdateAmbassadorErrors = {
-    400: unknown;
-};
-
-export type UpdateAmbassadorResponses = {
-    204: void;
-};
-
-export type UpdateAmbassadorResponse = UpdateAmbassadorResponses[keyof UpdateAmbassadorResponses];
-
-export type GetAmbassadorImagesData = {
-    body?: never;
-    path: {
-        id: string;
-    };
-    query?: never;
-    url: '/api/ambassadors/{id}/images';
-};
-
-export type GetAmbassadorImagesResponses = {
-    200: Array<AmbassadorImageDto>;
-};
-
-export type GetAmbassadorImagesResponse = GetAmbassadorImagesResponses[keyof GetAmbassadorImagesResponses];
-
-export type AddAmbassadorImageData = {
-    body: AddAmbassadorImageCommand;
-    path: {
-        id: string;
-    };
-    query?: never;
-    url: '/api/ambassadors/{id}/images';
-};
-
-export type AddAmbassadorImageErrors = {
-    400: unknown;
-};
-
-export type AddAmbassadorImageResponses = {
-    201: string;
-};
-
-export type AddAmbassadorImageResponse = AddAmbassadorImageResponses[keyof AddAmbassadorImageResponses];
-
-export type DeleteAmbassadorImageData = {
-    body?: never;
-    path: {
-        id: string;
-        imageId: string;
-    };
-    query?: never;
-    url: '/api/ambassadors/{id}/images/{imageId}';
-};
-
-export type DeleteAmbassadorImageErrors = {
-    404: unknown;
-};
-
-export type DeleteAmbassadorImageResponses = {
-    204: void;
-};
-
-export type DeleteAmbassadorImageResponse = DeleteAmbassadorImageResponses[keyof DeleteAmbassadorImageResponses];
 
 export type PostApiAuthRegisterData = {
     body: RegisterUserCommand;
@@ -346,6 +196,21 @@ export type GetProjectAssetsResponses = {
 };
 
 export type GetProjectAssetsResponse = GetProjectAssetsResponses[keyof GetProjectAssetsResponses];
+
+export type GetProjectAssetData = {
+    body?: never;
+    path: {
+        id: string;
+    };
+    query?: never;
+    url: '/api/project-assets/item/{id}';
+};
+
+export type GetProjectAssetResponses = {
+    200: ProjectAssetDto;
+};
+
+export type GetProjectAssetResponse = GetProjectAssetResponses[keyof GetProjectAssetResponses];
 
 export type GetUserProjectsData = {
     body?: never;

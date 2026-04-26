@@ -2,7 +2,7 @@
 
 import type { Client, Options as Options2, TDataShape } from './client';
 import { client } from './client.gen';
-import type { ConnectionData, ConnectionResponses, CreateAutoListData, CreateAutoListEntryData, CreateAutoListEntryResponses, CreateAutoListResponses, DeleteApiConnectionsAccountsData, DeleteApiConnectionsAccountsResponses, DeleteAutoListData, DeleteAutoListEntryData, DeleteAutoListEntryResponses, DeleteAutoListResponses, GetApiConnectionsAuthUrlData, GetApiConnectionsAuthUrlResponses, GetApiConnectionsData, GetApiConnectionsResponses, GetAutoListData, GetAutoListResponses, GetAutoListsForProjectData, GetAutoListsForProjectResponses, GetData, GetResponses, PostApiPublicationsVideoData, PostApiPublicationsVideoErrors, PostApiPublicationsVideoResponses, UpdateAutoListData, UpdateAutoListEntryData, UpdateAutoListEntryErrors, UpdateAutoListEntryResponses, UpdateAutoListErrors, UpdateAutoListResponses } from './types.gen';
+import type { ConnectionData, ConnectionResponses, CreateAutoListData, CreateAutoListEntryData, CreateAutoListEntryResponses, CreateAutoListResponses, DeleteApiConnectionsAccountsData, DeleteApiConnectionsAccountsResponses, DeleteAutoListData, DeleteAutoListEntryData, DeleteAutoListEntryResponses, DeleteAutoListResponses, GetApiConnectionsAuthUrlData, GetApiConnectionsAuthUrlResponses, GetApiConnectionsData, GetApiConnectionsResponses, GetApiPublicationsMediaPostsRecordsData, GetApiPublicationsMediaPostsRecordsResponses, GetAutoListData, GetAutoListResponses, GetAutoListsForProjectData, GetAutoListsForProjectResponses, GetData, GetResponses, PostApiPublicationsVideoData, PostApiPublicationsVideoErrors, PostApiPublicationsVideoResponses, UpdateAutoListData, UpdateAutoListEntryData, UpdateAutoListEntryErrors, UpdateAutoListEntryResponses, UpdateAutoListErrors, UpdateAutoListResponses } from './types.gen';
 
 export type Options<TData extends TDataShape = TDataShape, ThrowOnError extends boolean = boolean> = Options2<TData, ThrowOnError> & {
     /**
@@ -100,9 +100,14 @@ export const getApiConnectionsAuthUrl = <ThrowOnError extends boolean = false>(o
 });
 
 export const connection = <ThrowOnError extends boolean = false>(options: Options<ConnectionData, ThrowOnError>) => (options.client ?? client).post<ConnectionResponses, unknown, ThrowOnError>({
+    responseType: 'json',
     security: [{ name: 'Authorization', type: 'apiKey' }],
     url: '/api/connections',
-    ...options
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
 });
 
 export const getApiConnections = <ThrowOnError extends boolean = false>(options: Options<GetApiConnectionsData, ThrowOnError>) => (options.client ?? client).get<GetApiConnectionsResponses, unknown, ThrowOnError>({
@@ -127,4 +132,11 @@ export const postApiPublicationsVideo = <ThrowOnError extends boolean = false>(o
         'Content-Type': 'application/json',
         ...options.headers
     }
+});
+
+export const getApiPublicationsMediaPostsRecords = <ThrowOnError extends boolean = false>(options: Options<GetApiPublicationsMediaPostsRecordsData, ThrowOnError>) => (options.client ?? client).get<GetApiPublicationsMediaPostsRecordsResponses, unknown, ThrowOnError>({
+    responseType: 'json',
+    security: [{ name: 'Authorization', type: 'apiKey' }],
+    url: '/api/publications/media-posts/{mediaPostId}/records',
+    ...options
 });

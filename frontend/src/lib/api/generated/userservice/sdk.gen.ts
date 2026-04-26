@@ -2,7 +2,7 @@
 
 import type { Client, Options as Options2, TDataShape } from './client';
 import { client } from './client.gen';
-import type { AddAmbassadorImageData, AddAmbassadorImageErrors, AddAmbassadorImageResponses, CreateAmbassadorData, CreateAmbassadorResponses, CreateProjectData, CreateProjectResponses, DeleteAmbassadorData, DeleteAmbassadorImageData, DeleteAmbassadorImageErrors, DeleteAmbassadorImageResponses, DeleteAmbassadorResponses, DeleteProjectData, DeleteProjectResponses, GetAmbassadorData, GetAmbassadorImagesData, GetAmbassadorImagesResponses, GetAmbassadorResponses, GetApiAuthConfirmEmailData, GetApiAuthConfirmEmailResponses, GetApiAuthWellKnownOpenidConfigurationData, GetApiAuthWellKnownOpenidConfigurationResponses, GetProjectAssetsData, GetProjectAssetsResponses, GetProjectData, GetProjectResponses, GetUserProjectsData, GetUserProjectsResponses, JwksData, JwksResponses, LoginUserData, LoginUserResponses, PostApiAuthForgotPasswordData, PostApiAuthForgotPasswordResponses, PostApiAuthLogoutData, PostApiAuthLogoutResponses, PostApiAuthRegisterData, PostApiAuthRegisterResponses, PostApiAuthResetPasswordData, PostApiAuthResetPasswordResponses, RefreshTokenData, RefreshTokenResponses, UpdateAmbassadorData, UpdateAmbassadorErrors, UpdateAmbassadorResponses, UpdateProjectData, UpdateProjectErrors, UpdateProjectResponses } from './types.gen';
+import type { CreateProjectData, CreateProjectResponses, DeleteProjectData, DeleteProjectResponses, GetApiAuthConfirmEmailData, GetApiAuthConfirmEmailResponses, GetApiAuthWellKnownOpenidConfigurationData, GetApiAuthWellKnownOpenidConfigurationResponses, GetProjectAssetData, GetProjectAssetResponses, GetProjectAssetsData, GetProjectAssetsResponses, GetProjectData, GetProjectResponses, GetUserProjectsData, GetUserProjectsResponses, JwksData, JwksResponses, LoginUserData, LoginUserResponses, PostApiAuthForgotPasswordData, PostApiAuthForgotPasswordResponses, PostApiAuthLogoutData, PostApiAuthLogoutResponses, PostApiAuthRegisterData, PostApiAuthRegisterResponses, PostApiAuthResetPasswordData, PostApiAuthResetPasswordResponses, RefreshTokenData, RefreshTokenResponses, UpdateProjectData, UpdateProjectErrors, UpdateProjectResponses } from './types.gen';
 
 export type Options<TData extends TDataShape = TDataShape, ThrowOnError extends boolean = boolean> = Options2<TData, ThrowOnError> & {
     /**
@@ -17,64 +17,6 @@ export type Options<TData extends TDataShape = TDataShape, ThrowOnError extends 
      */
     meta?: Record<string, unknown>;
 };
-
-export const createAmbassador = <ThrowOnError extends boolean = false>(options: Options<CreateAmbassadorData, ThrowOnError>) => (options.client ?? client).post<CreateAmbassadorResponses, unknown, ThrowOnError>({
-    responseType: 'json',
-    security: [{ name: 'Authorization', type: 'apiKey' }],
-    url: '/api/ambassadors',
-    ...options,
-    headers: {
-        'Content-Type': 'application/json',
-        ...options.headers
-    }
-});
-
-export const deleteAmbassador = <ThrowOnError extends boolean = false>(options: Options<DeleteAmbassadorData, ThrowOnError>) => (options.client ?? client).delete<DeleteAmbassadorResponses, unknown, ThrowOnError>({
-    security: [{ name: 'Authorization', type: 'apiKey' }],
-    url: '/api/ambassadors/{id}',
-    ...options
-});
-
-export const getAmbassador = <ThrowOnError extends boolean = false>(options: Options<GetAmbassadorData, ThrowOnError>) => (options.client ?? client).get<GetAmbassadorResponses, unknown, ThrowOnError>({
-    responseType: 'json',
-    security: [{ name: 'Authorization', type: 'apiKey' }],
-    url: '/api/ambassadors/{id}',
-    ...options
-});
-
-export const updateAmbassador = <ThrowOnError extends boolean = false>(options: Options<UpdateAmbassadorData, ThrowOnError>) => (options.client ?? client).put<UpdateAmbassadorResponses, UpdateAmbassadorErrors, ThrowOnError>({
-    security: [{ name: 'Authorization', type: 'apiKey' }],
-    url: '/api/ambassadors/{id}',
-    ...options,
-    headers: {
-        'Content-Type': 'application/json',
-        ...options.headers
-    }
-});
-
-export const getAmbassadorImages = <ThrowOnError extends boolean = false>(options: Options<GetAmbassadorImagesData, ThrowOnError>) => (options.client ?? client).get<GetAmbassadorImagesResponses, unknown, ThrowOnError>({
-    responseType: 'json',
-    security: [{ name: 'Authorization', type: 'apiKey' }],
-    url: '/api/ambassadors/{id}/images',
-    ...options
-});
-
-export const addAmbassadorImage = <ThrowOnError extends boolean = false>(options: Options<AddAmbassadorImageData, ThrowOnError>) => (options.client ?? client).post<AddAmbassadorImageResponses, AddAmbassadorImageErrors, ThrowOnError>({
-    responseType: 'json',
-    security: [{ name: 'Authorization', type: 'apiKey' }],
-    url: '/api/ambassadors/{id}/images',
-    ...options,
-    headers: {
-        'Content-Type': 'application/json',
-        ...options.headers
-    }
-});
-
-export const deleteAmbassadorImage = <ThrowOnError extends boolean = false>(options: Options<DeleteAmbassadorImageData, ThrowOnError>) => (options.client ?? client).delete<DeleteAmbassadorImageResponses, DeleteAmbassadorImageErrors, ThrowOnError>({
-    security: [{ name: 'Authorization', type: 'apiKey' }],
-    url: '/api/ambassadors/{id}/images/{imageId}',
-    ...options
-});
 
 export const postApiAuthRegister = <ThrowOnError extends boolean = false>(options: Options<PostApiAuthRegisterData, ThrowOnError>) => (options.client ?? client).post<PostApiAuthRegisterResponses, unknown, ThrowOnError>({
     security: [{ name: 'Authorization', type: 'apiKey' }],
@@ -156,6 +98,13 @@ export const getProjectAssets = <ThrowOnError extends boolean = false>(options: 
     responseType: 'json',
     security: [{ name: 'Authorization', type: 'apiKey' }],
     url: '/api/project-assets/{id}',
+    ...options
+});
+
+export const getProjectAsset = <ThrowOnError extends boolean = false>(options: Options<GetProjectAssetData, ThrowOnError>) => (options.client ?? client).get<GetProjectAssetResponses, unknown, ThrowOnError>({
+    responseType: 'json',
+    security: [{ name: 'Authorization', type: 'apiKey' }],
+    url: '/api/project-assets/item/{id}',
     ...options
 });
 

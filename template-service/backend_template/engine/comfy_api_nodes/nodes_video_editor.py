@@ -26,8 +26,9 @@ class TaskStatusResponse(BaseModel):
 # --- Request models ---
 
 class CaptionsSettings(BaseModel):
-    font: str
-    font_size: int
+    style_code: str = "default"
+    position_x: float = 0.5
+    position_y: float = 0.83
 
 
 class MusicSettings(BaseModel):
@@ -93,21 +94,29 @@ class BaseUGCEditingNode(IO.ComfyNode):
                     tooltip="Add auto-generated captions to the video",
                 ),
                 IO.String.Input(
-                    "caption_font",
-                    default="Arial",
+                    "caption_style_code",
+                    default="default",
                     optional=True,
                     advanced=True,
-                    tooltip="Font name for captions",
+                    tooltip="Caption style code from the captions library",
                 ),
-                IO.Int.Input(
-                    "caption_font_size",
-                    default=48,
-                    min=8,
-                    max=200,
-                    display_mode=IO.NumberDisplay.number,
+                IO.Float.Input(
+                    "caption_position_x",
+                    default=0.5,
+                    min=0.0,
+                    max=1.0,
                     optional=True,
                     advanced=True,
-                    tooltip="Font size for captions",
+                    tooltip="Horizontal caption position (0=left, 0.5=centre, 1=right)",
+                ),
+                IO.Float.Input(
+                    "caption_position_y",
+                    default=0.83,
+                    min=0.0,
+                    max=1.0,
+                    optional=True,
+                    advanced=True,
+                    tooltip="Vertical caption position (0=top, 1=bottom)",
                 ),
                 IO.Boolean.Input(
                     "add_music",
@@ -143,8 +152,9 @@ class BaseUGCEditingNode(IO.ComfyNode):
         media_files: dict[str, list[str] | str],
         remove_silence: list[bool] | None = None,
         add_captions: list[bool] | None = None,
-        caption_font: list[str] | None = None,
-        caption_font_size: list[int] | None = None,
+        caption_style_code: list[str] | None = None,
+        caption_position_x: list[float] | None = None,
+        caption_position_y: list[float] | None = None,
         add_music: list[bool] | None = None,
         music_id: list[str | None] | None = None,
         music_volume: list[int] | None = None,
@@ -163,8 +173,9 @@ class BaseUGCEditingNode(IO.ComfyNode):
         # Scalar inputs arrive as single-element lists; unwrap them.
         _remove_silence = remove_silence[0] if remove_silence else False
         _add_captions = add_captions[0] if add_captions else False
-        _caption_font = caption_font[0] if caption_font else "Arial"
-        _caption_font_size = caption_font_size[0] if caption_font_size else 48
+        _caption_style_code = caption_style_code[0] if caption_style_code else "default"
+        _caption_position_x = caption_position_x[0] if caption_position_x else 0.5
+        _caption_position_y = caption_position_y[0] if caption_position_y else 0.83
         _add_music = add_music[0] if add_music else False
         _music_id = music_id[0] if music_id else None
         _music_volume = music_volume[0] if music_volume else 50
@@ -198,8 +209,9 @@ class BaseUGCEditingNode(IO.ComfyNode):
                 remove_silence=_remove_silence,
                 add_captions=_add_captions,
                 captions_settings=CaptionsSettings(
-                    font=_caption_font,
-                    font_size=_caption_font_size,
+                    style_code=_caption_style_code,
+                    position_x=_caption_position_x,
+                    position_y=_caption_position_y,
                 ) if _add_captions else None,
                 add_music=_add_music,
                 music_settings=MusicSettings(
@@ -298,21 +310,29 @@ class BatchUGCEditingNode(IO.ComfyNode):
                     tooltip="Add auto-generated captions to the video",
                 ),
                 IO.String.Input(
-                    "caption_font",
-                    default="Arial",
+                    "caption_style_code",
+                    default="default",
                     optional=True,
                     advanced=True,
-                    tooltip="Font name for captions",
+                    tooltip="Caption style code from the captions library",
                 ),
-                IO.Int.Input(
-                    "caption_font_size",
-                    default=48,
-                    min=8,
-                    max=200,
-                    display_mode=IO.NumberDisplay.number,
+                IO.Float.Input(
+                    "caption_position_x",
+                    default=0.5,
+                    min=0.0,
+                    max=1.0,
                     optional=True,
                     advanced=True,
-                    tooltip="Font size for captions",
+                    tooltip="Horizontal caption position (0=left, 0.5=centre, 1=right)",
+                ),
+                IO.Float.Input(
+                    "caption_position_y",
+                    default=0.83,
+                    min=0.0,
+                    max=1.0,
+                    optional=True,
+                    advanced=True,
+                    tooltip="Vertical caption position (0=top, 1=bottom)",
                 ),
                 IO.Boolean.Input(
                     "add_music",
@@ -350,8 +370,9 @@ class BatchUGCEditingNode(IO.ComfyNode):
         scenes: dict[str, list[str] | str] | None = None,
         remove_silence: list[bool] | None = None,
         add_captions: list[bool] | None = None,
-        caption_font: list[str] | None = None,
-        caption_font_size: list[int] | None = None,
+        caption_style_code: list[str] | None = None,
+        caption_position_x: list[float] | None = None,
+        caption_position_y: list[float] | None = None,
         add_music: list[bool] | None = None,
         music_id: list[str] | None = None,
         music_volume: list[int] | None = None,
@@ -371,13 +392,14 @@ class BatchUGCEditingNode(IO.ComfyNode):
                 "to a scene slot."
             )
 
-        _remove_silence    = remove_silence[0]    if remove_silence    else False
-        _add_captions      = add_captions[0]      if add_captions      else False
-        _caption_font      = caption_font[0]      if caption_font      else "Arial"
-        _caption_font_size = caption_font_size[0] if caption_font_size else 48
-        _add_music         = add_music[0]         if add_music         else False
-        _music_id          = music_id[0]          if music_id          else None
-        _music_volume      = music_volume[0]      if music_volume      else 50
+        _remove_silence      = remove_silence[0]      if remove_silence      else False
+        _add_captions        = add_captions[0]        if add_captions        else False
+        _caption_style_code  = caption_style_code[0]  if caption_style_code  else "default"
+        _caption_position_x  = caption_position_x[0]  if caption_position_x  else 0.5
+        _caption_position_y  = caption_position_y[0]  if caption_position_y  else 0.83
+        _add_music           = add_music[0]           if add_music           else False
+        _music_id            = music_id[0]            if music_id            else None
+        _music_volume        = music_volume[0]        if music_volume        else 50
 
         node_id = cls.hidden.unique_id or ""
         extra_pnginfo = cls.hidden.extra_pnginfo or {}
@@ -405,8 +427,9 @@ class BatchUGCEditingNode(IO.ComfyNode):
                 remove_silence=_remove_silence,
                 add_captions=_add_captions,
                 captions_settings=CaptionsSettings(
-                    font=_caption_font,
-                    font_size=_caption_font_size,
+                    style_code=_caption_style_code,
+                    position_x=_caption_position_x,
+                    position_y=_caption_position_y,
                 ) if _add_captions else None,
                 add_music=_add_music,
                 music_settings=MusicSettings(

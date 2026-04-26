@@ -18,7 +18,7 @@ export const integrationsApi = {
 
   async connect(code: string, state: string): Promise<void> {
     const cleanState = state.replace(/#_$/, "");
-    await connectSdk({ query: { code, state: cleanState } });
+    await connectSdk({ body: { code, state: cleanState } });
   },
 
   async getIntegrations(projectId: string): Promise<IntegrationsResponse> {

@@ -5,8 +5,9 @@ from models.broker_model import BrokerModel
 
 
 class CaptionsSettings(BrokerModel):
-    font: str
-    font_size: int
+    style_code: str = "default"
+    position_x: float = 0.5   # 0.0 = left edge, 1.0 = right edge
+    position_y: float = 0.83  # 0.0 = top, 1.0 = bottom (0.83 ≈ current default margin)
     language: Optional[str] = None
 
 
