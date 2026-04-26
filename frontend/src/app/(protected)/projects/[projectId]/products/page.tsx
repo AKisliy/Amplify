@@ -172,7 +172,8 @@ function ProductSheet({ product, open, onClose, brands }: ProductSheetProps) {
   // Basic fields
   const [name, setName] = useState(product?.name ?? "");
   const [description, setDescription] = useState(product?.description ?? "");
-  const [brandId, setBrandId] = useState(product?.brand_id ?? "");
+  const BRAND_NONE = "__none__";
+  const [brandId, setBrandId] = useState(product?.brand_id ?? BRAND_NONE);
   const [isSaving, setIsSaving] = useState(false);
 
   // New link form
@@ -187,7 +188,7 @@ function ProductSheet({ product, open, onClose, brands }: ProductSheetProps) {
   const resetFields = (p: ProductResponse | null) => {
     setName(p?.name ?? "");
     setDescription(p?.description ?? "");
-    setBrandId(p?.brand_id ?? "");
+    setBrandId(p?.brand_id ?? BRAND_NONE);
     setNewPlatform("");
     setNewUrl("");
   };
@@ -203,7 +204,7 @@ function ProductSheet({ product, open, onClose, brands }: ProductSheetProps) {
       const payload = {
         name: name.trim(),
         description: description.trim() || null,
-        brand_id: brandId || null,
+        brand_id: brandId === BRAND_NONE ? null : brandId,
       };
       if (product) {
         await updateProduct(product.id, payload);
@@ -272,7 +273,7 @@ function ProductSheet({ product, open, onClose, brands }: ProductSheetProps) {
                   <SelectValue placeholder="No brand" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">No brand</SelectItem>
+                  <SelectItem value={BRAND_NONE}>No brand</SelectItem>
                   {brands.map(b => <SelectItem key={b.id} value={b.id}>{b.name}</SelectItem>)}
                 </SelectContent>
               </Select>
