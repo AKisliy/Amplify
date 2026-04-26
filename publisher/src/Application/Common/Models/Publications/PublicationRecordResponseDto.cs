@@ -12,6 +12,10 @@ public class PublicationRecordResponseDto
 
     public PublicationStatus Status { get; set; }
 
+    public string? Description { get; set; }
+
+    public DateTimeOffset? CreatedAt { get; set; }
+
     public DateTimeOffset? ScheduledAt { get; set; }
 
     public DateTimeOffset? PublishedAt { get; set; }

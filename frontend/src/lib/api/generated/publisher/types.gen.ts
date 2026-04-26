@@ -106,6 +106,8 @@ export type PublicationRecordResponseDto = {
     id?: string;
     provider?: SocialProvider;
     status?: PublicationStatus;
+    description?: string | null;
+    createdAt?: string | null;
     scheduledAt?: string | null;
     publishedAt?: string | null;
     publicationType?: PublicationType;

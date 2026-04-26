@@ -13,6 +13,8 @@ public class PublicationRecord : BaseAuditableEntity
 
     public PublicationStatus Status { get; set; }
 
+    public string? Description { get; set; }
+
     public PublicationType PublicationType { get; set; } = PublicationType.Manual;
 
     /// <summary>When the record is scheduled to be published (AutoList only).</summary>

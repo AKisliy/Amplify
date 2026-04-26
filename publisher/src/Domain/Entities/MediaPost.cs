@@ -13,8 +13,6 @@ public class MediaPost : BaseAuditableEntity
     // TODO: not sure, if cover could be uploaded via URL 
     public Guid? CoverMediaId { get; set; }
 
-    public string? Description { get; set; }
-
     public Guid? AutoListId { get; set; }
 
     public PublicationSettings PublicationSettings { get; set; } = new();

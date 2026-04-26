@@ -22,6 +22,10 @@ class ProjectTemplate(Base, CommonMixin):
     # AutoList associations (UUIDs only, no FK constraint)
     auto_list_ids: Mapped[list] = mapped_column(ARRAY(UUID(as_uuid=True)), nullable=False, server_default='{}')
 
+    # Structured description config for auto-publishing.
+    # Shape: {"type": "static"|"dynamic", "value": "...", "prompt_template": "..."}
+    post_description_config: Mapped[dict | None] = mapped_column(JSONB, nullable=True)
+
     # Relationships
     # cascade="all, delete-orphan": If Template is deleted, delete all versions too.
     versions = relationship("TemplateVersion", back_populates="template", cascade="all, delete-orphan")

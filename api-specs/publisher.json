@@ -891,6 +891,15 @@
           "status": {
             "$ref": "#/components/schemas/PublicationStatus"
           },
+          "description": {
+            "type": "string",
+            "nullable": true
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
           "scheduledAt": {
             "type": "string",
             "format": "date-time",

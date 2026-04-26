@@ -13,6 +13,7 @@ from sqlalchemy.orm import selectinload
 
 from backend_template.config import settings
 from backend_template.database import async_session_maker
+from backend_template.entities.project_template import PostDescriptionConfig
 from backend_template.models.job import Job, JobStatus
 from backend_template.models.node_execution import NodeExecution, NodeStatus
 from backend_template.models.template_version import TemplateVersion
@@ -62,6 +63,7 @@ class FinalAssetGeneratedEvent(BaseModel):
     media_id: str
     media_type: str
     auto_list_ids: list[str] = []
+    description: str
 
 
 # ---------------------------------------------------------------------------
@@ -238,6 +240,8 @@ async def _publish_final_asset_for_job(
         media_id=media_id,
         media_type=media_type,
         auto_list_ids=[str(aid) for aid in template.auto_list_ids],
+        description=PostDescriptionConfig.model_validate(template.post_description_config).resolve()
+        if template.post_description_config else None
     )
     connection = await aio_pika.connect_robust(settings.rabbitmq_url)
     async with connection:

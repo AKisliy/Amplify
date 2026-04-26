@@ -36,7 +36,7 @@ public class PublicationService(
 
             var config = new SocialMediaPostConfig(
                 publicationRecord.MediaPost.MediaId,
-                publicationRecord.MediaPost.Description,
+                publicationRecord.Description,
                 publicationRecord.MediaPost.CoverMediaId,
                 publicationRecord.SocialAccountId,
                 publicationSettings);
