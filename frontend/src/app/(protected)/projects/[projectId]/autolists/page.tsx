@@ -7,8 +7,7 @@ import { Plus } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { useAutolists } from "@/features/autolists/hooks/useAutolists";
-import { useProject, useProjects } from "@/features/ambassadors/hooks/useProjects";
-import { ProjectHeader } from "@/components/ProjectHeader";
+import { useProject } from "@/features/ambassadors/hooks/useProjects";
 import { AutolistsTable } from "@/features/autolists/components/AutolistsTable";
 import { AutolistEmptyState } from "@/features/autolists/components/AutolistEmptyState";
 import { DeleteConfirmDialog } from "@/features/autolists/components/DeleteConfirmDialog";
@@ -19,8 +18,6 @@ export default function AutolistsPage() {
   const router = useRouter();
   const projectId = params?.projectId as string;
   const { project, isLoading: projectLoading } = useProject(projectId);
-  const { projects, isLoading: projectsLoading } = useProjects();
-  
   // Note: actorId would typically come from the project or user context
   // Using projectId as a placeholder for now
   const { autolists, isLoading: autolistsLoading, deleteAutolist } = useAutolists(projectId);
@@ -57,7 +54,6 @@ export default function AutolistsPage() {
     <div className="min-h-screen bg-background relative">
       <GrainOverlay />
       {/* Header */}
-      <ProjectHeader projects={projects} isLoading={projectsLoading} />
 
       {/* Create Button Bar */}
       {autolists.length > 0 && (

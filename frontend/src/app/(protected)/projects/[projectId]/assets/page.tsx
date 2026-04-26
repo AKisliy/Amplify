@@ -14,10 +14,8 @@ import {
   Sparkles,
   ChevronRight,
 } from "lucide-react";
-import { ProjectHeader } from "@/components/ProjectHeader";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { useProjects } from "@/features/ambassadors/hooks/useProjects";
 import { useProjectAssets } from "@/features/ambassadors/hooks/useProjectAssets";
 import type { ProjectAsset } from "@/features/ambassadors/types";
 import { AmplifyImage } from "@/features/media/components/AmplifyImage";
@@ -196,7 +194,6 @@ export default function AssetsPage() {
   const params = useParams();
   const projectId = params?.projectId as string;
 
-  const { projects, isLoading: projectsLoading } = useProjects();
   const { assets, isLoading, error, nextCursor, loadMore } = useProjectAssets(projectId);
 
   const groups = useMemo(() => groupAssets(assets), [assets]);
@@ -204,7 +201,6 @@ export default function AssetsPage() {
 
   return (
     <div className="min-h-screen bg-background">
-      <ProjectHeader projects={projects} isLoading={projectsLoading} />
 
       <div className="container mx-auto px-6 py-8 max-w-7xl">
         {/* Page header */}

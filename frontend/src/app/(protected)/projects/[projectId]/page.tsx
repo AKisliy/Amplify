@@ -8,9 +8,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
-import { ProjectHeader } from "@/components/ProjectHeader";
 import { useProject } from "@/features/ambassadors/hooks/useProjects";
-import { useProjects } from "@/features/ambassadors/hooks/useProjects";
 import { useAmbassador } from "@/features/ambassadors/hooks/useAmbassador";
 import { mediaApi } from "@/features/media/api";
 import { useProjectTemplates } from "@/features/templates/hooks/useProjectTemplates";
@@ -65,7 +63,6 @@ export default function ProjectOverviewPage() {
   const projectId = params?.projectId as string;
 
   const { project, isLoading: projectLoading } = useProject(projectId);
-  const { projects, isLoading: projectsLoading } = useProjects();
   const { templates, isLoading: templatesLoading, refetch } = useProjectTemplates(projectId);
 
   const [newTemplateOpen, setNewTemplateOpen] = useState(false);
@@ -141,7 +138,6 @@ export default function ProjectOverviewPage() {
 
   return (
     <div className="min-h-screen bg-background">
-      <ProjectHeader projects={projects} isLoading={projectsLoading} />
 
       <main className="container mx-auto px-6 py-8 space-y-6">
         {/* ------------------------------------------------------------------ */}

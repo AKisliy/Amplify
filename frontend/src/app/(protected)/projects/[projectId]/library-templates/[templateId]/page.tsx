@@ -27,8 +27,6 @@ import "@xyflow/react/dist/style.css";
 
 import { Button }      from "@/components/ui/button";
 import { useToast }    from "@/hooks/use-toast";
-import { useProjects } from "@/features/ambassadors/hooks/useProjects";
-import { ProjectHeader } from "@/components/ProjectHeader";
 import { useTheme } from "next-themes";
 import { createTemplateV1TemplatesPost } from "@/lib/api/template-service";
 import { getLibraryTemplate, type LibraryTemplate } from "@/features/templates/hooks/useLibraryTemplates";
@@ -126,7 +124,6 @@ export default function LibraryTemplatePreviewPage() {
   const templateId = params?.templateId as string;
 
   const { resolvedTheme } = useTheme();
-  const { projects, isLoading: projectsLoading } = useProjects();
   const { registry } = useNodeRegistry();
 
   const { toast } = useToast();
@@ -212,7 +209,6 @@ export default function LibraryTemplatePreviewPage() {
 
   return (
     <div className="h-screen bg-background flex flex-col overflow-hidden relative">
-      <ProjectHeader projects={projects} isLoading={projectsLoading} />
 
       {/* Floating read-only banner */}
       <ReadOnlyBanner onDuplicate={handleDuplicate} isDuplicating={isDuplicating} />
