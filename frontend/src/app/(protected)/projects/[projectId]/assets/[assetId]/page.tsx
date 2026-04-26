@@ -4,7 +4,7 @@
 // AssetDetailPage — Full view of a single generated asset
 // =============================================================================
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import {
@@ -148,6 +148,15 @@ function InstagramReelsPreview({ rec, videoUrl }: { rec: PublicationRecord; vide
   const username = rec.socialAccount?.username ?? "unknown";
   const avatar = rec.socialAccount?.avatarUrl;
   const description = rec.description ?? "";
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const [playing, setPlaying] = useState(false);
+
+  const togglePlay = () => {
+    const v = videoRef.current;
+    if (!v) return;
+    if (v.paused) { v.play(); setPlaying(true); }
+    else          { v.pause(); setPlaying(false); }
+  };
 
   return (
     <div
@@ -156,13 +165,27 @@ function InstagramReelsPreview({ rec, videoUrl }: { rec: PublicationRecord; vide
     >
       {/* Video layer */}
       <video
+        ref={videoRef}
         src={videoUrl}
         className="absolute inset-0 w-full h-full object-cover"
-        autoPlay
         loop
-        muted
         playsInline
+        onClick={togglePlay}
       />
+
+      {/* Play button overlay — shown when paused */}
+      {!playing && (
+        <button
+          onClick={togglePlay}
+          className="absolute inset-0 flex items-center justify-center z-10"
+        >
+          <div className="w-16 h-16 rounded-full bg-black/50 backdrop-blur-sm flex items-center justify-center">
+            <svg viewBox="0 0 24 24" className="w-8 h-8 text-white fill-current ml-1">
+              <polygon points="5,3 19,12 5,21" />
+            </svg>
+          </div>
+        </button>
+      )}
 
       {/* Top bar */}
       <div className="absolute top-0 left-0 right-0 flex items-center justify-between px-4 pt-4 pb-2">
