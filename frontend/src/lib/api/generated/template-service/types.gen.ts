@@ -127,6 +127,91 @@ export type BodyClearHistoryV1EngineHistoryPost = {
 };
 
 /**
+ * BrandCreate
+ *
+ * Fields required to create a new Brand.
+ */
+export type BrandCreate = {
+    /**
+     * Name
+     *
+     * Display name of the brand.
+     */
+    name: string;
+    /**
+     * Description
+     *
+     * The 'spirit' of the brand — used for prompt injection via {{brand_description}}.
+     */
+    description?: string | null;
+    /**
+     * Logo Image Uuid
+     *
+     * Reference to the brand's logo asset in media-ingest.
+     */
+    logo_image_uuid?: string | null;
+};
+
+/**
+ * BrandResponse
+ *
+ * Full Brand representation returned to the client.
+ */
+export type BrandResponse = {
+    /**
+     * Name
+     *
+     * Display name of the brand.
+     */
+    name: string;
+    /**
+     * Description
+     *
+     * The 'spirit' of the brand — used for prompt injection via {{brand_description}}.
+     */
+    description?: string | null;
+    /**
+     * Logo Image Uuid
+     *
+     * Reference to the brand's logo asset in media-ingest.
+     */
+    logo_image_uuid?: string | null;
+    /**
+     * Id
+     */
+    id: string;
+    /**
+     * Created At
+     */
+    created_at: string;
+    /**
+     * Updated At
+     */
+    updated_at: string;
+};
+
+/**
+ * BrandUpdate
+ *
+ * All fields optional for PATCH semantics.
+ * Inherits from BaseModel (NOT BrandBase) to make all fields optional.
+ */
+export type BrandUpdate = {
+    /**
+     * Name
+     */
+    name?: string | null;
+    /**
+     * Description
+     */
+    description?: string | null;
+    /**
+     * Logo Image Uuid
+     */
+    logo_image_uuid?: string | null;
+};
+
+/**
  * ExecutionStatus
  *
  * Status block returned by the engine for each completed prompt.
@@ -1548,6 +1633,157 @@ export type GetByJobAndNodeV1ReviewJobJobIdNodeNodeIdGetResponses = {
 };
 
 export type GetByJobAndNodeV1ReviewJobJobIdNodeNodeIdGetResponse = GetByJobAndNodeV1ReviewJobJobIdNodeNodeIdGetResponses[keyof GetByJobAndNodeV1ReviewJobJobIdNodeNodeIdGetResponses];
+
+export type ListBrandsV1BrandsGetData = {
+    body?: never;
+    path?: never;
+    query?: {
+        /**
+         * Skip
+         */
+        skip?: number;
+        /**
+         * Limit
+         */
+        limit?: number;
+    };
+    url: '/v1/brands/';
+};
+
+export type ListBrandsV1BrandsGetErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type ListBrandsV1BrandsGetError = ListBrandsV1BrandsGetErrors[keyof ListBrandsV1BrandsGetErrors];
+
+export type ListBrandsV1BrandsGetResponses = {
+    /**
+     * Response List Brands V1 Brands  Get
+     *
+     * Successful Response
+     */
+    200: Array<BrandResponse>;
+};
+
+export type ListBrandsV1BrandsGetResponse = ListBrandsV1BrandsGetResponses[keyof ListBrandsV1BrandsGetResponses];
+
+export type CreateBrandV1BrandsPostData = {
+    body: BrandCreate;
+    path?: never;
+    query?: never;
+    url: '/v1/brands/';
+};
+
+export type CreateBrandV1BrandsPostErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type CreateBrandV1BrandsPostError = CreateBrandV1BrandsPostErrors[keyof CreateBrandV1BrandsPostErrors];
+
+export type CreateBrandV1BrandsPostResponses = {
+    /**
+     * Successful Response
+     */
+    201: BrandResponse;
+};
+
+export type CreateBrandV1BrandsPostResponse = CreateBrandV1BrandsPostResponses[keyof CreateBrandV1BrandsPostResponses];
+
+export type DeleteBrandV1BrandsBrandIdDeleteData = {
+    body?: never;
+    path: {
+        /**
+         * Brand Id
+         */
+        brand_id: string;
+    };
+    query?: never;
+    url: '/v1/brands/{brand_id}';
+};
+
+export type DeleteBrandV1BrandsBrandIdDeleteErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type DeleteBrandV1BrandsBrandIdDeleteError = DeleteBrandV1BrandsBrandIdDeleteErrors[keyof DeleteBrandV1BrandsBrandIdDeleteErrors];
+
+export type DeleteBrandV1BrandsBrandIdDeleteResponses = {
+    /**
+     * Successful Response
+     */
+    204: void;
+};
+
+export type DeleteBrandV1BrandsBrandIdDeleteResponse = DeleteBrandV1BrandsBrandIdDeleteResponses[keyof DeleteBrandV1BrandsBrandIdDeleteResponses];
+
+export type GetBrandV1BrandsBrandIdGetData = {
+    body?: never;
+    path: {
+        /**
+         * Brand Id
+         */
+        brand_id: string;
+    };
+    query?: never;
+    url: '/v1/brands/{brand_id}';
+};
+
+export type GetBrandV1BrandsBrandIdGetErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type GetBrandV1BrandsBrandIdGetError = GetBrandV1BrandsBrandIdGetErrors[keyof GetBrandV1BrandsBrandIdGetErrors];
+
+export type GetBrandV1BrandsBrandIdGetResponses = {
+    /**
+     * Successful Response
+     */
+    200: BrandResponse;
+};
+
+export type GetBrandV1BrandsBrandIdGetResponse = GetBrandV1BrandsBrandIdGetResponses[keyof GetBrandV1BrandsBrandIdGetResponses];
+
+export type UpdateBrandV1BrandsBrandIdPatchData = {
+    body: BrandUpdate;
+    path: {
+        /**
+         * Brand Id
+         */
+        brand_id: string;
+    };
+    query?: never;
+    url: '/v1/brands/{brand_id}';
+};
+
+export type UpdateBrandV1BrandsBrandIdPatchErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type UpdateBrandV1BrandsBrandIdPatchError = UpdateBrandV1BrandsBrandIdPatchErrors[keyof UpdateBrandV1BrandsBrandIdPatchErrors];
+
+export type UpdateBrandV1BrandsBrandIdPatchResponses = {
+    /**
+     * Successful Response
+     */
+    200: BrandResponse;
+};
+
+export type UpdateBrandV1BrandsBrandIdPatchResponse = UpdateBrandV1BrandsBrandIdPatchResponses[keyof UpdateBrandV1BrandsBrandIdPatchResponses];
 
 export type CreateLibraryTemplateInternalLibraryTemplatesPostData = {
     body: LibraryTemplateCreate;

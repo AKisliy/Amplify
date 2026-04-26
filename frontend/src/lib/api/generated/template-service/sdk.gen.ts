@@ -2,7 +2,7 @@
 
 import type { Client, Options as Options2, TDataShape } from './client';
 import { client } from './client.gen';
-import type { AddReferenceImageV1AmbassadorsAmbassadorIdImagesPostData, AddReferenceImageV1AmbassadorsAmbassadorIdImagesPostErrors, AddReferenceImageV1AmbassadorsAmbassadorIdImagesPostResponses, ClearHistoryV1EngineHistoryPostData, ClearHistoryV1EngineHistoryPostErrors, ClearHistoryV1EngineHistoryPostResponses, CompleteTaskV1ReviewTaskIdCompletePostData, CompleteTaskV1ReviewTaskIdCompletePostErrors, CompleteTaskV1ReviewTaskIdCompletePostResponses, CreateAmbassadorV1AmbassadorsPostData, CreateAmbassadorV1AmbassadorsPostErrors, CreateAmbassadorV1AmbassadorsPostResponses, CreateLibraryTemplateInternalLibraryTemplatesPostData, CreateLibraryTemplateInternalLibraryTemplatesPostErrors, CreateLibraryTemplateInternalLibraryTemplatesPostResponses, CreateTaskV1ReviewPostData, CreateTaskV1ReviewPostErrors, CreateTaskV1ReviewPostResponses, CreateTemplateV1TemplatesPostData, CreateTemplateV1TemplatesPostErrors, CreateTemplateV1TemplatesPostResponses, DeleteAmbassadorV1AmbassadorsAmbassadorIdDeleteData, DeleteAmbassadorV1AmbassadorsAmbassadorIdDeleteErrors, DeleteAmbassadorV1AmbassadorsAmbassadorIdDeleteResponses, DeleteLibraryTemplateInternalLibraryTemplatesTemplateIdDeleteData, DeleteLibraryTemplateInternalLibraryTemplatesTemplateIdDeleteErrors, DeleteLibraryTemplateInternalLibraryTemplatesTemplateIdDeleteResponses, DeleteReferenceImageV1AmbassadorsAmbassadorIdImagesMediaIdDeleteData, DeleteReferenceImageV1AmbassadorsAmbassadorIdImagesMediaIdDeleteErrors, DeleteReferenceImageV1AmbassadorsAmbassadorIdImagesMediaIdDeleteResponses, DeleteTemplateV1TemplatesTemplateIdDeleteData, DeleteTemplateV1TemplatesTemplateIdDeleteErrors, DeleteTemplateV1TemplatesTemplateIdDeleteResponses, DuplicateFromLibraryV1TemplatesFromLibraryPostData, DuplicateFromLibraryV1TemplatesFromLibraryPostErrors, DuplicateFromLibraryV1TemplatesFromLibraryPostResponses, GetAllHistoryV1EngineHistoryGetData, GetAllHistoryV1EngineHistoryGetErrors, GetAllHistoryV1EngineHistoryGetResponses, GetAllNodesV1EngineNodesGetData, GetAllNodesV1EngineNodesGetResponses, GetAmbassadorByProjectV1AmbassadorsProjectProjectIdGetData, GetAmbassadorByProjectV1AmbassadorsProjectProjectIdGetErrors, GetAmbassadorByProjectV1AmbassadorsProjectProjectIdGetResponses, GetAmbassadorV1AmbassadorsAmbassadorIdGetData, GetAmbassadorV1AmbassadorsAmbassadorIdGetErrors, GetAmbassadorV1AmbassadorsAmbassadorIdGetResponses, GetByJobAndNodeV1ReviewJobJobIdNodeNodeIdGetData, GetByJobAndNodeV1ReviewJobJobIdNodeNodeIdGetErrors, GetByJobAndNodeV1ReviewJobJobIdNodeNodeIdGetResponses, GetLibraryTemplateV1LibraryTemplatesTemplateIdGetData, GetLibraryTemplateV1LibraryTemplatesTemplateIdGetErrors, GetLibraryTemplateV1LibraryTemplatesTemplateIdGetResponses, GetNodeV1EngineNodesNodeClassGetData, GetNodeV1EngineNodesNodeClassGetErrors, GetNodeV1EngineNodesNodeClassGetResponses, GetPromptHistoryV1EngineHistoryPromptIdGetData, GetPromptHistoryV1EngineHistoryPromptIdGetErrors, GetPromptHistoryV1EngineHistoryPromptIdGetResponses, GetTaskV1ReviewTaskIdGetData, GetTaskV1ReviewTaskIdGetErrors, GetTaskV1ReviewTaskIdGetResponses, GetTemplatesByProjectV1TemplatesProjectProjectIdGetData, GetTemplatesByProjectV1TemplatesProjectProjectIdGetErrors, GetTemplatesByProjectV1TemplatesProjectProjectIdGetResponses, GetTemplateV1TemplatesTemplateIdGetData, GetTemplateV1TemplatesTemplateIdGetErrors, GetTemplateV1TemplatesTemplateIdGetResponses, HealthCheckHealthGetData, HealthCheckHealthGetResponses, ListLibraryTemplatesV1LibraryTemplatesGetData, ListLibraryTemplatesV1LibraryTemplatesGetErrors, ListLibraryTemplatesV1LibraryTemplatesGetResponses, ListReferenceImagesV1AmbassadorsAmbassadorIdImagesGetData, ListReferenceImagesV1AmbassadorsAmbassadorIdImagesGetErrors, ListReferenceImagesV1AmbassadorsAmbassadorIdImagesGetResponses, ListTemplatesV1TemplatesGetData, ListTemplatesV1TemplatesGetErrors, ListTemplatesV1TemplatesGetResponses, RunTemplateV1EngineRunPostData, RunTemplateV1EngineRunPostErrors, RunTemplateV1EngineRunPostResponses, SubmitPromptV1EnginePromptPostData, SubmitPromptV1EnginePromptPostErrors, SubmitPromptV1EnginePromptPostResponses, UpdateAmbassadorV1AmbassadorsAmbassadorIdPatchData, UpdateAmbassadorV1AmbassadorsAmbassadorIdPatchErrors, UpdateAmbassadorV1AmbassadorsAmbassadorIdPatchResponses, UpdateLibraryTemplateInternalLibraryTemplatesTemplateIdPatchData, UpdateLibraryTemplateInternalLibraryTemplatesTemplateIdPatchErrors, UpdateLibraryTemplateInternalLibraryTemplatesTemplateIdPatchResponses, UpdateTemplateV1TemplatesTemplateIdPatchData, UpdateTemplateV1TemplatesTemplateIdPatchErrors, UpdateTemplateV1TemplatesTemplateIdPatchResponses } from './types.gen';
+import type { AddReferenceImageV1AmbassadorsAmbassadorIdImagesPostData, AddReferenceImageV1AmbassadorsAmbassadorIdImagesPostErrors, AddReferenceImageV1AmbassadorsAmbassadorIdImagesPostResponses, ClearHistoryV1EngineHistoryPostData, ClearHistoryV1EngineHistoryPostErrors, ClearHistoryV1EngineHistoryPostResponses, CompleteTaskV1ReviewTaskIdCompletePostData, CompleteTaskV1ReviewTaskIdCompletePostErrors, CompleteTaskV1ReviewTaskIdCompletePostResponses, CreateAmbassadorV1AmbassadorsPostData, CreateAmbassadorV1AmbassadorsPostErrors, CreateAmbassadorV1AmbassadorsPostResponses, CreateBrandV1BrandsPostData, CreateBrandV1BrandsPostErrors, CreateBrandV1BrandsPostResponses, CreateLibraryTemplateInternalLibraryTemplatesPostData, CreateLibraryTemplateInternalLibraryTemplatesPostErrors, CreateLibraryTemplateInternalLibraryTemplatesPostResponses, CreateTaskV1ReviewPostData, CreateTaskV1ReviewPostErrors, CreateTaskV1ReviewPostResponses, CreateTemplateV1TemplatesPostData, CreateTemplateV1TemplatesPostErrors, CreateTemplateV1TemplatesPostResponses, DeleteAmbassadorV1AmbassadorsAmbassadorIdDeleteData, DeleteAmbassadorV1AmbassadorsAmbassadorIdDeleteErrors, DeleteAmbassadorV1AmbassadorsAmbassadorIdDeleteResponses, DeleteBrandV1BrandsBrandIdDeleteData, DeleteBrandV1BrandsBrandIdDeleteErrors, DeleteBrandV1BrandsBrandIdDeleteResponses, DeleteLibraryTemplateInternalLibraryTemplatesTemplateIdDeleteData, DeleteLibraryTemplateInternalLibraryTemplatesTemplateIdDeleteErrors, DeleteLibraryTemplateInternalLibraryTemplatesTemplateIdDeleteResponses, DeleteReferenceImageV1AmbassadorsAmbassadorIdImagesMediaIdDeleteData, DeleteReferenceImageV1AmbassadorsAmbassadorIdImagesMediaIdDeleteErrors, DeleteReferenceImageV1AmbassadorsAmbassadorIdImagesMediaIdDeleteResponses, DeleteTemplateV1TemplatesTemplateIdDeleteData, DeleteTemplateV1TemplatesTemplateIdDeleteErrors, DeleteTemplateV1TemplatesTemplateIdDeleteResponses, DuplicateFromLibraryV1TemplatesFromLibraryPostData, DuplicateFromLibraryV1TemplatesFromLibraryPostErrors, DuplicateFromLibraryV1TemplatesFromLibraryPostResponses, GetAllHistoryV1EngineHistoryGetData, GetAllHistoryV1EngineHistoryGetErrors, GetAllHistoryV1EngineHistoryGetResponses, GetAllNodesV1EngineNodesGetData, GetAllNodesV1EngineNodesGetResponses, GetAmbassadorByProjectV1AmbassadorsProjectProjectIdGetData, GetAmbassadorByProjectV1AmbassadorsProjectProjectIdGetErrors, GetAmbassadorByProjectV1AmbassadorsProjectProjectIdGetResponses, GetAmbassadorV1AmbassadorsAmbassadorIdGetData, GetAmbassadorV1AmbassadorsAmbassadorIdGetErrors, GetAmbassadorV1AmbassadorsAmbassadorIdGetResponses, GetBrandV1BrandsBrandIdGetData, GetBrandV1BrandsBrandIdGetErrors, GetBrandV1BrandsBrandIdGetResponses, GetByJobAndNodeV1ReviewJobJobIdNodeNodeIdGetData, GetByJobAndNodeV1ReviewJobJobIdNodeNodeIdGetErrors, GetByJobAndNodeV1ReviewJobJobIdNodeNodeIdGetResponses, GetLibraryTemplateV1LibraryTemplatesTemplateIdGetData, GetLibraryTemplateV1LibraryTemplatesTemplateIdGetErrors, GetLibraryTemplateV1LibraryTemplatesTemplateIdGetResponses, GetNodeV1EngineNodesNodeClassGetData, GetNodeV1EngineNodesNodeClassGetErrors, GetNodeV1EngineNodesNodeClassGetResponses, GetPromptHistoryV1EngineHistoryPromptIdGetData, GetPromptHistoryV1EngineHistoryPromptIdGetErrors, GetPromptHistoryV1EngineHistoryPromptIdGetResponses, GetTaskV1ReviewTaskIdGetData, GetTaskV1ReviewTaskIdGetErrors, GetTaskV1ReviewTaskIdGetResponses, GetTemplatesByProjectV1TemplatesProjectProjectIdGetData, GetTemplatesByProjectV1TemplatesProjectProjectIdGetErrors, GetTemplatesByProjectV1TemplatesProjectProjectIdGetResponses, GetTemplateV1TemplatesTemplateIdGetData, GetTemplateV1TemplatesTemplateIdGetErrors, GetTemplateV1TemplatesTemplateIdGetResponses, HealthCheckHealthGetData, HealthCheckHealthGetResponses, ListBrandsV1BrandsGetData, ListBrandsV1BrandsGetErrors, ListBrandsV1BrandsGetResponses, ListLibraryTemplatesV1LibraryTemplatesGetData, ListLibraryTemplatesV1LibraryTemplatesGetErrors, ListLibraryTemplatesV1LibraryTemplatesGetResponses, ListReferenceImagesV1AmbassadorsAmbassadorIdImagesGetData, ListReferenceImagesV1AmbassadorsAmbassadorIdImagesGetErrors, ListReferenceImagesV1AmbassadorsAmbassadorIdImagesGetResponses, ListTemplatesV1TemplatesGetData, ListTemplatesV1TemplatesGetErrors, ListTemplatesV1TemplatesGetResponses, RunTemplateV1EngineRunPostData, RunTemplateV1EngineRunPostErrors, RunTemplateV1EngineRunPostResponses, SubmitPromptV1EnginePromptPostData, SubmitPromptV1EnginePromptPostErrors, SubmitPromptV1EnginePromptPostResponses, UpdateAmbassadorV1AmbassadorsAmbassadorIdPatchData, UpdateAmbassadorV1AmbassadorsAmbassadorIdPatchErrors, UpdateAmbassadorV1AmbassadorsAmbassadorIdPatchResponses, UpdateBrandV1BrandsBrandIdPatchData, UpdateBrandV1BrandsBrandIdPatchErrors, UpdateBrandV1BrandsBrandIdPatchResponses, UpdateLibraryTemplateInternalLibraryTemplatesTemplateIdPatchData, UpdateLibraryTemplateInternalLibraryTemplatesTemplateIdPatchErrors, UpdateLibraryTemplateInternalLibraryTemplatesTemplateIdPatchResponses, UpdateTemplateV1TemplatesTemplateIdPatchData, UpdateTemplateV1TemplatesTemplateIdPatchErrors, UpdateTemplateV1TemplatesTemplateIdPatchResponses } from './types.gen';
 
 export type Options<TData extends TDataShape = TDataShape, ThrowOnError extends boolean = boolean> = Options2<TData, ThrowOnError> & {
     /**
@@ -381,6 +381,65 @@ export const getByJobAndNodeV1ReviewJobJobIdNodeNodeIdGet = <ThrowOnError extend
     security: [{ scheme: 'bearer', type: 'http' }],
     url: '/v1/review/job/{job_id}/node/{node_id}',
     ...options
+});
+
+/**
+ * List Brands
+ *
+ * Lists all brands with pagination.
+ */
+export const listBrandsV1BrandsGet = <ThrowOnError extends boolean = false>(options?: Options<ListBrandsV1BrandsGetData, ThrowOnError>) => (options?.client ?? client).get<ListBrandsV1BrandsGetResponses, ListBrandsV1BrandsGetErrors, ThrowOnError>({
+    responseType: 'json',
+    url: '/v1/brands/',
+    ...options
+});
+
+/**
+ * Create Brand
+ *
+ * Creates a new brand.
+ */
+export const createBrandV1BrandsPost = <ThrowOnError extends boolean = false>(options: Options<CreateBrandV1BrandsPostData, ThrowOnError>) => (options.client ?? client).post<CreateBrandV1BrandsPostResponses, CreateBrandV1BrandsPostErrors, ThrowOnError>({
+    responseType: 'json',
+    url: '/v1/brands/',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+/**
+ * Delete Brand
+ *
+ * Deletes a brand by ID.
+ */
+export const deleteBrandV1BrandsBrandIdDelete = <ThrowOnError extends boolean = false>(options: Options<DeleteBrandV1BrandsBrandIdDeleteData, ThrowOnError>) => (options.client ?? client).delete<DeleteBrandV1BrandsBrandIdDeleteResponses, DeleteBrandV1BrandsBrandIdDeleteErrors, ThrowOnError>({ url: '/v1/brands/{brand_id}', ...options });
+
+/**
+ * Get Brand by ID
+ *
+ * Returns a single brand by its UUID.
+ */
+export const getBrandV1BrandsBrandIdGet = <ThrowOnError extends boolean = false>(options: Options<GetBrandV1BrandsBrandIdGetData, ThrowOnError>) => (options.client ?? client).get<GetBrandV1BrandsBrandIdGetResponses, GetBrandV1BrandsBrandIdGetErrors, ThrowOnError>({
+    responseType: 'json',
+    url: '/v1/brands/{brand_id}',
+    ...options
+});
+
+/**
+ * Update Brand
+ *
+ * Partially updates a brand. Only provided fields are changed.
+ */
+export const updateBrandV1BrandsBrandIdPatch = <ThrowOnError extends boolean = false>(options: Options<UpdateBrandV1BrandsBrandIdPatchData, ThrowOnError>) => (options.client ?? client).patch<UpdateBrandV1BrandsBrandIdPatchResponses, UpdateBrandV1BrandsBrandIdPatchErrors, ThrowOnError>({
+    responseType: 'json',
+    url: '/v1/brands/{brand_id}',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
 });
 
 /**
