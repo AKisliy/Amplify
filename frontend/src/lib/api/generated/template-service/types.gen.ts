@@ -481,6 +481,164 @@ export type PostDescriptionConfig = {
 };
 
 /**
+ * ProductCreate
+ */
+export type ProductCreate = {
+    /**
+     * Name
+     */
+    name: string;
+    /**
+     * Description
+     *
+     * Product description — injected into generation prompts.
+     */
+    description?: string | null;
+    /**
+     * Brand Id
+     *
+     * Optional reference to a Brand.
+     */
+    brand_id?: string | null;
+};
+
+/**
+ * ProductImageCreate
+ */
+export type ProductImageCreate = {
+    /**
+     * Media Uuid
+     */
+    media_uuid: string;
+};
+
+/**
+ * ProductImageResponse
+ */
+export type ProductImageResponse = {
+    /**
+     * Id
+     */
+    id: string;
+    /**
+     * Media Uuid
+     */
+    media_uuid: string;
+    /**
+     * Created At
+     */
+    created_at: string;
+    /**
+     * Updated At
+     */
+    updated_at: string;
+};
+
+/**
+ * ProductResponse
+ */
+export type ProductResponse = {
+    /**
+     * Name
+     */
+    name: string;
+    /**
+     * Description
+     *
+     * Product description — injected into generation prompts.
+     */
+    description?: string | null;
+    /**
+     * Brand Id
+     *
+     * Optional reference to a Brand.
+     */
+    brand_id?: string | null;
+    /**
+     * Id
+     */
+    id: string;
+    /**
+     * Images
+     */
+    images?: Array<ProductImageResponse>;
+    /**
+     * Store Links
+     */
+    store_links?: Array<ProductStoreLinkResponse>;
+    /**
+     * Created At
+     */
+    created_at: string;
+    /**
+     * Updated At
+     */
+    updated_at: string;
+};
+
+/**
+ * ProductStoreLinkCreate
+ */
+export type ProductStoreLinkCreate = {
+    /**
+     * Platform
+     *
+     * One of: tiktok-shop, shopify, amazon
+     */
+    platform: string;
+    /**
+     * Url
+     */
+    url: string;
+};
+
+/**
+ * ProductStoreLinkResponse
+ */
+export type ProductStoreLinkResponse = {
+    /**
+     * Id
+     */
+    id: string;
+    /**
+     * Platform
+     */
+    platform: string;
+    /**
+     * Url
+     */
+    url: string;
+    /**
+     * Created At
+     */
+    created_at: string;
+    /**
+     * Updated At
+     */
+    updated_at: string;
+};
+
+/**
+ * ProductUpdate
+ *
+ * All fields optional for PATCH semantics.
+ */
+export type ProductUpdate = {
+    /**
+     * Name
+     */
+    name?: string | null;
+    /**
+     * Description
+     */
+    description?: string | null;
+    /**
+     * Brand Id
+     */
+    brand_id?: string | null;
+};
+
+/**
  * ProjectTemplateCreate
  *
  * Fields required to CREATE a new template.
@@ -1784,6 +1942,285 @@ export type UpdateBrandV1BrandsBrandIdPatchResponses = {
 };
 
 export type UpdateBrandV1BrandsBrandIdPatchResponse = UpdateBrandV1BrandsBrandIdPatchResponses[keyof UpdateBrandV1BrandsBrandIdPatchResponses];
+
+export type ListProductsV1ProductsGetData = {
+    body?: never;
+    path?: never;
+    query?: {
+        /**
+         * Skip
+         */
+        skip?: number;
+        /**
+         * Limit
+         */
+        limit?: number;
+    };
+    url: '/v1/products/';
+};
+
+export type ListProductsV1ProductsGetErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type ListProductsV1ProductsGetError = ListProductsV1ProductsGetErrors[keyof ListProductsV1ProductsGetErrors];
+
+export type ListProductsV1ProductsGetResponses = {
+    /**
+     * Response List Products V1 Products  Get
+     *
+     * Successful Response
+     */
+    200: Array<ProductResponse>;
+};
+
+export type ListProductsV1ProductsGetResponse = ListProductsV1ProductsGetResponses[keyof ListProductsV1ProductsGetResponses];
+
+export type CreateProductV1ProductsPostData = {
+    body: ProductCreate;
+    path?: never;
+    query?: never;
+    url: '/v1/products/';
+};
+
+export type CreateProductV1ProductsPostErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type CreateProductV1ProductsPostError = CreateProductV1ProductsPostErrors[keyof CreateProductV1ProductsPostErrors];
+
+export type CreateProductV1ProductsPostResponses = {
+    /**
+     * Successful Response
+     */
+    201: ProductResponse;
+};
+
+export type CreateProductV1ProductsPostResponse = CreateProductV1ProductsPostResponses[keyof CreateProductV1ProductsPostResponses];
+
+export type DeleteProductV1ProductsProductIdDeleteData = {
+    body?: never;
+    path: {
+        /**
+         * Product Id
+         */
+        product_id: string;
+    };
+    query?: never;
+    url: '/v1/products/{product_id}';
+};
+
+export type DeleteProductV1ProductsProductIdDeleteErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type DeleteProductV1ProductsProductIdDeleteError = DeleteProductV1ProductsProductIdDeleteErrors[keyof DeleteProductV1ProductsProductIdDeleteErrors];
+
+export type DeleteProductV1ProductsProductIdDeleteResponses = {
+    /**
+     * Successful Response
+     */
+    204: void;
+};
+
+export type DeleteProductV1ProductsProductIdDeleteResponse = DeleteProductV1ProductsProductIdDeleteResponses[keyof DeleteProductV1ProductsProductIdDeleteResponses];
+
+export type GetProductV1ProductsProductIdGetData = {
+    body?: never;
+    path: {
+        /**
+         * Product Id
+         */
+        product_id: string;
+    };
+    query?: never;
+    url: '/v1/products/{product_id}';
+};
+
+export type GetProductV1ProductsProductIdGetErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type GetProductV1ProductsProductIdGetError = GetProductV1ProductsProductIdGetErrors[keyof GetProductV1ProductsProductIdGetErrors];
+
+export type GetProductV1ProductsProductIdGetResponses = {
+    /**
+     * Successful Response
+     */
+    200: ProductResponse;
+};
+
+export type GetProductV1ProductsProductIdGetResponse = GetProductV1ProductsProductIdGetResponses[keyof GetProductV1ProductsProductIdGetResponses];
+
+export type UpdateProductV1ProductsProductIdPatchData = {
+    body: ProductUpdate;
+    path: {
+        /**
+         * Product Id
+         */
+        product_id: string;
+    };
+    query?: never;
+    url: '/v1/products/{product_id}';
+};
+
+export type UpdateProductV1ProductsProductIdPatchErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type UpdateProductV1ProductsProductIdPatchError = UpdateProductV1ProductsProductIdPatchErrors[keyof UpdateProductV1ProductsProductIdPatchErrors];
+
+export type UpdateProductV1ProductsProductIdPatchResponses = {
+    /**
+     * Successful Response
+     */
+    200: ProductResponse;
+};
+
+export type UpdateProductV1ProductsProductIdPatchResponse = UpdateProductV1ProductsProductIdPatchResponses[keyof UpdateProductV1ProductsProductIdPatchResponses];
+
+export type AddImageV1ProductsProductIdImagesPostData = {
+    body: ProductImageCreate;
+    path: {
+        /**
+         * Product Id
+         */
+        product_id: string;
+    };
+    query?: never;
+    url: '/v1/products/{product_id}/images';
+};
+
+export type AddImageV1ProductsProductIdImagesPostErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type AddImageV1ProductsProductIdImagesPostError = AddImageV1ProductsProductIdImagesPostErrors[keyof AddImageV1ProductsProductIdImagesPostErrors];
+
+export type AddImageV1ProductsProductIdImagesPostResponses = {
+    /**
+     * Successful Response
+     */
+    201: ProductImageResponse;
+};
+
+export type AddImageV1ProductsProductIdImagesPostResponse = AddImageV1ProductsProductIdImagesPostResponses[keyof AddImageV1ProductsProductIdImagesPostResponses];
+
+export type RemoveImageV1ProductsProductIdImagesMediaUuidDeleteData = {
+    body?: never;
+    path: {
+        /**
+         * Product Id
+         */
+        product_id: string;
+        /**
+         * Media Uuid
+         */
+        media_uuid: string;
+    };
+    query?: never;
+    url: '/v1/products/{product_id}/images/{media_uuid}';
+};
+
+export type RemoveImageV1ProductsProductIdImagesMediaUuidDeleteErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type RemoveImageV1ProductsProductIdImagesMediaUuidDeleteError = RemoveImageV1ProductsProductIdImagesMediaUuidDeleteErrors[keyof RemoveImageV1ProductsProductIdImagesMediaUuidDeleteErrors];
+
+export type RemoveImageV1ProductsProductIdImagesMediaUuidDeleteResponses = {
+    /**
+     * Successful Response
+     */
+    204: void;
+};
+
+export type RemoveImageV1ProductsProductIdImagesMediaUuidDeleteResponse = RemoveImageV1ProductsProductIdImagesMediaUuidDeleteResponses[keyof RemoveImageV1ProductsProductIdImagesMediaUuidDeleteResponses];
+
+export type AddStoreLinkV1ProductsProductIdLinksPostData = {
+    body: ProductStoreLinkCreate;
+    path: {
+        /**
+         * Product Id
+         */
+        product_id: string;
+    };
+    query?: never;
+    url: '/v1/products/{product_id}/links';
+};
+
+export type AddStoreLinkV1ProductsProductIdLinksPostErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type AddStoreLinkV1ProductsProductIdLinksPostError = AddStoreLinkV1ProductsProductIdLinksPostErrors[keyof AddStoreLinkV1ProductsProductIdLinksPostErrors];
+
+export type AddStoreLinkV1ProductsProductIdLinksPostResponses = {
+    /**
+     * Successful Response
+     */
+    201: ProductStoreLinkResponse;
+};
+
+export type AddStoreLinkV1ProductsProductIdLinksPostResponse = AddStoreLinkV1ProductsProductIdLinksPostResponses[keyof AddStoreLinkV1ProductsProductIdLinksPostResponses];
+
+export type RemoveStoreLinkV1ProductsProductIdLinksLinkIdDeleteData = {
+    body?: never;
+    path: {
+        /**
+         * Product Id
+         */
+        product_id: string;
+        /**
+         * Link Id
+         */
+        link_id: string;
+    };
+    query?: never;
+    url: '/v1/products/{product_id}/links/{link_id}';
+};
+
+export type RemoveStoreLinkV1ProductsProductIdLinksLinkIdDeleteErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type RemoveStoreLinkV1ProductsProductIdLinksLinkIdDeleteError = RemoveStoreLinkV1ProductsProductIdLinksLinkIdDeleteErrors[keyof RemoveStoreLinkV1ProductsProductIdLinksLinkIdDeleteErrors];
+
+export type RemoveStoreLinkV1ProductsProductIdLinksLinkIdDeleteResponses = {
+    /**
+     * Successful Response
+     */
+    204: void;
+};
+
+export type RemoveStoreLinkV1ProductsProductIdLinksLinkIdDeleteResponse = RemoveStoreLinkV1ProductsProductIdLinksLinkIdDeleteResponses[keyof RemoveStoreLinkV1ProductsProductIdLinksLinkIdDeleteResponses];
 
 export type CreateLibraryTemplateInternalLibraryTemplatesPostData = {
     body: LibraryTemplateCreate;
