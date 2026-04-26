@@ -7,6 +7,7 @@ import {
   Calendar,
   Link as LinkIcon,
   Images,
+  Tag,
   FolderKanban,
   ChevronsUpDown,
   Check,
@@ -54,6 +55,12 @@ const NAV_ITEMS = [
     label: "Ambassador",
     href: (id: string) => `/projects/${id}/ambassadors`,
     icon: User,
+    exact: false,
+  },
+  {
+    label: "Brands",
+    href: (id: string) => `/projects/${id}/brands`,
+    icon: Tag,
     exact: false,
   },
   {

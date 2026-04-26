@@ -7,9 +7,7 @@
   "paths": {
     "/v1/templates/": {
       "post": {
-        "tags": [
-          "Project Templates"
-        ],
+        "tags": ["Project Templates"],
         "summary": "Create a new Project Template",
         "description": "Creates a new template container.\n- **payload**: The initial data (name, description, project_id).",
         "operationId": "create_template_v1_templates__post",
@@ -52,9 +50,7 @@
         }
       },
       "get": {
-        "tags": [
-          "Project Templates"
-        ],
+        "tags": ["Project Templates"],
         "summary": "List Templates",
         "description": "Lists templates with pagination.",
         "operationId": "list_templates_v1_templates__get",
@@ -122,9 +118,7 @@
     },
     "/v1/templates/{template_id}": {
       "get": {
-        "tags": [
-          "Project Templates"
-        ],
+        "tags": ["Project Templates"],
         "summary": "Get Template by ID",
         "description": "Retrieves a specific template by its UUID.",
         "operationId": "get_template_v1_templates__template_id__get",
@@ -169,9 +163,7 @@
         }
       },
       "patch": {
-        "tags": [
-          "Project Templates"
-        ],
+        "tags": ["Project Templates"],
         "summary": "Update Template",
         "description": "Partially updates a template (e.g., renaming or auto-saving graph JSON).\nOnly fields sent in the payload will be updated.",
         "operationId": "update_template_v1_templates__template_id__patch",
@@ -226,9 +218,7 @@
         }
       },
       "delete": {
-        "tags": [
-          "Project Templates"
-        ],
+        "tags": ["Project Templates"],
         "summary": "Delete Template",
         "description": "Deletes a template and all its associated history (versions/jobs).",
         "operationId": "delete_template_v1_templates__template_id__delete",
@@ -268,9 +258,7 @@
     },
     "/v1/templates/project/{project_id}": {
       "get": {
-        "tags": [
-          "Project Templates"
-        ],
+        "tags": ["Project Templates"],
         "summary": "Get Templates by Project ID",
         "description": "Retrieves all templates associated with a specific project ID.",
         "operationId": "get_templates_by_project_v1_templates_project__project_id__get",
@@ -321,9 +309,7 @@
     },
     "/v1/templates/from-library": {
       "post": {
-        "tags": [
-          "Project Templates"
-        ],
+        "tags": ["Project Templates"],
         "summary": "Duplicate a Library Template into a Project",
         "description": "Duplicates a read-only Library Template into a new editable Project Template.\nNo JSON body required \u2014 the backend fetches the source template and copies its graph.",
         "operationId": "duplicate_from_library_v1_templates_from_library_post",
@@ -384,9 +370,7 @@
     },
     "/v1/engine/nodes": {
       "get": {
-        "tags": [
-          "Engine"
-        ],
+        "tags": ["Engine"],
         "summary": "Get all node schemas",
         "description": "Returns the full schema (inputs, outputs, metadata) for every\nregistered node in the engine.",
         "operationId": "get_all_nodes_v1_engine_nodes_get",
@@ -409,9 +393,7 @@
     },
     "/v1/engine/nodes/{node_class}": {
       "get": {
-        "tags": [
-          "Engine"
-        ],
+        "tags": ["Engine"],
         "summary": "Get a single node schema",
         "description": "Returns the schema for a specific node class by name\n(e.g., `GeminiNode`, `VeoVideoGenerationNode`).",
         "operationId": "get_node_v1_engine_nodes__node_class__get",
@@ -455,9 +437,7 @@
     },
     "/v1/engine/run": {
       "post": {
-        "tags": [
-          "Engine"
-        ],
+        "tags": ["Engine"],
         "summary": "Run a template",
         "description": "Snapshots the template's current graph into a TemplateVersion, creates a\nJob + NodeExecution records, submits the graph to engine, and streams\nnode status updates via RabbitMQ \u2192 WebSocket Gateway \u2192 frontend.\nReturns immediately with job_id and prompt_id.\n\nRaises **422 Unprocessable Entity** if the graph contains validation\nerrors (e.g. missing required inputs, type mismatches).  The response\nbody includes a structured ``node_errors`` dict so the frontend can\nhighlight the broken nodes.",
         "operationId": "run_template_v1_engine_run_post",
@@ -502,9 +482,7 @@
     },
     "/v1/engine/prompt": {
       "post": {
-        "tags": [
-          "Engine"
-        ],
+        "tags": ["Engine"],
         "summary": "Submit a workflow for execution",
         "description": "Submits a workflow graph for asynchronous execution on the engine.\nReturns immediately with a `prompt_id` \u2014 poll\n`GET /history/{prompt_id}` for results.",
         "operationId": "submit_prompt_v1_engine_prompt_post",
@@ -549,9 +527,7 @@
     },
     "/v1/engine/history/{prompt_id}": {
       "get": {
-        "tags": [
-          "Engine"
-        ],
+        "tags": ["Engine"],
         "summary": "Get execution history for a prompt",
         "description": "Returns the execution history entry for a specific prompt_id.\nReturns null if no history exists for that prompt.",
         "operationId": "get_prompt_history_v1_engine_history__prompt_id__get",
@@ -605,9 +581,7 @@
     },
     "/v1/engine/history": {
       "get": {
-        "tags": [
-          "Engine"
-        ],
+        "tags": ["Engine"],
         "summary": "List execution history",
         "description": "Returns execution history for all prompts.\nSupports optional pagination via `max_items` and `offset`.",
         "operationId": "get_all_history_v1_engine_history_get",
@@ -679,9 +653,7 @@
         }
       },
       "post": {
-        "tags": [
-          "Engine"
-        ],
+        "tags": ["Engine"],
         "summary": "Clear or delete history entries",
         "description": "Clears all execution history (if `clear=true`) and/or deletes\nspecific entries by prompt_id (if `delete` list is provided).",
         "operationId": "clear_history_v1_engine_history_post",
@@ -723,9 +695,7 @@
     },
     "/v1/library-templates/": {
       "get": {
-        "tags": [
-          "Library Templates"
-        ],
+        "tags": ["Library Templates"],
         "summary": "List Library Templates",
         "description": "Lists all available library template cards with pagination.",
         "operationId": "list_library_templates_v1_library_templates__get",
@@ -788,9 +758,7 @@
     },
     "/v1/library-templates/{template_id}": {
       "get": {
-        "tags": [
-          "Library Templates"
-        ],
+        "tags": ["Library Templates"],
         "summary": "Get Library Template by ID",
         "description": "Retrieves a specific library template by its UUID.",
         "operationId": "get_library_template_v1_library_templates__template_id__get",
@@ -832,9 +800,7 @@
     },
     "/v1/ambassadors/": {
       "post": {
-        "tags": [
-          "Ambassadors"
-        ],
+        "tags": ["Ambassadors"],
         "summary": "Create ambassador for a project",
         "operationId": "create_ambassador_v1_ambassadors__post",
         "requestBody": {
@@ -878,9 +844,7 @@
     },
     "/v1/ambassadors/project/{project_id}": {
       "get": {
-        "tags": [
-          "Ambassadors"
-        ],
+        "tags": ["Ambassadors"],
         "summary": "Get ambassador by project ID",
         "operationId": "get_ambassador_by_project_v1_ambassadors_project__project_id__get",
         "security": [
@@ -926,9 +890,7 @@
     },
     "/v1/ambassadors/{ambassador_id}": {
       "get": {
-        "tags": [
-          "Ambassadors"
-        ],
+        "tags": ["Ambassadors"],
         "summary": "Get ambassador by ID",
         "operationId": "get_ambassador_v1_ambassadors__ambassador_id__get",
         "security": [
@@ -972,9 +934,7 @@
         }
       },
       "patch": {
-        "tags": [
-          "Ambassadors"
-        ],
+        "tags": ["Ambassadors"],
         "summary": "Update ambassador",
         "operationId": "update_ambassador_v1_ambassadors__ambassador_id__patch",
         "security": [
@@ -1028,9 +988,7 @@
         }
       },
       "delete": {
-        "tags": [
-          "Ambassadors"
-        ],
+        "tags": ["Ambassadors"],
         "summary": "Delete ambassador",
         "operationId": "delete_ambassador_v1_ambassadors__ambassador_id__delete",
         "security": [
@@ -1069,9 +1027,7 @@
     },
     "/v1/ambassadors/{ambassador_id}/images": {
       "get": {
-        "tags": [
-          "Ambassadors"
-        ],
+        "tags": ["Ambassadors"],
         "summary": "List reference images",
         "operationId": "list_reference_images_v1_ambassadors__ambassador_id__images_get",
         "security": [
@@ -1119,9 +1075,7 @@
         }
       },
       "post": {
-        "tags": [
-          "Ambassadors"
-        ],
+        "tags": ["Ambassadors"],
         "summary": "Add a reference image",
         "operationId": "add_reference_image_v1_ambassadors__ambassador_id__images_post",
         "security": [
@@ -1177,9 +1131,7 @@
     },
     "/v1/ambassadors/{ambassador_id}/images/{media_id}": {
       "delete": {
-        "tags": [
-          "Ambassadors"
-        ],
+        "tags": ["Ambassadors"],
         "summary": "Remove a reference image",
         "operationId": "delete_reference_image_v1_ambassadors__ambassador_id__images__media_id__delete",
         "security": [
@@ -1228,9 +1180,7 @@
     },
     "/v1/review/": {
       "post": {
-        "tags": [
-          "Manual Review"
-        ],
+        "tags": ["Manual Review"],
         "summary": "Create a manual review task (called by nodes)",
         "operationId": "create_task_v1_review__post",
         "requestBody": {
@@ -1274,9 +1224,7 @@
     },
     "/v1/review/{task_id}": {
       "get": {
-        "tags": [
-          "Manual Review"
-        ],
+        "tags": ["Manual Review"],
         "summary": "Get review task status (polled by nodes)",
         "operationId": "get_task_v1_review__task_id__get",
         "security": [
@@ -1322,9 +1270,7 @@
     },
     "/v1/review/{task_id}/complete": {
       "post": {
-        "tags": [
-          "Manual Review"
-        ],
+        "tags": ["Manual Review"],
         "summary": "Submit user decision for a review task",
         "operationId": "complete_task_v1_review__task_id__complete_post",
         "security": [
@@ -1380,9 +1326,7 @@
     },
     "/v1/review/job/{job_id}/pending": {
       "get": {
-        "tags": [
-          "Manual Review"
-        ],
+        "tags": ["Manual Review"],
         "summary": "Get the pending review task for a job (used by frontend to show UI)",
         "operationId": "get_pending_by_job_v1_review_job__job_id__pending_get",
         "security": [
@@ -1436,9 +1380,7 @@
     },
     "/v1/review/job/{job_id}/node/{node_id}": {
       "get": {
-        "tags": [
-          "Manual Review"
-        ],
+        "tags": ["Manual Review"],
         "summary": "Get the review task for a specific job + node (used by frontend to show UI)",
         "operationId": "get_by_job_and_node_v1_review_job__job_id__node__node_id__get",
         "security": [
@@ -1502,9 +1444,7 @@
     },
     "/v1/review/{task_id}/regenerate-shot": {
       "post": {
-        "tags": [
-          "Manual Review"
-        ],
+        "tags": ["Manual Review"],
         "summary": "Trigger re-generation of a single shot with (optionally edited) params",
         "description": "Marks ``payload.shots[slot_index].regen_status = \"regenerating\"`` immediately\nand returns 202.  A background task then calls the Veo API, registers the new\nclip with MediaIngest, and patches ``current_uuid`` + clears ``regen_status``.\n\nThe frontend polls ``GET /review/{task_id}`` to detect the UUID swap\n(``regen_status: null`` + changed ``current_uuid``) and swap the player.",
         "operationId": "regenerate_shot_v1_review__task_id__regenerate_shot_post",
@@ -1559,11 +1499,231 @@
         }
       }
     },
+    "/v1/brands/": {
+      "get": {
+        "tags": ["Brands"],
+        "summary": "List Brands",
+        "description": "Lists all brands with pagination.",
+        "operationId": "list_brands_v1_brands__get",
+        "parameters": [
+          {
+            "name": "skip",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "default": 0,
+              "title": "Skip"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 100,
+              "minimum": 1,
+              "default": 100,
+              "title": "Limit"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/BrandResponse"
+                  },
+                  "title": "Response List Brands V1 Brands  Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": ["Brands"],
+        "summary": "Create Brand",
+        "description": "Creates a new brand.",
+        "operationId": "create_brand_v1_brands__post",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BrandCreate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BrandResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/brands/{brand_id}": {
+      "get": {
+        "tags": ["Brands"],
+        "summary": "Get Brand by ID",
+        "description": "Returns a single brand by its UUID.",
+        "operationId": "get_brand_v1_brands__brand_id__get",
+        "parameters": [
+          {
+            "name": "brand_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Brand Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BrandResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "patch": {
+        "tags": ["Brands"],
+        "summary": "Update Brand",
+        "description": "Partially updates a brand. Only provided fields are changed.",
+        "operationId": "update_brand_v1_brands__brand_id__patch",
+        "parameters": [
+          {
+            "name": "brand_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Brand Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BrandUpdate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BrandResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": ["Brands"],
+        "summary": "Delete Brand",
+        "description": "Deletes a brand by ID.",
+        "operationId": "delete_brand_v1_brands__brand_id__delete",
+        "parameters": [
+          {
+            "name": "brand_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Brand Id"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/internal/library-templates/": {
       "post": {
-        "tags": [
-          "Library Templates (Internal)"
-        ],
+        "tags": ["Library Templates (Internal)"],
         "summary": "Create a Library Template",
         "description": "Creates a new library template card (internal use only).",
         "operationId": "create_library_template_internal_library_templates__post",
@@ -1603,9 +1763,7 @@
     },
     "/internal/library-templates/{template_id}": {
       "patch": {
-        "tags": [
-          "Library Templates (Internal)"
-        ],
+        "tags": ["Library Templates (Internal)"],
         "summary": "Update a Library Template",
         "description": "Partially updates a library template (internal use only).\nOnly fields sent in the payload will be updated.",
         "operationId": "update_library_template_internal_library_templates__template_id__patch",
@@ -1655,9 +1813,7 @@
         }
       },
       "delete": {
-        "tags": [
-          "Library Templates (Internal)"
-        ],
+        "tags": ["Library Templates (Internal)"],
         "summary": "Delete a Library Template",
         "description": "Deletes a library template from the library (internal use only).",
         "operationId": "delete_library_template_internal_library_templates__template_id__delete",
@@ -1761,10 +1917,7 @@
           }
         },
         "type": "object",
-        "required": [
-          "projectId",
-          "name"
-        ],
+        "required": ["projectId", "name"],
         "title": "AmbassadorCreate"
       },
       "AmbassadorResponse": {
@@ -1842,13 +1995,7 @@
           }
         },
         "type": "object",
-        "required": [
-          "projectId",
-          "name",
-          "id",
-          "createdAt",
-          "updatedAt"
-        ],
+        "required": ["projectId", "name", "id", "createdAt", "updatedAt"],
         "title": "AmbassadorResponse"
       },
       "AmbassadorUpdate": {
@@ -1935,6 +2082,144 @@
         "type": "object",
         "title": "Body_clear_history_v1_engine_history_post"
       },
+      "BrandCreate": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "maxLength": 255,
+            "minLength": 1,
+            "title": "Name",
+            "description": "Display name of the brand."
+          },
+          "description": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description",
+            "description": "The 'spirit' of the brand \u2014 used for prompt injection via {{brand_description}}."
+          },
+          "logo_image_uuid": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Logo Image Uuid",
+            "description": "Reference to the brand's logo asset in media-ingest."
+          }
+        },
+        "type": "object",
+        "required": ["name"],
+        "title": "BrandCreate",
+        "description": "Fields required to create a new Brand."
+      },
+      "BrandResponse": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "maxLength": 255,
+            "minLength": 1,
+            "title": "Name",
+            "description": "Display name of the brand."
+          },
+          "description": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description",
+            "description": "The 'spirit' of the brand \u2014 used for prompt injection via {{brand_description}}."
+          },
+          "logo_image_uuid": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Logo Image Uuid",
+            "description": "Reference to the brand's logo asset in media-ingest."
+          },
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Updated At"
+          }
+        },
+        "type": "object",
+        "required": ["name", "id", "created_at", "updated_at"],
+        "title": "BrandResponse",
+        "description": "Full Brand representation returned to the client."
+      },
+      "BrandUpdate": {
+        "properties": {
+          "name": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 255,
+                "minLength": 1
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Name"
+          },
+          "description": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description"
+          },
+          "logo_image_uuid": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Logo Image Uuid"
+          }
+        },
+        "type": "object",
+        "title": "BrandUpdate",
+        "description": "All fields optional for PATCH semantics.\nInherits from BaseModel (NOT BrandBase) to make all fields optional."
+      },
       "ExecutionStatus": {
         "properties": {
           "status_str": {
@@ -1952,11 +2237,7 @@
           }
         },
         "type": "object",
-        "required": [
-          "status_str",
-          "completed",
-          "messages"
-        ],
+        "required": ["status_str", "completed", "messages"],
         "title": "ExecutionStatus",
         "description": "Status block returned by the engine for each completed prompt."
       },
@@ -1993,12 +2274,7 @@
           }
         },
         "type": "object",
-        "required": [
-          "prompt",
-          "outputs",
-          "status",
-          "meta"
-        ],
+        "required": ["prompt", "outputs", "status", "meta"],
         "title": "HistoryEntry",
         "description": "A single prompt's execution history entry."
       },
@@ -2043,9 +2319,7 @@
           }
         },
         "type": "object",
-        "required": [
-          "name"
-        ],
+        "required": ["name"],
         "title": "LibraryTemplateCreate",
         "description": "Fields required to CREATE a new library template (internal use only).\nInherits everything from Base."
       },
@@ -2105,12 +2379,7 @@
           }
         },
         "type": "object",
-        "required": [
-          "name",
-          "id",
-          "created_at",
-          "updated_at"
-        ],
+        "required": ["name", "id", "created_at", "updated_at"],
         "title": "LibraryTemplateResponse",
         "description": "The full representation returned to the client.\nInherits from Base (Shared fields) + Adds System fields (ID, Timestamps)."
       },
@@ -2177,9 +2446,7 @@
           }
         },
         "type": "object",
-        "required": [
-          "decision"
-        ],
+        "required": ["decision"],
         "title": "ManualReviewCompleteRequest"
       },
       "ManualReviewCreateRequest": {
@@ -2211,11 +2478,7 @@
           }
         },
         "type": "object",
-        "required": [
-          "jobId",
-          "nodeId",
-          "nodeType"
-        ],
+        "required": ["jobId", "nodeId", "nodeType"],
         "title": "ManualReviewCreateRequest",
         "description": "Called internally by the node (not exposed to the public API)."
       },
@@ -2282,10 +2545,7 @@
         "properties": {
           "type": {
             "type": "string",
-            "enum": [
-              "static",
-              "dynamic"
-            ],
+            "enum": ["static", "dynamic"],
             "title": "Type",
             "default": "static"
           },
@@ -2371,10 +2631,7 @@
           }
         },
         "type": "object",
-        "required": [
-          "project_id",
-          "name"
-        ],
+        "required": ["project_id", "name"],
         "title": "ProjectTemplateCreate",
         "description": "Fields required to CREATE a new template.\nInherits everything from Base. \nBody is 'pass' because no extra write-only fields (like passwords) are needed."
       },
@@ -2448,13 +2705,7 @@
           }
         },
         "type": "object",
-        "required": [
-          "project_id",
-          "name",
-          "id",
-          "created_at",
-          "updated_at"
-        ],
+        "required": ["project_id", "name", "id", "created_at", "updated_at"],
         "title": "ProjectTemplateResponse",
         "description": "The full representation returned to the client.\nInherits from Base (Shared fields) + Adds System fields (ID, Timestamps)."
       },
@@ -2588,9 +2839,7 @@
           }
         },
         "type": "object",
-        "required": [
-          "prompt"
-        ],
+        "required": ["prompt"],
         "title": "PromptRequest",
         "description": "Request body for submitting a workflow graph for execution."
       },
@@ -2611,11 +2860,7 @@
           }
         },
         "type": "object",
-        "required": [
-          "prompt_id",
-          "number",
-          "node_errors"
-        ],
+        "required": ["prompt_id", "number", "node_errors"],
         "title": "PromptResponse",
         "description": "Successful response from POST /api/prompt."
       },
@@ -2667,19 +2912,12 @@
           },
           "imageType": {
             "type": "string",
-            "enum": [
-              "portrait",
-              "full_body",
-              "other"
-            ],
+            "enum": ["portrait", "full_body", "other"],
             "title": "Imagetype"
           }
         },
         "type": "object",
-        "required": [
-          "mediaId",
-          "imageType"
-        ],
+        "required": ["mediaId", "imageType"],
         "title": "ReferenceImageCreate"
       },
       "ReferenceImageResponse": {
@@ -2710,13 +2948,7 @@
           }
         },
         "type": "object",
-        "required": [
-          "id",
-          "mediaId",
-          "imageType",
-          "createdAt",
-          "updatedAt"
-        ],
+        "required": ["id", "mediaId", "imageType", "createdAt", "updatedAt"],
         "title": "ReferenceImageResponse"
       },
       "RunTemplateRequest": {
@@ -2728,9 +2960,7 @@
           }
         },
         "type": "object",
-        "required": [
-          "template_id"
-        ],
+        "required": ["template_id"],
         "title": "RunTemplateRequest"
       },
       "RunTemplateResponse": {
@@ -2745,10 +2975,7 @@
           }
         },
         "type": "object",
-        "required": [
-          "job_id",
-          "prompt_id"
-        ],
+        "required": ["job_id", "prompt_id"],
         "title": "RunTemplateResponse"
       },
       "ShotRegenerateRequest": {
@@ -2762,10 +2989,7 @@
           }
         },
         "type": "object",
-        "required": [
-          "slotIndex",
-          "params"
-        ],
+        "required": ["slotIndex", "params"],
         "title": "ShotRegenerateRequest",
         "description": "Body for POST /review/{task_id}/regenerate-shot."
       },
@@ -2795,11 +3019,7 @@
           }
         },
         "type": "object",
-        "required": [
-          "loc",
-          "msg",
-          "type"
-        ],
+        "required": ["loc", "msg", "type"],
         "title": "ValidationError"
       },
       "VeoEditableParams": {
@@ -2835,9 +3055,7 @@
           }
         },
         "type": "object",
-        "required": [
-          "prompt"
-        ],
+        "required": ["prompt"],
         "title": "VeoEditableParams",
         "description": "Editable Veo generation params surfaced to the user during script review.\n\nAll fields can be modified before re-generating a single shot.\nLocked fields (first_frame_uuid, last_frame_uuid) are read from the task\npayload server-side \u2014 they are never sent over the wire by the client."
       }
