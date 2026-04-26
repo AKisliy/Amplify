@@ -58,8 +58,8 @@ const NAV_ITEMS = [
     exact: false,
   },
   {
-    label: "Brands",
-    href: (id: string) => `/projects/${id}/brands`,
+    label: "Products",
+    href: (id: string) => `/projects/${id}/products`,
     icon: Tag,
     exact: false,
   },

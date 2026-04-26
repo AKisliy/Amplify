@@ -29,6 +29,7 @@ def upgrade() -> None:
         sa.Column('updated_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
         sa.PrimaryKeyConstraint('id', name=op.f('pk_brands')),
         schema='template_service',
+        if_not_exists=True
     )
 
 
