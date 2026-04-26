@@ -19,15 +19,18 @@ _PREVIEW_H = 80
 _PREVIEW_TEXT = "Amplify"
 _BG_COLOR = (18, 18, 18)
 
+logger = logging.getLogger(__name__)
+
 
 def _load_font(style: CaptionStyle, target_px: int) -> ImageFont.FreeTypeFont:
     """Load the style's font at the given pixel size, falling back to default."""
-    ttf_path = _FONTS_DIR / f"{style.font_name}.ttf"
+    ttf_path = _FONTS_DIR / style.font_file
     if not ttf_path.exists():
         ttf_path = _FONTS_DIR / "Mont-Regular.ttf"
     try:
         return ImageFont.truetype(str(ttf_path), size=target_px)
     except OSError:
+        logger.info(f"Couldn't load {ttf_path} font for preview. Using default instead")
         return ImageFont.load_default()
 
 

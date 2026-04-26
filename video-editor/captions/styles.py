@@ -6,7 +6,8 @@ class CaptionStyle:
     code: str
     name: str
     # Font
-    font_name: str
+    font_name: str        # internal family name used in ASS styles (matched by libass)
+    font_file: str        # .ttf filename without path, used for PIL preview rendering
     font_size: int        # in ASS coordinate space (PlayResY=288)
     bold: bool
     # Colors in ASS ABGR format (&HAABBGGRR, AA=00 is fully opaque)
@@ -23,7 +24,7 @@ STYLES: dict[str, CaptionStyle] = {
     "default": CaptionStyle(
         code="default",
         name="Default",
-        font_name="Rubik Storm",
+        font_name="Mont", font_file="Mont-Regular.ttf",
         font_size=72,
         bold=False,
         primary_color="&H00FFFFFF",   # white
@@ -36,7 +37,7 @@ STYLES: dict[str, CaptionStyle] = {
     "bold": CaptionStyle(
         code="bold",
         name="Bold",
-        font_name="Mont",
+        font_name="Mont", font_file="Mont-Regular.ttf",
         font_size=72,
         bold=True,
         primary_color="&H00FFFFFF",   # white
@@ -49,7 +50,7 @@ STYLES: dict[str, CaptionStyle] = {
     "minimal": CaptionStyle(
         code="minimal",
         name="Minimal",
-        font_name="Mont",
+        font_name="Mont", font_file="Mont-Regular.ttf",
         font_size=72,
         bold=False,
         primary_color="&H00FFFFFF",   # white
@@ -62,7 +63,7 @@ STYLES: dict[str, CaptionStyle] = {
     "yellow": CaptionStyle(
         code="yellow",
         name="Yellow",
-        font_name="Mont",
+        font_name="Mont", font_file="Mont-Regular.ttf",
         font_size=72,
         bold=True,
         primary_color="&H0000FFFF",   # yellow (ABGR: R=FF G=FF B=00)
@@ -75,7 +76,7 @@ STYLES: dict[str, CaptionStyle] = {
     "box": CaptionStyle(
         code="box",
         name="Box",
-        font_name="Mont",
+        font_name="Mont", font_file="Mont-Regular.ttf",
         font_size=72,
         bold=False,
         primary_color="&H00FFFFFF",   # white text
