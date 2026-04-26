@@ -62,6 +62,7 @@ class FinalAssetGeneratedEvent(BaseModel):
     media_id: str
     media_type: str
     auto_list_ids: list[str] = []
+    description: str
 
 
 # ---------------------------------------------------------------------------
@@ -238,6 +239,7 @@ async def _publish_final_asset_for_job(
         media_id=media_id,
         media_type=media_type,
         auto_list_ids=[str(aid) for aid in template.auto_list_ids],
+        description=template.post_description_config.resolve()
     )
     connection = await aio_pika.connect_robust(settings.rabbitmq_url)
     async with connection:

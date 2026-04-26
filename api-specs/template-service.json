@@ -2163,6 +2163,44 @@
         ],
         "title": "ManualReviewTaskResponse"
       },
+      "PostDescriptionConfig": {
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": [
+              "static",
+              "dynamic"
+            ],
+            "title": "Type",
+            "default": "static"
+          },
+          "value": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Value"
+          },
+          "prompt_template": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Prompt Template"
+          }
+        },
+        "type": "object",
+        "title": "PostDescriptionConfig",
+        "description": "Describes how the post description is produced when auto-publishing.\n\ntype=\"static\"  \u2192 use `value` as-is.\ntype=\"dynamic\" \u2192 generate via LLM using `prompt_template` (future work)."
+      },
       "ProjectTemplateCreate": {
         "properties": {
           "project_id": {
@@ -2204,6 +2242,17 @@
             "type": "array",
             "title": "Auto List Ids",
             "description": "AutoList UUIDs associated with this template for auto-publishing."
+          },
+          "post_description_config": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/PostDescriptionConfig"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Structured description config used when auto-publishing the generated media post."
           }
         },
         "type": "object",
@@ -2255,6 +2304,17 @@
             "type": "array",
             "title": "Auto List Ids",
             "description": "AutoList UUIDs associated with this template for auto-publishing."
+          },
+          "post_description_config": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/PostDescriptionConfig"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Structured description config used when auto-publishing the generated media post."
           },
           "id": {
             "type": "string",
@@ -2335,6 +2395,16 @@
               }
             ],
             "title": "Auto List Ids"
+          },
+          "post_description_config": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/PostDescriptionConfig"
+              },
+              {
+                "type": "null"
+              }
+            ]
           }
         },
         "type": "object",

@@ -1,8 +1,30 @@
 from datetime import datetime
 from uuid import UUID
-from typing import Any
+from typing import Any, Literal
 
 from pydantic import BaseModel, ConfigDict, Field
+
+# -----------------------------------------------------------------------------
+# 0. Description config value object
+# -----------------------------------------------------------------------------
+class PostDescriptionConfig(BaseModel):
+    """
+    Describes how the post description is produced when auto-publishing.
+
+    type="static"  → use `value` as-is.
+    type="dynamic" → generate via LLM using `prompt_template` (future work).
+    """
+    type: Literal["static", "dynamic"] = "static"
+    value: str | None = None             # populated for static
+    prompt_template: str | None = None   # populated for dynamic (reserved)
+
+    def resolve(self) -> str | None:
+        """Return the ready-to-publish description string, or None."""
+        if self.type == "static":
+            return self.value or None
+        # dynamic: not yet implemented — caller should handle None gracefully
+        return None
+
 
 # -----------------------------------------------------------------------------
 # 1. The Base Rule (Shared Contract)
@@ -37,6 +59,11 @@ class ProjectTemplateBase(BaseModel):
     auto_list_ids: list[UUID] = Field(
         default_factory=list,
         description="AutoList UUIDs associated with this template for auto-publishing."
+    )
+
+    post_description_config: PostDescriptionConfig | None = Field(
+        default=None,
+        description="Structured description config used when auto-publishing the generated media post."
     )
 
 
@@ -76,6 +103,10 @@ class ProjectTemplateUpdate(BaseModel):
     )
 
     auto_list_ids: list[UUID] | None = Field(
+        default=None
+    )
+
+    post_description_config: PostDescriptionConfig | None = Field(
         default=None
     )
 
