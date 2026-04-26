@@ -10,9 +10,17 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/textarea";
+import { Separator } from "@/components/ui/separator";
+import { Badge } from "@/components/ui/badge";
+import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
 import { useAutolists } from "@/features/autolists/hooks/useAutolists";
+import type { PostDescriptionConfig } from "@/lib/api/generated/template-service/types.gen";
 import type { CanvasNode } from "../types";
+
+export type { PostDescriptionConfig };
 
 // ---------------------------------------------------------------------------
 // Caption styles — mirrors video-editor/captions/styles.py (visual props only)
@@ -215,6 +223,8 @@ export interface TemplateSettingsSidebarProps {
   projectId: string;
   autoListIds: string[];
   onAutoListIdsChange: (ids: string[]) => void;
+  postDescriptionConfig: PostDescriptionConfig | null;
+  onPostDescriptionConfigChange: (config: PostDescriptionConfig | null) => void;
   nodes: CanvasNode[];
   updateNodeConfig: (nodeId: string, field: string, value: unknown) => void;
 }
@@ -223,6 +233,8 @@ export function TemplateSettingsSidebar({
   projectId,
   autoListIds,
   onAutoListIdsChange,
+  postDescriptionConfig,
+  onPostDescriptionConfigChange,
   nodes,
   updateNodeConfig,
 }: TemplateSettingsSidebarProps) {
@@ -312,7 +324,7 @@ export function TemplateSettingsSidebar({
               <TabsList className="flex-1 h-7">
                 <TabsTrigger value="autolist" className="flex-1 text-xs gap-1 h-full">
                   <CalendarDays className="size-3" />
-                  Schedule
+                  Posting
                 </TabsTrigger>
                 <TabsTrigger value="captions" className="flex-1 text-xs gap-1 h-full">
                   <Captions className="size-3" />
@@ -321,38 +333,121 @@ export function TemplateSettingsSidebar({
               </TabsList>
             </div>
 
-            {/* Auto-publish tab */}
-            <TabsContent value="autolist" className="flex-1 overflow-y-auto mt-0 p-2">
-              {isLoading && (
-                <p className="px-2 py-3 text-xs text-muted-foreground/40">Loading…</p>
-              )}
-              {!isLoading && autolists.length === 0 && (
-                <p className="px-2 py-3 text-xs text-muted-foreground/40">No AutoLists found</p>
-              )}
-              {autolists.map((al) => {
-                const selected = autoListIds.includes(al.id);
-                return (
-                  <button
-                    key={al.id}
-                    onClick={() => toggleAutoList(al.id)}
-                    className={cn(
-                      "w-full flex items-center gap-2.5 px-2 py-1.5 rounded-md text-xs text-left transition-colors",
-                      "hover:bg-sidebar-accent",
-                      selected ? "text-sidebar-foreground" : "text-sidebar-foreground/60"
-                    )}
-                  >
-                    <span
+            {/* Posting tab */}
+            <TabsContent value="autolist" className="flex-1 overflow-y-auto mt-0 flex flex-col min-h-0">
+              {/* AutoList section */}
+              <div className="p-2">
+                <Label className="px-2 pt-1 pb-1.5 block text-[10px] text-muted-foreground/40 uppercase tracking-wide">
+                  Auto-publish
+                </Label>
+                {isLoading && (
+                  <p className="px-2 py-3 text-xs text-muted-foreground/40">Loading…</p>
+                )}
+                {!isLoading && autolists.length === 0 && (
+                  <p className="px-2 py-3 text-xs text-muted-foreground/40">No AutoLists found</p>
+                )}
+                {autolists.map((al) => {
+                  const selected = autoListIds.includes(al.id);
+                  return (
+                    <button
+                      key={al.id}
+                      onClick={() => toggleAutoList(al.id)}
                       className={cn(
-                        "w-3.5 h-3.5 rounded shrink-0 border flex items-center justify-center",
-                        selected ? "bg-primary border-primary" : "border-sidebar-foreground/20"
+                        "w-full flex items-center gap-2.5 px-2 py-1.5 rounded-md text-xs text-left transition-colors",
+                        "hover:bg-sidebar-accent",
+                        selected ? "text-sidebar-foreground" : "text-sidebar-foreground/60"
                       )}
                     >
-                      {selected && <Check className="w-2.5 h-2.5 text-primary-foreground" />}
-                    </span>
-                    <span className="truncate">{al.name}</span>
-                  </button>
-                );
-              })}
+                      <span
+                        className={cn(
+                          "w-3.5 h-3.5 rounded shrink-0 border flex items-center justify-center",
+                          selected ? "bg-primary border-primary" : "border-sidebar-foreground/20"
+                        )}
+                      >
+                        {selected && <Check className="w-2.5 h-2.5 text-primary-foreground" />}
+                      </span>
+                      <span className="truncate">{al.name}</span>
+                    </button>
+                  );
+                })}
+              </div>
+
+              <Separator className="mx-2 w-auto" />
+
+              {/* Post description section */}
+              <div className="p-2 flex flex-col gap-2">
+                <div className="flex items-center gap-1.5 px-2 pt-1">
+                  <Label className="text-[10px] text-muted-foreground/40 uppercase tracking-wide flex-1">
+                    Post Description
+                  </Label>
+                  {autoListIds.length === 0 && (
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <span className="text-[9px] text-muted-foreground/25 cursor-default select-none">
+                          Requires auto-list
+                        </span>
+                      </TooltipTrigger>
+                      <TooltipContent side="left" className="max-w-[180px] text-xs">
+                        Description is used only for auto-publishing. Select an AutoList first.
+                      </TooltipContent>
+                    </Tooltip>
+                  )}
+                </div>
+
+                {/* Type toggle */}
+                <div
+                  className={cn(
+                    "flex rounded-md overflow-hidden border border-border/50 bg-muted/20",
+                    autoListIds.length === 0 && "opacity-40 pointer-events-none"
+                  )}
+                >
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() =>
+                      onPostDescriptionConfigChange({ ...postDescriptionConfig, type: "static" })
+                    }
+                    className={cn(
+                      "flex-1 h-7 rounded-none text-[11px]",
+                      (postDescriptionConfig?.type ?? "static") === "static"
+                        ? "bg-primary/20 text-primary hover:bg-primary/25 hover:text-primary"
+                        : "text-muted-foreground"
+                    )}
+                  >
+                    Static
+                  </Button>
+                  <Separator orientation="vertical" className="h-7" />
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    disabled
+                    className="flex-1 h-7 rounded-none text-[11px] gap-1 text-muted-foreground/30 cursor-not-allowed"
+                  >
+                    Generated
+                    <Badge variant="outline" className="text-[8px] h-3.5 px-1 py-0 border-muted-foreground/20 text-muted-foreground/30">
+                      Soon
+                    </Badge>
+                  </Button>
+                </div>
+
+                {/* Static description textarea */}
+                <Textarea
+                  disabled={autoListIds.length === 0}
+                  value={postDescriptionConfig?.value ?? ""}
+                  onChange={(e) =>
+                    onPostDescriptionConfigChange({
+                      type: postDescriptionConfig?.type ?? "static",
+                      value: e.target.value || null,
+                    })
+                  }
+                  placeholder="Enter post description…"
+                  rows={4}
+                  className={cn(
+                    "text-xs resize-none min-h-0",
+                    autoListIds.length === 0 && "opacity-40 cursor-not-allowed"
+                  )}
+                />
+              </div>
             </TabsContent>
 
             {/* Captions tab */}

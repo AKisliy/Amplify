@@ -43,7 +43,7 @@ import { NodeLibrarySidebar } from "@/features/canvas/components/NodeLibrarySide
 import { MediaAssetsPanel } from "@/features/canvas/components/MediaAssetsPanel";
 import { TemplateMenu } from "@/features/canvas/components/TemplateMenu";
 import { GeneratedMediaPanel } from "@/features/canvas/components/GeneratedMediaPanel";
-import { TemplateSettingsSidebar } from "@/features/canvas/components/TemplateSettingsSidebar";
+import { TemplateSettingsSidebar, type PostDescriptionConfig } from "@/features/canvas/components/TemplateSettingsSidebar";
 import { ShotReviewDialog } from "@/features/canvas/components/ShotReviewDialog";
 import { useCanvasStore } from "@/features/canvas/hooks/useCanvasStore";
 import { useNodeRegistry } from "@/features/canvas/hooks/useNodeRegistry";
@@ -166,6 +166,7 @@ export default function TemplateCanvasPage() {
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [sidebarTab,  setSidebarTab]  = useState<SidebarTab>("nodes");
   const [autoListIds, setAutoListIds] = useState<string[]>([]);
+  const [postDescriptionConfig, setPostDescriptionConfig] = useState<PostDescriptionConfig | null>(null);
 
   const [contextMenu, setContextMenu] = useState<{
     screenPos: { x: number; y: number };
@@ -190,9 +191,9 @@ export default function TemplateCanvasPage() {
       try {
         const response = await getTemplateV1TemplatesTemplateIdGet({ path: { template_id: templateId } });
         if (response?.data?.name) setTemplateName(response.data.name);
-        // auto_list_ids is present at runtime but not yet in the OpenAPI spec
         const d = response?.data as any;
         if (d?.auto_list_ids) setAutoListIds(d.auto_list_ids);
+        if (d?.post_description_config) setPostDescriptionConfig(d.post_description_config);
       } catch (err) {
         console.error("Failed to fetch template name:", err);
       }
@@ -506,6 +507,19 @@ export default function TemplateCanvasPage() {
     }
   }, [templateId]);
 
+  // ── Post description config ───────────────────────────────────────────────
+  const handlePostDescriptionConfigChange = useCallback(async (config: PostDescriptionConfig | null) => {
+    setPostDescriptionConfig(config);
+    try {
+      await updateTemplateV1TemplatesTemplateIdPatch({
+        path: { template_id: templateId },
+        body: { post_description_config: config } as any,
+      });
+    } catch {
+      // Silently fail
+    }
+  }, [templateId]);
+
   // ── Port-type compatibility ────────────────────────────────────────────────
   // Defines which source port types can connect to which target port types.
   // COMFY_AUTOGROW_V3 is a wildcard slot that accepts any type.
@@ -782,6 +796,8 @@ export default function TemplateCanvasPage() {
             projectId={projectId}
             autoListIds={autoListIds}
             onAutoListIdsChange={handleAutoListIdsChange}
+            postDescriptionConfig={postDescriptionConfig}
+            onPostDescriptionConfigChange={handlePostDescriptionConfigChange}
             nodes={nodes}
             updateNodeConfig={updateNodeConfig}
           />

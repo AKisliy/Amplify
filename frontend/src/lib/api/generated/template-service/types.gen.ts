@@ -373,6 +373,29 @@ export type ManualReviewTaskResponse = {
 };
 
 /**
+ * PostDescriptionConfig
+ *
+ * Describes how the post description is produced when auto-publishing.
+ *
+ * type="static"  → use `value` as-is.
+ * type="dynamic" → generate via LLM using `prompt_template` (future work).
+ */
+export type PostDescriptionConfig = {
+    /**
+     * Type
+     */
+    type?: 'static' | 'dynamic';
+    /**
+     * Value
+     */
+    value?: string | null;
+    /**
+     * Prompt Template
+     */
+    prompt_template?: string | null;
+};
+
+/**
  * ProjectTemplateCreate
  *
  * Fields required to CREATE a new template.
@@ -412,6 +435,10 @@ export type ProjectTemplateCreate = {
      * AutoList UUIDs associated with this template for auto-publishing.
      */
     auto_list_ids?: Array<string>;
+    /**
+     * Structured description config used when auto-publishing the generated media post.
+     */
+    post_description_config?: PostDescriptionConfig | null;
 };
 
 /**
@@ -454,6 +481,10 @@ export type ProjectTemplateResponse = {
      */
     auto_list_ids?: Array<string>;
     /**
+     * Structured description config used when auto-publishing the generated media post.
+     */
+    post_description_config?: PostDescriptionConfig | null;
+    /**
      * Id
      */
     id: string;
@@ -493,6 +524,7 @@ export type ProjectTemplateUpdate = {
      * Auto List Ids
      */
     auto_list_ids?: Array<string> | null;
+    post_description_config?: PostDescriptionConfig | null;
 };
 
 /**
