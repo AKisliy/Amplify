@@ -19,8 +19,6 @@ import "@xyflow/react/dist/style.css";
 
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
-import { useProjects } from "@/features/ambassadors/hooks/useProjects";
-import { ProjectHeader } from "@/components/ProjectHeader";
 import { useTheme } from "next-themes";
 import {
   updateTemplateV1TemplatesTemplateIdPatch,
@@ -158,8 +156,7 @@ export default function TemplateCanvasPage() {
   const [isDuplicating, setIsDuplicating] = useState(false);
 
   const { resolvedTheme } = useTheme();
-  const { projects, isLoading: projectsLoading } = useProjects();
-  const { registry, isLoading: registryLoading } = useNodeRegistry();
+const { registry, isLoading: registryLoading } = useNodeRegistry();
   const nodeLibrary = useMemo(() => getNodesByCategory(registry), [registry]);
 
   // ── UI state ────────────────────────────────────────────────────────────────
@@ -600,7 +597,6 @@ export default function TemplateCanvasPage() {
 
   return (
     <div className="h-screen bg-background flex flex-col overflow-hidden relative">
-      <ProjectHeader projects={projects} isLoading={projectsLoading} />
 
       {/* Read-only floating banner */}
       {isReadonly && (

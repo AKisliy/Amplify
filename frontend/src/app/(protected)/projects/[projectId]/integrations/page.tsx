@@ -6,15 +6,12 @@ import { motion } from "framer-motion";
 import { useIntegrations } from "@/features/integrations/hooks/useIntegrations";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
-import { ProjectHeader } from "@/components/ProjectHeader";
-import { useProjects } from "@/features/ambassadors/hooks/useProjects";
 import { Instagram, Loader2, CheckCircle2, Link as LinkIcon } from "lucide-react";
 
 export default function IntegrationsPage() {
     const params = useParams();
     const projectId = params?.projectId as string;
-    const { projects, isLoading: projectsLoading } = useProjects();
-    const { integrations, isLoading, error, getAuthUrl, disconnectAccount } = useIntegrations(projectId);
+const { integrations, isLoading, error, getAuthUrl, disconnectAccount } = useIntegrations(projectId);
     const [redirectingProvider, setRedirectingProvider] = useState<string | null>(null);
     const [disconnectingId, setDisconnectingId] = useState<string | null>(null);
 
@@ -66,7 +63,6 @@ export default function IntegrationsPage() {
 
     return (
         <div className="min-h-screen bg-background flex flex-col">
-            <ProjectHeader projects={projects} isLoading={projectsLoading} />
 
             <main className="container mx-auto px-6 py-8 flex-1">
                 <motion.div

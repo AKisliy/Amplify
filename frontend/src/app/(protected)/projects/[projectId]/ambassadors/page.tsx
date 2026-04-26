@@ -3,10 +3,9 @@
 import { useParams } from "next/navigation";
 
 import { useAmbassador } from "@/features/ambassadors/hooks/useAmbassador";
-import { useProject, useProjects } from "@/features/ambassadors/hooks/useProjects";
+import { useProject } from "@/features/ambassadors/hooks/useProjects";
 import { AmbassadorView } from "@/features/ambassadors/components/AmbassadorView";
 import type { AmbassadorFormValues } from "@/features/ambassadors/schemas/ambassador.schema";
-import { ProjectHeader } from "@/components/ProjectHeader";
 import { uploadMedia } from "@/features/ambassadors/services/ambassador.service";
 import { ambassadorApi } from "@/features/ambassadors/services/api";
 
@@ -15,7 +14,6 @@ export default function ProjectAmbassadorPage() {
   const projectId = params?.projectId as string;
 
   const { project, isLoading: projectLoading } = useProject(projectId);
-  const { projects, isLoading: projectsLoading } = useProjects();
 
   const {
     ambassador,
@@ -58,7 +56,6 @@ export default function ProjectAmbassadorPage() {
 
   return (
     <div className="min-h-screen bg-background">
-      <ProjectHeader projects={projects} isLoading={projectsLoading} />
 
       <main className="container mx-auto px-6 py-8">
         <AmbassadorView
