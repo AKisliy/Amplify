@@ -7,6 +7,7 @@ Output: 400x80 px, returned as a base64-encoded PNG string.
 """
 import base64
 import io
+import logging
 from pathlib import Path
 
 from PIL import Image, ImageDraw, ImageFont
