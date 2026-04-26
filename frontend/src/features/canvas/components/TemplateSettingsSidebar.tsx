@@ -144,13 +144,13 @@ function PositionPicker({ position, onPositionChange, styleCode }: {
   );
 
   return (
-    <div className="flex justify-center">
+    <div className="flex-1 min-h-0 flex justify-center">
       <div
         ref={containerRef}
         onMouseDown={handleMouseDown}
         className="relative rounded-lg overflow-hidden cursor-crosshair select-none"
         style={{
-          width: 120,
+          height: "100%",
           aspectRatio: "9 / 16",
           background: "linear-gradient(160deg, #0f0f1a 0%, #1a1025 100%)",
           border: "1px solid rgba(255,255,255,0.08)",
@@ -389,7 +389,7 @@ export function TemplateSettingsSidebar({
                   <div className="h-px bg-border/40 shrink-0" />
 
                   {/* Position picker */}
-                  <div className="shrink-0 p-3 flex flex-col gap-2">
+                  <div className="flex-1 min-h-0 p-3 flex flex-col gap-2">
                     <p className="text-[10px] text-muted-foreground/40 uppercase tracking-wide">
                       Position
                     </p>
