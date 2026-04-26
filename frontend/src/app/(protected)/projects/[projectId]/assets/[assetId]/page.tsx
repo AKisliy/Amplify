@@ -28,6 +28,11 @@ import {
 } from "lucide-react";
 import { ProjectHeader } from "@/components/ProjectHeader";
 import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
 import { useProjects } from "@/features/ambassadors/hooks/useProjects";
 import { projectApi } from "@/features/ambassadors/services/api";
@@ -136,10 +141,108 @@ function StatCard({
 }
 
 // ---------------------------------------------------------------------------
+// Instagram Reels preview
+// ---------------------------------------------------------------------------
+
+function InstagramReelsPreview({ rec, videoUrl }: { rec: PublicationRecord; videoUrl: string }) {
+  const username = rec.socialAccount?.username ?? "unknown";
+  const avatar = rec.socialAccount?.avatarUrl;
+  const description = rec.description ?? "";
+
+  return (
+    <div
+      className="relative w-full bg-black overflow-hidden select-none"
+      style={{ aspectRatio: "9/16", maxHeight: "80vh" }}
+    >
+      {/* Video layer */}
+      <video
+        src={videoUrl}
+        className="absolute inset-0 w-full h-full object-cover"
+        autoPlay
+        loop
+        muted
+        playsInline
+      />
+
+      {/* Top bar */}
+      <div className="absolute top-0 left-0 right-0 flex items-center justify-between px-4 pt-4 pb-2">
+        <ChevronRight className="w-6 h-6 text-white rotate-180" />
+        <span className="text-white text-[15px] font-semibold tracking-tight">Reels</span>
+        <svg viewBox="0 0 24 24" className="w-6 h-6 text-white fill-none stroke-current stroke-2">
+          <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" />
+          <circle cx="12" cy="13" r="4" />
+        </svg>
+      </div>
+
+      {/* Right action buttons */}
+      <div className="absolute right-3 bottom-24 flex flex-col items-center gap-5">
+        {/* Like */}
+        <div className="flex flex-col items-center gap-1">
+          <Heart className="w-7 h-7 text-white" strokeWidth={1.8} />
+          <span className="text-white text-xs font-medium">0</span>
+        </div>
+        {/* Comment */}
+        <div className="flex flex-col items-center gap-1">
+          <svg viewBox="0 0 24 24" className="w-7 h-7 text-white fill-none stroke-current" strokeWidth={1.8}>
+            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+          </svg>
+          <span className="text-white text-xs font-medium">0</span>
+        </div>
+        {/* Send */}
+        <div className="flex flex-col items-center gap-1">
+          <svg viewBox="0 0 24 24" className="w-7 h-7 text-white fill-none stroke-current" strokeWidth={1.8}>
+            <line x1="22" y1="2" x2="11" y2="13" />
+            <polygon points="22 2 15 22 11 13 2 9 22 2" />
+          </svg>
+          <span className="text-white text-xs font-medium">0</span>
+        </div>
+        {/* More */}
+        <div className="flex flex-col items-center">
+          <svg viewBox="0 0 24 24" className="w-6 h-6 text-white fill-current">
+            <circle cx="12" cy="5" r="1.5" /><circle cx="12" cy="12" r="1.5" /><circle cx="12" cy="19" r="1.5" />
+          </svg>
+        </div>
+        {/* Music disc */}
+        <div className="w-9 h-9 rounded-full border-2 border-white/60 bg-black/60 flex items-center justify-center">
+          <div className="w-3 h-3 rounded-full bg-white/80" />
+        </div>
+      </div>
+
+      {/* Bottom info */}
+      <div className="absolute bottom-0 left-0 right-16 px-4 pb-5 space-y-1.5">
+        {/* Avatar + username */}
+        <div className="flex items-center gap-2.5">
+          {avatar ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={avatar} alt={username} className="w-8 h-8 rounded-full object-cover ring-1 ring-white/40" />
+          ) : (
+            <div className="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center ring-1 ring-white/40">
+              <span className="text-white text-xs font-bold">{username[0]?.toUpperCase()}</span>
+            </div>
+          )}
+          <span className="text-white text-[13px] font-semibold drop-shadow">{username}</span>
+        </div>
+        {/* Description */}
+        {description && (
+          <p className="text-white text-[12px] leading-snug drop-shadow line-clamp-3">{description}</p>
+        )}
+        {/* Music */}
+        <div className="flex items-center gap-1.5 mt-1">
+          <svg viewBox="0 0 24 24" className="w-3.5 h-3.5 text-white fill-current">
+            <path d="M9 18V5l12-2v13" /><circle cx="6" cy="18" r="3" /><circle cx="18" cy="16" r="3" />
+          </svg>
+          <span className="text-white text-[11px]">Original audio</span>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
 // Publication card (social post)
 // ---------------------------------------------------------------------------
 
-function PublicationCard({ rec, thumbnailUrl }: { rec: PublicationRecord; thumbnailUrl: string }) {
+function PublicationCard({ rec, thumbnailUrl, onClick }: { rec: PublicationRecord; thumbnailUrl: string; onClick: () => void }) {
   const statusLow = rec.status.toLowerCase();
   const isPublished = statusLow === "published";
   const timeLabel = isPublished && rec.publishedAt
@@ -197,22 +300,34 @@ function PublicationCard({ rec, thumbnailUrl }: { rec: PublicationRecord; thumbn
         </span>
       </div>
 
-      {/* Hover overlay */}
-      {isPublished && rec.publicUrl && (
-        <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-          <div className="flex items-center gap-1.5 text-white text-xs font-medium">
-            <ExternalLink className="w-3.5 h-3.5" />
-            View post
-          </div>
-        </div>
-      )}
+      {/* Hover overlay — preview */}
+      <div
+        className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center gap-2"
+        onClick={(e) => { e.preventDefault(); onClick(); }}
+      >
+        <Eye className="w-5 h-5 text-white" />
+        <span className="text-white text-xs font-medium">Preview</span>
+        {isPublished && rec.publicUrl && (
+          <a
+            href={rec.publicUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            onClick={(e) => e.stopPropagation()}
+            className="flex items-center gap-1 text-white/60 text-[10px] hover:text-white transition-colors"
+          >
+            <ExternalLink className="w-3 h-3" />
+            Open post
+          </a>
+        )}
+      </div>
     </div>
   );
 
-  if (isPublished && rec.publicUrl) {
-    return <a href={rec.publicUrl} target="_blank" rel="noopener noreferrer">{inner}</a>;
-  }
-  return inner;
+  return (
+    <div onClick={onClick} className="cursor-pointer">
+      {inner}
+    </div>
+  );
 }
 
 // ---------------------------------------------------------------------------
@@ -251,6 +366,7 @@ export default function AssetDetailPage() {
   const [records, setRecords] = useState<PublicationRecord[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [previewRec, setPreviewRec] = useState<PublicationRecord | null>(null);
 
   useEffect(() => {
     if (!assetId) return;
@@ -525,7 +641,7 @@ export default function AssetDetailPage() {
               ) : (
                 <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
                   {records.map((rec) => (
-                    <PublicationCard key={rec.id} rec={rec} thumbnailUrl={asset.mediaUrl} />
+                    <PublicationCard key={rec.id} rec={rec} thumbnailUrl={asset.mediaUrl} onClick={() => setPreviewRec(rec)} />
                   ))}
                 </div>
               )}
@@ -533,6 +649,32 @@ export default function AssetDetailPage() {
           </motion.div>
         )}
       </div>
+      {/* Instagram Reels preview dialog */}
+      {asset && (
+        <Dialog open={!!previewRec} onOpenChange={(open) => { if (!open) setPreviewRec(null); }}>
+          <DialogContent className="p-0 border-0 bg-transparent shadow-none max-w-none w-auto overflow-visible">
+            <DialogTitle className="sr-only">Post Preview</DialogTitle>
+            {previewRec && (
+              <div
+                className="relative rounded-[2.5rem] overflow-hidden shadow-2xl"
+                style={{ width: "min(340px, 90vw)" }}
+              >
+                {/* Phone notch bar */}
+                <div className="absolute top-0 left-0 right-0 h-9 bg-black z-20 flex items-center justify-center">
+                  <div className="w-20 h-1.5 rounded-full bg-white/20" />
+                </div>
+                <div className="pt-9">
+                  <InstagramReelsPreview rec={previewRec} videoUrl={asset.mediaUrl} />
+                </div>
+                {/* Phone home bar */}
+                <div className="h-7 bg-black flex items-center justify-center">
+                  <div className="w-24 h-1 rounded-full bg-white/20" />
+                </div>
+              </div>
+            )}
+          </DialogContent>
+        </Dialog>
+      )}
     </div>
   );
 }

@@ -96,7 +96,8 @@ function mapPublicationRecord(dto: PublicationRecordResponseDto): PublicationRec
     scheduledAt: dto?.scheduledAt ?? null,
     publishedAt: dto?.publishedAt ?? null,
     publicUrl: dto?.publicUrl ?? null,
-    createdAt: null, // Not provided by the API
+    createdAt: null,
+    description: (dto as any)?.description ?? null,
     socialAccount: {
       id: dto?.socialAccount?.id ?? "",
       socialProvider: dto?.socialAccount?.socialProvider ?? "Unknown",
