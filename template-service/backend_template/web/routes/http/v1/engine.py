@@ -71,7 +71,7 @@ async def run_template(
 ):
     """
     Snapshots the template's current graph into a TemplateVersion, creates a
-    Job + NodeExecution records, submits the graph to ComfyUI, and streams
+    Job + NodeExecution records, submits the graph to engine, and streams
     node status updates via RabbitMQ → WebSocket Gateway → frontend.
     Returns immediately with job_id and prompt_id.
 
