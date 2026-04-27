@@ -15,6 +15,7 @@ from backend_template.database import get_db
 from backend_template.entities.job import RunTemplateResponse
 from backend_template.models.job import Job, JobStatus
 from backend_template.models.node_execution import NodeExecution, NodeStatus
+from backend_template.models.product import Product
 from backend_template.models.project_template import ProjectTemplate
 from backend_template.models.template_version import TemplateVersion
 from backend_template.utils.graph import convert_reactflow_to_comfy
@@ -86,6 +87,28 @@ class JobService:
         project_id = str(template.project_id)
         logger.info(f"Submitting job for project={project_id}")
 
+        # Resolve product context if set on the template
+        product_context: dict | None = None
+        if template.product_id:
+            from sqlalchemy.orm import selectinload
+            result = await self.db.execute(
+                select(Product)
+                .where(Product.id == template.product_id)
+                .options(selectinload(Product.images), selectinload(Product.store_links))
+            )
+            product = result.scalar_one_or_none()
+            if product:
+                product_context = {
+                    "id": str(product.id),
+                    "name": product.name,
+                    "description": product.description,
+                    "store_links": [
+                        {"platform": sl.platform, "url": sl.url}
+                        for sl in product.store_links
+                    ],
+                    "image_uuids": [str(img.media_uuid) for img in product.images],
+                }
+
         # Submit to engine.  Pass job_id in extra_data so the engine can include
         # it in RabbitMQ events; client_id is the user_id for potential WS routing.
         try:
@@ -101,6 +124,7 @@ class JobService:
                                 "client_id": user_id,
                                 "project_id": project_id,
                                 "job_id": str(job.id),
+                                "product": product_context,
                             },
                         },
                     },

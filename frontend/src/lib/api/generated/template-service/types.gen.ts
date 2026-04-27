@@ -679,6 +679,12 @@ export type ProjectTemplateCreate = {
      */
     auto_list_ids?: Array<string>;
     /**
+     * Product Id
+     *
+     * Optional product UUID to use as generation context.
+     */
+    product_id?: string | null;
+    /**
      * Structured description config used when auto-publishing the generated media post.
      */
     post_description_config?: PostDescriptionConfig | null;
@@ -724,6 +730,12 @@ export type ProjectTemplateResponse = {
      */
     auto_list_ids?: Array<string>;
     /**
+     * Product Id
+     *
+     * Optional product UUID to use as generation context.
+     */
+    product_id?: string | null;
+    /**
      * Structured description config used when auto-publishing the generated media post.
      */
     post_description_config?: PostDescriptionConfig | null;
@@ -767,6 +779,10 @@ export type ProjectTemplateUpdate = {
      * Auto List Ids
      */
     auto_list_ids?: Array<string> | null;
+    /**
+     * Product Id
+     */
+    product_id?: string | null;
     post_description_config?: PostDescriptionConfig | null;
 };
 
