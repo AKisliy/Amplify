@@ -13,6 +13,11 @@
         "summary": "Create a new Project Template",
         "description": "Creates a new template container.\n- **payload**: The initial data (name, description, project_id).",
         "operationId": "create_template_v1_templates__post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
         "requestBody": {
           "required": true,
           "content": {
@@ -53,6 +58,11 @@
         "summary": "List Templates",
         "description": "Lists templates with pagination.",
         "operationId": "list_templates_v1_templates__get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
         "parameters": [
           {
             "name": "skip",
@@ -118,6 +128,11 @@
         "summary": "Get Template by ID",
         "description": "Retrieves a specific template by its UUID.",
         "operationId": "get_template_v1_templates__template_id__get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
         "parameters": [
           {
             "name": "template_id",
@@ -160,6 +175,11 @@
         "summary": "Update Template",
         "description": "Partially updates a template (e.g., renaming or auto-saving graph JSON).\nOnly fields sent in the payload will be updated.",
         "operationId": "update_template_v1_templates__template_id__patch",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
         "parameters": [
           {
             "name": "template_id",
@@ -212,6 +232,11 @@
         "summary": "Delete Template",
         "description": "Deletes a template and all its associated history (versions/jobs).",
         "operationId": "delete_template_v1_templates__template_id__delete",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
         "parameters": [
           {
             "name": "template_id",
@@ -249,6 +274,11 @@
         "summary": "Get Templates by Project ID",
         "description": "Retrieves all templates associated with a specific project ID.",
         "operationId": "get_templates_by_project_v1_templates_project__project_id__get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
         "parameters": [
           {
             "name": "project_id",
@@ -297,6 +327,11 @@
         "summary": "Duplicate a Library Template into a Project",
         "description": "Duplicates a read-only Library Template into a new editable Project Template.\nNo JSON body required \u2014 the backend fetches the source template and copies its graph.",
         "operationId": "duplicate_from_library_v1_templates_from_library_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
         "parameters": [
           {
             "name": "library_template_id",
@@ -364,7 +399,12 @@
               }
             }
           }
-        }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
       }
     },
     "/v1/engine/nodes/{node_class}": {
@@ -375,6 +415,11 @@
         "summary": "Get a single node schema",
         "description": "Returns the schema for a specific node class by name\n(e.g., `GeminiNode`, `VeoVideoGenerationNode`).",
         "operationId": "get_node_v1_engine_nodes__node_class__get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
         "parameters": [
           {
             "name": "node_class",
@@ -406,6 +451,53 @@
             }
           }
         }
+      }
+    },
+    "/v1/engine/run": {
+      "post": {
+        "tags": [
+          "Engine"
+        ],
+        "summary": "Run a template",
+        "description": "Snapshots the template's current graph into a TemplateVersion, creates a\nJob + NodeExecution records, submits the graph to ComfyUI, and streams\nnode status updates via RabbitMQ \u2192 WebSocket Gateway \u2192 frontend.\nReturns immediately with job_id and prompt_id.\n\nRaises **422 Unprocessable Entity** if the graph contains validation\nerrors (e.g. missing required inputs, type mismatches).  The response\nbody includes a structured ``node_errors`` dict so the frontend can\nhighlight the broken nodes.",
+        "operationId": "run_template_v1_engine_run_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RunTemplateRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "202": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RunTemplateResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
       }
     },
     "/v1/engine/prompt": {
@@ -447,7 +539,12 @@
               }
             }
           }
-        }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
       }
     },
     "/v1/engine/history/{prompt_id}": {
@@ -458,6 +555,11 @@
         "summary": "Get execution history for a prompt",
         "description": "Returns the execution history entry for a specific prompt_id.\nReturns null if no history exists for that prompt.",
         "operationId": "get_prompt_history_v1_engine_history__prompt_id__get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
         "parameters": [
           {
             "name": "prompt_id",
@@ -509,6 +611,11 @@
         "summary": "List execution history",
         "description": "Returns execution history for all prompts.\nSupports optional pagination via `max_items` and `offset`.",
         "operationId": "get_all_history_v1_engine_history_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
         "parameters": [
           {
             "name": "max_items",
@@ -578,6 +685,11 @@
         "summary": "Clear or delete history entries",
         "description": "Clears all execution history (if `clear=true`) and/or deletes\nspecific entries by prompt_id (if `delete` list is provided).",
         "operationId": "clear_history_v1_engine_history_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
         "requestBody": {
           "content": {
             "application/json": {
@@ -701,6 +813,620 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/LibraryTemplateResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/ambassadors/": {
+      "post": {
+        "tags": [
+          "Ambassadors"
+        ],
+        "summary": "Create ambassador for a project",
+        "operationId": "create_ambassador_v1_ambassadors__post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AmbassadorCreate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AmbassadorResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/v1/ambassadors/project/{project_id}": {
+      "get": {
+        "tags": [
+          "Ambassadors"
+        ],
+        "summary": "Get ambassador by project ID",
+        "operationId": "get_ambassador_by_project_v1_ambassadors_project__project_id__get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "project_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Project Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AmbassadorResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/ambassadors/{ambassador_id}": {
+      "get": {
+        "tags": [
+          "Ambassadors"
+        ],
+        "summary": "Get ambassador by ID",
+        "operationId": "get_ambassador_v1_ambassadors__ambassador_id__get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "ambassador_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Ambassador Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AmbassadorResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "Ambassadors"
+        ],
+        "summary": "Update ambassador",
+        "operationId": "update_ambassador_v1_ambassadors__ambassador_id__patch",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "ambassador_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Ambassador Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AmbassadorUpdate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AmbassadorResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Ambassadors"
+        ],
+        "summary": "Delete ambassador",
+        "operationId": "delete_ambassador_v1_ambassadors__ambassador_id__delete",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "ambassador_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Ambassador Id"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/ambassadors/{ambassador_id}/images": {
+      "get": {
+        "tags": [
+          "Ambassadors"
+        ],
+        "summary": "List reference images",
+        "operationId": "list_reference_images_v1_ambassadors__ambassador_id__images_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "ambassador_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Ambassador Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ReferenceImageResponse"
+                  },
+                  "title": "Response List Reference Images V1 Ambassadors  Ambassador Id  Images Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Ambassadors"
+        ],
+        "summary": "Add a reference image",
+        "operationId": "add_reference_image_v1_ambassadors__ambassador_id__images_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "ambassador_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Ambassador Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReferenceImageCreate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReferenceImageResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/ambassadors/{ambassador_id}/images/{media_id}": {
+      "delete": {
+        "tags": [
+          "Ambassadors"
+        ],
+        "summary": "Remove a reference image",
+        "operationId": "delete_reference_image_v1_ambassadors__ambassador_id__images__media_id__delete",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "ambassador_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Ambassador Id"
+            }
+          },
+          {
+            "name": "media_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Media Id"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/review/": {
+      "post": {
+        "tags": [
+          "Manual Review"
+        ],
+        "summary": "Create a manual review task (called by nodes)",
+        "operationId": "create_task_v1_review__post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ManualReviewCreateRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ManualReviewTaskResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/v1/review/{task_id}": {
+      "get": {
+        "tags": [
+          "Manual Review"
+        ],
+        "summary": "Get review task status (polled by nodes)",
+        "operationId": "get_task_v1_review__task_id__get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "task_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Task Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ManualReviewTaskResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/review/{task_id}/complete": {
+      "post": {
+        "tags": [
+          "Manual Review"
+        ],
+        "summary": "Submit user decision for a review task",
+        "operationId": "complete_task_v1_review__task_id__complete_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "task_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Task Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ManualReviewCompleteRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ManualReviewTaskResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/review/job/{job_id}/node/{node_id}": {
+      "get": {
+        "tags": [
+          "Manual Review"
+        ],
+        "summary": "Get the review task for a specific job + node (used by frontend to show UI)",
+        "operationId": "get_by_job_and_node_v1_review_job__job_id__node__node_id__get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "job_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Job Id"
+            }
+          },
+          {
+            "name": "node_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Node Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/ManualReviewTaskResponse"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "title": "Response Get By Job And Node V1 Review Job  Job Id  Node  Node Id  Get"
                 }
               }
             }
@@ -868,6 +1594,201 @@
   },
   "components": {
     "schemas": {
+      "AmbassadorCreate": {
+        "properties": {
+          "projectId": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Projectid",
+            "description": "UUID of the parent Project (one-to-one)."
+          },
+          "name": {
+            "type": "string",
+            "maxLength": 255,
+            "minLength": 1,
+            "title": "Name"
+          },
+          "appearanceDescription": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Appearancedescription",
+            "description": "Structured text injected into AI prompts (e.g. 'Anna, 25yo, long dark hair...')."
+          },
+          "voiceDescription": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Voicedescription",
+            "description": "Text description used in prompts for video models."
+          },
+          "voiceId": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Voiceid",
+            "description": "TTS library voice ID (not a text description)."
+          }
+        },
+        "type": "object",
+        "required": [
+          "projectId",
+          "name"
+        ],
+        "title": "AmbassadorCreate"
+      },
+      "AmbassadorResponse": {
+        "properties": {
+          "projectId": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Projectid",
+            "description": "UUID of the parent Project (one-to-one)."
+          },
+          "name": {
+            "type": "string",
+            "maxLength": 255,
+            "minLength": 1,
+            "title": "Name"
+          },
+          "appearanceDescription": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Appearancedescription",
+            "description": "Structured text injected into AI prompts (e.g. 'Anna, 25yo, long dark hair...')."
+          },
+          "voiceDescription": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Voicedescription",
+            "description": "Text description used in prompts for video models."
+          },
+          "voiceId": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Voiceid",
+            "description": "TTS library voice ID (not a text description)."
+          },
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Createdat"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Updatedat"
+          },
+          "referenceImages": {
+            "items": {
+              "$ref": "#/components/schemas/ReferenceImageResponse"
+            },
+            "type": "array",
+            "title": "Referenceimages",
+            "default": []
+          }
+        },
+        "type": "object",
+        "required": [
+          "projectId",
+          "name",
+          "id",
+          "createdAt",
+          "updatedAt"
+        ],
+        "title": "AmbassadorResponse"
+      },
+      "AmbassadorUpdate": {
+        "properties": {
+          "name": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 255,
+                "minLength": 1
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Name"
+          },
+          "appearanceDescription": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Appearancedescription"
+          },
+          "voiceDescription": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Voicedescription"
+          },
+          "voiceId": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Voiceid"
+          }
+        },
+        "type": "object",
+        "title": "AmbassadorUpdate",
+        "description": "All fields optional for PATCH. project_id intentionally omitted."
+      },
       "Body_clear_history_v1_engine_history_post": {
         "properties": {
           "clear": {
@@ -1132,6 +2053,154 @@
         "title": "LibraryTemplateUpdate",
         "description": "Fields allowed to be UPDATED (internal use only).\nCRITICAL: Inherits from BaseModel, NOT LibraryTemplateBase.\nAll fields are optional (None) to support PATCH operations."
       },
+      "ManualReviewCompleteRequest": {
+        "properties": {
+          "decision": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Decision"
+          }
+        },
+        "type": "object",
+        "required": [
+          "decision"
+        ],
+        "title": "ManualReviewCompleteRequest"
+      },
+      "ManualReviewCreateRequest": {
+        "properties": {
+          "jobId": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Jobid"
+          },
+          "nodeId": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Nodeid"
+          },
+          "nodeType": {
+            "type": "string",
+            "title": "Nodetype"
+          },
+          "autoConfirm": {
+            "type": "boolean",
+            "title": "Autoconfirm",
+            "default": false
+          },
+          "payload": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Payload",
+            "default": {}
+          }
+        },
+        "type": "object",
+        "required": [
+          "jobId",
+          "nodeId",
+          "nodeType"
+        ],
+        "title": "ManualReviewCreateRequest",
+        "description": "Called internally by the node (not exposed to the public API)."
+      },
+      "ManualReviewTaskResponse": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "jobId": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Jobid"
+          },
+          "nodeId": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Nodeid"
+          },
+          "nodeType": {
+            "type": "string",
+            "title": "Nodetype"
+          },
+          "status": {
+            "type": "string",
+            "title": "Status"
+          },
+          "autoConfirm": {
+            "type": "boolean",
+            "title": "Autoconfirm"
+          },
+          "payload": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Payload"
+          },
+          "decision": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Decision"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "jobId",
+          "nodeId",
+          "nodeType",
+          "status",
+          "autoConfirm",
+          "payload"
+        ],
+        "title": "ManualReviewTaskResponse"
+      },
+      "PostDescriptionConfig": {
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": [
+              "static",
+              "dynamic"
+            ],
+            "title": "Type",
+            "default": "static"
+          },
+          "value": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Value"
+          },
+          "prompt_template": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Prompt Template"
+          }
+        },
+        "type": "object",
+        "title": "PostDescriptionConfig",
+        "description": "Describes how the post description is produced when auto-publishing.\n\ntype=\"static\"  \u2192 use `value` as-is.\ntype=\"dynamic\" \u2192 generate via LLM using `prompt_template` (future work)."
+      },
       "ProjectTemplateCreate": {
         "properties": {
           "project_id": {
@@ -1164,6 +2233,26 @@
             "type": "object",
             "title": "Current Graph Json",
             "description": "The ComfyUI-style node graph definition. Defaults to empty object."
+          },
+          "auto_list_ids": {
+            "items": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "type": "array",
+            "title": "Auto List Ids",
+            "description": "AutoList UUIDs associated with this template for auto-publishing."
+          },
+          "post_description_config": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/PostDescriptionConfig"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Structured description config used when auto-publishing the generated media post."
           }
         },
         "type": "object",
@@ -1206,6 +2295,26 @@
             "type": "object",
             "title": "Current Graph Json",
             "description": "The ComfyUI-style node graph definition. Defaults to empty object."
+          },
+          "auto_list_ids": {
+            "items": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "type": "array",
+            "title": "Auto List Ids",
+            "description": "AutoList UUIDs associated with this template for auto-publishing."
+          },
+          "post_description_config": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/PostDescriptionConfig"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Structured description config used when auto-publishing the generated media post."
           },
           "id": {
             "type": "string",
@@ -1271,6 +2380,31 @@
               }
             ],
             "title": "Current Graph Json"
+          },
+          "auto_list_ids": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string",
+                  "format": "uuid"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Auto List Ids"
+          },
+          "post_description_config": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/PostDescriptionConfig"
+              },
+              {
+                "type": "null"
+              }
+            ]
           }
         },
         "type": "object",
@@ -1409,6 +2543,99 @@
         "title": "QueueItem",
         "description": "Parsed representation of the engine's prompt queue-item tuple.\n\nThe engine stores this as a 5-element tuple:\n    (number, prompt_id, prompt, extra_data, outputs_to_execute)\nThe model_validator converts the tuple into named fields on arrival."
       },
+      "ReferenceImageCreate": {
+        "properties": {
+          "mediaId": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Mediaid"
+          },
+          "imageType": {
+            "type": "string",
+            "enum": [
+              "portrait",
+              "full_body",
+              "other"
+            ],
+            "title": "Imagetype"
+          }
+        },
+        "type": "object",
+        "required": [
+          "mediaId",
+          "imageType"
+        ],
+        "title": "ReferenceImageCreate"
+      },
+      "ReferenceImageResponse": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "mediaId": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Mediaid"
+          },
+          "imageType": {
+            "type": "string",
+            "title": "Imagetype"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Createdat"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Updatedat"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "mediaId",
+          "imageType",
+          "createdAt",
+          "updatedAt"
+        ],
+        "title": "ReferenceImageResponse"
+      },
+      "RunTemplateRequest": {
+        "properties": {
+          "template_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Template Id"
+          }
+        },
+        "type": "object",
+        "required": [
+          "template_id"
+        ],
+        "title": "RunTemplateRequest"
+      },
+      "RunTemplateResponse": {
+        "properties": {
+          "job_id": {
+            "type": "string",
+            "title": "Job Id"
+          },
+          "prompt_id": {
+            "type": "string",
+            "title": "Prompt Id"
+          }
+        },
+        "type": "object",
+        "required": [
+          "job_id",
+          "prompt_id"
+        ],
+        "title": "RunTemplateResponse"
+      },
       "ValidationError": {
         "properties": {
           "loc": {
@@ -1441,6 +2668,12 @@
           "type"
         ],
         "title": "ValidationError"
+      }
+    },
+    "securitySchemes": {
+      "HTTPBearer": {
+        "type": "http",
+        "scheme": "bearer"
       }
     }
   },

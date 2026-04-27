@@ -10,7 +10,5 @@ public class Project : BaseAuditableEntity
 
     public Guid UserId { get; set; }
 
-    public virtual Ambassador? Ambassador { get; set; }
-
     public virtual IReadOnlyCollection<ProjectAsset> ProjectAssets { get; set; } = [];
 }

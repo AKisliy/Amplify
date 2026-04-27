@@ -1,0 +1,950 @@
+{
+  "x-generator": "NSwag v14.2.0.0 (NJsonSchema v11.1.0.0 (Newtonsoft.Json v13.0.0.0))",
+  "openapi": "3.0.0",
+  "info": {
+    "title": "MediaIngest API",
+    "version": "1.0.0"
+  },
+  "servers": [
+    {
+      "url": "/media",
+      "description": "Media-ingest API"
+    }
+  ],
+  "paths": {
+    "/api/images": {
+      "post": {
+        "tags": [
+          "images"
+        ],
+        "summary": "Upload an image",
+        "description": "Accepts JPEG, PNG, WebP, GIF. Max size: 10 MB. Returns the assigned mediaId and public URL.",
+        "operationId": "UploadFromFile",
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "file": {
+                    "type": "string",
+                    "format": "binary",
+                    "nullable": true
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {}
+            }
+          },
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UploadFileDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "JWT": []
+          }
+        ]
+      }
+    },
+    "/api/images/import": {
+      "post": {
+        "tags": [
+          "images"
+        ],
+        "summary": "Import an image from URL",
+        "description": "Downloads an image from an external URL and stores it. Not yet implemented.",
+        "operationId": "PostApiImagesImport",
+        "parameters": [
+          {
+            "name": "link",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "x-position": 1
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {}
+            }
+          },
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UploadFileDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "501": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "JWT": []
+          }
+        ]
+      }
+    },
+    "/api/internal/media": {
+      "post": {
+        "tags": [
+          "internal/media"
+        ],
+        "summary": "Upload a file (internal)",
+        "description": "Service-to-service only. Stores any file type without auth. Returns mediaId for use in subsequent requests.",
+        "operationId": "PostApiInternalMedia",
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "file": {
+                    "type": "string",
+                    "format": "binary",
+                    "nullable": true
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {}
+            }
+          },
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UploadFileDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/internal/media/{mediaId}/stream": {
+      "get": {
+        "tags": [
+          "internal/media"
+        ],
+        "summary": "Stream file content (internal)",
+        "description": "Service-to-service only. Returns raw file bytes with the stored Content-Type header.",
+        "operationId": "GetApiInternalMediaStream",
+        "parameters": [
+          {
+            "name": "mediaId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "guid"
+            },
+            "x-position": 1
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          },
+          "404": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/internal/media/{mediaId}": {
+      "delete": {
+        "tags": [
+          "internal/media"
+        ],
+        "summary": "Delete media (internal)",
+        "description": "Service-to-service only. Permanently deletes the file from storage and removes the database record.",
+        "operationId": "DeleteApiInternalMedia",
+        "parameters": [
+          {
+            "name": "mediaId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "guid"
+            },
+            "x-position": 1
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {}
+            }
+          },
+          "204": {
+            "description": ""
+          },
+          "404": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/internal/media/{mediaId}/link": {
+      "get": {
+        "tags": [
+          "internal/media"
+        ],
+        "summary": "Get media URL (internal)",
+        "description": "Service-to-service only. Returns a URL for the media file based on the requested link type.",
+        "operationId": "GetApiInternalMediaLink",
+        "parameters": [
+          {
+            "name": "mediaId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "guid"
+            },
+            "x-position": 1
+          },
+          {
+            "name": "linkType",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/LinkType"
+            },
+            "x-position": 2
+          },
+          {
+            "name": "includeMetadata",
+            "in": "query",
+            "schema": {
+              "type": "boolean",
+              "default": true
+            },
+            "x-position": 3
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GetLinkByIdResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/internal/media/{mediaId}/presigned-upload": {
+      "get": {
+        "tags": [
+          "internal/media"
+        ],
+        "summary": "Get presigned upload URL for existing media (internal)",
+        "description": "Service-to-service only. Returns a presigned PUT URL to overwrite an existing media file in S3.",
+        "operationId": "GetApiInternalMediaPresignedUpload",
+        "parameters": [
+          {
+            "name": "mediaId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "guid"
+            },
+            "x-position": 1
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GetUploadPresignedUrlResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/internal/media/import-url": {
+      "post": {
+        "tags": [
+          "internal/media"
+        ],
+        "summary": "Import file from external URL (internal)",
+        "description": "Service-to-service only. Downloads file from an external URL and stores it in S3. Returns mediaId.",
+        "operationId": "PostApiInternalMediaImportUrl",
+        "parameters": [
+          {
+            "name": "Url",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "nullable": true
+            },
+            "x-position": 1
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {}
+            }
+          },
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ImportFromUrlDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/internal/media/presigned-upload": {
+      "post": {
+        "tags": [
+          "internal/media"
+        ],
+        "summary": "Create presigned upload URL (internal)",
+        "description": "Service-to-service only. Registers a new media record and returns a presigned PUT URL for direct S3 upload.",
+        "operationId": "PostApiInternalMediaPresignedUpload",
+        "requestBody": {
+          "x-name": "command",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateUploadPresignedUrlCommand"
+              }
+            }
+          },
+          "required": true,
+          "x-position": 1
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {}
+            }
+          },
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreateUploadPresignedUrlDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/internal/media/import-gs": {
+      "post": {
+        "tags": [
+          "internal/media"
+        ],
+        "summary": "Import file from Google Storage (internal)",
+        "description": "Service-to-service only. Downloads file from Google Storage and stores it in S3. Returns mediaId.",
+        "operationId": "PostApiInternalMediaImportGs",
+        "requestBody": {
+          "x-name": "request",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ImportFromGoogleStorageCommand"
+              }
+            }
+          },
+          "required": true,
+          "x-position": 1
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {}
+            }
+          },
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ImportFromUrlDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/media/{mediaId}": {
+      "get": {
+        "tags": [
+          "media"
+        ],
+        "summary": "Get media by ID",
+        "description": "Redirects to the CDN URL of the media file. Use the URL directly in <img src> or <video src>.",
+        "operationId": "GetApiMedia",
+        "parameters": [
+          {
+            "name": "mediaId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "guid"
+            },
+            "x-position": 1
+          },
+          {
+            "name": "variant",
+            "in": "query",
+            "schema": {
+              "default": "Original",
+              "oneOf": [
+                {
+                  "$ref": "#/components/schemas/MediaVariant"
+                }
+              ]
+            },
+            "x-position": 2
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {}
+            }
+          },
+          "302": {
+            "description": ""
+          },
+          "404": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/media/presigned-upload": {
+      "post": {
+        "tags": [
+          "media"
+        ],
+        "summary": "Get presigned upload URL",
+        "description": "Registers a new media record and returns a presigned PUT URL for direct S3 upload. To upload to S3 please use exact ContentType header.",
+        "operationId": "PostApiMediaPresignedUpload",
+        "requestBody": {
+          "x-name": "command",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateUploadPresignedUrlCommand"
+              }
+            }
+          },
+          "required": true,
+          "x-position": 1
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {}
+            }
+          },
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreateUploadPresignedUrlDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "JWT": []
+          }
+        ]
+      }
+    },
+    "/api/media/{mediaId}/upload-completed": {
+      "post": {
+        "tags": [
+          "media"
+        ],
+        "summary": "Confirm upload completion",
+        "description": "Called by the client after a successful direct S3 upload. Marks the file as uploaded and triggers preprocessing.",
+        "operationId": "PostApiMediaUploadCompleted",
+        "parameters": [
+          {
+            "name": "mediaId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "guid"
+            },
+            "x-position": 1
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {}
+            }
+          },
+          "204": {
+            "description": ""
+          },
+          "404": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "JWT": []
+          }
+        ]
+      }
+    },
+    "/api/videos": {
+      "post": {
+        "tags": [
+          "videos"
+        ],
+        "summary": "Upload a video",
+        "description": "Accepts MP4 and WebM. Max size: 100 MB. Returns the assigned mediaId and presigned URL.",
+        "operationId": "PostApiVideos",
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "file": {
+                    "type": "string",
+                    "format": "binary",
+                    "nullable": true
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {}
+            }
+          },
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UploadFileDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "JWT": []
+          }
+        ]
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "UploadFileDto": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "mediaId": {
+            "type": "string",
+            "format": "guid"
+          },
+          "mediaPath": {
+            "type": "string"
+          },
+          "contentType": {
+            "type": "string"
+          }
+        }
+      },
+      "HttpValidationProblemDetails": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/ProblemDetails"
+          },
+          {
+            "type": "object",
+            "additionalProperties": {
+              "nullable": true
+            },
+            "properties": {
+              "errors": {
+                "type": "object",
+                "additionalProperties": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        ]
+      },
+      "ProblemDetails": {
+        "type": "object",
+        "additionalProperties": {
+          "nullable": true
+        },
+        "properties": {
+          "type": {
+            "type": "string",
+            "nullable": true
+          },
+          "title": {
+            "type": "string",
+            "nullable": true
+          },
+          "status": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "detail": {
+            "type": "string",
+            "nullable": true
+          },
+          "instance": {
+            "type": "string",
+            "nullable": true
+          }
+        }
+      },
+      "GetLinkByIdResponse": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "mediaId": {
+            "type": "string",
+            "format": "guid"
+          },
+          "link": {
+            "type": "string"
+          }
+        }
+      },
+      "LinkType": {
+        "type": "string",
+        "description": "",
+        "x-enumNames": [
+          "GoogleCloudStorage",
+          "Public",
+          "Presigned"
+        ],
+        "enum": [
+          "GoogleCloudStorage",
+          "Public",
+          "Presigned"
+        ]
+      },
+      "GetUploadPresignedUrlResponse": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "mediaId": {
+            "type": "string",
+            "format": "guid"
+          },
+          "uploadUrl": {
+            "type": "string"
+          }
+        }
+      },
+      "ImportFromUrlDto": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "mediaId": {
+            "type": "string",
+            "format": "guid"
+          }
+        }
+      },
+      "CreateUploadPresignedUrlDto": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "mediaId": {
+            "type": "string",
+            "format": "guid"
+          },
+          "uploadUrl": {
+            "type": "string"
+          }
+        }
+      },
+      "CreateUploadPresignedUrlCommand": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "fileName": {
+            "type": "string"
+          },
+          "contentType": {
+            "type": "string"
+          },
+          "fileSize": {
+            "type": "integer",
+            "format": "int64"
+          }
+        }
+      },
+      "ImportFromGoogleStorageCommand": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "files": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ImportFromGoogleStorageDto"
+            }
+          }
+        }
+      },
+      "ImportFromGoogleStorageDto": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "gsUri": {
+            "type": "string"
+          },
+          "contentType": {
+            "type": "string"
+          }
+        }
+      },
+      "MediaVariant": {
+        "type": "string",
+        "description": "",
+        "x-enumNames": [
+          "Original",
+          "Medium",
+          "Tiny"
+        ],
+        "enum": [
+          "Original",
+          "Medium",
+          "Tiny"
+        ]
+      }
+    },
+    "securitySchemes": {
+      "JWT": {
+        "type": "apiKey",
+        "description": "Type into the textbox: Bearer {your JWT token}",
+        "name": "Authorization",
+        "in": "header"
+      }
+    }
+  },
+  "security": [
+    {
+      "JWT": []
+    }
+  ]
+}

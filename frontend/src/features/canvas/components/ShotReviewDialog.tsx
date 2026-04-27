@@ -1,12 +1,13 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useCallback } from "react";
 import { createPortal } from "react-dom";
-import { Check, ChevronLeft, ChevronRight, Loader2, X } from "lucide-react";
+import { Check, ChevronLeft, ChevronRight, Loader2, Pause, Play, X } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { VideoTrimTimeline } from "./VideoTrimTimeline";
 import {
   completeManualReview,
-  getManualReviewPendingByJob,
+  getManualReviewByJobAndNode,
 } from "@/lib/api/template-service";
 import { mediaApi } from "@/features/media/api";
 
@@ -20,12 +21,13 @@ interface TrimState {
 
 interface ShotReviewDialogProps {
   jobId: string;
+  nodeId: string;
   onClose: () => void;
 }
 
 // ---------------------------------------------------------------------------
 
-export function ShotReviewDialog({ jobId, onClose }: ShotReviewDialogProps) {
+export function ShotReviewDialog({ jobId, nodeId, onClose }: ShotReviewDialogProps) {
   const [taskId, setTaskId] = useState<string | null>(null);
   const [videoUuids, setVideoUuids] = useState<string[]>([]);
   const [selectedIndex, setSelectedIndex] = useState(0);
@@ -33,14 +35,19 @@ export function ShotReviewDialog({ jobId, onClose }: ShotReviewDialogProps) {
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [currentTime, setCurrentTime] = useState(0);
   const videoRef = useRef<HTMLVideoElement>(null);
+
+  // Ref for trimEnd to avoid stale closure in onTimeUpdate
+  const trimEndRef = useRef(0);
 
   // Fetch pending task on mount
   useEffect(() => {
     let cancelled = false;
     (async () => {
       try {
-        const task = await getManualReviewPendingByJob(jobId);
+        const task = await getManualReviewByJobAndNode(jobId, nodeId);
         if (cancelled) return;
         if (!task) { setError("No pending review task found."); return; }
         const uuids = (
@@ -56,31 +63,67 @@ export function ShotReviewDialog({ jobId, onClose }: ShotReviewDialogProps) {
       }
     })();
     return () => { cancelled = true; };
-  }, [jobId]);
+  }, [jobId, nodeId]);
+
+  // Reset playback state when switching shots
+  useEffect(() => {
+    setIsPlaying(false);
+    setCurrentTime(0);
+    if (videoRef.current) {
+      videoRef.current.pause();
+      videoRef.current.currentTime = 0;
+    }
+  }, [selectedIndex]);
 
   // Update duration when video metadata loads
   const handleVideoLoaded = () => {
     const dur = videoRef.current?.duration;
     if (!dur || !isFinite(dur)) return;
     setTrims((prev) =>
-      prev.map((t, i) =>
-        i === selectedIndex
-          ? { ...t, end: t.end === 8 ? dur : t.end, duration: dur }
-          : t
-      )
-    );
-  };
-
-  const setTrim = (field: "start" | "end", raw: number) => {
-    setTrims((prev) =>
       prev.map((t, i) => {
         if (i !== selectedIndex) return t;
-        if (field === "start")
-          return { ...t, start: Math.min(raw, t.end - 0.1) };
-        return { ...t, end: Math.max(raw, t.start + 0.1) };
+        const end = t.end === 8 ? dur : t.end;
+        trimEndRef.current = end;
+        return { ...t, end, duration: dur };
       })
     );
   };
+
+  const handleTimeUpdate = () => {
+    const t = videoRef.current?.currentTime ?? 0;
+    setCurrentTime(t);
+    if (t >= trimEndRef.current) {
+      videoRef.current?.pause();
+      setIsPlaying(false);
+    }
+  };
+
+  const togglePlay = () => {
+    const v = videoRef.current;
+    if (!v) return;
+    if (isPlaying) {
+      v.pause();
+      setIsPlaying(false);
+    } else {
+      if (v.currentTime >= trimEndRef.current) {
+        v.currentTime = trims[selectedIndex]?.start ?? 0;
+      }
+      v.play().catch(() => {});
+      setIsPlaying(true);
+    }
+  };
+
+  const handleSeek = useCallback((time: number) => {
+    if (videoRef.current) videoRef.current.currentTime = time;
+    setCurrentTime(time);
+  }, []);
+
+  const handleTrimChange = useCallback((start: number, end: number) => {
+    trimEndRef.current = end;
+    setTrims((prev) =>
+      prev.map((t, i) => i === selectedIndex ? { ...t, start, end } : t)
+    );
+  }, [selectedIndex]);
 
   const handleSubmit = async () => {
     if (!taskId) return;
@@ -150,19 +193,32 @@ export function ShotReviewDialog({ jobId, onClose }: ShotReviewDialogProps) {
           {/* Video player + trim */}
           <div className="flex-1 flex flex-col items-center justify-center px-6 py-4 gap-4 min-h-0">
             {/* Player */}
-            <div className="relative w-full max-w-3xl aspect-video bg-black/60 rounded-xl overflow-hidden border border-white/10">
+            <div
+              className="relative w-full max-w-3xl aspect-video bg-black/60 rounded-xl overflow-hidden border border-white/10 cursor-pointer"
+              onClick={togglePlay}
+            >
               {currentVideoUrl ? (
                 <video
                   ref={videoRef}
                   key={currentVideoUrl}
                   src={currentVideoUrl}
-                  controls
                   className="w-full h-full object-contain"
                   onLoadedMetadata={handleVideoLoaded}
+                  onTimeUpdate={handleTimeUpdate}
+                  onEnded={() => setIsPlaying(false)}
+                  playsInline
                 />
               ) : (
                 <div className="w-full h-full flex items-center justify-center text-white/20 text-sm">
                   No video
+                </div>
+              )}
+              {/* Play/pause overlay */}
+              {currentVideoUrl && !isPlaying && (
+                <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                  <div className="w-14 h-14 rounded-full bg-black/60 backdrop-blur-sm border border-white/20 flex items-center justify-center">
+                    <Play className="w-5 h-5 text-white ml-0.5" fill="white" />
+                  </div>
                 </div>
               )}
             </div>
@@ -188,57 +244,41 @@ export function ShotReviewDialog({ jobId, onClose }: ShotReviewDialogProps) {
               </button>
             </div>
 
-            {/* Trim controls */}
-            <div className="w-full max-w-3xl rounded-lg bg-white/[0.04] border border-white/10 p-4">
-              <p className="text-[10px] text-white/30 uppercase tracking-widest mb-3">
-                Trim — shot {selectedIndex + 1}
-              </p>
-              <div className="flex gap-8">
-                <label className="flex-1 flex flex-col gap-2">
-                  <div className="flex justify-between text-[11px] text-white/40">
-                    <span>Start</span>
-                    <span className="tabular-nums text-orange-400">
-                      {currentTrim.start.toFixed(1)}s
-                    </span>
-                  </div>
-                  <input
-                    type="range"
-                    min={0}
-                    max={currentTrim.duration}
-                    step={0.1}
-                    value={currentTrim.start}
-                    onChange={(e) => setTrim("start", parseFloat(e.target.value))}
-                    className="w-full h-1.5 rounded-full accent-orange-500 cursor-pointer"
-                  />
-                </label>
-                <label className="flex-1 flex flex-col gap-2">
-                  <div className="flex justify-between text-[11px] text-white/40">
-                    <span>End</span>
-                    <span className="tabular-nums text-orange-400">
-                      {currentTrim.end.toFixed(1)}s
-                    </span>
-                  </div>
-                  <input
-                    type="range"
-                    min={0}
-                    max={currentTrim.duration}
-                    step={0.1}
-                    value={currentTrim.end}
-                    onChange={(e) => setTrim("end", parseFloat(e.target.value))}
-                    className="w-full h-1.5 rounded-full accent-orange-500 cursor-pointer"
-                  />
-                </label>
+            {/* Timeline */}
+            <div className="w-full max-w-3xl space-y-2">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={togglePlay}
+                    className="flex items-center justify-center w-7 h-7 rounded-md bg-white/[0.06] hover:bg-white/10 border border-white/10 text-white transition-colors"
+                  >
+                    {isPlaying
+                      ? <Pause className="w-3.5 h-3.5" fill="white" />
+                      : <Play className="w-3.5 h-3.5 ml-px" fill="white" />}
+                  </button>
+                  <span className="text-[11px] text-white/30 tabular-nums font-mono">
+                    {currentTime.toFixed(1)}s
+                  </span>
+                </div>
+                <span className="text-[11px] text-white/30 tabular-nums font-mono">
+                  <span className="text-orange-400">{currentTrim.start.toFixed(1)}</span>
+                  {" – "}
+                  <span className="text-orange-400">{currentTrim.end.toFixed(1)}</span>
+                  {" · "}
+                  {(currentTrim.end - currentTrim.start).toFixed(1)}s
+                </span>
               </div>
-              {/* Visual trim bar */}
-              <div className="mt-3 h-1 w-full bg-white/10 rounded-full overflow-hidden">
-                <div
-                  className="h-full bg-orange-500/70 rounded-full transition-all"
-                  style={{
-                    marginLeft: `${(currentTrim.start / currentTrim.duration) * 100}%`,
-                    width: `${((currentTrim.end - currentTrim.start) / currentTrim.duration) * 100}%`,
-                  }}
+              {currentVideoUrl && currentTrim.duration > 0 && (
+                <VideoTrimTimeline
+                  videoUrl={currentVideoUrl}
+                  duration={currentTrim.duration}
+                  trimStart={currentTrim.start}
+                  trimEnd={currentTrim.end}
+                  currentTime={currentTime}
+                  onTrimChange={handleTrimChange}
+                  onSeek={handleSeek}
                 />
-              </div>
+              )}
             </div>
           </div>
 

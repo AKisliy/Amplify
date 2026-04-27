@@ -17,4 +17,5 @@ spec:
             - secretRef:
                 name: {{ .Values.secret.name }}
       restartPolicy: Never
-  backoffLimit: 3
+  backoffLimit: 5
+  activeDeadlineSeconds: 120

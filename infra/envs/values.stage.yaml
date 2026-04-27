@@ -6,7 +6,7 @@
 # so Envoy fetches the JWKS directly from the internal service:
 #   kubectl -n istio-system set env deployment/istiod PILOT_JWT_ENABLE_REMOTE_JWKS=envoy
 auth:
-  enabled: true
+  enabled: false
   issuer: "http://userservice.test-env.svc.cluster.local/userservice/api/auth"
   jwksUri: "http://userservice.test-env.svc.cluster.local/userservice/api/auth/.well-known/jwks.json"
   audience: "MyAppDevelopmentUsers"
@@ -58,3 +58,6 @@ auth:
     - "/media/api/media/*"
     # Liveness/readiness health probes — open for k8s kubelet.
     - "*/health"
+    # OpenAPI specs — open for development/demo access.
+    - "*/specification.json"
+    - "*/swagger*"

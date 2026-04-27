@@ -1,5 +1,8 @@
 import axios from "axios";
-import api from "@/lib/axios";
+import {
+  postApiMediaPresignedUpload,
+  postApiMediaUploadCompleted,
+} from "@/lib/api/media-ingest";
 import { MediaVariant } from "./components/AmplifyImage";
 
 export interface MediaUploadResult {
@@ -46,16 +49,21 @@ export const mediaApi = {
    * POST /api/media/presigned-upload → { mediaId, uploadUrl }
    */
   async getPresignedUpload(file: File): Promise<{ mediaId: string; uploadUrl: string }> {
-    const { data } = await api.post<{ mediaId: string; uploadUrl: string }>(
-      "media/presigned-upload",
-      { fileName: file.name, contentType: file.type, fileSize: file.size }
-    );
-    return data;
+    const { data } = await postApiMediaPresignedUpload({
+      body: { fileName: file.name, contentType: file.type, fileSize: file.size },
+    });
+    // Response is 201: CreateUploadPresignedUrlDto
+    const dto = data as { mediaId?: string; uploadUrl?: string } | undefined;
+    return {
+      mediaId: dto?.mediaId ?? "",
+      uploadUrl: dto?.uploadUrl ?? "",
+    };
   },
 
   /**
-   * Step 2: PUT the file directly to S3/GCS via the presigned URL,
-   * then confirm the upload to media-ingest.
+   * Step 2: PUT the file directly to S3/GCS via the presigned URL.
+   * This call is intentionally raw axios — presigned S3 URLs must NOT
+   * include our app's Authorization header.
    */
   async uploadToS3(
     mediaId: string,
@@ -71,7 +79,8 @@ export const mediaApi = {
         }
       },
     });
-    await api.post(`media/${mediaId}/upload-completed`);
+    // Confirm the upload to the media service
+    await postApiMediaUploadCompleted({ path: { mediaId } });
   },
 
   /**

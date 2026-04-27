@@ -1,192 +1,136 @@
 import axios from "axios";
 
-// Create axios instance
+// Create axios instance — a single shared instance used by all hey-api clients
+// and any remaining manual calls that are not yet in a generated spec.
 const api = axios.create({
-    baseURL: process.env.NEXT_PUBLIC_API_BASE_URL || "/api",
-    headers: {
-        "Content-Type": "application/json",
-    },
+  baseURL: process.env.NEXT_PUBLIC_API_BASE_URL || "/api",
+  headers: {
+    "Content-Type": "application/json",
+  },
 });
 
-// Basic mapping of root-level paths to their respective microservices
-const serviceMap: Record<string, string> = {
-    auth: "/userservice/api",
-    users: "/userservice/api",
-    projects: "/userservice/api",
-    "project-assets": "/userservice/api",
-    ambassadors: "/template/v1",
-    autolists: "/publisher/api",
-    autolistentry: "/publisher/api",
-    connections: "/publisher/api",
-    integrations: "/publisher/api",
-    publications: "/publisher/api",
-    images: "/media/api",
-    videos: "/media/api",
-    media: "/media/api",
-};
-
-// Request interceptor for API calls
+// ── Request interceptor ──────────────────────────────────────────────────────
+// Injects the Bearer token from localStorage into every outbound request.
+// All service-specific base URLs are now set by each generated client wrapper
+// (see src/lib/api/*.ts) — no URL routing logic needed here.
 api.interceptors.request.use(
-    (config) => {
-        // Skip baseURL override if the client already set a custom baseURL
-        // (e.g. template-service client sets its own baseURL)
-        const instanceDefault = process.env.NEXT_PUBLIC_API_BASE_URL || "/api";
-        const hasCustomBase = config.baseURL && config.baseURL !== instanceDefault;
-
-        // Determine the microservice based on the first segment of the URL
-        if (!hasCustomBase && config.url) {
-            const cleanPath = config.url.startsWith("/") ? config.url.substring(1) : config.url;
-            const firstSegment = cleanPath.split("/")[0];
-            const servicePrefix = serviceMap[firstSegment] || "/userservice/api"; // Default to userservice
-
-            // Extract the base host from the environment variable (strip any existing path)
-            const envUrl = process.env.NEXT_PUBLIC_API_BASE_URL || "https://staging.alexeykiselev.tech";
-            try {
-                const urlObj = new URL(envUrl);
-                const baseHost = `${urlObj.protocol}//${urlObj.host}`;
-                config.baseURL = baseHost + servicePrefix;
-                // Update url to cleanPath so it appends to baseURL path instead of replacing it
-                // config.url = cleanPath;
-            } catch (e) {
-                // Fallback if URL parsing fails
-                config.baseURL = envUrl;
-            }
-        }
-
-        // Add token if available
-        if (typeof window !== "undefined") {
-            const token = localStorage.getItem("accessToken");
-            if (token) {
-                config.headers.Authorization = `Bearer ${token}`;
-            }
-        }
-        return config;
-    },
-    (error) => {
-        return Promise.reject(error);
+  (config) => {
+    if (typeof window !== "undefined") {
+      const token = localStorage.getItem("accessToken");
+      if (token) {
+        config.headers.Authorization = `Bearer ${token}`;
+      }
     }
+    return config;
+  },
+  (error) => Promise.reject(error)
 );
 
-// Top level variables for token refresh state
+// ── Token refresh state ──────────────────────────────────────────────────────
 let isRefreshing = false;
 let failedQueue: Array<{ resolve: (value?: unknown) => void; reject: (reason?: any) => void }> = [];
 
 const processQueue = (error: any, token: string | null = null) => {
-    failedQueue.forEach((prom) => {
-        if (error) {
-            prom.reject(error);
-        } else {
-            prom.resolve(token);
-        }
-    });
-
-    failedQueue = [];
+  failedQueue.forEach((prom) => {
+    if (error) {
+      prom.reject(error);
+    } else {
+      prom.resolve(token);
+    }
+  });
+  failedQueue = [];
 };
 
 const handleLogout = () => {
-    if (typeof window !== "undefined") {
-        localStorage.removeItem("accessToken");
-        localStorage.removeItem("refreshToken");
-        localStorage.removeItem("auth_user");
-        window.location.href = "/login";
-    }
+  if (typeof window !== "undefined") {
+    localStorage.removeItem("accessToken");
+    localStorage.removeItem("refreshToken");
+    localStorage.removeItem("auth_user");
+    window.location.href = "/login";
+  }
 };
 
-// Response interceptor for API calls
+// ── Response interceptor ─────────────────────────────────────────────────────
+// Handles 401 responses by attempting a token refresh then retrying the failed
+// request. Concurrent requests are queued during the refresh and retried once
+// a new token is available.
 api.interceptors.response.use(
-    (response) => {
-        return response;
-    },
-    async (error) => {
-        const originalRequest = error.config;
+  (response) => response,
+  async (error) => {
+    const originalRequest = error.config;
 
-        // Check if error is 401 and we haven't retried yet
-        if (error.response?.status === 401 && !originalRequest._retry) {
-            if (isRefreshing) {
-                // If already refreshing, wait in the queue and retry when complete
-                return new Promise(function (resolve, reject) {
-                    failedQueue.push({ resolve, reject });
-                })
-                    .then((token) => {
-                        if (originalRequest.headers) {
-                            originalRequest.headers.Authorization = `Bearer ${token}`;
-                        } else {
-                            originalRequest.headers = { Authorization: `Bearer ${token}` };
-                        }
-                        return api(originalRequest);
-                    })
-                    .catch((err) => {
-                        return Promise.reject(err);
-                    });
-            }
-
-            originalRequest._retry = true;
-            isRefreshing = true;
-
-            const refreshToken = typeof window !== "undefined" ? localStorage.getItem("refreshToken") : null;
-            const accessToken = typeof window !== "undefined" ? localStorage.getItem("accessToken") : null;
-
-            if (refreshToken && accessToken) {
-                try {
-                    console.log("Axios Interceptor: 401 detected, attempting refresh...");
-                    const envUrl = process.env.NEXT_PUBLIC_API_BASE_URL || "https://staging.alexeykiselev.tech";
-                    const refreshUrl = `${envUrl}/userservice/api/auth/refresh`;
-
-                    // Call refresh endpoint directly
-                    const { data } = await axios.post(refreshUrl, {
-                        accessToken,
-                        refreshToken
-                    });
-
-                    console.log("Axios Interceptor: Refresh successful");
-
-                    const newAccessToken = data.accessToken || data.AccessToken;
-                    const newRefreshToken = data.refreshToken || data.RefreshToken;
-
-                    if (!newAccessToken) {
-                        throw new Error("Refresh token response missing access token");
-                    }
-
-                    // Update stored tokens
-                    if (typeof window !== "undefined") {
-                        localStorage.setItem("accessToken", newAccessToken);
-                        localStorage.setItem("refreshToken", newRefreshToken);
-                    }
-
-                    // Update authorization header for the RETRY
-                    if (originalRequest.headers) {
-                        originalRequest.headers.Authorization = `Bearer ${newAccessToken}`;
-                    } else {
-                        originalRequest.headers = { Authorization: `Bearer ${newAccessToken}` };
-                    }
-
-                    // Update the instance's custom headers too for future requests
-                    api.defaults.headers.common["Authorization"] = `Bearer ${newAccessToken}`;
-
-                    // Resolve the queue and retry original request
-                    processQueue(null, newAccessToken);
-                    return api(originalRequest);
-                } catch (refreshError) {
-                    console.error("Axios Interceptor: Refresh failed", refreshError);
-                    processQueue(refreshError, null);
-                    handleLogout();
-                    return Promise.reject(refreshError);
-                } finally {
-                    isRefreshing = false;
-                }
+    if (error.response?.status === 401 && !originalRequest._retry) {
+      if (isRefreshing) {
+        return new Promise(function (resolve, reject) {
+          failedQueue.push({ resolve, reject });
+        })
+          .then((token) => {
+            if (originalRequest.headers) {
+              originalRequest.headers.Authorization = `Bearer ${token}`;
             } else {
-                // No token available to refresh, log out immediately
-                processQueue(new Error("No refresh token available"), null);
-                isRefreshing = false;
-                handleLogout();
-                return Promise.reject(error);
+              originalRequest.headers = { Authorization: `Bearer ${token}` };
             }
-        }
+            return api(originalRequest);
+          })
+          .catch((err) => Promise.reject(err));
+      }
 
-        // If it's a CORS error (network error) often hiding a 401 or 500
-        // we can't do much but reject.
+      originalRequest._retry = true;
+      isRefreshing = true;
+
+      const refreshToken = typeof window !== "undefined" ? localStorage.getItem("refreshToken") : null;
+      const accessToken = typeof window !== "undefined" ? localStorage.getItem("accessToken") : null;
+
+      if (refreshToken && accessToken) {
+        try {
+          console.log("Axios Interceptor: 401 detected, attempting refresh...");
+          const envUrl = process.env.NEXT_PUBLIC_API_BASE_URL || "https://staging.alexeykiselev.tech";
+          const refreshUrl = `${envUrl}/userservice/api/auth/refresh`;
+
+          const { data } = await axios.post(refreshUrl, { accessToken, refreshToken });
+
+          console.log("Axios Interceptor: Refresh successful");
+
+          const newAccessToken = data.accessToken || data.AccessToken;
+          const newRefreshToken = data.refreshToken || data.RefreshToken;
+
+          if (!newAccessToken) {
+            throw new Error("Refresh token response missing access token");
+          }
+
+          if (typeof window !== "undefined") {
+            localStorage.setItem("accessToken", newAccessToken);
+            localStorage.setItem("refreshToken", newRefreshToken);
+          }
+
+          if (originalRequest.headers) {
+            originalRequest.headers.Authorization = `Bearer ${newAccessToken}`;
+          } else {
+            originalRequest.headers = { Authorization: `Bearer ${newAccessToken}` };
+          }
+
+          api.defaults.headers.common["Authorization"] = `Bearer ${newAccessToken}`;
+
+          processQueue(null, newAccessToken);
+          return api(originalRequest);
+        } catch (refreshError) {
+          console.error("Axios Interceptor: Refresh failed", refreshError);
+          processQueue(refreshError, null);
+          handleLogout();
+          return Promise.reject(refreshError);
+        } finally {
+          isRefreshing = false;
+        }
+      } else {
+        processQueue(new Error("No refresh token available"), null);
+        isRefreshing = false;
+        handleLogout();
         return Promise.reject(error);
+      }
     }
+
+    return Promise.reject(error);
+  }
 );
 
 export default api;

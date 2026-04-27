@@ -40,7 +40,6 @@ public class PublishVideoCommandHandler(
             MediaId = request.MediaId,
             ProjectId = request.ProjectId,
             UserId = userId.Value,
-            Description = request.Description,
             CoverMediaId = request.CoverMediaId,
         };
 
@@ -66,7 +65,8 @@ public class PublishVideoCommandHandler(
                 MediaPost = mediaPost,
                 SocialAccountId = account.Id,
                 Status = PublicationStatus.Scheduled,
-                Provider = account.Provider
+                Provider = account.Provider,
+                Description = request.Description
             };
 
             publicationRecord.AddDomainEvent(new PublicationRecordCreated(publicationRecord));

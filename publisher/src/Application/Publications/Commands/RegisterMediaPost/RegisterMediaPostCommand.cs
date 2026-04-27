@@ -11,7 +11,8 @@ public record RegisterMediaPostCommand(
     Guid UserId,
     Guid ProjectId,
     Guid MediaId,
-    List<Guid>? AutoListIds = null) : IRequest;
+    List<Guid>? AutoListIds = null,
+    string? Description = null) : IRequest;
 
 public class RegisterMediaPostCommandHandler(
     ILogger<RegisterMediaPostCommandHandler> logger,
@@ -42,7 +43,7 @@ public class RegisterMediaPostCommandHandler(
         {
             foreach (var autoListId in request.AutoListIds)
             {
-                await ScheduleInAutoList(post, autoListId, cancellationToken);
+                await ScheduleInAutoList(post, autoListId, request.Description, cancellationToken);
             }
         }
 
@@ -51,7 +52,7 @@ public class RegisterMediaPostCommandHandler(
         logger.LogInformation("Registered MediaPost {Id} for media {MediaId}", request.Id, request.MediaId);
     }
 
-    private async Task ScheduleInAutoList(MediaPost post, Guid autoListId, CancellationToken ct)
+    private async Task ScheduleInAutoList(MediaPost post, Guid autoListId, string? description, CancellationToken ct)
     {
         var autoList = await dbContext.AutoLists
             .Include(al => al.Entries)
@@ -111,6 +112,7 @@ public class RegisterMediaPostCommandHandler(
                 PublicationType = PublicationType.AutoList,
                 ScheduledAt = slot.Value.ScheduledAt,
                 AutoListEntryId = slot.Value.EntryId,
+                Description = description
             };
             record.AddDomainEvent(new PublicationRecordCreated(record));
             dbContext.PublicationRecords.Add(record);

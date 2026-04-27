@@ -22,12 +22,13 @@ import {
 import { loginSchema, LoginFormValues } from "./login.schema";
 import { useAuth } from "@/features/auth/hooks/useAuth";
 import { AuthMotionWrapper, FadeInStagger } from "./AuthMotionWrapper";
-import { Sparkles, ArrowRight } from "lucide-react";
+import { Sparkles, ArrowRight, Eye, EyeOff } from "lucide-react";
 
 export const LoginForm = () => {
   const { login } = useAuth();
   const router = useRouter();
   const [serverError, setServerError] = useState<string | null>(null);
+  const [showPassword, setShowPassword] = useState(false);
 
   const {
     register,
@@ -186,13 +187,23 @@ export const LoginForm = () => {
                       </Link>
                     </div>
 
-                    <Input
-                      id="password"
-                      className="h-12 bg-white/50 dark:bg-black/20"
-                      type="password"
-                      autoComplete="current-password"
-                      {...register("password")}
-                    />
+                    <div className="relative">
+                      <Input
+                        id="password"
+                        className="h-12 bg-white/50 dark:bg-black/20 pr-12"
+                        type={showPassword ? "text" : "password"}
+                        autoComplete="current-password"
+                        {...register("password")}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowPassword((v) => !v)}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors focus:outline-none"
+                        aria-label={showPassword ? "Hide password" : "Show password"}
+                      >
+                        {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                      </button>
+                    </div>
 
                     {errors.password && (
                       <p className="text-sm text-destructive mt-1">

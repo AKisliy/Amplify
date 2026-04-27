@@ -39,11 +39,12 @@ export interface ManualReviewTask {
   decision: Record<string, unknown> | null;
 }
 
-export async function getManualReviewPendingByJob(
-  jobId: string
+export async function getManualReviewByJobAndNode(
+  jobId: string,
+  nodeId: string
 ): Promise<ManualReviewTask | null> {
   const response = await api.get<ManualReviewTask | null>(
-    `${apiBase}/template/v1/review/job/${jobId}/pending`
+    `${apiBase}/template/v1/review/job/${jobId}/node/${nodeId}`
   );
   return response.data ?? null;
 }

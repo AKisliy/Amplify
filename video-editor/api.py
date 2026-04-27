@@ -3,6 +3,8 @@ from celery.result import AsyncResult
 
 from celery_app import app as celery_app
 from models.messages.base_create_video_message import BaseCreateVideoMessage
+from captions.styles import STYLES
+from captions.preview import generate_preview_base64
 
 api = FastAPI()
 
@@ -24,3 +26,15 @@ def get_task_status(task_id: str):
         response["error"] = str(result.result)
 
     return response
+
+
+@api.get("/captions/styles")
+def get_caption_styles():
+    return [
+        {
+            "code": style.code,
+            "name": style.name,
+            "preview_base64": generate_preview_base64(style),
+        }
+        for style in STYLES.values()
+    ]
