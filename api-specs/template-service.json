@@ -459,7 +459,7 @@
           "Engine"
         ],
         "summary": "Run a template",
-        "description": "Snapshots the template's current graph into a TemplateVersion, creates a\nJob + NodeExecution records, submits the graph to ComfyUI, and streams\nnode status updates via RabbitMQ \u2192 WebSocket Gateway \u2192 frontend.\nReturns immediately with job_id and prompt_id.\n\nRaises **422 Unprocessable Entity** if the graph contains validation\nerrors (e.g. missing required inputs, type mismatches).  The response\nbody includes a structured ``node_errors`` dict so the frontend can\nhighlight the broken nodes.",
+        "description": "Snapshots the template's current graph into a TemplateVersion, creates a\nJob + NodeExecution records, submits the graph to engine, and streams\nnode status updates via RabbitMQ \u2192 WebSocket Gateway \u2192 frontend.\nReturns immediately with job_id and prompt_id.\n\nRaises **422 Unprocessable Entity** if the graph contains validation\nerrors (e.g. missing required inputs, type mismatches).  The response\nbody includes a structured ``node_errors`` dict so the frontend can\nhighlight the broken nodes.",
         "operationId": "run_template_v1_engine_run_post",
         "requestBody": {
           "content": {
@@ -1378,6 +1378,62 @@
         }
       }
     },
+    "/v1/review/job/{job_id}/pending": {
+      "get": {
+        "tags": [
+          "Manual Review"
+        ],
+        "summary": "Get the pending review task for a job (used by frontend to show UI)",
+        "operationId": "get_pending_by_job_v1_review_job__job_id__pending_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "job_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Job Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/ManualReviewTaskResponse"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "title": "Response Get Pending By Job V1 Review Job  Job Id  Pending Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/v1/review/job/{job_id}/node/{node_id}": {
       "get": {
         "tags": [
@@ -1427,6 +1483,65 @@
                     }
                   ],
                   "title": "Response Get By Job And Node V1 Review Job  Job Id  Node  Node Id  Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/review/{task_id}/regenerate-shot": {
+      "post": {
+        "tags": [
+          "Manual Review"
+        ],
+        "summary": "Trigger re-generation of a single shot with (optionally edited) params",
+        "description": "Marks ``payload.shots[slot_index].regen_status = \"regenerating\"`` immediately\nand returns 202.  A background task then calls the Veo API, registers the new\nclip with MediaIngest, and patches ``current_uuid`` + clears ``regen_status``.\n\nThe frontend polls ``GET /review/{task_id}`` to detect the UUID swap\n(``regen_status: null`` + changed ``current_uuid``) and swap the player.",
+        "operationId": "regenerate_shot_v1_review__task_id__regenerate_shot_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "task_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Task Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ShotRegenerateRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "202": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ManualReviewTaskResponse"
                 }
               }
             }
@@ -2636,6 +2751,24 @@
         ],
         "title": "RunTemplateResponse"
       },
+      "ShotRegenerateRequest": {
+        "properties": {
+          "slotIndex": {
+            "type": "integer",
+            "title": "Slotindex"
+          },
+          "params": {
+            "$ref": "#/components/schemas/VeoEditableParams"
+          }
+        },
+        "type": "object",
+        "required": [
+          "slotIndex",
+          "params"
+        ],
+        "title": "ShotRegenerateRequest",
+        "description": "Body for POST /review/{task_id}/regenerate-shot."
+      },
       "ValidationError": {
         "properties": {
           "loc": {
@@ -2668,6 +2801,45 @@
           "type"
         ],
         "title": "ValidationError"
+      },
+      "VeoEditableParams": {
+        "properties": {
+          "prompt": {
+            "type": "string",
+            "title": "Prompt"
+          },
+          "negativePrompt": {
+            "type": "string",
+            "title": "Negativeprompt",
+            "default": ""
+          },
+          "resolution": {
+            "type": "string",
+            "title": "Resolution",
+            "default": "720p"
+          },
+          "aspectRatio": {
+            "type": "string",
+            "title": "Aspectratio",
+            "default": "16:9"
+          },
+          "duration": {
+            "type": "integer",
+            "title": "Duration",
+            "default": 8
+          },
+          "model": {
+            "type": "string",
+            "title": "Model",
+            "default": "veo-3.1-lite-generate-001"
+          }
+        },
+        "type": "object",
+        "required": [
+          "prompt"
+        ],
+        "title": "VeoEditableParams",
+        "description": "Editable Veo generation params surfaced to the user during script review.\n\nAll fields can be modified before re-generating a single shot.\nLocked fields (first_frame_uuid, last_frame_uuid) are read from the task\npayload server-side \u2014 they are never sent over the wire by the client."
       }
     },
     "securitySchemes": {
