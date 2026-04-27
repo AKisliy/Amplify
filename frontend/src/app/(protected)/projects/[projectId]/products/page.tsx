@@ -31,6 +31,7 @@ import { Separator } from "@/components/ui/separator";
 import { useProducts } from "@/features/products/hooks/useProducts";
 import { useBrands } from "@/features/brands/hooks/useBrands";
 import { mediaApi } from "@/features/media/api";
+import { AmplifyImage } from "@/features/media/components/AmplifyImage";
 import type {
   ProductResponse, ProductStoreLinkCreate, BrandCreate, BrandUpdate,
 } from "@/lib/api/generated/template-service";
@@ -318,8 +319,7 @@ function ProductDialog({
                 <div className="grid grid-cols-4 gap-2">
                   {(product.images ?? []).map(img => (
                     <div key={img.id} className="relative group aspect-square rounded-lg overflow-hidden border border-border/50 bg-muted/40">
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img src={mediaApi.getMediaUrl(img.media_uuid)} alt="" className="w-full h-full object-cover" />
+                      <AmplifyImage mediaId={img.media_uuid} alt="" />
                       <button
                         onClick={() => removeImage(product.id, img.media_uuid)}
                         className="absolute inset-0 flex items-center justify-center bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity"
@@ -336,8 +336,7 @@ function ProductDialog({
                 <input type="file" accept="image/*" className="hidden" onChange={handlePendingImagePick} disabled={isSaving} />
                 {pendingPreview ? (
                   <div className="relative group aspect-video rounded-lg overflow-hidden border border-border/50 bg-muted/40">
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img src={pendingPreview} alt="preview" className="w-full h-full object-cover" />
+                    <AmplifyImage src={pendingPreview!} alt="preview" />
                     <div className="absolute inset-0 flex items-center justify-center bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity">
                       <p className="text-white text-xs font-medium">Change photo</p>
                     </div>
@@ -455,10 +454,9 @@ function ProductCard({
   return (
     <div className="relative group/card rounded-xl border border-border/50 bg-card hover:border-border hover:shadow-sm transition-all overflow-hidden">
       {/* Thumbnail */}
-      <div className="aspect-video bg-muted/40 flex items-center justify-center overflow-hidden">
+      <div className="relative aspect-video bg-muted/40 flex items-center justify-center overflow-hidden">
         {firstImage ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img src={mediaApi.getMediaUrl(firstImage.media_uuid)} alt={product.name} className="w-full h-full object-cover" />
+          <AmplifyImage mediaId={firstImage.media_uuid} alt={product.name} />
         ) : (
           <Package className="w-8 h-8 text-muted-foreground/20" />
         )}

@@ -22,6 +22,9 @@ class ProjectTemplate(Base, CommonMixin):
     # AutoList associations (UUIDs only, no FK constraint)
     auto_list_ids: Mapped[list] = mapped_column(ARRAY(UUID(as_uuid=True)), nullable=False, server_default='{}')
 
+    # Product association (UUID only, no FK constraint — product lives in same service)
+    product_id: Mapped[UUID | None] = mapped_column(UUID(as_uuid=True), nullable=True)
+
     # Structured description config for auto-publishing.
     # Shape: {"type": "static"|"dynamic", "value": "...", "prompt_template": "..."}
     post_description_config: Mapped[dict | None] = mapped_column(JSONB, nullable=True)

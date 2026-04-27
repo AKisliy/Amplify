@@ -3302,6 +3302,19 @@
             "title": "Auto List Ids",
             "description": "AutoList UUIDs associated with this template for auto-publishing."
           },
+          "product_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Product Id",
+            "description": "Optional product UUID to use as generation context."
+          },
           "post_description_config": {
             "anyOf": [
               {
@@ -3360,6 +3373,19 @@
             "type": "array",
             "title": "Auto List Ids",
             "description": "AutoList UUIDs associated with this template for auto-publishing."
+          },
+          "product_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Product Id",
+            "description": "Optional product UUID to use as generation context."
           },
           "post_description_config": {
             "anyOf": [
@@ -3445,6 +3471,18 @@
               }
             ],
             "title": "Auto List Ids"
+          },
+          "product_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Product Id"
           },
           "post_description_config": {
             "anyOf": [
