@@ -1,5 +1,5 @@
 otel:
-  injectPython: false
+  injectPython: true
 
 secrets:
   postgresDsn:
@@ -21,3 +21,4 @@ config:
   userServiceUrl: "http://userservice.test-env.svc.cluster.local/userservice/api"
   videoEditorUrl: "http://video-editor.test-env.svc.cluster.local:8000"
   langfuseUrl: "https://cloud.langfuse.com"
+  
