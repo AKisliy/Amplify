@@ -3,7 +3,8 @@ from typing import Annotated
 
 import aiohttp
 import jwt
-from fastapi import Depends, Header, HTTPException, status
+from fastapi import Depends, HTTPException, status
+from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from jwt.algorithms import RSAAlgorithm
 
 from backend_template.config import auth_config
@@ -40,10 +41,11 @@ async def _get_jwks() -> dict:
 # FastAPI dependency
 # ---------------------------------------------------------------------------
 
-async def _get_user_id(authorization: str = Header(alias="Authorization")) -> str:
-    if not authorization.startswith("Bearer "):
-        raise HTTPException(status.HTTP_401_UNAUTHORIZED, detail="Missing Bearer token")
-    token = authorization[7:]
+_bearer = HTTPBearer()
+
+
+async def _get_user_id(credentials: HTTPAuthorizationCredentials = Depends(_bearer)) -> str:
+    token = credentials.credentials
 
     jwks = await _get_jwks()
     last_exc: Exception | None = None

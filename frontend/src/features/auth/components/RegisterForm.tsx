@@ -6,7 +6,7 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { motion } from "framer-motion";
-import { Sparkles, ArrowRight, Mail, CheckCircle2 } from "lucide-react";
+import { Sparkles, ArrowRight, Mail, CheckCircle2, Eye, EyeOff } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -62,6 +62,8 @@ const PasswordTooltip = () => (
 export const RegisterForm = () => {
   const [success, setSuccess] = useState(false);
   const [serverError, setServerError] = useState<string | null>(null);
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const router = useRouter();
 
   const {
@@ -267,23 +269,43 @@ export const RegisterForm = () => {
                         <Label htmlFor="password">Password</Label>
                         <PasswordTooltip />
                       </div>
-                      <Input
-                        id="password"
-                        className="h-12 bg-white/50 dark:bg-black/20"
-                        type="password"
-                        autoComplete="new-password"
-                        {...register("password")}
-                      />
+                      <div className="relative">
+                        <Input
+                          id="password"
+                          className="h-12 bg-white/50 dark:bg-black/20 pr-12"
+                          type={showPassword ? "text" : "password"}
+                          autoComplete="new-password"
+                          {...register("password")}
+                        />
+                        <button
+                          type="button"
+                          onClick={() => setShowPassword((v) => !v)}
+                          className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors focus:outline-none"
+                          aria-label={showPassword ? "Hide password" : "Show password"}
+                        >
+                          {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                        </button>
+                      </div>
                     </div>
                     <div className="space-y-2">
                       <Label htmlFor="confirmPassword">Confirm</Label>
-                      <Input
-                        id="confirmPassword"
-                        className="h-12 bg-white/50 dark:bg-black/20"
-                        type="password"
-                        autoComplete="new-password"
-                        {...register("confirmPassword")}
-                      />
+                      <div className="relative">
+                        <Input
+                          id="confirmPassword"
+                          className="h-12 bg-white/50 dark:bg-black/20 pr-12"
+                          type={showConfirmPassword ? "text" : "password"}
+                          autoComplete="new-password"
+                          {...register("confirmPassword")}
+                        />
+                        <button
+                          type="button"
+                          onClick={() => setShowConfirmPassword((v) => !v)}
+                          className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors focus:outline-none"
+                          aria-label={showConfirmPassword ? "Hide confirm password" : "Show confirm password"}
+                        >
+                          {showConfirmPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                        </button>
+                      </div>
                     </div>
                   </div>
 

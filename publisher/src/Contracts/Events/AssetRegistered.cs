@@ -15,4 +15,6 @@ public class AssetRegistered
     public string MediaType { get; set; } = string.Empty;
 
     public List<Guid> AutoListIds { get; set; } = [];
+
+    public string? Description { get; set; }
 }

@@ -1,3 +1,6 @@
+otel:
+  injectPython: false
+
 secrets:
   postgresDsn:
     key: template-service-db-conn-test
@@ -12,9 +15,9 @@ secrets:
 
 config:
   mediaIngestUrl: "http://mediaingest.test-env.svc.cluster.local/media/api"
-  gcpProjectId: "proven-aviary-484307-c9"
+  gcpProjectId: "project-d72a81f9-0097-4b5b-a62"
   gcpLocation: "global"
-  gcpStorageUri: "gs://amplify-media-test"
+  gcpStorageUri: "gs://amplify-media-test-2"
   userServiceUrl: "http://userservice.test-env.svc.cluster.local/userservice/api"
   videoEditorUrl: "http://video-editor.test-env.svc.cluster.local:8000"
   langfuseUrl: "https://cloud.langfuse.com"

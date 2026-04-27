@@ -11,7 +11,6 @@ public class GetProjectQueryHandler(IApplicationDbContext dbContext, IUser user,
     public async Task<ProjectDto> Handle(GetProjectQuery request, CancellationToken cancellationToken)
     {
         var project = await dbContext.Projects
-            .Include(x => x.Ambassador)
             .Where(x => x.Id == request.Id)
             .FirstAsync(cancellationToken);
         Guard.Against.NotFound(request.Id, project);

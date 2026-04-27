@@ -17,6 +17,6 @@ internalServices:
 
 minio:
   host: "storage.googleapis.com"
-  bucket: "amplify-media-test"
+  bucket: "amplify-media-test-2"
   useSsl: "true"
   location: "europe-west3"

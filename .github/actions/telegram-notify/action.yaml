@@ -20,11 +20,16 @@ runs:
     steps:
         - name: Send Telegram Notification
           shell: bash
+          env:
+              TELEGRAM_MESSAGE: ${{ inputs.message }}
+              TELEGRAM_CHAT_ID: ${{ inputs.chat_id }}
+              TELEGRAM_THREAD_ID: ${{ inputs.topic_id }}
+              TELEGRAM_BOT_TOKEN: ${{ inputs.bot_token }}
           run: |
               JSON_PAYLOAD=$(jq -n \
-              --arg chat_id "${{ inputs.chat_id }}" \
-              --arg thread_id "${{ inputs.topic_id }}" \
-              --arg text "${{ inputs.message }}" \
+              --arg chat_id "$TELEGRAM_CHAT_ID" \
+              --arg thread_id "$TELEGRAM_THREAD_ID" \
+              --arg text "$TELEGRAM_MESSAGE" \
               '{
                   chat_id: $chat_id,
                   message_thread_id: $thread_id,
@@ -33,6 +38,6 @@ runs:
                   disable_web_page_preview: true
               }')
 
-              curl -s -X POST "https://api.telegram.org/bot${{ inputs.bot_token }}/sendMessage" \
+              curl -s -X POST "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage" \
               -H "Content-Type: application/json" \
               -d "$JSON_PAYLOAD"

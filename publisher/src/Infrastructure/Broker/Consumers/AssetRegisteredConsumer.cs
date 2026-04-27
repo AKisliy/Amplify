@@ -18,6 +18,12 @@ public class AssetRegisteredConsumer(
             "Received AssetRegistered event: id={Id} mediaId={MediaId} projectId={ProjectId}",
             msg.Id, msg.MediaId, msg.ProjectId);
 
-        await mediator.Send(new RegisterMediaPostCommand(msg.Id, msg.UserId, msg.ProjectId, msg.MediaId, msg.AutoListIds));
+        await mediator.Send(new RegisterMediaPostCommand(
+            msg.Id,
+            msg.UserId,
+            msg.ProjectId,
+            msg.MediaId,
+            msg.AutoListIds,
+            msg.Description));
     }
 }

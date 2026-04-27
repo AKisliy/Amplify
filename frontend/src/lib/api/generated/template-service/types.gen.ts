@@ -5,6 +5,114 @@ export type ClientOptions = {
 };
 
 /**
+ * AmbassadorCreate
+ */
+export type AmbassadorCreate = {
+    /**
+     * Projectid
+     *
+     * UUID of the parent Project (one-to-one).
+     */
+    projectId: string;
+    /**
+     * Name
+     */
+    name: string;
+    /**
+     * Appearancedescription
+     *
+     * Structured text injected into AI prompts (e.g. 'Anna, 25yo, long dark hair...').
+     */
+    appearanceDescription?: string | null;
+    /**
+     * Voicedescription
+     *
+     * Text description used in prompts for video models.
+     */
+    voiceDescription?: string | null;
+    /**
+     * Voiceid
+     *
+     * TTS library voice ID (not a text description).
+     */
+    voiceId?: string | null;
+};
+
+/**
+ * AmbassadorResponse
+ */
+export type AmbassadorResponse = {
+    /**
+     * Projectid
+     *
+     * UUID of the parent Project (one-to-one).
+     */
+    projectId: string;
+    /**
+     * Name
+     */
+    name: string;
+    /**
+     * Appearancedescription
+     *
+     * Structured text injected into AI prompts (e.g. 'Anna, 25yo, long dark hair...').
+     */
+    appearanceDescription?: string | null;
+    /**
+     * Voicedescription
+     *
+     * Text description used in prompts for video models.
+     */
+    voiceDescription?: string | null;
+    /**
+     * Voiceid
+     *
+     * TTS library voice ID (not a text description).
+     */
+    voiceId?: string | null;
+    /**
+     * Id
+     */
+    id: string;
+    /**
+     * Createdat
+     */
+    createdAt: string;
+    /**
+     * Updatedat
+     */
+    updatedAt: string;
+    /**
+     * Referenceimages
+     */
+    referenceImages?: Array<ReferenceImageResponse>;
+};
+
+/**
+ * AmbassadorUpdate
+ *
+ * All fields optional for PATCH. project_id intentionally omitted.
+ */
+export type AmbassadorUpdate = {
+    /**
+     * Name
+     */
+    name?: string | null;
+    /**
+     * Appearancedescription
+     */
+    appearanceDescription?: string | null;
+    /**
+     * Voicedescription
+     */
+    voiceDescription?: string | null;
+    /**
+     * Voiceid
+     */
+    voiceId?: string | null;
+};
+
+/**
  * Body_clear_history_v1_engine_history_post
  */
 export type BodyClearHistoryV1EngineHistoryPost = {
@@ -71,6 +179,223 @@ export type HistoryEntry = {
 };
 
 /**
+ * LibraryTemplateCreate
+ *
+ * Fields required to CREATE a new library template (internal use only).
+ * Inherits everything from Base.
+ */
+export type LibraryTemplateCreate = {
+    /**
+     * Name
+     *
+     * The display name of the library template card.
+     */
+    name: string;
+    /**
+     * Description
+     *
+     * Optional description of what this template does.
+     */
+    description?: string | null;
+    /**
+     * Graph Json
+     *
+     * The static ComfyUI-style node graph definition.
+     */
+    graph_json?: {
+        [key: string]: unknown;
+    };
+    /**
+     * Thumbnail Url
+     *
+     * Signed HTTPS URL to the template's thumbnail image on GCS.
+     */
+    thumbnail_url?: string | null;
+};
+
+/**
+ * LibraryTemplateResponse
+ *
+ * The full representation returned to the client.
+ * Inherits from Base (Shared fields) + Adds System fields (ID, Timestamps).
+ */
+export type LibraryTemplateResponse = {
+    /**
+     * Name
+     *
+     * The display name of the library template card.
+     */
+    name: string;
+    /**
+     * Description
+     *
+     * Optional description of what this template does.
+     */
+    description?: string | null;
+    /**
+     * Graph Json
+     *
+     * The static ComfyUI-style node graph definition.
+     */
+    graph_json?: {
+        [key: string]: unknown;
+    };
+    /**
+     * Thumbnail Url
+     *
+     * Signed HTTPS URL to the template's thumbnail image on GCS.
+     */
+    thumbnail_url?: string | null;
+    /**
+     * Id
+     */
+    id: string;
+    /**
+     * Created At
+     */
+    created_at: string;
+    /**
+     * Updated At
+     */
+    updated_at: string;
+};
+
+/**
+ * LibraryTemplateUpdate
+ *
+ * Fields allowed to be UPDATED (internal use only).
+ * CRITICAL: Inherits from BaseModel, NOT LibraryTemplateBase.
+ * All fields are optional (None) to support PATCH operations.
+ */
+export type LibraryTemplateUpdate = {
+    /**
+     * Name
+     */
+    name?: string | null;
+    /**
+     * Description
+     */
+    description?: string | null;
+    /**
+     * Graph Json
+     */
+    graph_json?: {
+        [key: string]: unknown;
+    } | null;
+    /**
+     * Thumbnail Url
+     */
+    thumbnail_url?: string | null;
+};
+
+/**
+ * ManualReviewCompleteRequest
+ */
+export type ManualReviewCompleteRequest = {
+    /**
+     * Decision
+     */
+    decision: {
+        [key: string]: unknown;
+    };
+};
+
+/**
+ * ManualReviewCreateRequest
+ *
+ * Called internally by the node (not exposed to the public API).
+ */
+export type ManualReviewCreateRequest = {
+    /**
+     * Jobid
+     */
+    jobId: string;
+    /**
+     * Nodeid
+     */
+    nodeId: string;
+    /**
+     * Nodetype
+     */
+    nodeType: string;
+    /**
+     * Autoconfirm
+     */
+    autoConfirm?: boolean;
+    /**
+     * Payload
+     */
+    payload?: {
+        [key: string]: unknown;
+    };
+};
+
+/**
+ * ManualReviewTaskResponse
+ */
+export type ManualReviewTaskResponse = {
+    /**
+     * Id
+     */
+    id: string;
+    /**
+     * Jobid
+     */
+    jobId: string;
+    /**
+     * Nodeid
+     */
+    nodeId: string;
+    /**
+     * Nodetype
+     */
+    nodeType: string;
+    /**
+     * Status
+     */
+    status: string;
+    /**
+     * Autoconfirm
+     */
+    autoConfirm: boolean;
+    /**
+     * Payload
+     */
+    payload: {
+        [key: string]: unknown;
+    };
+    /**
+     * Decision
+     */
+    decision?: {
+        [key: string]: unknown;
+    } | null;
+};
+
+/**
+ * PostDescriptionConfig
+ *
+ * Describes how the post description is produced when auto-publishing.
+ *
+ * type="static"  → use `value` as-is.
+ * type="dynamic" → generate via LLM using `prompt_template` (future work).
+ */
+export type PostDescriptionConfig = {
+    /**
+     * Type
+     */
+    type?: 'static' | 'dynamic';
+    /**
+     * Value
+     */
+    value?: string | null;
+    /**
+     * Prompt Template
+     */
+    prompt_template?: string | null;
+};
+
+/**
  * ProjectTemplateCreate
  *
  * Fields required to CREATE a new template.
@@ -104,6 +429,16 @@ export type ProjectTemplateCreate = {
     current_graph_json?: {
         [key: string]: unknown;
     };
+    /**
+     * Auto List Ids
+     *
+     * AutoList UUIDs associated with this template for auto-publishing.
+     */
+    auto_list_ids?: Array<string>;
+    /**
+     * Structured description config used when auto-publishing the generated media post.
+     */
+    post_description_config?: PostDescriptionConfig | null;
 };
 
 /**
@@ -146,6 +481,10 @@ export type ProjectTemplateResponse = {
      */
     auto_list_ids?: Array<string>;
     /**
+     * Structured description config used when auto-publishing the generated media post.
+     */
+    post_description_config?: PostDescriptionConfig | null;
+    /**
      * Id
      */
     id: string;
@@ -185,6 +524,7 @@ export type ProjectTemplateUpdate = {
      * Auto List Ids
      */
     auto_list_ids?: Array<string> | null;
+    post_description_config?: PostDescriptionConfig | null;
 };
 
 /**
@@ -285,6 +625,70 @@ export type QueueItem = {
      * Outputs To Execute
      */
     outputs_to_execute: Array<string>;
+};
+
+/**
+ * ReferenceImageCreate
+ */
+export type ReferenceImageCreate = {
+    /**
+     * Mediaid
+     */
+    mediaId: string;
+    /**
+     * Imagetype
+     */
+    imageType: 'portrait' | 'full_body' | 'other';
+};
+
+/**
+ * ReferenceImageResponse
+ */
+export type ReferenceImageResponse = {
+    /**
+     * Id
+     */
+    id: string;
+    /**
+     * Mediaid
+     */
+    mediaId: string;
+    /**
+     * Imagetype
+     */
+    imageType: string;
+    /**
+     * Createdat
+     */
+    createdAt: string;
+    /**
+     * Updatedat
+     */
+    updatedAt: string;
+};
+
+/**
+ * RunTemplateRequest
+ */
+export type RunTemplateRequest = {
+    /**
+     * Template Id
+     */
+    template_id: string;
+};
+
+/**
+ * RunTemplateResponse
+ */
+export type RunTemplateResponse = {
+    /**
+     * Job Id
+     */
+    job_id: string;
+    /**
+     * Prompt Id
+     */
+    prompt_id: string;
 };
 
 /**
@@ -492,6 +896,44 @@ export type GetTemplatesByProjectV1TemplatesProjectProjectIdGetResponses = {
 
 export type GetTemplatesByProjectV1TemplatesProjectProjectIdGetResponse = GetTemplatesByProjectV1TemplatesProjectProjectIdGetResponses[keyof GetTemplatesByProjectV1TemplatesProjectProjectIdGetResponses];
 
+export type DuplicateFromLibraryV1TemplatesFromLibraryPostData = {
+    body?: never;
+    path?: never;
+    query: {
+        /**
+         * Library Template Id
+         *
+         * UUID of the source LibraryTemplate to clone
+         */
+        library_template_id: string;
+        /**
+         * Project Id
+         *
+         * UUID of the target Project to create the template in
+         */
+        project_id: string;
+    };
+    url: '/v1/templates/from-library';
+};
+
+export type DuplicateFromLibraryV1TemplatesFromLibraryPostErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type DuplicateFromLibraryV1TemplatesFromLibraryPostError = DuplicateFromLibraryV1TemplatesFromLibraryPostErrors[keyof DuplicateFromLibraryV1TemplatesFromLibraryPostErrors];
+
+export type DuplicateFromLibraryV1TemplatesFromLibraryPostResponses = {
+    /**
+     * Successful Response
+     */
+    201: ProjectTemplateResponse;
+};
+
+export type DuplicateFromLibraryV1TemplatesFromLibraryPostResponse = DuplicateFromLibraryV1TemplatesFromLibraryPostResponses[keyof DuplicateFromLibraryV1TemplatesFromLibraryPostResponses];
+
 export type GetAllNodesV1EngineNodesGetData = {
     body?: never;
     path?: never;
@@ -533,6 +975,31 @@ export type GetNodeV1EngineNodesNodeClassGetResponses = {
      */
     200: unknown;
 };
+
+export type RunTemplateV1EngineRunPostData = {
+    body: RunTemplateRequest;
+    path?: never;
+    query?: never;
+    url: '/v1/engine/run';
+};
+
+export type RunTemplateV1EngineRunPostErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type RunTemplateV1EngineRunPostError = RunTemplateV1EngineRunPostErrors[keyof RunTemplateV1EngineRunPostErrors];
+
+export type RunTemplateV1EngineRunPostResponses = {
+    /**
+     * Successful Response
+     */
+    202: RunTemplateResponse;
+};
+
+export type RunTemplateV1EngineRunPostResponse = RunTemplateV1EngineRunPostResponses[keyof RunTemplateV1EngineRunPostResponses];
 
 export type SubmitPromptV1EnginePromptPostData = {
     body: PromptRequest;
@@ -649,6 +1116,523 @@ export type ClearHistoryV1EngineHistoryPostResponses = {
      */
     200: unknown;
 };
+
+export type ListLibraryTemplatesV1LibraryTemplatesGetData = {
+    body?: never;
+    path?: never;
+    query?: {
+        /**
+         * Skip
+         *
+         * Number of records to skip
+         */
+        skip?: number;
+        /**
+         * Limit
+         *
+         * Max records to return
+         */
+        limit?: number;
+    };
+    url: '/v1/library-templates/';
+};
+
+export type ListLibraryTemplatesV1LibraryTemplatesGetErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type ListLibraryTemplatesV1LibraryTemplatesGetError = ListLibraryTemplatesV1LibraryTemplatesGetErrors[keyof ListLibraryTemplatesV1LibraryTemplatesGetErrors];
+
+export type ListLibraryTemplatesV1LibraryTemplatesGetResponses = {
+    /**
+     * Response List Library Templates V1 Library Templates  Get
+     *
+     * Successful Response
+     */
+    200: Array<LibraryTemplateResponse>;
+};
+
+export type ListLibraryTemplatesV1LibraryTemplatesGetResponse = ListLibraryTemplatesV1LibraryTemplatesGetResponses[keyof ListLibraryTemplatesV1LibraryTemplatesGetResponses];
+
+export type GetLibraryTemplateV1LibraryTemplatesTemplateIdGetData = {
+    body?: never;
+    path: {
+        /**
+         * Template Id
+         */
+        template_id: string;
+    };
+    query?: never;
+    url: '/v1/library-templates/{template_id}';
+};
+
+export type GetLibraryTemplateV1LibraryTemplatesTemplateIdGetErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type GetLibraryTemplateV1LibraryTemplatesTemplateIdGetError = GetLibraryTemplateV1LibraryTemplatesTemplateIdGetErrors[keyof GetLibraryTemplateV1LibraryTemplatesTemplateIdGetErrors];
+
+export type GetLibraryTemplateV1LibraryTemplatesTemplateIdGetResponses = {
+    /**
+     * Successful Response
+     */
+    200: LibraryTemplateResponse;
+};
+
+export type GetLibraryTemplateV1LibraryTemplatesTemplateIdGetResponse = GetLibraryTemplateV1LibraryTemplatesTemplateIdGetResponses[keyof GetLibraryTemplateV1LibraryTemplatesTemplateIdGetResponses];
+
+export type CreateAmbassadorV1AmbassadorsPostData = {
+    body: AmbassadorCreate;
+    path?: never;
+    query?: never;
+    url: '/v1/ambassadors/';
+};
+
+export type CreateAmbassadorV1AmbassadorsPostErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type CreateAmbassadorV1AmbassadorsPostError = CreateAmbassadorV1AmbassadorsPostErrors[keyof CreateAmbassadorV1AmbassadorsPostErrors];
+
+export type CreateAmbassadorV1AmbassadorsPostResponses = {
+    /**
+     * Successful Response
+     */
+    201: AmbassadorResponse;
+};
+
+export type CreateAmbassadorV1AmbassadorsPostResponse = CreateAmbassadorV1AmbassadorsPostResponses[keyof CreateAmbassadorV1AmbassadorsPostResponses];
+
+export type GetAmbassadorByProjectV1AmbassadorsProjectProjectIdGetData = {
+    body?: never;
+    path: {
+        /**
+         * Project Id
+         */
+        project_id: string;
+    };
+    query?: never;
+    url: '/v1/ambassadors/project/{project_id}';
+};
+
+export type GetAmbassadorByProjectV1AmbassadorsProjectProjectIdGetErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type GetAmbassadorByProjectV1AmbassadorsProjectProjectIdGetError = GetAmbassadorByProjectV1AmbassadorsProjectProjectIdGetErrors[keyof GetAmbassadorByProjectV1AmbassadorsProjectProjectIdGetErrors];
+
+export type GetAmbassadorByProjectV1AmbassadorsProjectProjectIdGetResponses = {
+    /**
+     * Successful Response
+     */
+    200: AmbassadorResponse;
+};
+
+export type GetAmbassadorByProjectV1AmbassadorsProjectProjectIdGetResponse = GetAmbassadorByProjectV1AmbassadorsProjectProjectIdGetResponses[keyof GetAmbassadorByProjectV1AmbassadorsProjectProjectIdGetResponses];
+
+export type DeleteAmbassadorV1AmbassadorsAmbassadorIdDeleteData = {
+    body?: never;
+    path: {
+        /**
+         * Ambassador Id
+         */
+        ambassador_id: string;
+    };
+    query?: never;
+    url: '/v1/ambassadors/{ambassador_id}';
+};
+
+export type DeleteAmbassadorV1AmbassadorsAmbassadorIdDeleteErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type DeleteAmbassadorV1AmbassadorsAmbassadorIdDeleteError = DeleteAmbassadorV1AmbassadorsAmbassadorIdDeleteErrors[keyof DeleteAmbassadorV1AmbassadorsAmbassadorIdDeleteErrors];
+
+export type DeleteAmbassadorV1AmbassadorsAmbassadorIdDeleteResponses = {
+    /**
+     * Successful Response
+     */
+    204: void;
+};
+
+export type DeleteAmbassadorV1AmbassadorsAmbassadorIdDeleteResponse = DeleteAmbassadorV1AmbassadorsAmbassadorIdDeleteResponses[keyof DeleteAmbassadorV1AmbassadorsAmbassadorIdDeleteResponses];
+
+export type GetAmbassadorV1AmbassadorsAmbassadorIdGetData = {
+    body?: never;
+    path: {
+        /**
+         * Ambassador Id
+         */
+        ambassador_id: string;
+    };
+    query?: never;
+    url: '/v1/ambassadors/{ambassador_id}';
+};
+
+export type GetAmbassadorV1AmbassadorsAmbassadorIdGetErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type GetAmbassadorV1AmbassadorsAmbassadorIdGetError = GetAmbassadorV1AmbassadorsAmbassadorIdGetErrors[keyof GetAmbassadorV1AmbassadorsAmbassadorIdGetErrors];
+
+export type GetAmbassadorV1AmbassadorsAmbassadorIdGetResponses = {
+    /**
+     * Successful Response
+     */
+    200: AmbassadorResponse;
+};
+
+export type GetAmbassadorV1AmbassadorsAmbassadorIdGetResponse = GetAmbassadorV1AmbassadorsAmbassadorIdGetResponses[keyof GetAmbassadorV1AmbassadorsAmbassadorIdGetResponses];
+
+export type UpdateAmbassadorV1AmbassadorsAmbassadorIdPatchData = {
+    body: AmbassadorUpdate;
+    path: {
+        /**
+         * Ambassador Id
+         */
+        ambassador_id: string;
+    };
+    query?: never;
+    url: '/v1/ambassadors/{ambassador_id}';
+};
+
+export type UpdateAmbassadorV1AmbassadorsAmbassadorIdPatchErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type UpdateAmbassadorV1AmbassadorsAmbassadorIdPatchError = UpdateAmbassadorV1AmbassadorsAmbassadorIdPatchErrors[keyof UpdateAmbassadorV1AmbassadorsAmbassadorIdPatchErrors];
+
+export type UpdateAmbassadorV1AmbassadorsAmbassadorIdPatchResponses = {
+    /**
+     * Successful Response
+     */
+    200: AmbassadorResponse;
+};
+
+export type UpdateAmbassadorV1AmbassadorsAmbassadorIdPatchResponse = UpdateAmbassadorV1AmbassadorsAmbassadorIdPatchResponses[keyof UpdateAmbassadorV1AmbassadorsAmbassadorIdPatchResponses];
+
+export type ListReferenceImagesV1AmbassadorsAmbassadorIdImagesGetData = {
+    body?: never;
+    path: {
+        /**
+         * Ambassador Id
+         */
+        ambassador_id: string;
+    };
+    query?: never;
+    url: '/v1/ambassadors/{ambassador_id}/images';
+};
+
+export type ListReferenceImagesV1AmbassadorsAmbassadorIdImagesGetErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type ListReferenceImagesV1AmbassadorsAmbassadorIdImagesGetError = ListReferenceImagesV1AmbassadorsAmbassadorIdImagesGetErrors[keyof ListReferenceImagesV1AmbassadorsAmbassadorIdImagesGetErrors];
+
+export type ListReferenceImagesV1AmbassadorsAmbassadorIdImagesGetResponses = {
+    /**
+     * Response List Reference Images V1 Ambassadors  Ambassador Id  Images Get
+     *
+     * Successful Response
+     */
+    200: Array<ReferenceImageResponse>;
+};
+
+export type ListReferenceImagesV1AmbassadorsAmbassadorIdImagesGetResponse = ListReferenceImagesV1AmbassadorsAmbassadorIdImagesGetResponses[keyof ListReferenceImagesV1AmbassadorsAmbassadorIdImagesGetResponses];
+
+export type AddReferenceImageV1AmbassadorsAmbassadorIdImagesPostData = {
+    body: ReferenceImageCreate;
+    path: {
+        /**
+         * Ambassador Id
+         */
+        ambassador_id: string;
+    };
+    query?: never;
+    url: '/v1/ambassadors/{ambassador_id}/images';
+};
+
+export type AddReferenceImageV1AmbassadorsAmbassadorIdImagesPostErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type AddReferenceImageV1AmbassadorsAmbassadorIdImagesPostError = AddReferenceImageV1AmbassadorsAmbassadorIdImagesPostErrors[keyof AddReferenceImageV1AmbassadorsAmbassadorIdImagesPostErrors];
+
+export type AddReferenceImageV1AmbassadorsAmbassadorIdImagesPostResponses = {
+    /**
+     * Successful Response
+     */
+    201: ReferenceImageResponse;
+};
+
+export type AddReferenceImageV1AmbassadorsAmbassadorIdImagesPostResponse = AddReferenceImageV1AmbassadorsAmbassadorIdImagesPostResponses[keyof AddReferenceImageV1AmbassadorsAmbassadorIdImagesPostResponses];
+
+export type DeleteReferenceImageV1AmbassadorsAmbassadorIdImagesMediaIdDeleteData = {
+    body?: never;
+    path: {
+        /**
+         * Ambassador Id
+         */
+        ambassador_id: string;
+        /**
+         * Media Id
+         */
+        media_id: string;
+    };
+    query?: never;
+    url: '/v1/ambassadors/{ambassador_id}/images/{media_id}';
+};
+
+export type DeleteReferenceImageV1AmbassadorsAmbassadorIdImagesMediaIdDeleteErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type DeleteReferenceImageV1AmbassadorsAmbassadorIdImagesMediaIdDeleteError = DeleteReferenceImageV1AmbassadorsAmbassadorIdImagesMediaIdDeleteErrors[keyof DeleteReferenceImageV1AmbassadorsAmbassadorIdImagesMediaIdDeleteErrors];
+
+export type DeleteReferenceImageV1AmbassadorsAmbassadorIdImagesMediaIdDeleteResponses = {
+    /**
+     * Successful Response
+     */
+    204: void;
+};
+
+export type DeleteReferenceImageV1AmbassadorsAmbassadorIdImagesMediaIdDeleteResponse = DeleteReferenceImageV1AmbassadorsAmbassadorIdImagesMediaIdDeleteResponses[keyof DeleteReferenceImageV1AmbassadorsAmbassadorIdImagesMediaIdDeleteResponses];
+
+export type CreateTaskV1ReviewPostData = {
+    body: ManualReviewCreateRequest;
+    path?: never;
+    query?: never;
+    url: '/v1/review/';
+};
+
+export type CreateTaskV1ReviewPostErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type CreateTaskV1ReviewPostError = CreateTaskV1ReviewPostErrors[keyof CreateTaskV1ReviewPostErrors];
+
+export type CreateTaskV1ReviewPostResponses = {
+    /**
+     * Successful Response
+     */
+    201: ManualReviewTaskResponse;
+};
+
+export type CreateTaskV1ReviewPostResponse = CreateTaskV1ReviewPostResponses[keyof CreateTaskV1ReviewPostResponses];
+
+export type GetTaskV1ReviewTaskIdGetData = {
+    body?: never;
+    path: {
+        /**
+         * Task Id
+         */
+        task_id: string;
+    };
+    query?: never;
+    url: '/v1/review/{task_id}';
+};
+
+export type GetTaskV1ReviewTaskIdGetErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type GetTaskV1ReviewTaskIdGetError = GetTaskV1ReviewTaskIdGetErrors[keyof GetTaskV1ReviewTaskIdGetErrors];
+
+export type GetTaskV1ReviewTaskIdGetResponses = {
+    /**
+     * Successful Response
+     */
+    200: ManualReviewTaskResponse;
+};
+
+export type GetTaskV1ReviewTaskIdGetResponse = GetTaskV1ReviewTaskIdGetResponses[keyof GetTaskV1ReviewTaskIdGetResponses];
+
+export type CompleteTaskV1ReviewTaskIdCompletePostData = {
+    body: ManualReviewCompleteRequest;
+    path: {
+        /**
+         * Task Id
+         */
+        task_id: string;
+    };
+    query?: never;
+    url: '/v1/review/{task_id}/complete';
+};
+
+export type CompleteTaskV1ReviewTaskIdCompletePostErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type CompleteTaskV1ReviewTaskIdCompletePostError = CompleteTaskV1ReviewTaskIdCompletePostErrors[keyof CompleteTaskV1ReviewTaskIdCompletePostErrors];
+
+export type CompleteTaskV1ReviewTaskIdCompletePostResponses = {
+    /**
+     * Successful Response
+     */
+    200: ManualReviewTaskResponse;
+};
+
+export type CompleteTaskV1ReviewTaskIdCompletePostResponse = CompleteTaskV1ReviewTaskIdCompletePostResponses[keyof CompleteTaskV1ReviewTaskIdCompletePostResponses];
+
+export type GetByJobAndNodeV1ReviewJobJobIdNodeNodeIdGetData = {
+    body?: never;
+    path: {
+        /**
+         * Job Id
+         */
+        job_id: string;
+        /**
+         * Node Id
+         */
+        node_id: string;
+    };
+    query?: never;
+    url: '/v1/review/job/{job_id}/node/{node_id}';
+};
+
+export type GetByJobAndNodeV1ReviewJobJobIdNodeNodeIdGetErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type GetByJobAndNodeV1ReviewJobJobIdNodeNodeIdGetError = GetByJobAndNodeV1ReviewJobJobIdNodeNodeIdGetErrors[keyof GetByJobAndNodeV1ReviewJobJobIdNodeNodeIdGetErrors];
+
+export type GetByJobAndNodeV1ReviewJobJobIdNodeNodeIdGetResponses = {
+    /**
+     * Response Get By Job And Node V1 Review Job  Job Id  Node  Node Id  Get
+     *
+     * Successful Response
+     */
+    200: ManualReviewTaskResponse | null;
+};
+
+export type GetByJobAndNodeV1ReviewJobJobIdNodeNodeIdGetResponse = GetByJobAndNodeV1ReviewJobJobIdNodeNodeIdGetResponses[keyof GetByJobAndNodeV1ReviewJobJobIdNodeNodeIdGetResponses];
+
+export type CreateLibraryTemplateInternalLibraryTemplatesPostData = {
+    body: LibraryTemplateCreate;
+    path?: never;
+    query?: never;
+    url: '/internal/library-templates/';
+};
+
+export type CreateLibraryTemplateInternalLibraryTemplatesPostErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type CreateLibraryTemplateInternalLibraryTemplatesPostError = CreateLibraryTemplateInternalLibraryTemplatesPostErrors[keyof CreateLibraryTemplateInternalLibraryTemplatesPostErrors];
+
+export type CreateLibraryTemplateInternalLibraryTemplatesPostResponses = {
+    /**
+     * Successful Response
+     */
+    201: LibraryTemplateResponse;
+};
+
+export type CreateLibraryTemplateInternalLibraryTemplatesPostResponse = CreateLibraryTemplateInternalLibraryTemplatesPostResponses[keyof CreateLibraryTemplateInternalLibraryTemplatesPostResponses];
+
+export type DeleteLibraryTemplateInternalLibraryTemplatesTemplateIdDeleteData = {
+    body?: never;
+    path: {
+        /**
+         * Template Id
+         */
+        template_id: string;
+    };
+    query?: never;
+    url: '/internal/library-templates/{template_id}';
+};
+
+export type DeleteLibraryTemplateInternalLibraryTemplatesTemplateIdDeleteErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type DeleteLibraryTemplateInternalLibraryTemplatesTemplateIdDeleteError = DeleteLibraryTemplateInternalLibraryTemplatesTemplateIdDeleteErrors[keyof DeleteLibraryTemplateInternalLibraryTemplatesTemplateIdDeleteErrors];
+
+export type DeleteLibraryTemplateInternalLibraryTemplatesTemplateIdDeleteResponses = {
+    /**
+     * Successful Response
+     */
+    204: void;
+};
+
+export type DeleteLibraryTemplateInternalLibraryTemplatesTemplateIdDeleteResponse = DeleteLibraryTemplateInternalLibraryTemplatesTemplateIdDeleteResponses[keyof DeleteLibraryTemplateInternalLibraryTemplatesTemplateIdDeleteResponses];
+
+export type UpdateLibraryTemplateInternalLibraryTemplatesTemplateIdPatchData = {
+    body: LibraryTemplateUpdate;
+    path: {
+        /**
+         * Template Id
+         */
+        template_id: string;
+    };
+    query?: never;
+    url: '/internal/library-templates/{template_id}';
+};
+
+export type UpdateLibraryTemplateInternalLibraryTemplatesTemplateIdPatchErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type UpdateLibraryTemplateInternalLibraryTemplatesTemplateIdPatchError = UpdateLibraryTemplateInternalLibraryTemplatesTemplateIdPatchErrors[keyof UpdateLibraryTemplateInternalLibraryTemplatesTemplateIdPatchErrors];
+
+export type UpdateLibraryTemplateInternalLibraryTemplatesTemplateIdPatchResponses = {
+    /**
+     * Successful Response
+     */
+    200: LibraryTemplateResponse;
+};
+
+export type UpdateLibraryTemplateInternalLibraryTemplatesTemplateIdPatchResponse = UpdateLibraryTemplateInternalLibraryTemplatesTemplateIdPatchResponses[keyof UpdateLibraryTemplateInternalLibraryTemplatesTemplateIdPatchResponses];
 
 export type HealthCheckHealthGetData = {
     body?: never;

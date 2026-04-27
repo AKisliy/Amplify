@@ -7,7 +7,9 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "generate:api:template": "openapi-ts"
+    "copy:specs": "node scripts/copy-specs.mjs",
+    "generate:api": "npm run copy:specs && openapi-ts",
+    "generate:api:template": "openapi-ts --config openapi-ts.config.ts"
   },
   "dependencies": {
     "@hey-api/client-axios": "^0.9.1",

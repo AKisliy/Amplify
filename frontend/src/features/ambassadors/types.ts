@@ -84,6 +84,7 @@ export type PublicationRecord = {
   publishedAt?: string | null;
   publicUrl?: string | null;
   createdAt?: string | null;
+  description?: string | null;
   socialAccount: SocialAccountSummary;
 };
 
