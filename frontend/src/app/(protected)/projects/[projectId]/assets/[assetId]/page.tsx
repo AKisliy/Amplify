@@ -26,7 +26,6 @@ import {
   Sparkles,
   ChevronRight,
 } from "lucide-react";
-import { ProjectHeader } from "@/components/ProjectHeader";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -34,7 +33,6 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
-import { useProjects } from "@/features/ambassadors/hooks/useProjects";
 import { projectApi } from "@/features/ambassadors/services/api";
 import type { ProjectAsset, PublicationRecord } from "@/features/ambassadors/types";
 import { getTemplateV1TemplatesTemplateIdGet } from "@/lib/api/template-service";
@@ -381,7 +379,6 @@ export default function AssetDetailPage() {
   const projectId = params?.projectId as string;
   const assetId = params?.assetId as string;
 
-  const { projects, isLoading: projectsLoading } = useProjects();
   const { connection } = useHubConnection();
 
   const [asset, setAsset] = useState<ProjectAsset | null>(null);
@@ -442,7 +439,6 @@ export default function AssetDetailPage() {
 
   return (
     <div className="min-h-screen bg-background">
-      <ProjectHeader projects={projects} isLoading={projectsLoading} />
 
       <div className="container mx-auto px-6 py-8 max-w-6xl">
         {/* Back */}

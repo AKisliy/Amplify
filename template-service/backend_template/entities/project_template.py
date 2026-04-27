@@ -61,6 +61,11 @@ class ProjectTemplateBase(BaseModel):
         description="AutoList UUIDs associated with this template for auto-publishing."
     )
 
+    product_id: UUID | None = Field(
+        default=None,
+        description="Optional product UUID to use as generation context.",
+    )
+
     post_description_config: PostDescriptionConfig | None = Field(
         default=None,
         description="Structured description config used when auto-publishing the generated media post."
@@ -103,6 +108,10 @@ class ProjectTemplateUpdate(BaseModel):
     )
 
     auto_list_ids: list[UUID] | None = Field(
+        default=None
+    )
+
+    product_id: UUID | None = Field(
         default=None
     )
 
