@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
-import { ArrowLeft, Play, PanelLeft, Image as ImageIcon, Sparkles, Eye, Copy, Loader2, Package, UserCircle } from "lucide-react";
+import { ArrowLeft, PanelLeft, Image as ImageIcon, Sparkles, Eye, Copy, Loader2, Package, UserCircle } from "lucide-react";
 import {
   ReactFlow,
   Background,
@@ -185,7 +185,9 @@ function CanvasControlPanel({
   const selectedProduct = products.find((p) => p.id === productId) ?? null;
   const productImage = selectedProduct ? (selectedProduct.images ?? [])[0] : null;
 
-  const ambassadorPortrait = ambassador?.referenceImages?.find((img) => img.imageType === "portrait");
+  const ambassadorPortrait =
+    ambassador?.referenceImages.find((img) => img.imageType === "portrait")
+    ?? ambassador?.referenceImages[0];
 
   return (
     <>
@@ -935,28 +937,16 @@ const { registry, isLoading: registryLoading } = useNodeRegistry();
         )}
 
         <div className="ml-auto flex items-center gap-2">
-          {isReadonly ? (
+          {isReadonly && (
             <div className="flex items-center gap-1.5 px-3 py-1 rounded-lg bg-white/[0.05] border border-white/[0.08] text-xs text-white/30">
               <Eye className="w-3 h-3" />
               Read-only preview
             </div>
-          ) : (
-            <>
-              {execution.activeJobId && (
-                <span className="text-xs text-muted-foreground/60 font-mono">
-                  {execution.activeJobId.slice(0, 12)}…
-                </span>
-              )}
-              <Button
-                size="sm"
-                onClick={handleRun}
-                disabled={execution.isSubmitting}
-                className="gap-1.5"
-              >
-                <Play className="w-3.5 h-3.5" />
-                {execution.isSubmitting ? "Running…" : "Run"}
-              </Button>
-            </>
+          )}
+          {!isReadonly && execution.activeJobId && (
+            <span className="text-xs text-muted-foreground/60 font-mono">
+              {execution.activeJobId.slice(0, 12)}…
+            </span>
           )}
         </div>
       </motion.div>
