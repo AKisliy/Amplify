@@ -158,23 +158,115 @@ function BrandsSheet() {
 }
 
 // ---------------------------------------------------------------------------
-// Product editor sheet
+// Create product dialog
 // ---------------------------------------------------------------------------
 
-
-type ProductMutations = Pick<
-  ReturnType<typeof useProducts>,
-  "createProduct" | "updateProduct" | "addImage" | "removeImage" | "addStoreLink" | "removeStoreLink"
->;
-
-function ProductSheet({
-  product, open, onClose, onCreated, brands,
-  createProduct, updateProduct, addImage, removeImage, addStoreLink, removeStoreLink,
+function ProductCreateDialog({
+  open, onClose, onCreated, brands, createProduct,
 }: {
-  product: ProductResponse | null;
   open: boolean;
   onClose: () => void;
   onCreated: (p: ProductResponse) => void;
+  brands: BrandResponse[];
+  createProduct: ReturnType<typeof useProducts>["createProduct"];
+}) {
+  const [name, setName] = useState("");
+  const [description, setDescription] = useState("");
+  const [brandId, setBrandId] = useState(BRAND_NONE);
+  const [isSaving, setIsSaving] = useState(false);
+
+  useEffect(() => {
+    if (!open) return;
+    setName("");
+    setDescription("");
+    setBrandId(BRAND_NONE);
+  }, [open]);
+
+  const handleCreate = async () => {
+    if (!name.trim()) return;
+    setIsSaving(true);
+    try {
+      const created = await createProduct({
+        name: name.trim(),
+        description: description.trim() || null,
+        brand_id: brandId === BRAND_NONE ? null : brandId,
+      } as any);
+      onCreated(created);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={(o) => { if (!o) onClose(); }}>
+      <DialogContent className="sm:max-w-[480px]">
+        <DialogHeader>
+          <DialogTitle className="text-xl font-semibold">New Product</DialogTitle>
+        </DialogHeader>
+        <div className="space-y-4 py-2">
+          <div className="space-y-1.5">
+            <Label>Name <span className="text-destructive">*</span></Label>
+            <Input
+              placeholder="e.g. Wireless Headphones"
+              value={name}
+              onChange={e => setName(e.target.value)}
+              onKeyDown={e => { if (e.key === "Enter") handleCreate(); }}
+              autoFocus
+              disabled={isSaving}
+            />
+          </div>
+          <div className="space-y-1.5">
+            <Label>Description</Label>
+            <Textarea
+              placeholder="Product description — will be injected into generation prompts."
+              value={description}
+              onChange={e => setDescription(e.target.value)}
+              rows={3}
+              disabled={isSaving}
+            />
+          </div>
+          <div className="space-y-1.5">
+            <Label>Brand</Label>
+            <Select value={brandId} onValueChange={setBrandId} disabled={isSaving}>
+              <SelectTrigger>
+                <SelectValue placeholder="No brand" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value={BRAND_NONE}>No brand</SelectItem>
+                {brands.map(b => <SelectItem key={b.id} value={b.id}>{b.name}</SelectItem>)}
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+        <DialogFooter>
+          <Button variant="ghost" onClick={onClose} disabled={isSaving}>Cancel</Button>
+          <Button onClick={handleCreate} disabled={!name.trim() || isSaving}>
+            {isSaving ? "Creating…" : "Create"}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Product editor sheet (edit-only)
+// ---------------------------------------------------------------------------
+
+type ProductMutations = Pick<
+  ReturnType<typeof useProducts>,
+  "updateProduct" | "addImage" | "removeImage" | "addStoreLink" | "removeStoreLink"
+>;
+
+function ProductSheet({
+  product, open, onClose, brands,
+  updateProduct, addImage, removeImage, addStoreLink, removeStoreLink,
+}: {
+  product: ProductResponse;
+  open: boolean;
+  onClose: () => void;
   brands: BrandResponse[];
 } & ProductMutations) {
   const [name, setName] = useState("");
@@ -186,31 +278,24 @@ function ProductSheet({
   const [isAddingLink, setIsAddingLink] = useState(false);
   const [isUploadingImage, setIsUploadingImage] = useState(false);
 
-  // Sync fields whenever the sheet opens or switches to a different product
   useEffect(() => {
     if (!open) return;
-    setName(product?.name ?? "");
-    setDescription(product?.description ?? "");
-    setBrandId(product?.brand_id ?? BRAND_NONE);
+    setName(product.name ?? "");
+    setDescription(product.description ?? "");
+    setBrandId(product.brand_id ?? BRAND_NONE);
     setNewPlatform("");
     setNewUrl("");
   }, [open, product]);
 
-  const handleSaveBasic = async () => {
+  const handleSave = async () => {
     if (!name.trim()) return;
     setIsSaving(true);
     try {
-      const payload = {
+      await updateProduct(product.id, {
         name: name.trim(),
         description: description.trim() || null,
         brand_id: brandId === BRAND_NONE ? null : brandId,
-      };
-      if (product) {
-        await updateProduct(product.id, payload);
-      } else {
-        const created = await createProduct(payload as any);
-        onCreated(created); // keep sheet open in edit mode
-      }
+      });
     } catch (err) {
       console.error(err);
     } finally {
@@ -234,7 +319,7 @@ function ProductSheet({
   };
 
   const handleAddLink = async () => {
-    if (!newPlatform || !newUrl.trim() || !product) return;
+    if (!newPlatform || !newUrl.trim()) return;
     setIsAddingLink(true);
     try {
       await addStoreLink(product.id, { platform: newPlatform, url: newUrl.trim() });
@@ -245,58 +330,53 @@ function ProductSheet({
     }
   };
 
-  const isEditMode = !!product;
-
   return (
     <Sheet open={open} onOpenChange={(o) => { if (!o) onClose(); }}>
       <SheetContent className="w-[480px] sm:w-[520px] flex flex-col gap-0 p-0 overflow-y-auto">
         <SheetHeader className="px-6 py-4 border-b border-border/50 shrink-0">
-          <SheetTitle>{isEditMode ? product.name : "New Product"}</SheetTitle>
+          <SheetTitle>{product.name}</SheetTitle>
         </SheetHeader>
 
         <div className="flex-1 overflow-y-auto px-6 py-5 space-y-6">
-          {/* Images — top in edit mode */}
-          {isEditMode && (
-            <>
-              <div className="space-y-3">
-                <div className="flex items-center justify-between">
-                  <Label className="text-sm font-medium">Images</Label>
-                  <label className="cursor-pointer">
-                    <input type="file" accept="image/*" className="hidden" onChange={handleImagePick} disabled={isUploadingImage} />
-                    <Button size="sm" variant="outline" asChild disabled={isUploadingImage}>
-                      <span>
-                        <Plus className="w-3.5 h-3.5 mr-1.5" />
-                        {isUploadingImage ? "Uploading…" : "Add image"}
-                      </span>
-                    </Button>
-                  </label>
-                </div>
+          {/* Images — top */}
+          <div className="space-y-3">
+            <div className="flex items-center justify-between">
+              <Label className="text-sm font-medium">Images</Label>
+              <label className="cursor-pointer">
+                <input type="file" accept="image/*" className="hidden" onChange={handleImagePick} disabled={isUploadingImage} />
+                <Button size="sm" variant="outline" asChild disabled={isUploadingImage}>
+                  <span>
+                    <Plus className="w-3.5 h-3.5 mr-1.5" />
+                    {isUploadingImage ? "Uploading…" : "Add image"}
+                  </span>
+                </Button>
+              </label>
+            </div>
 
-                {(product.images ?? []).length === 0 ? (
-                  <div className="flex flex-col items-center justify-center py-8 rounded-lg border border-dashed border-border/50 text-center">
-                    <ImageIcon className="w-7 h-7 text-muted-foreground/30 mb-2" />
-                    <p className="text-xs text-muted-foreground">No images yet</p>
-                  </div>
-                ) : (
-                  <div className="grid grid-cols-4 gap-2">
-                    {(product.images ?? []).map(img => (
-                      <div key={img.id} className="relative group aspect-square rounded-lg overflow-hidden border border-border/50 bg-muted/40">
-                        {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <img src={mediaApi.getMediaUrl(img.media_uuid)} alt="" className="w-full h-full object-cover" />
-                        <button
-                          onClick={() => removeImage(product.id, img.media_uuid)}
-                          className="absolute inset-0 flex items-center justify-center bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity"
-                        >
-                          <X className="w-4 h-4 text-white" />
-                        </button>
-                      </div>
-                    ))}
-                  </div>
-                )}
+            {(product.images ?? []).length === 0 ? (
+              <div className="flex flex-col items-center justify-center py-8 rounded-lg border border-dashed border-border/50 text-center">
+                <ImageIcon className="w-7 h-7 text-muted-foreground/30 mb-2" />
+                <p className="text-xs text-muted-foreground">No images yet</p>
               </div>
-              <Separator />
-            </>
-          )}
+            ) : (
+              <div className="grid grid-cols-4 gap-2">
+                {(product.images ?? []).map(img => (
+                  <div key={img.id} className="relative group aspect-square rounded-lg overflow-hidden border border-border/50 bg-muted/40">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src={mediaApi.getMediaUrl(img.media_uuid)} alt="" className="w-full h-full object-cover" />
+                    <button
+                      onClick={() => removeImage(product.id, img.media_uuid)}
+                      className="absolute inset-0 flex items-center justify-center bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity"
+                    >
+                      <X className="w-4 h-4 text-white" />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          <Separator />
 
           {/* Basic info */}
           <div className="space-y-4">
@@ -323,14 +403,14 @@ function ProductSheet({
           </div>
 
           <div className="flex justify-end">
-            <Button onClick={handleSaveBasic} disabled={!name.trim() || isSaving} size="sm">
-              {isSaving ? "Saving…" : isEditMode ? "Save changes" : "Create"}
+            <Button onClick={handleSave} disabled={!name.trim() || isSaving} size="sm">
+              {isSaving ? "Saving…" : "Save changes"}
             </Button>
           </div>
 
-          {/* Store links — only in edit mode */}
-          {isEditMode && (
-            <>
+          {/* Store links */}
+          <>
+            <Separator />
               <Separator />
               <div className="space-y-3">
                 <Label className="text-sm font-medium">Store links</Label>
@@ -377,7 +457,6 @@ function ProductSheet({
                 </div>
               </div>
             </>
-          )}
         </div>
       </SheetContent>
     </Sheet>
@@ -462,13 +541,19 @@ export default function ProductsPage() {
   } = useProducts();
   const { brands } = useBrands();
 
+  const [createDialogOpen, setCreateDialogOpen] = useState(false);
   const [sheetOpen, setSheetOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState<ProductResponse | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<ProductResponse | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
 
-  const openCreate = () => { setEditingProduct(null); setSheetOpen(true); };
+  const openCreate = () => setCreateDialogOpen(true);
   const openEdit = (p: ProductResponse) => { setEditingProduct(p); setSheetOpen(true); };
+  const handleCreated = (p: ProductResponse) => {
+    setCreateDialogOpen(false);
+    setEditingProduct(p);
+    setSheetOpen(true);
+  };
 
   const handleDelete = async () => {
     if (!deleteTarget) return;
@@ -534,20 +619,29 @@ export default function ProductsPage() {
         )}
       </motion.div>
 
-      {/* Product sheet */}
-      <ProductSheet
-        product={editingProduct}
-        open={sheetOpen}
-        onClose={() => setSheetOpen(false)}
-        onCreated={(p) => setEditingProduct(p)}
+      {/* Create dialog */}
+      <ProductCreateDialog
+        open={createDialogOpen}
+        onClose={() => setCreateDialogOpen(false)}
+        onCreated={handleCreated}
         brands={brands}
         createProduct={createProduct}
-        updateProduct={updateProduct}
-        addImage={addImage}
-        removeImage={removeImage}
-        addStoreLink={addStoreLink}
-        removeStoreLink={removeStoreLink}
       />
+
+      {/* Edit sheet */}
+      {editingProduct && (
+        <ProductSheet
+          product={editingProduct}
+          open={sheetOpen}
+          onClose={() => setSheetOpen(false)}
+          brands={brands}
+          updateProduct={updateProduct}
+          addImage={addImage}
+          removeImage={removeImage}
+          addStoreLink={addStoreLink}
+          removeStoreLink={removeStoreLink}
+        />
+      )}
 
       {/* Delete confirmation */}
       <AlertDialog open={!!deleteTarget} onOpenChange={(o) => { if (!o) setDeleteTarget(null); }}>
