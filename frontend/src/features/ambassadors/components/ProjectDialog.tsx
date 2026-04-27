@@ -45,7 +45,7 @@ export function ProjectDialog({
         defaultValues: {
             name: "",
             description: "",
-            photo: "",
+            photo: undefined,
         },
     });
 
