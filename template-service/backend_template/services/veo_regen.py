@@ -25,7 +25,7 @@ import logging
 
 import aiohttp
 
-from config import gemini_config, media_ingest_config
+from backend_template.engine.config import gemini_config, media_ingest_config
 
 logger = logging.getLogger(__name__)
 
@@ -51,12 +51,30 @@ _MAX_POLL_ATTEMPTS = 96        # 96 × 5 s = 8 minutes max
 
 # ── Internal helpers ──────────────────────────────────────────────────────────
 
+_gcp_credentials = None  # Cached GCP credentials (refreshed lazily)
+
 
 def _get_token() -> str:
-    """Return a valid Vertex AI access token (refreshed if needed)."""
-    # Import here to avoid module-level side-effects during engine boot
-    from comfy_api_nodes.util.request_utils import get_vertex_ai_access_token
-    return get_vertex_ai_access_token()
+    """Return a valid Vertex AI access token (refreshed if needed).
+
+    Uses google-auth directly — avoids importing engine-internal modules
+    (comfy_api_nodes.util.request_utils) which pull in the full ComfyUI stack.
+    """
+    import google.auth.transport.requests
+    from google.oauth2 import service_account
+
+    global _gcp_credentials
+    if _gcp_credentials is None:
+        _gcp_credentials = service_account.Credentials.from_service_account_file(
+            gemini_config.service_account_key_file,
+            scopes=["https://www.googleapis.com/auth/cloud-platform"],
+        )
+
+    if not _gcp_credentials.valid:
+        request = google.auth.transport.requests.Request()
+        _gcp_credentials.refresh(request)
+
+    return _gcp_credentials.token
 
 
 async def _fetch_gcs_uri(media_id: str) -> str:

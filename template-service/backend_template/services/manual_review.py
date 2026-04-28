@@ -114,6 +114,8 @@ class ManualReviewService:
 
         # Atomically mark the slot as in-progress
         await self.repo.set_slot_regen_status(task_id, slot_index, "regenerating")
+        # Expire cached ORM objects so get_by_id re-reads from DB
+        self.repo.db.expire_all()
         # Re-fetch for the response
         updated = await self.repo.get_by_id(task_id)
 

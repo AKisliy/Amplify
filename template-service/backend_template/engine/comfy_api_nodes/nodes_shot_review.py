@@ -127,6 +127,12 @@ class ShotReviewNode(IO.ComfyNode):
         except (ValueError, AttributeError):
             node_id = UUID(int=0)
 
+        if auto_confirm:
+            logger.info("[ShotReviewNode] auto_confirm=True, resolving immediately")
+            existing = extra_pnginfo.get("shot_decisions", {})
+            extra_pnginfo["shot_decisions"] = {**existing}
+            return IO.NodeOutput(video_uuids, ui={"video_uuids": video_uuids})
+
         # ── Create the review task ────────────────────────────────────────
         async with async_session_maker() as session:
             repo = ManualReviewTaskRepository(session)
@@ -147,12 +153,6 @@ class ShotReviewNode(IO.ComfyNode):
             auto_confirm,
             len(video_uuids),
         )
-
-        if auto_confirm:
-            logger.info("[ShotReviewNode] auto_confirm=True, resolving immediately")
-            existing = extra_pnginfo.get("shot_decisions", {})
-            extra_pnginfo["shot_decisions"] = {**existing}
-            return IO.NodeOutput(video_uuids, ui={"video_uuids": video_uuids})
 
         # ── Notify frontend via RabbitMQ → WS Gateway ────────────────────
         user_id: str = extra_pnginfo.get("client_id", "")

@@ -10,6 +10,10 @@ from backend_template.database import get_db
 from backend_template.models.manual_review_task import ManualReviewTask
 from backend_template.repositories.base import BaseRepository
 
+# Schema-qualified table name (e.g. 'template_service.manual_review_tasks')
+_SCHEMA = ManualReviewTask.metadata.schema
+_TABLE = f"{_SCHEMA}.{ManualReviewTask.__tablename__}" if _SCHEMA else ManualReviewTask.__tablename__
+
 
 class ManualReviewTaskRepository(BaseRepository[ManualReviewTask]):
 
@@ -33,6 +37,10 @@ class ManualReviewTaskRepository(BaseRepository[ManualReviewTask]):
         return result.scalar_one_or_none()
 
     # ── Atomic JSONB slot operations (concurrent-safe) ────────────────────────
+    #
+    # Uses raw SQL text() with CAST() to avoid asyncpg parameter binding
+    # conflicts with PostgreSQL's :: cast operator.  The table name is resolved
+    # from the ORM model so schema changes propagate automatically.
 
     async def set_slot_regen_status(
         self,
@@ -46,17 +54,17 @@ class ManualReviewTaskRepository(BaseRepository[ManualReviewTask]):
         because PostgreSQL re-evaluates ``payload`` after acquiring the row lock.
         """
         await self.db.execute(
-            text("""
-                UPDATE manual_review_tasks
+            text(f"""
+                UPDATE {_TABLE}
                 SET payload = jsonb_set(
                     payload,
-                    :path,
-                    :value::jsonb
+                    CAST(:path AS text[]),
+                    CAST(:value AS jsonb)
                 )
-                WHERE id = :task_id
+                WHERE id = CAST(:task_id AS uuid)
             """),
             {
-                "path": f"{{shots,{slot_index},regen_status}}",
+                "path": ["shots", str(slot_index), "regen_status"],
                 "value": json.dumps(status),
                 "task_id": str(task_id),
             },
@@ -74,34 +82,34 @@ class ManualReviewTaskRepository(BaseRepository[ManualReviewTask]):
         ``regen_status`` / ``regen_error`` for a single slot.
         """
         await self.db.execute(
-            text("""
-                UPDATE manual_review_tasks
+            text(f"""
+                UPDATE {_TABLE}
                 SET payload = jsonb_set(
                     jsonb_set(
                         jsonb_set(
                             jsonb_set(
                                 payload,
-                                :uuid_path,
-                                :uuid_val::jsonb
+                                CAST(:uuid_path AS text[]),
+                                CAST(:uuid_val AS jsonb)
                             ),
-                            :prompt_path,
-                            :prompt_val::jsonb
+                            CAST(:prompt_path AS text[]),
+                            CAST(:prompt_val AS jsonb)
                         ),
-                        :status_path,
-                        'null'::jsonb
+                        CAST(:status_path AS text[]),
+                        CAST('null' AS jsonb)
                     ),
-                    :error_path,
-                    'null'::jsonb
+                    CAST(:error_path AS text[]),
+                    CAST('null' AS jsonb)
                 )
-                WHERE id = :task_id
+                WHERE id = CAST(:task_id AS uuid)
             """),
             {
-                "uuid_path":   f"{{shots,{slot_index},current_uuid}}",
+                "uuid_path":   ["shots", str(slot_index), "current_uuid"],
                 "uuid_val":    json.dumps(new_uuid),
-                "prompt_path": f"{{shots,{slot_index},gen_params,prompt}}",
+                "prompt_path": ["shots", str(slot_index), "gen_params", "prompt"],
                 "prompt_val":  json.dumps(new_prompt),
-                "status_path": f"{{shots,{slot_index},regen_status}}",
-                "error_path":  f"{{shots,{slot_index},regen_error}}",
+                "status_path": ["shots", str(slot_index), "regen_status"],
+                "error_path":  ["shots", str(slot_index), "regen_error"],
                 "task_id":     str(task_id),
             },
         )
@@ -115,23 +123,23 @@ class ManualReviewTaskRepository(BaseRepository[ManualReviewTask]):
     ) -> None:
         """Atomically set ``regen_status`` to ``"failed"`` and store the error."""
         await self.db.execute(
-            text("""
-                UPDATE manual_review_tasks
+            text(f"""
+                UPDATE {_TABLE}
                 SET payload = jsonb_set(
                     jsonb_set(
                         payload,
-                        :status_path,
-                        :status_val::jsonb
+                        CAST(:status_path AS text[]),
+                        CAST(:status_val AS jsonb)
                     ),
-                    :error_path,
-                    :error_val::jsonb
+                    CAST(:error_path AS text[]),
+                    CAST(:error_val AS jsonb)
                 )
-                WHERE id = :task_id
+                WHERE id = CAST(:task_id AS uuid)
             """),
             {
-                "status_path": f"{{shots,{slot_index},regen_status}}",
+                "status_path": ["shots", str(slot_index), "regen_status"],
                 "status_val":  json.dumps("failed"),
-                "error_path":  f"{{shots,{slot_index},regen_error}}",
+                "error_path":  ["shots", str(slot_index), "regen_error"],
                 "error_val":   json.dumps(error_message),
                 "task_id":     str(task_id),
             },

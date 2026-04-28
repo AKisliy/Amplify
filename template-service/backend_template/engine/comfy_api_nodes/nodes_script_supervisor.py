@@ -245,31 +245,33 @@ class ScriptSupervisorNode(IO.ComfyNode):
             for i, uuid in enumerate(video_uuids)
         ]
 
-        # ── Create the review task ────────────────────────────────────────────
+        # ── Fast path: skip DB entirely when auto-confirming ─────────────────
+        if should_confirm:
+            logger.info(
+                "[ScriptSupervisorNode] auto_confirm=True — returning %d UUIDs immediately",
+                len(video_uuids),
+            )
+            return IO.NodeOutput(video_uuids, ui={"video_uuids": video_uuids})
+
+        # ── Create the review task (only for actual human review) ─────────────
         async with async_session_maker() as session:
             repo = ManualReviewTaskRepository(session)
             task = await repo.create(
                 job_id=job_id,
                 node_id=node_id,
                 node_type=NODE_TYPE,
-                auto_confirm=should_confirm,
-                status="auto_confirmed" if should_confirm else "pending",
+                auto_confirm=False,
+                status="pending",
                 payload={"shots": shots},
                 decision=None,
             )
             task_id = task.id
 
         logger.info(
-            "[ScriptSupervisorNode] Created review task %s "
-            "(auto_confirm=%s, shots=%d)",
+            "[ScriptSupervisorNode] Created review task %s (shots=%d)",
             task_id,
-            should_confirm,
             len(shots),
         )
-
-        if should_confirm:
-            logger.info("[ScriptSupervisorNode] auto_confirm=True — resolving immediately")
-            return IO.NodeOutput(video_uuids, ui={"video_uuids": video_uuids})
 
         # ── Notify frontend via RabbitMQ → WS Gateway ────────────────────────
         user_id: str = extra_pnginfo.get("client_id", "")
