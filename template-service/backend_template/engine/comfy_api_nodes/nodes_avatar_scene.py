@@ -232,6 +232,11 @@ class AvatarSceneNode(IO.ComfyNode):
                     is_output_list=True,
                     tooltip="Generated video media_ids — one per transcript segment.",
                 ),
+                IO.String.Output(
+                    display_name="veo_prompts",
+                    is_output_list=True,
+                    tooltip="Compiled Veo prompts used per segment — wire to ScriptSupervisorNode.",
+                ),
             ],
         )
 
@@ -343,6 +348,7 @@ class AvatarSceneNode(IO.ComfyNode):
         gcs_uri = await fetch_media_uri_from_ingest(cls, media_uuid)
 
         video_uuids: list[str] = []
+        veo_prompts_list: list[str] = []
 
         for i, seg in enumerate(segments):
             script_segment: str = seg.get("script_segment", "")
@@ -360,6 +366,7 @@ class AvatarSceneNode(IO.ComfyNode):
                     "avatar_voice_description": voice,
                 },
             )
+            veo_prompts_list.append(veo_prompt)
 
             initial_response: VeoGenVidResponse = await sync_op(
                 cls,
@@ -428,7 +435,11 @@ class AvatarSceneNode(IO.ComfyNode):
             raise Exception(f"No video returned for segment {i + 1}.")
 
         logger.info("[AvatarSceneNode] All %d segment(s) generated", len(video_uuids))
-        return IO.NodeOutput(video_uuids, ui={"video_uuids": video_uuids})
+        return IO.NodeOutput(
+            video_uuids,
+            veo_prompts_list,
+            ui={"video_uuids": video_uuids},
+        )
 
 
 # ── Extension & Entry Point ───────────────────────────────────────────
