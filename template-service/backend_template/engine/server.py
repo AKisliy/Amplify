@@ -332,7 +332,7 @@ class PromptServer():
         elif sid in self.sockets:
             await send_socket_catch_exception(self.sockets[sid].send_json, message)
 
-        _EXECUTION_EVENTS = {"executing", "execution_cached", "executed", "execution_error", "execution_success"}
+        _EXECUTION_EVENTS = {"execution_start", "executing", "execution_cached", "executed", "execution_error", "execution_interrupted", "execution_success"}
         if event in _EXECUTION_EVENTS:
             try:
                 await self._publish_exec_event(event, data)

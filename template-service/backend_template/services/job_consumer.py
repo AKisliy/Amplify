@@ -8,7 +8,7 @@ import aio_pika
 from pydantic import BaseModel
 from pydantic.alias_generators import to_camel
 from pydantic import ConfigDict
-from sqlalchemy import select
+from sqlalchemy import select, update
 from sqlalchemy.orm import selectinload
 
 from backend_template.config import settings
@@ -224,6 +224,20 @@ async def _finish_job(job_id: str, final_status: JobStatus) -> None:
             return
         job.status = final_status
         job.finished_at = datetime.now(timezone.utc)
+
+        # Wire-only nodes (e.g. StringInputNode, ConcatTextNode) don't produce
+        # output_ui, so the engine never emits an `executed` event for them.
+        # If the job completed successfully, these nodes must have succeeded.
+        if final_status == JobStatus.COMPLETED:
+            await db.execute(
+                update(NodeExecution)
+                .where(
+                    NodeExecution.job_id == job_uuid,
+                    NodeExecution.status == NodeStatus.RUNNING,
+                )
+                .values(status=NodeStatus.SUCCESS)
+            )
+
         await db.commit()
 
 
