@@ -32,6 +32,9 @@ class _NodeStatusEvent(BaseModel):
     error: str | None = None
     job_status: str | None = None  # COMPLETED | FAILED on terminal events
 
+def _remove_sensitive_from_queue(queue: list) -> list:
+    """Remove sensitive data (index 5) from queue item tuples."""
+    return [item[:5] for item in queue]
 
 async def send_socket_catch_exception(function, message):
     try:
@@ -226,6 +229,60 @@ class PromptServer():
             prompt_id = request.match_info.get("prompt_id", None)
             return web.json_response(self.prompt_queue.get_history(prompt_id=prompt_id))
 
+        @routes.get("/queue")
+        async def get_queue(request):
+            queue_info = {}
+            current_queue = self.prompt_queue.get_current_queue_volatile()
+            queue_info['queue_running'] = _remove_sensitive_from_queue(current_queue[0])
+            queue_info['queue_pending'] = _remove_sensitive_from_queue(current_queue[1])
+            return web.json_response(queue_info)
+
+        @routes.post("/queue")
+        async def post_queue(request):
+            json_data =  await request.json()
+            if "clear" in json_data:
+                if json_data["clear"]:
+                    self.prompt_queue.wipe_queue()
+            if "delete" in json_data:
+                to_delete = json_data['delete']
+                for id_to_delete in to_delete:
+                    delete_func = lambda a: a[1] == id_to_delete
+                    self.prompt_queue.delete_queue_item(delete_func)
+
+            return web.Response(status=200)        
+
+        @routes.post("/interrupt")
+        async def post_interrupt(request):
+            try:
+                json_data = await request.json()
+            except json.JSONDecodeError:
+                json_data = {}
+
+            # Check if a specific prompt_id was provided for targeted interruption
+            prompt_id = json_data.get('prompt_id')
+            if prompt_id:
+                currently_running, _ = self.prompt_queue.get_current_queue()
+
+                # Check if the prompt_id matches any currently running prompt
+                should_interrupt = False
+                for item in currently_running:
+                    # item structure: (number, prompt_id, prompt, extra_data, outputs_to_execute)
+                    if item[1] == prompt_id:
+                        logging.info(f"Interrupting prompt {prompt_id}")
+                        should_interrupt = True
+                        break
+
+                if should_interrupt:
+                    nodes.interrupt_processing()
+                else:
+                    logging.info(f"Prompt {prompt_id} is not currently running, skipping interrupt")
+            else:
+                # No prompt_id provided, do a global interrupt
+                logging.info("Global interrupt (no prompt_id specified)")
+                nodes.interrupt_processing()
+
+            return web.Response(status=200)
+            
         @routes.post("/history")
         async def post_history(request):
             json_data =  await request.json()
@@ -297,7 +354,14 @@ class PromptServer():
 
         to_publish: list[_NodeStatusEvent] = []
 
-        if event == "executing":
+        if event == "execution_start":
+            to_publish.append(_NodeStatusEvent(
+                job_id=job_id, prompt_id=prompt_id, node_id="",
+                user_id=user_id, status="JOB_STARTED",
+                job_status="PROCESSING",
+            ))
+
+        elif event == "executing":
             node_id = data.get("node")
             if node_id is None:
                 return
@@ -328,6 +392,15 @@ class PromptServer():
                 job_id=job_id, prompt_id=prompt_id, node_id=node_id,
                 user_id=user_id, status="FAILURE", error=error,
                 job_status="FAILED",
+            ))
+            self.prompt_metadata.pop(prompt_id, None)
+
+        elif event == "execution_interrupted":
+            node_id = data.get("node_id", "")
+            to_publish.append(_NodeStatusEvent(
+                job_id=job_id, prompt_id=prompt_id, node_id=node_id,
+                user_id=user_id, status="CANCELLED",
+                job_status="CANCELLED",
             ))
             self.prompt_metadata.pop(prompt_id, None)
 

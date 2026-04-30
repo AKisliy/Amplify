@@ -9,10 +9,11 @@ import aiohttp
 from fastapi import Depends, HTTPException, status
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
 
 from backend_template.config import settings
 from backend_template.database import get_db
-from backend_template.entities.job import RunTemplateResponse
+from backend_template.entities.job import JobDetailResponse, RunTemplateResponse
 from backend_template.models.job import Job, JobStatus
 from backend_template.models.node_execution import NodeExecution, NodeStatus
 from backend_template.models.product import Product
@@ -26,6 +27,18 @@ logger = logging.getLogger(__name__)
 class JobService:
     def __init__(self, db: Annotated[AsyncSession, Depends(get_db)]):
         self.db = db
+
+    async def get_job_detail(self, job_id: UUID) -> JobDetailResponse:
+        """Load a Job with all its NodeExecution records from the DB."""
+        result = await self.db.execute(
+            select(Job)
+            .options(selectinload(Job.node_executions))
+            .where(Job.id == job_id)
+        )
+        job = result.scalar_one_or_none()
+        if not job:
+            raise HTTPException(status.HTTP_404_NOT_FOUND, detail="Job not found")
+        return JobDetailResponse.model_validate(job)
 
     async def run_template(self, template_id: UUID, user_id: str) -> RunTemplateResponse:
         template = await self.db.get(ProjectTemplate, template_id)
@@ -164,7 +177,6 @@ class JobService:
             )
 
         job.prompt_id = prompt_id
-        job.status = JobStatus.PROCESSING
         await self.db.commit()
 
         return RunTemplateResponse(job_id=str(job.id), prompt_id=prompt_id)
