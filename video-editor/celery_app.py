@@ -10,6 +10,7 @@ result_backend = os.getenv("CELERY_RESULT_BACKEND", "db+postgresql+psycopg2://de
 
 app = Celery("video_editor", broker=broker_url, backend=result_backend)
 
+
 app.conf.update(
     task_serializer="json",
     accept_content=["json"],
@@ -17,6 +18,7 @@ app.conf.update(
     task_reject_on_worker_lost=True,
     worker_prefetch_multiplier=1,
     task_track_started=True,
+    worker_hijack_root_logger=False
 )
 
 if result_backend:

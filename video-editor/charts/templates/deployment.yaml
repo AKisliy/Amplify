@@ -11,6 +11,10 @@ spec:
       {{- include "video-editor.selectorLabels" . | nindent 6 }}
   template:
     metadata:
+      annotations:
+        {{- if .Values.otel.injectPython }}
+        instrumentation.opentelemetry.io/inject-python: "python-instrumentation"
+        {{- end }}
       labels:
         {{- include "video-editor.labels" . | nindent 8 }}
     spec:

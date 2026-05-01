@@ -87,3 +87,6 @@ cors:
 
 config:
   rootPath: "/video-editor"
+
+otel:
+  injectPython: true
