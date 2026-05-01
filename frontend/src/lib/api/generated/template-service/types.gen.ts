@@ -692,6 +692,19 @@ export type RunTemplateResponse = {
 };
 
 /**
+ * ShotRegenerateRequest
+ *
+ * Body for POST /review/{task_id}/regenerate-shot.
+ */
+export type ShotRegenerateRequest = {
+    /**
+     * Slotindex
+     */
+    slotIndex: number;
+    params: VeoEditableParams;
+};
+
+/**
  * ValidationError
  */
 export type ValidationError = {
@@ -707,6 +720,42 @@ export type ValidationError = {
      * Error Type
      */
     type: string;
+};
+
+/**
+ * VeoEditableParams
+ *
+ * Editable Veo generation params surfaced to the user during script review.
+ *
+ * All fields can be modified before re-generating a single shot.
+ * Locked fields (first_frame_uuid, last_frame_uuid) are read from the task
+ * payload server-side — they are never sent over the wire by the client.
+ */
+export type VeoEditableParams = {
+    /**
+     * Prompt
+     */
+    prompt: string;
+    /**
+     * Negativeprompt
+     */
+    negativePrompt?: string;
+    /**
+     * Resolution
+     */
+    resolution?: string;
+    /**
+     * Aspectratio
+     */
+    aspectRatio?: string;
+    /**
+     * Duration
+     */
+    duration?: number;
+    /**
+     * Model
+     */
+    model?: string;
 };
 
 export type ListTemplatesV1TemplatesGetData = {
@@ -1513,6 +1562,38 @@ export type CompleteTaskV1ReviewTaskIdCompletePostResponses = {
 
 export type CompleteTaskV1ReviewTaskIdCompletePostResponse = CompleteTaskV1ReviewTaskIdCompletePostResponses[keyof CompleteTaskV1ReviewTaskIdCompletePostResponses];
 
+export type GetPendingByJobV1ReviewJobJobIdPendingGetData = {
+    body?: never;
+    path: {
+        /**
+         * Job Id
+         */
+        job_id: string;
+    };
+    query?: never;
+    url: '/v1/review/job/{job_id}/pending';
+};
+
+export type GetPendingByJobV1ReviewJobJobIdPendingGetErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type GetPendingByJobV1ReviewJobJobIdPendingGetError = GetPendingByJobV1ReviewJobJobIdPendingGetErrors[keyof GetPendingByJobV1ReviewJobJobIdPendingGetErrors];
+
+export type GetPendingByJobV1ReviewJobJobIdPendingGetResponses = {
+    /**
+     * Response Get Pending By Job V1 Review Job  Job Id  Pending Get
+     *
+     * Successful Response
+     */
+    200: ManualReviewTaskResponse | null;
+};
+
+export type GetPendingByJobV1ReviewJobJobIdPendingGetResponse = GetPendingByJobV1ReviewJobJobIdPendingGetResponses[keyof GetPendingByJobV1ReviewJobJobIdPendingGetResponses];
+
 export type GetByJobAndNodeV1ReviewJobJobIdNodeNodeIdGetData = {
     body?: never;
     path: {
@@ -1548,6 +1629,36 @@ export type GetByJobAndNodeV1ReviewJobJobIdNodeNodeIdGetResponses = {
 };
 
 export type GetByJobAndNodeV1ReviewJobJobIdNodeNodeIdGetResponse = GetByJobAndNodeV1ReviewJobJobIdNodeNodeIdGetResponses[keyof GetByJobAndNodeV1ReviewJobJobIdNodeNodeIdGetResponses];
+
+export type RegenerateShotV1ReviewTaskIdRegenerateShotPostData = {
+    body: ShotRegenerateRequest;
+    path: {
+        /**
+         * Task Id
+         */
+        task_id: string;
+    };
+    query?: never;
+    url: '/v1/review/{task_id}/regenerate-shot';
+};
+
+export type RegenerateShotV1ReviewTaskIdRegenerateShotPostErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type RegenerateShotV1ReviewTaskIdRegenerateShotPostError = RegenerateShotV1ReviewTaskIdRegenerateShotPostErrors[keyof RegenerateShotV1ReviewTaskIdRegenerateShotPostErrors];
+
+export type RegenerateShotV1ReviewTaskIdRegenerateShotPostResponses = {
+    /**
+     * Successful Response
+     */
+    202: ManualReviewTaskResponse;
+};
+
+export type RegenerateShotV1ReviewTaskIdRegenerateShotPostResponse = RegenerateShotV1ReviewTaskIdRegenerateShotPostResponses[keyof RegenerateShotV1ReviewTaskIdRegenerateShotPostResponses];
 
 export type CreateLibraryTemplateInternalLibraryTemplatesPostData = {
     body: LibraryTemplateCreate;
