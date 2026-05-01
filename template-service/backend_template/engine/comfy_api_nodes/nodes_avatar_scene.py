@@ -262,11 +262,11 @@ class AvatarSceneNode(IO.ComfyNode):
                 "Ensure the template is run via the JobService."
             )
 
-        from backend_template.database import async_session_maker
+        from backend_template.engine.database import engine_session_maker
         from backend_template.repositories.ambassador import AmbassadorRepository
 
         logger.info("[AvatarSceneNode] Looking up ambassador for project %s", project_id_str)
-        async with async_session_maker() as session:
+        async with engine_session_maker() as session:
             repo = AmbassadorRepository(session)
             ambassador = await repo.get_by_project_id(UUID(project_id_str))
 

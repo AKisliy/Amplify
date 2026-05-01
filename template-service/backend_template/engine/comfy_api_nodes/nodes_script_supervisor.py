@@ -143,7 +143,7 @@ class ScriptSupervisorNode(IO.ComfyNode):
                 "Ensure the template is run via the JobService."
             )
 
-        from backend_template.database import async_session_maker
+        from backend_template.engine.database import engine_session_maker
         from backend_template.repositories.manual_review_task import ManualReviewTaskRepository
 
         job_id = UUID(job_id_str)
@@ -191,7 +191,7 @@ class ScriptSupervisorNode(IO.ComfyNode):
             return IO.NodeOutput(video_uuids, ui={"video_uuids": video_uuids})
 
         # ── Create the review task (only for actual human review) ─────────────
-        async with async_session_maker() as session:
+        async with engine_session_maker() as session:
             repo = ManualReviewTaskRepository(session)
             task = await repo.create(
                 job_id=job_id,
@@ -230,7 +230,7 @@ class ScriptSupervisorNode(IO.ComfyNode):
         while True:
             await asyncio.sleep(POLL_INTERVAL_SECONDS)
 
-            async with async_session_maker() as session:
+            async with engine_session_maker() as session:
                 repo = ManualReviewTaskRepository(session)
                 task = await repo.get_by_id(task_id)
 

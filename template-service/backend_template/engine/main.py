@@ -25,7 +25,13 @@ import comfy.model_management
 
 def prompt_worker(q, server_instance, cache_type=execution.CacheType.NONE):
     current_time: float = 0.0
-    
+
+    # Create a persistent event loop for the worker thread.  This loop lives
+    # for the entire lifetime of the thread so that async DB engines / connection
+    # pools created by nodes remain valid across prompt executions.
+    loop = asyncio.new_event_loop()
+    asyncio.set_event_loop(loop)
+
     e = execution.PromptExecutor(server_instance, cache_type=cache_type)
     last_gc_collect = 0
     need_gc = False
@@ -48,7 +54,7 @@ def prompt_worker(q, server_instance, cache_type=execution.CacheType.NONE):
             for k in sensitive:
                 extra_data[k] = sensitive[k]
 
-            e.execute(item[2], prompt_id, extra_data, item[4])
+            loop.run_until_complete(e.execute_async(item[2], prompt_id, extra_data, item[4]))
             need_gc = True
 
             remove_sensitive = lambda prompt: prompt[:5] + prompt[6:]
