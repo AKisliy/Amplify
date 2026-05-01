@@ -20,3 +20,6 @@ minio:
   bucket: "amplify-media-test-2"
   useSsl: "true"
   location: "europe-west3"
+
+otel:
+  injectPython: true
