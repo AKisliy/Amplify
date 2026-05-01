@@ -60,4 +60,3 @@ sqlalchemy==2.0.41
 opentelemetry-api==1.40.0
 opentelemetry-sdk==1.40.0
 opentelemetry-exporter-otlp-proto-http==1.40.0
-opentelemetry-instrumentation-celery==0.61b0

@@ -1,9 +1,7 @@
 import os
 from celery import Celery
-from celery.signals import worker_process_init
 from dotenv import load_dotenv
 from sqlalchemy.pool import NullPool
-from opentelemetry.instrumentation.celery import CeleryInstrumentor
 
 load_dotenv()
 
