@@ -54,6 +54,11 @@ def prompt_worker(q, server_instance, cache_type=execution.CacheType.NONE):
             for k in sensitive:
                 extra_data[k] = sensitive[k]
 
+            logging.info(
+                "[prompt_worker] Starting prompt_id=%s client_id=%s",
+                prompt_id, extra_data.get("client_id", "N/A"),
+            )
+
             loop.run_until_complete(e.execute_async(item[2], prompt_id, extra_data, item[4]))
             need_gc = True
 

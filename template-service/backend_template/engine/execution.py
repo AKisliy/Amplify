@@ -494,6 +494,12 @@ async def execute(server, dynprompt, caches, current_item, extra_data, executed,
                 # TODO - How to handle this with async functions without contextvars (which requires Python 3.12)?
                 GraphBuilder.set_default_prefix(unique_id, call_index, 0)
 
+            logging.info(
+                "[execute] Node %s (%s) — starting execute, prompt_id=%s",
+                unique_id, class_type, prompt_id,
+            )
+            node_start_ts = time.perf_counter()
+
             output_data, output_ui, has_subgraph, has_pending_tasks = await get_output_data(prompt_id, unique_id, obj, input_data_all, execution_block_cb=execution_block_cb, pre_execute_cb=pre_execute_cb, v3_data=v3_data)
 
             if has_pending_tasks:
@@ -553,12 +559,20 @@ async def execute(server, dynprompt, caches, current_item, extra_data, executed,
             pending_subgraph_results[unique_id] = cached_outputs
             return (ExecutionResult.PENDING, None, None)
 
+        logging.info(
+            "[execute] Node %s (%s) — completed in %.1fs, prompt_id=%s",
+            unique_id, class_type, time.perf_counter() - node_start_ts, prompt_id,
+        )
+
         cache_entry = CacheEntry(ui=ui_outputs.get(unique_id), outputs=output_data)
         execution_list.cache_update(unique_id, cache_entry)
         caches.outputs.set(unique_id, cache_entry)
 
     except comfy.model_management.InterruptProcessingException as iex:
-        logging.info("Processing interrupted")
+        logging.info(
+            "[execute] Node %s (%s) — INTERRUPTED after %.1fs, prompt_id=%s",
+            unique_id, class_type, time.perf_counter() - node_start_ts, prompt_id,
+        )
 
         # skip formatting inputs/outputs
         error_details = {
@@ -577,6 +591,10 @@ async def execute(server, dynprompt, caches, current_item, extra_data, executed,
 
         logging.error(f"!!! Exception during processing !!! {ex}")
         logging.error(traceback.format_exc())
+        logging.info(
+            "[execute] Node %s (%s) — FAILED after %.1fs: %s, prompt_id=%s",
+            unique_id, class_type, time.perf_counter() - node_start_ts, ex, prompt_id,
+        )
         tips = ""
 
         error_details = {
