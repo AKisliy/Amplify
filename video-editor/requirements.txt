@@ -41,7 +41,6 @@ PyWavelets==1.8.0
 PyYAML==6.0.2
 requests==2.32.4
 scenedetect==0.6.6
-scipy==1.16.0
 six==1.17.0
 tqdm==4.67.1
 typing-inspection==0.4.1
