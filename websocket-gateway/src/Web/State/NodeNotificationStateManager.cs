@@ -12,11 +12,12 @@ namespace WebSocketGateway.Web.State;
 /// |---------------------|-----------------|----------|
 /// | any                 | (none)          | Forward  |
 /// | RUNNING             | RUNNING         | Forward  |
+/// | RUNNING             | WAITING_FOR_REVIEW | Forward  |
 /// | RUNNING             | SUCCESS/FAILURE  | Suppress |
 /// | WAITING_FOR_REVIEW  | SUCCESS/FAILURE  | Suppress |
 /// | SUCCESS/FAILURE     | any             | Forward  |
 /// </summary>
-public class NodeNotificationStateManager
+public class NodeNotificationStateManager(ILogger<NodeNotificationStateManager> logger)
 {
     private static readonly HashSet<string> TerminalStatuses = new(StringComparer.OrdinalIgnoreCase)
     {
@@ -46,9 +47,20 @@ public class NodeNotificationStateManager
                     suppressed = true;
                     return current;
                 }
+
+                if (newStatus == "RUNNING" && current == "WAITING_FOR_REVIEW")
+                {
+                    suppressed = true;
+                    return current;
+                }
                 return newStatus;
             });
 
+        if (suppressed)
+        {
+            // Log suppression for diagnostics
+            logger.LogInformation("Suppressed transition to {NewStatus} for NodeId={NodeId} JobId={JobId} due to current state.", newStatus, nodeId, jobId);
+        }
         return !suppressed;
     }
 
