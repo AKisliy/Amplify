@@ -243,7 +243,7 @@ export function ScriptSupervisorDialog({ jobId, nodeId, onClose }: ScriptSupervi
     <Dialog open onOpenChange={(open) => { if (!open) onClose(); }}>
       <DialogContent
         showCloseButton={false}
-        className="inset-0 top-0 left-0 translate-x-0 translate-y-0 max-w-none w-screen h-screen rounded-none p-0 flex flex-col gap-0 border-0 bg-black/95"
+        className="inset-0 top-0 left-0 translate-x-0 translate-y-0 max-w-none sm:max-w-none w-screen h-screen rounded-none p-0 flex flex-col gap-0 border-0 bg-black/95"
       >
         {/* sr-only title for accessibility */}
         <DialogTitle className="sr-only">Script Supervisor</DialogTitle>
