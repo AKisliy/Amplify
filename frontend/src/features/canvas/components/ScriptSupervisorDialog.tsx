@@ -266,7 +266,7 @@ export function ScriptSupervisorDialog({ jobId, nodeId, onClose }: ScriptSupervi
           <div className="flex-1 flex gap-5 px-6 py-5 min-h-0 items-stretch">
 
             {/* ── LEFT: Video box ───────────────────────────────────────── */}
-            <div className="flex flex-col items-center gap-3 min-h-0 shrink-0">
+            <div className="flex flex-col items-center gap-3 shrink-0 w-56">
               {/* Shot navigation */}
               <div className="flex items-center gap-3">
                 <button
@@ -288,13 +288,9 @@ export function ScriptSupervisorDialog({ jobId, nodeId, onClose }: ScriptSupervi
                 </button>
               </div>
 
-              {/* Video player */}
+              {/* Video player — always 9:16 (vertical/reels) */}
               <div
-                className={cn(
-                  "relative bg-black/60 rounded-xl overflow-hidden border border-white/10",
-                  "cursor-pointer flex-1",
-                  currentShot?.aspectRatio === "9:16" ? "aspect-[9/16]" : "aspect-video"
-                )}
+                className="relative bg-black/60 rounded-xl overflow-hidden border border-white/10 cursor-pointer w-full aspect-[9/16]"
                 onClick={togglePlay}
               >
                 {currentVideoUrl ? (
@@ -308,7 +304,7 @@ export function ScriptSupervisorDialog({ jobId, nodeId, onClose }: ScriptSupervi
                     loop
                   />
                 ) : (
-                  <div className="w-full h-full flex items-center justify-center text-white/20 text-sm min-w-[200px] min-h-[300px]">
+                  <div className="w-full h-full flex items-center justify-center text-white/20 text-sm">
                     {isRegenerating ? (
                       <div className="flex flex-col items-center gap-2">
                         <Loader2 className="w-6 h-6 animate-spin text-orange-400" />
