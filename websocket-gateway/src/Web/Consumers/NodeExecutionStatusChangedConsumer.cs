@@ -18,8 +18,8 @@ public class NodeExecutionStatusChangedConsumer(
         var message = context.Message;
 
         logger.LogInformation(
-            "Node execution status changed: NodeId={NodeId} Status={Status}",
-            message.NodeId, message.Status);
+            "Node execution status changed: NodeId={NodeId} JobId={JobId} Status={Status}",
+            message.NodeId, message.JobId, message.Status);
 
         if (!Guid.TryParse(message.UserId, out var _))
         {
@@ -30,6 +30,14 @@ public class NodeExecutionStatusChangedConsumer(
         if (!Guid.TryParse(message.NodeId, out var _))
         {
             logger.LogWarning("Invalid NodeId in message: {NodeId}", message.NodeId);
+            return Task.CompletedTask;
+        }
+
+        if (!stateManager.TryTransition(message.NodeId, message.JobId, message.Status))
+        {
+            logger.LogInformation(
+                "Suppressed stale status {Status} for NodeId={NodeId} JobId={JobId}",
+                message.Status, message.NodeId, message.JobId);
             return Task.CompletedTask;
         }
 
