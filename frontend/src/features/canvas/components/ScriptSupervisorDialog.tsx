@@ -22,6 +22,7 @@ import {
   type ManualReviewTaskResponse,
 } from "@/lib/api/template-service";
 import { mediaApi } from "@/features/media/api";
+import { AmplifyImage } from "@/features/media/components/AmplifyImage";
 
 // ---------------------------------------------------------------------------
 
@@ -62,6 +63,8 @@ interface ShotState {
   resolution: string;
   aspectRatio: string;
   duration: number;
+  firstFrameUuid: string | null;
+  lastFrameUuid: string | null;
 }
 
 function parseShots(task: ManualReviewTaskResponse): ShotState[] {
@@ -71,12 +74,14 @@ function parseShots(task: ManualReviewTaskResponse): ShotState[] {
     currentUuid:   s.current_uuid,
     originalUuid:  s.original_uuid,
     regenStatus:   s.regen_status,
-    prompt:        s.gen_params?.prompt ?? "",
-    model:         s.gen_params?.model ?? "veo-3.1-lite-generate-001",
-    negativePrompt: s.gen_params?.negative_prompt ?? "",
-    resolution:    s.gen_params?.resolution ?? "720p",
-    aspectRatio:   s.gen_params?.aspect_ratio ?? "16:9",
-    duration:      s.gen_params?.duration ?? 8,
+    prompt:          s.gen_params?.prompt ?? "",
+    model:           s.gen_params?.model ?? "veo-3.1-lite-generate-001",
+    negativePrompt:  s.gen_params?.negative_prompt ?? "",
+    resolution:      s.gen_params?.resolution ?? "720p",
+    aspectRatio:     s.gen_params?.aspect_ratio ?? "16:9",
+    duration:        s.gen_params?.duration ?? 8,
+    firstFrameUuid:  s.gen_params?.first_frame_uuid ?? null,
+    lastFrameUuid:   s.gen_params?.last_frame_uuid ?? null,
   }));
 }
 
@@ -363,7 +368,57 @@ export function ScriptSupervisorDialog({ jobId, nodeId, onClose }: ScriptSupervi
                   placeholder="Enter Veo prompt…"
                 />
 
-                {/* Google Flow–style bottom bar */}
+                {/* Gen params + frame cards */}
+                <div className="flex flex-wrap items-center gap-2 px-3 py-2.5 border-t border-white/10 shrink-0">
+                  {/* Aspect ratio */}
+                  <span className="flex items-center gap-1 px-2 py-1 rounded-md bg-white/[0.06] border border-white/10 text-[11px] text-white/50">
+                    {currentShot?.aspectRatio ?? "—"}
+                  </span>
+                  {/* Resolution */}
+                  <span className="flex items-center gap-1 px-2 py-1 rounded-md bg-white/[0.06] border border-white/10 text-[11px] text-white/50">
+                    {currentShot?.resolution ?? "—"}
+                  </span>
+                  {/* Duration */}
+                  <span className="flex items-center gap-1 px-2 py-1 rounded-md bg-white/[0.06] border border-white/10 text-[11px] text-white/50">
+                    {currentShot?.duration ?? "—"}s
+                  </span>
+
+                  {/* First frame */}
+                  {currentShot?.firstFrameUuid && (
+                    <div className="flex items-center gap-1.5">
+                      <span className="text-[10px] text-white/30">first</span>
+                      <div className="relative w-8 h-8 rounded-md overflow-hidden border border-white/10 shrink-0">
+                        <AmplifyImage
+                          mediaId={currentShot.firstFrameUuid}
+                          variant="Tiny"
+                          lightbox
+                          alt="First frame"
+                          sizes="32px"
+                          className="object-cover"
+                        />
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Last frame */}
+                  {currentShot?.lastFrameUuid && (
+                    <div className="flex items-center gap-1.5">
+                      <span className="text-[10px] text-white/30">last</span>
+                      <div className="relative w-8 h-8 rounded-md overflow-hidden border border-white/10 shrink-0">
+                        <AmplifyImage
+                          mediaId={currentShot.lastFrameUuid}
+                          variant="Tiny"
+                          lightbox
+                          alt="Last frame"
+                          sizes="32px"
+                          className="object-cover"
+                        />
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* Bottom bar: model + regen */}
                 <div className="flex items-center justify-between px-3 py-2.5 border-t border-white/10 bg-white/[0.02] shrink-0">
                   {/* Model selector */}
                   <div className="relative">
