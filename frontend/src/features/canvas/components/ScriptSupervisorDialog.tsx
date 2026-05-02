@@ -266,7 +266,7 @@ export function ScriptSupervisorDialog({ jobId, nodeId, onClose }: ScriptSupervi
           <div className="flex-1 flex gap-5 px-6 py-5 min-h-0 items-stretch">
 
             {/* ── LEFT: Video box ───────────────────────────────────────── */}
-            <div className="flex flex-col items-center gap-3 shrink-0 w-56">
+            <div className="flex flex-col items-center gap-3 shrink-0">
               {/* Shot navigation */}
               <div className="flex items-center gap-3">
                 <button
@@ -290,7 +290,7 @@ export function ScriptSupervisorDialog({ jobId, nodeId, onClose }: ScriptSupervi
 
               {/* Video player — always 9:16 (vertical/reels) */}
               <div
-                className="relative bg-black/60 rounded-xl overflow-hidden border border-white/10 cursor-pointer w-full aspect-[9/16]"
+                className="relative bg-black/60 rounded-xl overflow-hidden border border-white/10 cursor-pointer flex-1 aspect-[9/16]"
                 onClick={togglePlay}
               >
                 {currentVideoUrl ? (
