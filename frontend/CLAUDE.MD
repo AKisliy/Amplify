@@ -68,6 +68,7 @@ src/
 | Custom dropdown | `<DropdownMenu>` from `@/components/ui/dropdown-menu` |
 | `<select>` | `<Select>` from `@/components/ui/select` |
 | `<img>` | `<AmplifyImage>` from `@/features/media/components/AmplifyImage` |
+| `<video>` | `<AmplifyVideo>` from `@/features/media/components/AmplifyVideo` |
 
 **Installed shadcn components:** `alert-dialog`, `avatar`, `badge`, `button`, `card`, `dialog`, `dropdown-menu`, `input`, `label`, `popover`, `select`, `separator`, `sheet`, `sidebar`, `skeleton`, `switch`, `table`, `tabs`, `textarea`, `toast`, `tooltip`.
 
