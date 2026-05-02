@@ -1,17 +1,14 @@
 "use client";
 
 import { useEffect, useRef, useState, useCallback } from "react";
-import { createPortal } from "react-dom";
 import {
   Check,
-  ChevronDown,
   ChevronLeft,
   ChevronRight,
   Loader2,
   Pause,
   Play,
   RefreshCw,
-  X,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
@@ -23,6 +20,20 @@ import {
 } from "@/lib/api/template-service";
 import { mediaApi } from "@/features/media/api";
 import { AmplifyImage } from "@/features/media/components/AmplifyImage";
+import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/textarea";
+import {
+  Dialog,
+  DialogClose,
+  DialogContent,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 // ---------------------------------------------------------------------------
 
@@ -70,18 +81,18 @@ interface ShotState {
 function parseShots(task: ManualReviewTaskResponse): ShotState[] {
   const rawShots = (task.payload?.shots ?? []) as RawShot[];
   return rawShots.map((s) => ({
-    slotIndex:     s.slot_index,
-    currentUuid:   s.current_uuid,
-    originalUuid:  s.original_uuid,
-    regenStatus:   s.regen_status,
-    prompt:          s.gen_params?.prompt ?? "",
-    model:           s.gen_params?.model ?? "veo-3.1-lite-generate-001",
-    negativePrompt:  s.gen_params?.negative_prompt ?? "",
-    resolution:      s.gen_params?.resolution ?? "720p",
-    aspectRatio:     s.gen_params?.aspect_ratio ?? "16:9",
-    duration:        s.gen_params?.duration ?? 8,
-    firstFrameUuid:  s.gen_params?.first_frame_uuid ?? null,
-    lastFrameUuid:   s.gen_params?.last_frame_uuid ?? null,
+    slotIndex:      s.slot_index,
+    currentUuid:    s.current_uuid,
+    originalUuid:   s.original_uuid,
+    regenStatus:    s.regen_status,
+    prompt:         s.gen_params?.prompt ?? "",
+    model:          s.gen_params?.model ?? "veo-3.1-lite-generate-001",
+    negativePrompt: s.gen_params?.negative_prompt ?? "",
+    resolution:     s.gen_params?.resolution ?? "720p",
+    aspectRatio:    s.gen_params?.aspect_ratio ?? "16:9",
+    duration:       s.gen_params?.duration ?? 8,
+    firstFrameUuid: s.gen_params?.first_frame_uuid ?? null,
+    lastFrameUuid:  s.gen_params?.last_frame_uuid ?? null,
   }));
 }
 
@@ -103,9 +114,8 @@ export function ScriptSupervisorDialog({ jobId, nodeId, onClose }: ScriptSupervi
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error,        setError]        = useState<string | null>(null);
   const [isPlaying,    setIsPlaying]    = useState(false);
-  const [modelOpen,    setModelOpen]    = useState(false);
 
-  const videoRef    = useRef<HTMLVideoElement>(null);
+  const videoRef     = useRef<HTMLVideoElement>(null);
   const pollTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   // ── Fetch task on mount ─────────────────────────────────────────────────────
@@ -136,8 +146,7 @@ export function ScriptSupervisorDialog({ jobId, nodeId, onClose }: ScriptSupervi
       if (pollTimerRef.current) { clearInterval(pollTimerRef.current); pollTimerRef.current = null; }
       return;
     }
-
-    if (pollTimerRef.current) return; // already polling
+    if (pollTimerRef.current) return;
 
     pollTimerRef.current = setInterval(async () => {
       try {
@@ -155,7 +164,6 @@ export function ScriptSupervisorDialog({ jobId, nodeId, onClose }: ScriptSupervi
   // ── Reset video when switching shots ────────────────────────────────────────
   useEffect(() => {
     setIsPlaying(false);
-    setModelOpen(false);
     if (videoRef.current) {
       videoRef.current.pause();
       videoRef.current.currentTime = 0;
@@ -174,10 +182,8 @@ export function ScriptSupervisorDialog({ jobId, nodeId, onClose }: ScriptSupervi
   const handlePromptChange = (value: string) =>
     setShots((prev) => prev.map((s, i) => i === selectedIdx ? { ...s, prompt: value } : s));
 
-  const handleModelChange = (model: string) => {
+  const handleModelChange = (model: string) =>
     setShots((prev) => prev.map((s, i) => i === selectedIdx ? { ...s, model } : s));
-    setModelOpen(false);
-  };
 
   // ── Regenerate single shot ──────────────────────────────────────────────────
   const handleRegenerate = useCallback(async () => {
@@ -191,12 +197,12 @@ export function ScriptSupervisorDialog({ jobId, nodeId, onClose }: ScriptSupervi
         body: {
           slotIndex: shot.slotIndex,
           params: {
-            prompt:          shot.prompt,
-            negativePrompt:  shot.negativePrompt,
-            resolution:      shot.resolution,
-            aspectRatio:     shot.aspectRatio,
-            duration:        shot.duration,
-            model:           shot.model,
+            prompt:         shot.prompt,
+            negativePrompt: shot.negativePrompt,
+            resolution:     shot.resolution,
+            aspectRatio:    shot.aspectRatio,
+            duration:       shot.duration,
+            model:          shot.model,
           },
         },
       });
@@ -225,337 +231,312 @@ export function ScriptSupervisorDialog({ jobId, nodeId, onClose }: ScriptSupervi
   }, [taskId, shots, onClose]);
 
   // ── Derived ─────────────────────────────────────────────────────────────────
-  const currentShot = shots[selectedIdx];
+  const currentShot    = shots[selectedIdx];
   const currentVideoUrl = currentShot?.currentUuid
     ? mediaApi.getMediaUrl(currentShot.currentUuid, "Original")
     : undefined;
-  const currentModel = VEO_MODELS.find((m) => m.value === currentShot?.model) ?? VEO_MODELS[2];
+  const currentModel   = VEO_MODELS.find((m) => m.value === currentShot?.model) ?? VEO_MODELS[2];
   const isRegenerating = currentShot?.regenStatus === "regenerating";
 
   // ── Render ──────────────────────────────────────────────────────────────────
-  return createPortal(
-    <div className="fixed inset-0 z-50 bg-black/95 flex flex-col">
+  return (
+    <Dialog open onOpenChange={(open) => { if (!open) onClose(); }}>
+      <DialogContent
+        showCloseButton={false}
+        className="inset-0 top-0 left-0 translate-x-0 translate-y-0 max-w-none w-screen h-screen rounded-none p-0 flex flex-col gap-0 border-0 bg-black/95"
+      >
+        {/* sr-only title for accessibility */}
+        <DialogTitle className="sr-only">Script Supervisor</DialogTitle>
 
-      {/* ── Header ─────────────────────────────────────────────────────────── */}
-      <div className="flex items-center justify-between px-6 py-4 border-b border-white/10 shrink-0">
-        <div className="flex items-center gap-3">
-          <h2 className="text-white font-semibold text-base">Script Supervisor</h2>
-          {!isLoading && shots.length > 0 && (
-            <span className="text-white/30 text-sm">
-              {shots.length} shot{shots.length !== 1 ? "s" : ""}
-            </span>
-          )}
+        {/* ── Header ───────────────────────────────────────────────────────── */}
+        <div className="flex items-center justify-between px-6 py-4 border-b border-white/10 shrink-0">
+          <div className="flex items-center gap-3">
+            <h2 className="text-white font-semibold text-base">Script Supervisor</h2>
+            {!isLoading && shots.length > 0 && (
+              <span className="text-white/30 text-sm">
+                {shots.length} shot{shots.length !== 1 ? "s" : ""}
+              </span>
+            )}
+          </div>
+          <DialogClose asChild>
+            <Button variant="ghost" size="icon" className="text-white/40 hover:text-white hover:bg-white/5">
+              <span className="sr-only">Close</span>
+              ✕
+            </Button>
+          </DialogClose>
         </div>
-        <button
-          onClick={onClose}
-          className="text-white/40 hover:text-white transition-colors rounded-md p-1 hover:bg-white/5"
-          title="Close"
-        >
-          <X className="w-5 h-5" />
-        </button>
-      </div>
 
-      {/* ── Body ───────────────────────────────────────────────────────────── */}
-      {isLoading ? (
-        <div className="flex-1 flex items-center justify-center gap-2 text-white/40">
-          <Loader2 className="w-4 h-4 animate-spin" />
-          <span className="text-sm">Loading review task…</span>
-        </div>
-      ) : error && shots.length === 0 ? (
-        <div className="flex-1 flex items-center justify-center">
-          <p className="text-red-400 text-sm">{error}</p>
-        </div>
-      ) : (
-        <>
-          {/* ── Main content: two boxes ──────────────────────────────────── */}
-          <div className="flex-1 flex gap-5 px-6 py-5 min-h-0 items-stretch">
+        {/* ── Body ─────────────────────────────────────────────────────────── */}
+        {isLoading ? (
+          <div className="flex-1 flex items-center justify-center gap-2 text-white/40">
+            <Loader2 className="w-4 h-4 animate-spin" />
+            <span className="text-sm">Loading review task…</span>
+          </div>
+        ) : error && shots.length === 0 ? (
+          <div className="flex-1 flex items-center justify-center">
+            <p className="text-red-400 text-sm">{error}</p>
+          </div>
+        ) : (
+          <>
+            {/* ── Main content ─────────────────────────────────────────────── */}
+            <div className="flex-1 flex gap-5 px-6 py-5 min-h-0 items-stretch">
 
-            {/* ── LEFT: Video box ───────────────────────────────────────── */}
-            <div className="flex flex-col items-center gap-3 shrink-0">
-              {/* Shot navigation */}
-              <div className="flex items-center gap-3">
-                <button
-                  disabled={selectedIdx === 0}
-                  onClick={() => setSelectedIdx((i) => i - 1)}
-                  className="p-1.5 rounded text-white/50 hover:text-white hover:bg-white/5 disabled:opacity-20 transition-colors"
+              {/* ── LEFT: Video ──────────────────────────────────────────── */}
+              <div className="flex flex-col items-center gap-3 shrink-0">
+                {/* Shot navigation */}
+                <div className="flex items-center gap-2">
+                  <Button
+                    variant="ghost"
+                    size="icon-sm"
+                    disabled={selectedIdx === 0}
+                    onClick={() => setSelectedIdx((i) => i - 1)}
+                    className="text-white/50 hover:text-white hover:bg-white/5"
+                  >
+                    <ChevronLeft className="w-4 h-4" />
+                  </Button>
+                  <span className="text-white/50 text-sm tabular-nums">
+                    Shot {selectedIdx + 1} / {shots.length}
+                  </span>
+                  <Button
+                    variant="ghost"
+                    size="icon-sm"
+                    disabled={selectedIdx === shots.length - 1}
+                    onClick={() => setSelectedIdx((i) => i + 1)}
+                    className="text-white/50 hover:text-white hover:bg-white/5"
+                  >
+                    <ChevronRight className="w-4 h-4" />
+                  </Button>
+                </div>
+
+                {/* Video player — always 9:16 (vertical/reels) */}
+                <div
+                  className="relative bg-black/60 rounded-xl overflow-hidden border border-white/10 cursor-pointer flex-1 aspect-[9/16]"
+                  onClick={togglePlay}
                 >
-                  <ChevronLeft className="w-4 h-4" />
-                </button>
-                <span className="text-white/50 text-sm tabular-nums">
-                  Shot {selectedIdx + 1} / {shots.length}
-                </span>
-                <button
-                  disabled={selectedIdx === shots.length - 1}
-                  onClick={() => setSelectedIdx((i) => i + 1)}
-                  className="p-1.5 rounded text-white/50 hover:text-white hover:bg-white/5 disabled:opacity-20 transition-colors"
-                >
-                  <ChevronRight className="w-4 h-4" />
-                </button>
-              </div>
+                  {currentVideoUrl ? (
+                    <video
+                      ref={videoRef}
+                      key={currentVideoUrl}
+                      src={currentVideoUrl}
+                      className="w-full h-full object-contain"
+                      onEnded={() => setIsPlaying(false)}
+                      playsInline
+                      loop
+                    />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center text-white/20 text-sm">
+                      {isRegenerating ? (
+                        <div className="flex flex-col items-center gap-2">
+                          <Loader2 className="w-6 h-6 animate-spin text-orange-400" />
+                          <span className="text-orange-400/70 text-xs">Regenerating…</span>
+                        </div>
+                      ) : "No video"}
+                    </div>
+                  )}
 
-              {/* Video player — always 9:16 (vertical/reels) */}
-              <div
-                className="relative bg-black/60 rounded-xl overflow-hidden border border-white/10 cursor-pointer flex-1 aspect-[9/16]"
-                onClick={togglePlay}
-              >
-                {currentVideoUrl ? (
-                  <video
-                    ref={videoRef}
-                    key={currentVideoUrl}
-                    src={currentVideoUrl}
-                    className="w-full h-full object-contain"
-                    onEnded={() => setIsPlaying(false)}
-                    playsInline
-                    loop
-                  />
-                ) : (
-                  <div className="w-full h-full flex items-center justify-center text-white/20 text-sm">
-                    {isRegenerating ? (
+                  {/* Regenerating overlay */}
+                  {currentVideoUrl && isRegenerating && (
+                    <div className="absolute inset-0 bg-black/70 flex items-center justify-center">
                       <div className="flex flex-col items-center gap-2">
-                        <Loader2 className="w-6 h-6 animate-spin text-orange-400" />
-                        <span className="text-orange-400/70 text-xs">Regenerating…</span>
-                      </div>
-                    ) : "No video"}
-                  </div>
-                )}
-
-                {/* Regenerating overlay */}
-                {currentVideoUrl && isRegenerating && (
-                  <div className="absolute inset-0 bg-black/70 flex items-center justify-center">
-                    <div className="flex flex-col items-center gap-2">
-                      <Loader2 className="w-7 h-7 animate-spin text-orange-400" />
-                      <span className="text-orange-400/80 text-xs">Regenerating…</span>
-                    </div>
-                  </div>
-                )}
-
-                {/* Play/pause overlay */}
-                {currentVideoUrl && !isPlaying && !isRegenerating && (
-                  <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                    <div className="w-14 h-14 rounded-full bg-black/60 backdrop-blur-sm border border-white/20 flex items-center justify-center">
-                      <Play className="w-5 h-5 text-white ml-0.5" fill="white" />
-                    </div>
-                  </div>
-                )}
-
-                {/* Pause overlay */}
-                {currentVideoUrl && isPlaying && (
-                  <div className="absolute inset-0 flex items-center justify-center pointer-events-none opacity-0 hover:opacity-100 transition-opacity">
-                    <div className="w-14 h-14 rounded-full bg-black/60 backdrop-blur-sm border border-white/20 flex items-center justify-center">
-                      <Pause className="w-5 h-5 text-white" fill="white" />
-                    </div>
-                  </div>
-                )}
-              </div>
-            </div>
-
-            {/* ── RIGHT: Prompt box ─────────────────────────────────────── */}
-            <div className="flex flex-col flex-1 min-h-0 min-w-0">
-              <label className="text-[11px] text-white/40 uppercase tracking-wide mb-2 shrink-0">
-                Veo Prompt
-              </label>
-
-              <div className="flex-1 flex flex-col rounded-xl border border-white/10 bg-white/[0.03] overflow-hidden min-h-0">
-                <textarea
-                  className={cn(
-                    "flex-1 p-4 bg-transparent text-white/80 text-sm resize-none outline-none",
-                    "placeholder:text-white/20 leading-relaxed min-h-0",
-                    "disabled:opacity-50"
-                  )}
-                  value={currentShot?.prompt ?? ""}
-                  onChange={(e) => handlePromptChange(e.target.value)}
-                  disabled={isRegenerating}
-                  placeholder="Enter Veo prompt…"
-                />
-
-                {/* Gen params + frame cards */}
-                <div className="flex flex-wrap items-center gap-2 px-3 py-2.5 border-t border-white/10 shrink-0">
-                  {/* Aspect ratio */}
-                  <span className="flex items-center gap-1 px-2 py-1 rounded-md bg-white/[0.06] border border-white/10 text-[11px] text-white/50">
-                    {currentShot?.aspectRatio ?? "—"}
-                  </span>
-                  {/* Resolution */}
-                  <span className="flex items-center gap-1 px-2 py-1 rounded-md bg-white/[0.06] border border-white/10 text-[11px] text-white/50">
-                    {currentShot?.resolution ?? "—"}
-                  </span>
-                  {/* Duration */}
-                  <span className="flex items-center gap-1 px-2 py-1 rounded-md bg-white/[0.06] border border-white/10 text-[11px] text-white/50">
-                    {currentShot?.duration ?? "—"}s
-                  </span>
-
-                  {/* First frame */}
-                  {currentShot?.firstFrameUuid && (
-                    <div className="flex items-center gap-1.5">
-                      <span className="text-[10px] text-white/30">first</span>
-                      <div className="relative w-8 h-8 rounded-md overflow-hidden border border-white/10 shrink-0">
-                        <AmplifyImage
-                          mediaId={currentShot.firstFrameUuid}
-                          variant="Tiny"
-                          lightbox
-                          alt="First frame"
-                          sizes="32px"
-                          className="object-cover"
-                        />
+                        <Loader2 className="w-7 h-7 animate-spin text-orange-400" />
+                        <span className="text-orange-400/80 text-xs">Regenerating…</span>
                       </div>
                     </div>
                   )}
 
-                  {/* Last frame */}
-                  {currentShot?.lastFrameUuid && (
-                    <div className="flex items-center gap-1.5">
-                      <span className="text-[10px] text-white/30">last</span>
-                      <div className="relative w-8 h-8 rounded-md overflow-hidden border border-white/10 shrink-0">
-                        <AmplifyImage
-                          mediaId={currentShot.lastFrameUuid}
-                          variant="Tiny"
-                          lightbox
-                          alt="Last frame"
-                          sizes="32px"
-                          className="object-cover"
-                        />
+                  {/* Play overlay */}
+                  {currentVideoUrl && !isPlaying && !isRegenerating && (
+                    <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                      <div className="w-14 h-14 rounded-full bg-black/60 backdrop-blur-sm border border-white/20 flex items-center justify-center">
+                        <Play className="w-5 h-5 text-white ml-0.5" fill="white" />
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Pause overlay */}
+                  {currentVideoUrl && isPlaying && (
+                    <div className="absolute inset-0 flex items-center justify-center pointer-events-none opacity-0 hover:opacity-100 transition-opacity">
+                      <div className="w-14 h-14 rounded-full bg-black/60 backdrop-blur-sm border border-white/20 flex items-center justify-center">
+                        <Pause className="w-5 h-5 text-white" fill="white" />
                       </div>
                     </div>
                   )}
                 </div>
+              </div>
 
-                {/* Bottom bar: model + regen */}
-                <div className="flex items-center justify-between px-3 py-2.5 border-t border-white/10 bg-white/[0.02] shrink-0">
-                  {/* Model selector */}
-                  <div className="relative">
-                    <button
-                      onClick={() => setModelOpen((v) => !v)}
-                      disabled={isRegenerating}
-                      className={cn(
-                        "flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs",
-                        "text-white/60 hover:text-white",
-                        "bg-white/[0.06] hover:bg-white/10 border border-white/10",
-                        "transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
-                      )}
-                    >
-                      {currentModel.label}
-                      <ChevronDown className="w-3 h-3 opacity-60" />
-                    </button>
+              {/* ── RIGHT: Prompt box ────────────────────────────────────── */}
+              <div className="flex flex-col flex-1 min-h-0 min-w-0">
+                <label className="text-[11px] text-white/40 uppercase tracking-wide mb-2 shrink-0">
+                  Veo Prompt
+                </label>
 
-                    {modelOpen && (
-                      <div className="absolute bottom-full mb-1.5 left-0 bg-[#12121f] border border-white/10 rounded-xl overflow-hidden shadow-2xl z-20 min-w-[160px]">
+                <div className="flex-1 flex flex-col rounded-xl border border-white/10 bg-white/[0.03] overflow-hidden min-h-0">
+                  <Textarea
+                    className="flex-1 min-h-0 resize-none border-0 shadow-none rounded-none bg-transparent p-4 text-white/80 text-sm placeholder:text-white/20 leading-relaxed focus-visible:ring-0 focus-visible:border-0 disabled:opacity-50"
+                    value={currentShot?.prompt ?? ""}
+                    onChange={(e) => handlePromptChange(e.target.value)}
+                    disabled={isRegenerating}
+                    placeholder="Enter Veo prompt…"
+                  />
+
+                  {/* Gen params + frame cards */}
+                  <div className="flex flex-wrap items-center gap-2 px-3 py-2.5 border-t border-white/10 shrink-0">
+                    <span className="px-2 py-1 rounded-md bg-white/[0.06] border border-white/10 text-[11px] text-white/50">
+                      {currentShot?.aspectRatio ?? "—"}
+                    </span>
+                    <span className="px-2 py-1 rounded-md bg-white/[0.06] border border-white/10 text-[11px] text-white/50">
+                      {currentShot?.resolution ?? "—"}
+                    </span>
+                    <span className="px-2 py-1 rounded-md bg-white/[0.06] border border-white/10 text-[11px] text-white/50">
+                      {currentShot?.duration ?? "—"}s
+                    </span>
+
+                    {currentShot?.firstFrameUuid && (
+                      <div className="flex items-center gap-1.5">
+                        <span className="text-[10px] text-white/30">first</span>
+                        <div className="relative w-8 h-8 rounded-md overflow-hidden border border-white/10 shrink-0">
+                          <AmplifyImage
+                            mediaId={currentShot.firstFrameUuid}
+                            variant="Tiny"
+                            lightbox
+                            alt="First frame"
+                            sizes="32px"
+                            className="object-cover"
+                          />
+                        </div>
+                      </div>
+                    )}
+
+                    {currentShot?.lastFrameUuid && (
+                      <div className="flex items-center gap-1.5">
+                        <span className="text-[10px] text-white/30">last</span>
+                        <div className="relative w-8 h-8 rounded-md overflow-hidden border border-white/10 shrink-0">
+                          <AmplifyImage
+                            mediaId={currentShot.lastFrameUuid}
+                            variant="Tiny"
+                            lightbox
+                            alt="Last frame"
+                            sizes="32px"
+                            className="object-cover"
+                          />
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Bottom bar: model + regen */}
+                  <div className="flex items-center justify-between px-3 py-2.5 border-t border-white/10 bg-white/[0.02] shrink-0">
+                    {/* Model selector */}
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          disabled={isRegenerating}
+                          className="text-white/60 bg-white/[0.06] border-white/10 hover:bg-white/10 hover:text-white text-xs h-7"
+                        >
+                          {currentModel.label}
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent side="top" align="start" className="min-w-[160px]">
                         {VEO_MODELS.map((m) => (
-                          <button
+                          <DropdownMenuItem
                             key={m.value}
                             onClick={() => handleModelChange(m.value)}
                             className={cn(
-                              "w-full text-left px-4 py-2.5 text-xs transition-colors whitespace-nowrap",
-                              currentShot?.model === m.value
-                                ? "text-orange-400 bg-orange-500/10"
-                                : "text-white/70 hover:bg-white/10 hover:text-white"
+                              currentShot?.model === m.value && "text-orange-400"
                             )}
                           >
                             {m.label}
-                          </button>
+                          </DropdownMenuItem>
                         ))}
-                      </div>
-                    )}
-                  </div>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
 
-                  {/* Regenerate button — Google Flow send arrow style */}
-                  <button
-                    onClick={handleRegenerate}
-                    disabled={isRegenerating}
-                    title="Regenerate this shot with current prompt"
-                    className={cn(
-                      "flex items-center justify-center w-9 h-9 rounded-full transition-colors",
-                      "bg-orange-500 hover:bg-orange-400 text-white",
-                      "disabled:opacity-50 disabled:cursor-not-allowed"
-                    )}
-                  >
-                    {isRegenerating
-                      ? <Loader2 className="w-4 h-4 animate-spin" />
-                      : <RefreshCw className="w-4 h-4" />
-                    }
-                  </button>
+                    {/* Regenerate */}
+                    <Button
+                      size="icon"
+                      disabled={isRegenerating}
+                      onClick={handleRegenerate}
+                      title="Regenerate this shot with current prompt"
+                      className="rounded-full bg-orange-500 hover:bg-orange-400 text-white"
+                    >
+                      {isRegenerating
+                        ? <Loader2 className="w-4 h-4 animate-spin" />
+                        : <RefreshCw className="w-4 h-4" />
+                      }
+                    </Button>
+                  </div>
                 </div>
               </div>
             </div>
-          </div>
 
-          {/* ── Footer: shot strip + submit ──────────────────────────────── */}
-          <div className="border-t border-white/10 px-6 py-4 flex items-center gap-4 shrink-0">
-            {/* Shot strip */}
-            <div className="flex gap-2 flex-1 overflow-x-auto pb-0.5">
-              {shots.map((shot, i) => {
-                const isSelected    = i === selectedIdx;
-                const isRegenStatus = shot.regenStatus === "regenerating";
-                const isRegenDone   = !isRegenStatus && shot.currentUuid !== shot.originalUuid;
+            {/* ── Footer: shot strip + submit ──────────────────────────────── */}
+            <div className="border-t border-white/10 px-6 py-4 flex items-center gap-4 shrink-0">
+              {/* Shot strip */}
+              <div className="flex gap-2 flex-1 overflow-x-auto pb-0.5">
+                {shots.map((shot, i) => {
+                  const isSelected    = i === selectedIdx;
+                  const isRegenStatus = shot.regenStatus === "regenerating";
+                  const isRegenDone   = !isRegenStatus && shot.currentUuid !== shot.originalUuid;
 
-                return (
-                  <button
-                    key={`${shot.slotIndex}-${shot.currentUuid}`}
-                    onClick={() => setSelectedIdx(i)}
-                    title={`Shot ${i + 1}`}
-                    className={cn(
-                      "relative shrink-0 rounded-lg overflow-hidden border-2 transition-all",
-                      "bg-black/40",
-                      isSelected
-                        ? "border-orange-500 shadow-[0_0_0_1px_#f9731680]"
-                        : "border-white/10 hover:border-white/25"
-                    )}
-                    style={{ width: 52, aspectRatio: "9/16" }}
-                  >
-                    <video
-                      src={mediaApi.getMediaUrl(shot.currentUuid, "Original")}
-                      muted
-                      preload="metadata"
-                      className="w-full h-full object-cover"
-                    />
-
-                    {/* Overlay: shot number */}
-                    <div className="absolute inset-0 flex flex-col justify-between p-1 pointer-events-none">
-                      <span className="text-[10px] font-semibold text-white bg-black/60 rounded px-1 leading-snug self-start">
-                        {i + 1}
-                      </span>
-
-                      {/* Status badge */}
-                      {isRegenStatus && (
-                        <span className="text-[9px] text-orange-400 bg-black/70 rounded px-1 leading-snug flex items-center gap-0.5 self-start">
-                          <Loader2 className="w-2 h-2 animate-spin" />
-                          regen
-                        </span>
+                  return (
+                    <button
+                      key={`${shot.slotIndex}-${shot.currentUuid}`}
+                      onClick={() => setSelectedIdx(i)}
+                      title={`Shot ${i + 1}`}
+                      className={cn(
+                        "relative shrink-0 rounded-lg overflow-hidden border-2 transition-all bg-black/40",
+                        isSelected
+                          ? "border-orange-500 shadow-[0_0_0_1px_#f9731680]"
+                          : "border-white/10 hover:border-white/25"
                       )}
-                      {isRegenDone && !isRegenStatus && (
-                        <span className="text-[9px] text-green-400 bg-black/70 rounded px-1 leading-snug self-start">
-                          ✓ new
+                      style={{ width: 52, aspectRatio: "9/16" }}
+                    >
+                      <video
+                        src={mediaApi.getMediaUrl(shot.currentUuid, "Original")}
+                        muted
+                        preload="metadata"
+                        className="w-full h-full object-cover"
+                      />
+                      <div className="absolute inset-0 flex flex-col justify-between p-1 pointer-events-none">
+                        <span className="text-[10px] font-semibold text-white bg-black/60 rounded px-1 leading-snug self-start">
+                          {i + 1}
                         </span>
-                      )}
-                    </div>
-                  </button>
-                );
-              })}
-            </div>
+                        {isRegenStatus && (
+                          <span className="text-[9px] text-orange-400 bg-black/70 rounded px-1 leading-snug flex items-center gap-0.5 self-start">
+                            <Loader2 className="w-2 h-2 animate-spin" />
+                            regen
+                          </span>
+                        )}
+                        {isRegenDone && !isRegenStatus && (
+                          <span className="text-[9px] text-green-400 bg-black/70 rounded px-1 leading-snug self-start">
+                            ✓ new
+                          </span>
+                        )}
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
 
-            {/* Inline error */}
-            {error && (
-              <p className="text-red-400 text-xs shrink-0">{error}</p>
-            )}
-
-            {/* Submit */}
-            <button
-              onClick={handleSubmit}
-              disabled={isSubmitting || !taskId || shots.some((s) => s.regenStatus === "regenerating")}
-              className={cn(
-                "shrink-0 flex items-center gap-2 px-5 py-2.5 rounded-lg font-medium text-sm transition-colors",
-                "bg-orange-500 text-white hover:bg-orange-400",
-                "disabled:opacity-50 disabled:cursor-not-allowed"
+              {error && (
+                <p className="text-red-400 text-xs shrink-0">{error}</p>
               )}
-            >
-              {isSubmitting
-                ? <Loader2 className="w-4 h-4 animate-spin" />
-                : <Check className="w-4 h-4" />
-              }
-              {isSubmitting ? "Submitting…" : "Approve & Continue"}
-            </button>
-          </div>
-        </>
-      )}
-    </div>,
-    document.body
+
+              {/* Submit */}
+              <Button
+                onClick={handleSubmit}
+                disabled={isSubmitting || !taskId || shots.some((s) => s.regenStatus === "regenerating")}
+                className="shrink-0 bg-orange-500 text-white hover:bg-orange-400"
+              >
+                {isSubmitting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Check />}
+                {isSubmitting ? "Submitting…" : "Approve & Continue"}
+              </Button>
+            </div>
+          </>
+        )}
+      </DialogContent>
+    </Dialog>
   );
 }
