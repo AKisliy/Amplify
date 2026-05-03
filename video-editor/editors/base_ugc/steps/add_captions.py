@@ -109,7 +109,7 @@ class AddCaptionsStep(PipelineStep):
 
         logger.info("Using caption style %r at position (%.2f, %.2f)", style.code, position_x, position_y)
 
-        srt_text = transcribe(ctx.intermediate_presigned_url, language)
+        srt_text = transcribe(ctx.intermediate_presigned_url, language, style.max_words_per_segment, style.max_chars_per_segment)
 
         srt_path = ctx.workspace.get_temp_path("srt")
         with open(srt_path, "w", encoding="utf-8") as f:

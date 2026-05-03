@@ -6,6 +6,7 @@ using AiGateway.Web.Clients.OpenAi;
 using AiGateway.Web.Configuration;
 using AiGateway.Web.Configuration.Extensions;
 using AiGateway.Web.Services;
+using AiGateway.Web.Utils;
 using Microsoft.Kiota.Abstractions;
 using Microsoft.Kiota.Abstractions.Authentication;
 using Microsoft.Kiota.Http.HttpClientLibrary;
@@ -28,6 +29,17 @@ public static class DependencyInjection
         services.AddOpenAi();
         services.AddMediaIngest();
         services.AddHttpClient();
+
+        services.AddSingleton<SrtBuilder>();
+
+        services.AddEndpointsApiExplorer();
+        services.AddOpenApiDocument(options =>
+        {
+            options.Title = "AI Gateway API";
+            options.Version = "v1";
+        });
+
+        services.AddOpenApi();
     }
 
     public static void AddWebServices(this IHostApplicationBuilder builder)
