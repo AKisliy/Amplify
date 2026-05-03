@@ -6,8 +6,6 @@ import {
   ChevronLeft,
   ChevronRight,
   Loader2,
-  Pause,
-  Play,
   RefreshCw,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -18,8 +16,8 @@ import {
   regenerateShotV1ReviewTaskIdRegenerateShotPost,
   type ManualReviewTaskResponse,
 } from "@/lib/api/template-service";
-import { mediaApi } from "@/features/media/api";
 import { AmplifyImage } from "@/features/media/components/AmplifyImage";
+import { AmplifyVideo } from "@/features/media/components/AmplifyVideo";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import {
@@ -113,9 +111,7 @@ export function ScriptSupervisorDialog({ jobId, nodeId, onClose }: ScriptSupervi
   const [isLoading,    setIsLoading]    = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error,        setError]        = useState<string | null>(null);
-  const [isPlaying,    setIsPlaying]    = useState(false);
 
-  const videoRef     = useRef<HTMLVideoElement>(null);
   const pollTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   // ── Fetch task on mount ─────────────────────────────────────────────────────
@@ -160,23 +156,6 @@ export function ScriptSupervisorDialog({ jobId, nodeId, onClose }: ScriptSupervi
       if (pollTimerRef.current) { clearInterval(pollTimerRef.current); pollTimerRef.current = null; }
     };
   }, [shots, taskId]);
-
-  // ── Reset video when switching shots ────────────────────────────────────────
-  useEffect(() => {
-    setIsPlaying(false);
-    if (videoRef.current) {
-      videoRef.current.pause();
-      videoRef.current.currentTime = 0;
-    }
-  }, [selectedIdx]);
-
-  // ── Video controls ──────────────────────────────────────────────────────────
-  const togglePlay = useCallback(() => {
-    const v = videoRef.current;
-    if (!v) return;
-    if (isPlaying) { v.pause(); setIsPlaying(false); }
-    else           { v.play().catch(() => {}); setIsPlaying(true); }
-  }, [isPlaying]);
 
   // ── Prompt / model edits ────────────────────────────────────────────────────
   const handlePromptChange = (value: string) =>
@@ -232,9 +211,6 @@ export function ScriptSupervisorDialog({ jobId, nodeId, onClose }: ScriptSupervi
 
   // ── Derived ─────────────────────────────────────────────────────────────────
   const currentShot    = shots[selectedIdx];
-  const currentVideoUrl = currentShot?.currentUuid
-    ? mediaApi.getMediaUrl(currentShot.currentUuid, "Original")
-    : undefined;
   const currentModel   = VEO_MODELS.find((m) => m.value === currentShot?.model) ?? VEO_MODELS[2];
   const isRegenerating = currentShot?.regenStatus === "regenerating";
 
@@ -279,10 +255,15 @@ export function ScriptSupervisorDialog({ jobId, nodeId, onClose }: ScriptSupervi
         ) : (
           <>
             {/* ── Main content ─────────────────────────────────────────────── */}
+            {/* Left panel width = (available height) × 9/16.
+                250px = header(56) + footer(100) + py-5×2(40) + nav(36) + gap(12) + buffer */}
             <div className="flex-1 flex gap-5 px-6 py-5 min-h-0 items-stretch">
 
               {/* ── LEFT: Video ──────────────────────────────────────────── */}
-              <div className="flex flex-col items-center gap-3 shrink-0">
+              <div
+                className="shrink-0 flex flex-col items-center gap-3"
+                style={{ width: "calc((100vh - 250px) * 9 / 16)" }}
+              >
                 {/* Shot navigation */}
                 <div className="flex items-center gap-2">
                   <Button
@@ -309,55 +290,26 @@ export function ScriptSupervisorDialog({ jobId, nodeId, onClose }: ScriptSupervi
                 </div>
 
                 {/* Video player — always 9:16 (vertical/reels) */}
-                <div
-                  className="relative bg-black/60 rounded-xl overflow-hidden border border-white/10 cursor-pointer flex-1 aspect-[9/16]"
-                  onClick={togglePlay}
-                >
-                  {currentVideoUrl ? (
-                    <video
-                      ref={videoRef}
-                      key={currentVideoUrl}
-                      src={currentVideoUrl}
-                      className="w-full h-full object-contain"
-                      onEnded={() => setIsPlaying(false)}
-                      playsInline
+                <div className="relative bg-black/60 rounded-xl overflow-hidden border border-white/10 flex-1 w-full">
+                  {currentShot?.currentUuid ? (
+                    <AmplifyVideo
+                      key={currentShot.currentUuid}
+                      mediaId={currentShot.currentUuid}
+                      mode="click-play"
                       loop
                     />
                   ) : (
-                    <div className="w-full h-full flex items-center justify-center text-white/20 text-sm">
-                      {isRegenerating ? (
-                        <div className="flex flex-col items-center gap-2">
-                          <Loader2 className="w-6 h-6 animate-spin text-orange-400" />
-                          <span className="text-orange-400/70 text-xs">Regenerating…</span>
-                        </div>
-                      ) : "No video"}
+                    <div className="absolute inset-0 flex items-center justify-center text-white/20 text-sm">
+                      No video
                     </div>
                   )}
 
                   {/* Regenerating overlay */}
-                  {currentVideoUrl && isRegenerating && (
-                    <div className="absolute inset-0 bg-black/70 flex items-center justify-center">
+                  {isRegenerating && (
+                    <div className="absolute inset-0 z-10 bg-black/70 flex items-center justify-center">
                       <div className="flex flex-col items-center gap-2">
                         <Loader2 className="w-7 h-7 animate-spin text-orange-400" />
                         <span className="text-orange-400/80 text-xs">Regenerating…</span>
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Play overlay */}
-                  {currentVideoUrl && !isPlaying && !isRegenerating && (
-                    <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                      <div className="w-14 h-14 rounded-full bg-black/60 backdrop-blur-sm border border-white/20 flex items-center justify-center">
-                        <Play className="w-5 h-5 text-white ml-0.5" fill="white" />
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Pause overlay */}
-                  {currentVideoUrl && isPlaying && (
-                    <div className="absolute inset-0 flex items-center justify-center pointer-events-none opacity-0 hover:opacity-100 transition-opacity">
-                      <div className="w-14 h-14 rounded-full bg-black/60 backdrop-blur-sm border border-white/20 flex items-center justify-center">
-                        <Pause className="w-5 h-5 text-white" fill="white" />
                       </div>
                     </div>
                   )}
@@ -365,7 +317,7 @@ export function ScriptSupervisorDialog({ jobId, nodeId, onClose }: ScriptSupervi
               </div>
 
               {/* ── RIGHT: Prompt box ────────────────────────────────────── */}
-              <div className="flex flex-col flex-1 min-h-0 min-w-0">
+              <div className="flex flex-col flex-1 min-w-0 min-h-0">
                 <label className="text-[11px] text-white/40 uppercase tracking-wide mb-2 shrink-0">
                   Veo Prompt
                 </label>
@@ -493,12 +445,7 @@ export function ScriptSupervisorDialog({ jobId, nodeId, onClose }: ScriptSupervi
                       )}
                       style={{ width: 52, aspectRatio: "9/16" }}
                     >
-                      <video
-                        src={mediaApi.getMediaUrl(shot.currentUuid, "Original")}
-                        muted
-                        preload="metadata"
-                        className="w-full h-full object-cover"
-                      />
+                      <AmplifyVideo mediaId={shot.currentUuid} mode="hover-play" />
                       <div className="absolute inset-0 flex flex-col justify-between p-1 pointer-events-none">
                         <span className="text-[10px] font-semibold text-white bg-black/60 rounded px-1 leading-snug self-start">
                           {i + 1}
