@@ -218,7 +218,6 @@ function HoverPlayVideo({
 
   return (
     <>
-      {/* eslint-disable-next-line jsx-a11y/media-has-caption */}
       <video
         ref={videoRef}
         src={src}
@@ -302,7 +301,6 @@ function ClickPlayVideo({
         )}
         onClick={handleClick}
       >
-        {/* eslint-disable-next-line jsx-a11y/media-has-caption */}
         <video
           ref={videoRef}
           src={src}
@@ -369,7 +367,6 @@ function ControlsVideo({
   onError?: () => void;
 }) {
   return (
-    // eslint-disable-next-line jsx-a11y/media-has-caption
     <video
       src={src}
       poster={poster}

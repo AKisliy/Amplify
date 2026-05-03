@@ -51,6 +51,7 @@ from comfy_api_nodes.apis.veo import (
     VeoRequestParameters,
     VeoRequestInstance
 )
+from comfy_api_nodes.context_keys import GenParamKey, MediaNodeOutput, with_media_context
 from comfy_api_nodes.util import (
     ApiEndpoint,
     fetch_media_uri_from_ingest,
@@ -241,6 +242,7 @@ class AvatarSceneNode(IO.ComfyNode):
         )
 
     @classmethod
+    @with_media_context
     async def execute(
         cls,
         media_uuid: str,
@@ -435,9 +437,23 @@ class AvatarSceneNode(IO.ComfyNode):
             raise Exception(f"No video returned for segment {i + 1}.")
 
         logger.info("[AvatarSceneNode] All %d segment(s) generated", len(video_uuids))
-        return IO.NodeOutput(
+        return MediaNodeOutput(
             video_uuids,
             veo_prompts_list,
+            context=[
+                {
+                    GenParamKey.MEDIA_ID:         mid,
+                    GenParamKey.PROMPT:           veo_prompts_list[i],
+                    GenParamKey.MODEL:            veo_model,
+                    GenParamKey.ASPECT_RATIO:     aspect_ratio,
+                    GenParamKey.DURATION:         8,
+                    GenParamKey.RESOLUTION:       "720p",
+                    GenParamKey.NEGATIVE_PROMPT:  "",
+                    GenParamKey.FIRST_FRAME_UUID: media_uuid,
+                    GenParamKey.LAST_FRAME_UUID:  None,
+                }
+                for i, mid in enumerate(video_uuids)
+            ],
             ui={"video_uuids": video_uuids},
         )
 

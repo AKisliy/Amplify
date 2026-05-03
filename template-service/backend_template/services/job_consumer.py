@@ -63,7 +63,7 @@ class FinalAssetGeneratedEvent(BaseModel):
     media_id: str
     media_type: str
     auto_list_ids: list[str] = []
-    description: str
+    description: str | None
 
 
 # ---------------------------------------------------------------------------

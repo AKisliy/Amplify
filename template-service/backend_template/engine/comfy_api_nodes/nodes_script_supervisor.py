@@ -39,6 +39,7 @@ from pydantic import BaseModel, ConfigDict
 from pydantic.alias_generators import to_camel
 from typing_extensions import override
 
+from comfy_api_nodes.context_keys import MEDIA_GEN_PARAMS, MEDIA_PROMPTS
 from comfy_api_nodes.util.broker import publish_event
 
 logger = logging.getLogger(__name__)
@@ -96,67 +97,7 @@ class ScriptSupervisorNode(IO.ComfyNode):
                 IO.String.Input(
                     "video_uuids",
                     force_input=True,
-                    tooltip="List of video media_ids from AvatarSceneNode.",
-                ),
-                IO.String.Input(
-                    "veo_prompts",
-                    force_input=True,
-                    tooltip=(
-                        "List of compiled Veo prompts — one per shot, "
-                        "from AvatarSceneNode's veo_prompts output."
-                    ),
-                ),
-                IO.String.Input(
-                    "first_frame_uuid",
-                    force_input=True,
-                    optional=True,
-                    tooltip=(
-                        "Media Ingest UUID of the first-frame image used during "
-                        "the original generation. Stored in the task payload for "
-                        "re-generation; not editable by the user."
-                    ),
-                ),
-                IO.Combo.Input(
-                    "veo_model",
-                    options=[
-                        "veo-3.1-generate",
-                        "veo-3.1-fast-generate",
-                        "veo-3.1-lite-generate-001",
-                    ],
-                    default="veo-3.1-lite-generate-001",
-                    tooltip="Veo model used during the original generation (default for re-generation).",
-                    optional=True,
-                ),
-                IO.Combo.Input(
-                    "aspect_ratio",
-                    options=["16:9", "9:16"],
-                    default="16:9",
-                    tooltip="Aspect ratio used during the original generation (default for re-generation).",
-                    optional=True,
-                ),
-                IO.Int.Input(
-                    "duration",
-                    default=8,
-                    min=4,
-                    max=8,
-                    step=2,
-                    display_mode=IO.NumberDisplay.slider,
-                    tooltip="Duration in seconds used during the original generation (4 / 6 / 8).",
-                    optional=True,
-                ),
-                IO.String.Input(
-                    "negative_prompt",
-                    multiline=True,
-                    default="",
-                    tooltip="Negative prompt applied to all re-generations.",
-                    optional=True,
-                ),
-                IO.Combo.Input(
-                    "resolution",
-                    options=["720p", "1080p"],
-                    default="720p",
-                    tooltip="Output resolution used during the original generation.",
-                    optional=True,
+                    tooltip="List of video media_ids from the generation node.",
                 ),
                 IO.Boolean.Input(
                     "auto_confirm",
@@ -185,26 +126,13 @@ class ScriptSupervisorNode(IO.ComfyNode):
     async def execute(
         cls,
         video_uuids: list[str],
-        veo_prompts: list[str],
-        first_frame_uuid: list[str] | None = None,
-        veo_model: list[str] | None = None,
-        aspect_ratio: list[str] | None = None,
-        duration: list[int] | None = None,
-        negative_prompt: list[str] | None = None,
-        resolution: list[str] | None = None,
         auto_confirm: list[bool] | None = None,
     ) -> IO.NodeOutput:
         # is_input_list=True → scalar inputs arrive as single-element lists
-        first_frame_uuid_val: str | None = (first_frame_uuid[0] if first_frame_uuid else None)
-        veo_model_val: str = (veo_model[0] if veo_model else "veo-3.1-lite-generate-001")
-        aspect_ratio_val: str = (aspect_ratio[0] if aspect_ratio else "16:9")
-        duration_val: int = (duration[0] if duration else 8)
-        negative_prompt_val: str = (negative_prompt[0] if negative_prompt else "")
-        resolution_val: str = (resolution[0] if resolution else "720p")
         should_confirm: bool = bool(auto_confirm[0]) if auto_confirm else False
 
         extra_pnginfo = cls.hidden.extra_pnginfo or {}
-        logger.info("[ScriptSupervisorNode] extra_pnginfo=%r", extra_pnginfo)
+        logger.info("[ScriptSupervisorNode] extra_pnginfo keys=%r", list(extra_pnginfo.keys()))
 
         job_id_str: str = extra_pnginfo.get("job_id", "")
         node_id_str: str = cls.hidden.unique_id or ""
@@ -224,6 +152,10 @@ class ScriptSupervisorNode(IO.ComfyNode):
         except (ValueError, AttributeError):
             node_id = UUID(int=0)
 
+        # ── Read per-media metadata from execution context ────────────────────
+        media_prompts: dict = extra_pnginfo.get(MEDIA_PROMPTS, {})
+        media_gen_params: dict = extra_pnginfo.get(MEDIA_GEN_PARAMS, {})
+
         # ── Build per-slot payload ────────────────────────────────────────────
         shots: list[dict] = [
             {
@@ -232,14 +164,19 @@ class ScriptSupervisorNode(IO.ComfyNode):
                 "original_uuid": uuid,
                 "regen_status": None,    # null = idle | "regenerating" = in-progress
                 "gen_params": {
-                    "prompt":           veo_prompts[i] if i < len(veo_prompts) else "",
-                    "negative_prompt":  negative_prompt_val,
-                    "resolution":       resolution_val,
-                    "aspect_ratio":     aspect_ratio_val,
-                    "duration":         duration_val,
-                    "model":            veo_model_val,
-                    "first_frame_uuid": first_frame_uuid_val,
-                    "last_frame_uuid":  None,  # AvatarSceneNode does not use last frames
+                    "prompt":           media_prompts.get(uuid, ""),
+                    **{
+                        k: media_gen_params.get(uuid, {}).get(k, default)
+                        for k, default in [
+                            ("negative_prompt", ""),
+                            ("resolution", "720p"),
+                            ("aspect_ratio", "16:9"),
+                            ("duration", 8),
+                            ("model", "veo-3.1-lite-generate-001"),
+                            ("first_frame_uuid", None),
+                            ("last_frame_uuid", None),
+                        ]
+                    },
                 },
             }
             for i, uuid in enumerate(video_uuids)

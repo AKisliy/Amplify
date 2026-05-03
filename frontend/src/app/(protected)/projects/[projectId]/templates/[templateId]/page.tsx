@@ -45,6 +45,7 @@ import { TemplateMenu } from "@/features/canvas/components/TemplateMenu";
 import { GeneratedMediaPanel } from "@/features/canvas/components/GeneratedMediaPanel";
 import { TemplateSettingsSidebar, type PostDescriptionConfig } from "@/features/canvas/components/TemplateSettingsSidebar";
 import { ShotReviewDialog } from "@/features/canvas/components/ShotReviewDialog";
+import { ScriptSupervisorDialog } from "@/features/canvas/components/ScriptSupervisorDialog";
 import { useCanvasStore } from "@/features/canvas/hooks/useCanvasStore";
 import { useNodeRegistry } from "@/features/canvas/hooks/useNodeRegistry";
 import { getNodesByCategory, getNodeDef } from "@/features/canvas/registry";
@@ -829,14 +830,25 @@ export default function TemplateCanvasPage() {
         </>
       )}
 
-      {/* Shot review fullscreen dialog */}
-      {reviewNodeId && execution.activeJobId && (
-        <ShotReviewDialog
-          jobId={execution.activeJobId}
-          nodeId={reviewNodeId}
-          onClose={() => setReviewNodeId(null)}
-        />
-      )}
+      {/* Fullscreen review dialogs — type determined by node schema */}
+      {reviewNodeId && execution.activeJobId && (() => {
+        const reviewNode = nodes.find((n) => n.id === reviewNodeId);
+        if (!reviewNode) return null;
+        return reviewNode.data.schemaName === "ScriptSupervisorNode"
+          ? (
+            <ScriptSupervisorDialog
+              jobId={execution.activeJobId!}
+              nodeId={reviewNodeId}
+              onClose={() => setReviewNodeId(null)}
+            />
+          ) : (
+            <ShotReviewDialog
+              jobId={execution.activeJobId!}
+              nodeId={reviewNodeId}
+              onClose={() => setReviewNodeId(null)}
+            />
+          );
+      })()}
     </div>
   );
 }

@@ -508,5 +508,3 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
-# Markdown files
-*.md
