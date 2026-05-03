@@ -162,6 +162,12 @@ export interface PortDef {
    * forceInput:true overrides this to always show a handle.
    */
   isWidget: boolean;
+  /**
+   * If true, a connectable socket handle is shown alongside the inline widget.
+   * When the socket is connected its value takes priority over the widget value.
+   * Currently set for STRING multiline (prompt) inputs.
+   */
+  canConnectSocket?: boolean;
   /** True when this port is part of a COMFY_AUTOGROW_V3 group */
   isAutogrowSlot?: boolean;
   /** Index within its autogrow group (0-based) */

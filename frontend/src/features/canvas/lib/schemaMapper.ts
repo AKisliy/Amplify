@@ -82,6 +82,13 @@ function parseInputPorts(schema: NodeSchemaDef): PortDef[] {
       }
 
       const cfg = config as NodeInputConfig;
+      const isWidget = isWidgetInput(type, cfg);
+      const cfgRecord = cfg as Record<string, unknown>;
+      const canConnectSocket =
+        isWidget &&
+        type === "STRING" &&
+        cfgRecord.multiline !== false &&
+        (cfgRecord.multiline === true || required === "optional");
       ports.push({
         id: fieldName,
         label: fieldName.replace(/_/g, " "),
@@ -90,7 +97,8 @@ function parseInputPorts(schema: NodeSchemaDef): PortDef[] {
         required,
         config: cfg,
         tooltip: (cfg as Record<string, string | undefined>).tooltip,
-        isWidget: isWidgetInput(type, cfg),
+        isWidget,
+        canConnectSocket,
       });
     }
   };
