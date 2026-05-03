@@ -31,6 +31,15 @@ public static class DependencyInjection
         services.AddHttpClient();
 
         services.AddSingleton<SrtBuilder>();
+
+        services.AddEndpointsApiExplorer();
+        services.AddOpenApiDocument(options =>
+        {
+            options.Title = "AI Gateway API";
+            options.Version = "v1";
+        });
+
+        services.AddOpenApi();
     }
 
     public static void AddWebServices(this IHostApplicationBuilder builder)
