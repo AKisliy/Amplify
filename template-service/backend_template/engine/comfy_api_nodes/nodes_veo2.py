@@ -3,6 +3,7 @@ import asyncio
 import logging
 
 from comfy_api.latest import IO, ComfyExtension
+from comfy_api.latest._io import Hidden
 from typing_extensions import override
 from comfy_api_nodes.apis.veo import (
     VeoGenVidPollRequest,
@@ -22,6 +23,7 @@ from comfy_api_nodes.util import (
 )
 
 from comfy_api_nodes.util import get_vertex_ai_access_token, fetch_media_uri_from_ingest, register_media_uri_with_ingest
+from comfy_api_nodes.context_keys import GenParamKey, MediaNodeOutput, with_media_context
 
 from config import gemini_config
 import base64
@@ -64,6 +66,7 @@ class VeoVideoGenerationNode(IO.ComfyNode):
             category="api node/video/Veo",
             description="Generates videos from text prompts using Google's Veo 2 API",
             is_output_node=True,
+            hidden=[Hidden.extra_pnginfo],
             inputs=[
                 IO.String.Input(
                     "prompt",
@@ -140,6 +143,7 @@ class VeoVideoGenerationNode(IO.ComfyNode):
         )
     
     @classmethod
+    @with_media_context
     async def execute(
         cls,
         prompt,
@@ -256,7 +260,21 @@ class VeoVideoGenerationNode(IO.ComfyNode):
             if hasattr(video, "gcsUri") and video.gcsUri:
 
                 media_id = await register_media_uri_with_ingest(cls, video.gcsUri, "video/mp4")
-                return IO.NodeOutput(media_id, ui={"video_uuid": [media_id]})
+                return MediaNodeOutput(
+                    media_id,
+                    context=[{
+                        GenParamKey.MEDIA_ID:         media_id,
+                        GenParamKey.PROMPT:           prompt,
+                        GenParamKey.MODEL:            model,
+                        GenParamKey.ASPECT_RATIO:     aspect_ratio,
+                        GenParamKey.DURATION:         duration_seconds,
+                        GenParamKey.RESOLUTION:       "",
+                        GenParamKey.NEGATIVE_PROMPT:  negative_prompt,
+                        GenParamKey.FIRST_FRAME_UUID: image_uuid,
+                        GenParamKey.LAST_FRAME_UUID:  None,
+                    }],
+                    ui={"video_uuid": [media_id]},
+                )
 
             raise Exception("Video returned but no data or URL was provided")
         raise Exception("Video generation completed but no video was returned")
@@ -282,6 +300,7 @@ class Veo3VideoGenerationNode(VeoVideoGenerationNode):
             category="api node/video/Veo",
             description="Generates videos from text prompts using Google's Veo 3 API",
             is_output_node=True,
+            hidden=[Hidden.extra_pnginfo],
             inputs=[
                 IO.String.Input(
                     "prompt",
@@ -379,6 +398,7 @@ class Veo3FirstLastFrameNode(IO.ComfyNode):
             category="api node/video/Veo",
             description="Generate video using prompt and first and last frames.",
             is_output_node=True,
+            hidden=[Hidden.extra_pnginfo],
             inputs=[
                 IO.String.Input(
                     "prompt",
@@ -540,6 +560,7 @@ class Veo3FirstLastFrameNode(IO.ComfyNode):
         raise Exception("Video generation completed but no video was returned")
 
     @classmethod
+    @with_media_context
     async def execute(
         cls,
         prompt: str,
@@ -588,7 +609,21 @@ class Veo3FirstLastFrameNode(IO.ComfyNode):
                             last_frame_uri=last_frame_uri,
                             attempt=attempt,
                         )
-                        return IO.NodeOutput(media_id, ui={"video_uuid": [media_id]})
+                        return MediaNodeOutput(
+                            media_id,
+                            context=[{
+                                GenParamKey.MEDIA_ID:         media_id,
+                                GenParamKey.PROMPT:           prompt,
+                                GenParamKey.MODEL:            model,
+                                GenParamKey.ASPECT_RATIO:     aspect_ratio,
+                                GenParamKey.DURATION:         duration,
+                                GenParamKey.RESOLUTION:       resolution,
+                                GenParamKey.NEGATIVE_PROMPT:  negative_prompt,
+                                GenParamKey.FIRST_FRAME_UUID: first_frame_uuid,
+                                GenParamKey.LAST_FRAME_UUID:  last_frame_uuid,
+                            }],
+                            ui={"video_uuid": [media_id]},
+                        )
 
                     except RAIFilteredError as e:
                         last_rai_error = e
