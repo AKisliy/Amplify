@@ -10,10 +10,20 @@ public class TranscribeRequest
     public required string PresignedUrl { get; set; }
 
     /// <summary>
-    /// Optional language hint for the transcription. Should be an ISO 639-1 code (e.g. "en" for English, "es" for Spanish). 
+    /// Optional language hint for the transcription. Should be an ISO 639-1 code (e.g. "en" for English, "es" for Spanish).
     /// This can help improve accuracy if the language is known in advance.
     /// </summary>
     public string? Language { get; set; }
+
+    /// <summary>
+    /// Maximum number of words per caption segment. Overrides the server default when provided.
+    /// </summary>
+    public int? MaxWordsPerSegment { get; set; }
+
+    /// <summary>
+    /// Maximum number of characters per caption segment. Overrides the server default when provided.
+    /// </summary>
+    public int? MaxCharsPerSegment { get; set; }
 }
 
 public record TranscriptionResult(string SrtText);
@@ -37,7 +47,13 @@ public class OpenAiService(
         await fileResponse.Content.CopyToAsync(buffered, cancellationToken);
         buffered.Position = 0;
 
-        var result = await transcriptionClient.TranscribeAsync(buffered, fileName, request.Language, cancellationToken);
+        var result = await transcriptionClient.TranscribeAsync(
+            buffered,
+            fileName,
+            request.Language,
+            request.MaxWordsPerSegment,
+            request.MaxCharsPerSegment,
+            cancellationToken);
 
         return result;
     }
