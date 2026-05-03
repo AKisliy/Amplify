@@ -1,7 +1,7 @@
 "use client";
 
-import React, { useState, useCallback, useEffect } from "react";
-import { type NodeProps, useUpdateNodeInternals } from "@xyflow/react";
+import React, { useState, useCallback, useEffect, useMemo } from "react";
+import { type NodeProps, useUpdateNodeInternals, useEdges } from "@xyflow/react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Trash2,
@@ -101,7 +101,14 @@ const STATUS_CONFIG: Record<NodeExecutionStatus, StatusConfig> = {
 
 export function AmplifyNode({ id, data, selected }: NodeProps<CanvasNode>) {
   const updateNodeInternals = useUpdateNodeInternals();
+  const edges = useEdges();
   const [showAdvanced, setShowAdvanced] = useState(false);
+
+  // Set of input port IDs that currently have a connected edge
+  const connectedInputIds = useMemo(
+    () => new Set(edges.filter((e) => e.target === id).map((e) => e.targetHandle ?? "")),
+    [edges, id]
+  );
 
   // Re-measure handle positions whenever the port list grows or shrinks
   useEffect(() => {
@@ -261,6 +268,7 @@ export function AmplifyNode({ id, data, selected }: NodeProps<CanvasNode>) {
               value={data.config[port.id]}
               onChange={(v) => handleValueChange(port.id, v)}
               disabled={data.status === "processing" || data.status === "queued"}
+              isConnected={connectedInputIds.has(port.id)}
             />
           ))}
         </div>
@@ -332,6 +340,7 @@ export function AmplifyNode({ id, data, selected }: NodeProps<CanvasNode>) {
                       value={data.config[port.id]}
                       onChange={(v) => handleValueChange(port.id, v)}
                       disabled={data.status === "processing" || data.status === "queued"}
+                      isConnected={connectedInputIds.has(port.id)}
                     />
                   ))}
                 </div>

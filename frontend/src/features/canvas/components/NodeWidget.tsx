@@ -5,6 +5,7 @@
 // Handles STRING (textarea/input), INT/FLOAT (number), BOOLEAN (switch), COMBO (select).
 // =============================================================================
 
+import { Handle, Position } from "@xyflow/react";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
@@ -16,6 +17,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
+import { PORT_COLORS } from "./NodePort";
 import type {
   PortDef,
   StringInputConfig,
@@ -31,9 +33,11 @@ interface NodeWidgetProps {
   value: unknown;
   onChange: (value: unknown) => void;
   disabled?: boolean;
+  /** True when a socket edge is connected to this port — socket value takes priority */
+  isConnected?: boolean;
 }
 
-export function NodeWidget({ port, value, onChange, disabled }: NodeWidgetProps) {
+export function NodeWidget({ port, value, onChange, disabled, isConnected }: NodeWidgetProps) {
   const label = port.label;
 
   switch (port.portType) {
@@ -41,19 +45,43 @@ export function NodeWidget({ port, value, onChange, disabled }: NodeWidgetProps)
       const cfg = port.config as StringInputConfig;
 
       if (cfg.multiline !== false && (cfg.multiline || port.required === "optional")) {
-        // Multiline → textarea
+        // Multiline → textarea, optionally with a connectable socket handle
+        const socketHandle = port.canConnectSocket ? (
+          <Handle
+            id={port.id}
+            type="target"
+            position={Position.Left}
+            style={{
+              position: "relative",
+              inset: "unset",
+              transform: "none",
+              width: 11,
+              height: 11,
+              minWidth: 11,
+              minHeight: 11,
+              borderRadius: "50%",
+              background: PORT_COLORS["STRING"],
+              border: `2px solid ${PORT_COLORS["STRING"]}40`,
+              boxShadow: `0 0 0 1px ${PORT_COLORS["STRING"]}20, 0 0 8px ${PORT_COLORS["STRING"]}44`,
+              flexShrink: 0,
+              cursor: "crosshair",
+            }}
+          />
+        ) : null;
+
         return (
-          <WidgetRow label={label} tooltip={port.tooltip}>
-          <Textarea
+          <WidgetRow label={label} tooltip={port.tooltip} socketHandle={socketHandle} isConnected={isConnected}>
+            <Textarea
               value={(value as string) ?? ""}
               onChange={(e) => onChange(e.target.value)}
               className={cn(
                 "nodrag nopan nowheel resize-none text-[11px] min-h-[52px] max-h-[160px] overflow-y-auto",
                 "bg-black/20 border-white/[0.06] placeholder:text-muted-foreground/30",
-                "focus-visible:ring-1 focus-visible:ring-white/20"
+                "focus-visible:ring-1 focus-visible:ring-white/20",
+                isConnected && "opacity-30 pointer-events-none",
               )}
-              placeholder={cfg.tooltip ?? `Enter ${label}…`}
-              disabled={disabled}
+              placeholder={isConnected ? "← value from socket" : (cfg.tooltip ?? `Enter ${label}…`)}
+              disabled={disabled || isConnected}
             />
           </WidgetRow>
         );
@@ -168,10 +196,14 @@ interface WidgetRowProps {
   label: string;
   tooltip?: string;
   inline?: boolean;
+  /** Optional inline socket handle rendered to the left of the label */
+  socketHandle?: React.ReactNode;
+  /** When true, shows a subtle "socket" indicator next to the label */
+  isConnected?: boolean;
   children: React.ReactNode;
 }
 
-function WidgetRow({ label, tooltip, inline = false, children }: WidgetRowProps) {
+function WidgetRow({ label, tooltip, inline = false, socketHandle, isConnected, children }: WidgetRowProps) {
   if (inline) {
     return (
       <div className="flex items-center justify-between gap-2 px-3 py-[3px]">
@@ -187,12 +219,18 @@ function WidgetRow({ label, tooltip, inline = false, children }: WidgetRowProps)
   }
   return (
     <div className="flex flex-col gap-[3px] px-3 py-[3px]">
-      <label
-        className="text-[11px] text-muted-foreground/60 select-none"
-        title={tooltip}
-      >
-        {label}
-      </label>
+      <div className="flex items-center gap-1.5">
+        {socketHandle}
+        <label
+          className="text-[11px] text-muted-foreground/60 select-none"
+          title={tooltip}
+        >
+          {label}
+        </label>
+        {isConnected && (
+          <span className="text-[9px] text-purple-400/70 leading-none">socket</span>
+        )}
+      </div>
       {children}
     </div>
   );
