@@ -18,6 +18,8 @@ class CaptionStyle:
     outline: float        # outline thickness in ASS units
     shadow: float         # drop shadow depth
     border_style: int     # 1 = outline+shadow, 3 = opaque box background
+    max_words_per_segment: int = 6
+    max_chars_per_segment: int = 40
 
 
 STYLES: dict[str, CaptionStyle] = {
@@ -33,6 +35,8 @@ STYLES: dict[str, CaptionStyle] = {
         outline=3.0,
         shadow=0.0,
         border_style=1,
+        max_words_per_segment=6,
+        max_chars_per_segment=40
     ),
     "bold": CaptionStyle(
         code="bold",
@@ -46,6 +50,8 @@ STYLES: dict[str, CaptionStyle] = {
         outline=4.0,
         shadow=0.0,
         border_style=1,
+        max_words_per_segment=6, 
+        max_chars_per_segment=40
     ),
     "minimal": CaptionStyle(
         code="minimal",
@@ -59,6 +65,8 @@ STYLES: dict[str, CaptionStyle] = {
         outline=1.5,
         shadow=1.0,
         border_style=1,
+        max_words_per_segment=6, 
+        max_chars_per_segment=40
     ),
     "yellow": CaptionStyle(
         code="yellow",
@@ -72,6 +80,8 @@ STYLES: dict[str, CaptionStyle] = {
         outline=3.0,
         shadow=0.0,
         border_style=1,
+        max_words_per_segment=6, 
+        max_chars_per_segment=40
     ),
     "box": CaptionStyle(
         code="box",
@@ -85,6 +95,8 @@ STYLES: dict[str, CaptionStyle] = {
         outline=0.0,
         shadow=0.0,
         border_style=3,               # opaque box background
+        max_words_per_segment=6, 
+        max_chars_per_segment=40
     ),
 }
 
