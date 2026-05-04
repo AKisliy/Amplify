@@ -1,6 +1,7 @@
 import hashlib
 import json
 import logging
+import os
 import uuid
 from uuid import UUID
 from typing import Annotated
@@ -22,6 +23,8 @@ from backend_template.models.template_version import TemplateVersion
 from backend_template.utils.graph import convert_reactflow_to_comfy
 
 logger = logging.getLogger(__name__)
+
+DEV_MODE = os.getenv("DEV_MODE", "").lower() in ("1", "true", "yes")
 
 
 class JobService:
@@ -69,8 +72,14 @@ class JobService:
             await self.db.flush()
 
         # Convert ReactFlow graph to ComfyUI prompt format
-        comfy_prompt = convert_reactflow_to_comfy(graph)
-        logger.warning(f"Converted comfy graph: {json.dumps(comfy_prompt, indent=2)}")
+        if DEV_MODE:
+            comfy_prompt = graph  # already in raw API format
+            logger.debug("[DEV_MODE] Skipping ReactFlow conversion — using graph as-is")
+        else:
+            comfy_prompt = convert_reactflow_to_comfy(graph)
+
+        logger.debug("Comfy prompt for engine:\n%s", json.dumps(comfy_prompt, indent=2))
+
         
         job = Job(
             template_version_id=template_version.id,

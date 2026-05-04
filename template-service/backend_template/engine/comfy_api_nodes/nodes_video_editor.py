@@ -462,7 +462,7 @@ class BatchUGCEditingNode(IO.ComfyNode):
             ),
         )
 
-        logger.info(
+        logger.debug(
             "[BatchUGCEditingNode] Submitting task — %d clips from %d scenes, node=%s",
             len(media_list), len(scenes) if scenes else 0, node_id,
         )
@@ -476,7 +476,7 @@ class BatchUGCEditingNode(IO.ComfyNode):
             wait_label="Submitting batch video editing task...",
         )
 
-        logger.info(
+        logger.debug(
             "[BatchUGCEditingNode] Task submitted — task_id=%s, polling for completion",
             submit_response.task_id,
         )

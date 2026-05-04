@@ -27,29 +27,14 @@ from uuid import UUID
 
 from comfy_api.latest import IO, ComfyExtension
 from comfy_api.latest._io import Hidden
-from pydantic import BaseModel, ConfigDict
-from pydantic.alias_generators import to_camel
 from typing_extensions import override
 
-from comfy_api_nodes.util.broker import publish_event
+from server import PromptServer
 
 logger = logging.getLogger(__name__)
 
 NODE_TYPE = "shot_review"
 POLL_INTERVAL_SECONDS = 5.0
-
-
-class _NodeStatusEvent(BaseModel):
-    model_config = ConfigDict(alias_generator=to_camel, populate_by_name=True)
-
-    job_id: str
-    prompt_id: str = ""
-    node_id: str
-    user_id: str
-    status: str
-    outputs: dict | None = None
-    error: str | None = None
-    job_status: str | None = None
 
 
 class ShotReviewNode(IO.ComfyNode):
@@ -147,23 +132,17 @@ class ShotReviewNode(IO.ComfyNode):
             )
             task_id = task.id
 
-        logger.info(
+        logger.debug(
             "[ShotReviewNode] Created review task %s (auto_confirm=%s, videos=%d)",
             task_id,
             auto_confirm,
             len(video_uuids),
         )
 
-        # ── Notify frontend via RabbitMQ → WS Gateway ────────────────────
-        user_id: str = extra_pnginfo.get("client_id", "")
-        await publish_event(
-            "node-status-changed",
-            _NodeStatusEvent(
-                job_id=job_id_str,
-                node_id=node_id_str,
-                user_id=user_id,
-                status="WAITING_FOR_REVIEW",
-            ),
+        # ── Notify via send_sync (same FIFO queue as engine events) ────────
+        PromptServer.instance.send_sync(
+            "WAITING_FOR_REVIEW",
+            {"node": node_id_str, "prompt_id": extra_pnginfo.get("prompt_id", "")},
         )
 
         # ── Poll until the user submits their decision ────────────────────

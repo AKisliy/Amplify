@@ -188,6 +188,9 @@ class PromptServer():
                         if sensitive_val in extra_data:
                             sensitive[sensitive_val] = extra_data.pop(sensitive_val)
                     extra_data["create_time"] = int(time.time() * 1000)  # timestamp in milliseconds
+                    # Inject prompt_id so nodes can reference it via extra_pnginfo
+                    if "extra_pnginfo" in extra_data:
+                        extra_data["extra_pnginfo"]["prompt_id"] = prompt_id
                     self.prompt_queue.put((number, prompt_id, prompt, extra_data, outputs_to_execute, sensitive))
 
                     # Store metadata for RabbitMQ event publishing
@@ -332,7 +335,7 @@ class PromptServer():
         elif sid in self.sockets:
             await send_socket_catch_exception(self.sockets[sid].send_json, message)
 
-        _EXECUTION_EVENTS = {"execution_start", "executing", "execution_cached", "executed", "execution_error", "execution_interrupted", "execution_success"}
+        _EXECUTION_EVENTS = {"execution_start", "executing", "execution_cached", "executed", "execution_error", "execution_interrupted", "execution_success", "WAITING_FOR_REVIEW"}
         if event in _EXECUTION_EVENTS:
             try:
                 await self._publish_exec_event(event, data)
@@ -411,6 +414,14 @@ class PromptServer():
             ))
             self.prompt_metadata.pop(prompt_id, None)
 
+        # ── Custom node status (e.g. HITL nodes) ─────────────────────
+        elif event == "WAITING_FOR_REVIEW":
+            node_id = data.get("node", "")
+            to_publish.append(_NodeStatusEvent(
+                job_id=job_id, prompt_id=prompt_id, node_id=node_id,
+                user_id=user_id, status="WAITING_FOR_REVIEW",
+            ))
+
         for ev in to_publish:
             try:
                 await publish_event("node-status-changed", ev)
@@ -418,7 +429,7 @@ class PromptServer():
                 logging.error(f"Failed to publish execution event: {e}")
 
     def send_sync(self, event, data, sid=None):
-        logging.info(f"[SERVER] send_sync {event} {data} {sid}")
+        # logging.debug(f"[SERVER] send_sync {event} {data} {sid}")
         self.loop.call_soon_threadsafe(
             self.messages.put_nowait, (event, data, sid))
 
