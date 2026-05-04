@@ -14,7 +14,9 @@
   "paths": {
     "/api/auth/register": {
       "post": {
-        "tags": ["auth"],
+        "tags": [
+          "auth"
+        ],
         "operationId": "PostApiAuthRegister",
         "requestBody": {
           "x-name": "command",
@@ -37,7 +39,9 @@
     },
     "/api/auth/confirm-email": {
       "get": {
-        "tags": ["auth"],
+        "tags": [
+          "auth"
+        ],
         "operationId": "GetApiAuthConfirmEmail",
         "parameters": [
           {
@@ -70,7 +74,9 @@
     },
     "/api/auth/login": {
       "post": {
-        "tags": ["auth"],
+        "tags": [
+          "auth"
+        ],
         "operationId": "LoginUser",
         "requestBody": {
           "x-name": "command",
@@ -100,7 +106,9 @@
     },
     "/api/auth/logout": {
       "post": {
-        "tags": ["auth"],
+        "tags": [
+          "auth"
+        ],
         "operationId": "PostApiAuthLogout",
         "responses": {
           "200": {
@@ -116,7 +124,9 @@
     },
     "/api/auth/refresh": {
       "post": {
-        "tags": ["auth"],
+        "tags": [
+          "auth"
+        ],
         "operationId": "RefreshToken",
         "requestBody": {
           "x-name": "request",
@@ -146,7 +156,9 @@
     },
     "/api/auth/forgot-password": {
       "post": {
-        "tags": ["auth"],
+        "tags": [
+          "auth"
+        ],
         "operationId": "PostApiAuthForgotPassword",
         "requestBody": {
           "x-name": "command",
@@ -169,7 +181,9 @@
     },
     "/api/auth/reset-password": {
       "post": {
-        "tags": ["auth"],
+        "tags": [
+          "auth"
+        ],
         "operationId": "PostApiAuthResetPassword",
         "requestBody": {
           "x-name": "command",
@@ -192,7 +206,9 @@
     },
     "/api/auth/.well-known/jwks.json": {
       "get": {
-        "tags": ["auth"],
+        "tags": [
+          "auth"
+        ],
         "operationId": "JWKS",
         "responses": {
           "200": {
@@ -203,7 +219,9 @@
     },
     "/api/auth/.well-known/openid-configuration": {
       "get": {
-        "tags": ["auth"],
+        "tags": [
+          "auth"
+        ],
         "operationId": "GetApiAuth.wellKnownOpenidConfiguration",
         "responses": {
           "200": {
@@ -214,7 +232,9 @@
     },
     "/api/project-assets/{id}": {
       "get": {
-        "tags": ["project-assets"],
+        "tags": [
+          "project-assets"
+        ],
         "operationId": "GetProjectAssets",
         "parameters": [
           {
@@ -282,7 +302,9 @@
     },
     "/api/project-assets/item/{id}": {
       "get": {
-        "tags": ["project-assets"],
+        "tags": [
+          "project-assets"
+        ],
         "operationId": "GetProjectAsset",
         "parameters": [
           {
@@ -317,7 +339,9 @@
     },
     "/api/projects": {
       "post": {
-        "tags": ["projects"],
+        "tags": [
+          "projects"
+        ],
         "operationId": "CreateProject",
         "requestBody": {
           "x-name": "command",
@@ -351,7 +375,9 @@
         ]
       },
       "get": {
-        "tags": ["projects"],
+        "tags": [
+          "projects"
+        ],
         "operationId": "GetUserProjects",
         "responses": {
           "200": {
@@ -377,7 +403,9 @@
     },
     "/api/projects/{id}": {
       "delete": {
-        "tags": ["projects"],
+        "tags": [
+          "projects"
+        ],
         "operationId": "DeleteProject",
         "parameters": [
           {
@@ -403,7 +431,9 @@
         ]
       },
       "put": {
-        "tags": ["projects"],
+        "tags": [
+          "projects"
+        ],
         "operationId": "UpdateProject",
         "parameters": [
           {
@@ -444,7 +474,9 @@
         ]
       },
       "get": {
-        "tags": ["projects"],
+        "tags": [
+          "projects"
+        ],
         "operationId": "GetProject",
         "parameters": [
           {
@@ -601,14 +633,26 @@
       "AssetMediaType": {
         "type": "string",
         "description": "",
-        "x-enumNames": ["Image", "Video"],
-        "enum": ["Image", "Video"]
+        "x-enumNames": [
+          "Image",
+          "Video"
+        ],
+        "enum": [
+          "Image",
+          "Video"
+        ]
       },
       "AssetLifetime": {
         "type": "string",
         "description": "",
-        "x-enumNames": ["Intermediate", "Permanent"],
-        "enum": ["Intermediate", "Permanent"]
+        "x-enumNames": [
+          "Intermediate",
+          "Permanent"
+        ],
+        "enum": [
+          "Intermediate",
+          "Permanent"
+        ]
       },
       "CreateProjectCommand": {
         "type": "object",
