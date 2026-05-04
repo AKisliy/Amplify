@@ -39,6 +39,7 @@ import { getTemplateV1TemplatesTemplateIdGet } from "@/lib/api/template-service"
 import { useHubConnection } from "@/hooks/useHubConnection";
 import { AmplifyImage } from "@/features/media/components/AmplifyImage";
 import { AmplifyVideo } from "@/features/media/components/AmplifyVideo";
+import { PublishDialog } from "@/features/publications/components/PublishDialog";
 
 type TemplateMeta = { id: string; name: string } | null | undefined;
 
@@ -387,6 +388,7 @@ export default function AssetDetailPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [previewRec, setPreviewRec] = useState<PublicationRecord | null>(null);
+  const [publishDialogOpen, setPublishDialogOpen] = useState(false);
 
   useEffect(() => {
     if (!assetId) return;
@@ -507,7 +509,7 @@ export default function AssetDetailPage() {
                   </div>
                 </div>
 
-                {/* Download / open */}
+                {/* Download / open / publish */}
                 <div className="flex items-center gap-3">
                   <a
                     href={asset.mediaUrl}
@@ -526,6 +528,20 @@ export default function AssetDetailPage() {
                     <Download className="w-3.5 h-3.5" />
                     Download
                   </a>
+                  <div className="ml-auto">
+                    {isVideo ? (
+                      <Button size="sm" onClick={() => setPublishDialogOpen(true)} className="gap-1.5">
+                        <Send className="w-3.5 h-3.5" />
+                        Publish to social media
+                      </Button>
+                    ) : (
+                      <Button size="sm" disabled className="gap-1.5 opacity-50 cursor-not-allowed">
+                        <Send className="w-3.5 h-3.5" />
+                        Publish to social media
+                        <span className="text-[10px] font-medium opacity-70">coming soon</span>
+                      </Button>
+                    )}
+                  </div>
                 </div>
               </div>
 
@@ -668,6 +684,20 @@ export default function AssetDetailPage() {
           </motion.div>
         )}
       </div>
+      {/* Publish dialog */}
+      {asset && (
+        <PublishDialog
+          open={publishDialogOpen}
+          onClose={() => setPublishDialogOpen(false)}
+          onPublished={(newRecords) => setRecords(prev => [...newRecords, ...prev])}
+          projectId={projectId}
+          assetId={assetId}
+          assetName={template?.name}
+          mediaUrl={asset.mediaUrl}
+          mediaType={asset.mediaType as "Video" | "Image"}
+        />
+      )}
+
       {/* Instagram Reels preview dialog */}
       {asset && (
         <Dialog open={!!previewRec} onOpenChange={(open) => { if (!open) setPreviewRec(null); }}>
