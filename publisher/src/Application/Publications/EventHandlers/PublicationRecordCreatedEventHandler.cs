@@ -6,7 +6,7 @@ using Publisher.Domain.Events;
 
 namespace Publisher.Application.Publications.EventHandlers;
 
-public class PublicationRecordCreatedEventHandler(
+internal sealed class PublicationRecordCreatedEventHandler(
     ILogger<PublicationRecordCreatedEventHandler> logger,
     IBackgroundJobClient backgroundJobClient)
     : INotificationHandler<PublicationRecordCreated>

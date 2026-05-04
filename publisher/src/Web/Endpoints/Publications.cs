@@ -16,10 +16,10 @@ public class Publications : EndpointGroupBase
         groupBuilder.MapGet("media-posts/{mediaPostId:guid}/records", GetMediaPostRecordsAsync).RequireAuthorization();
     }
 
-    public async Task<Results<Created<MediaPostResponseDto>, BadRequest>> PublishVideoAsync(IMediator mediator, [FromBody] PublishVideoCommand request)
+    public async Task<Results<Created<List<PublicationRecordResponseDto>>, BadRequest>> PublishVideoAsync(IMediator mediator, [FromBody] PublishVideoCommand request)
     {
         var result = await mediator.Send(request, CancellationToken.None);
-        return TypedResults.Created($"/publications/{result.Id}", result);
+        return TypedResults.Created($"/publications/{request.MediaPostId}/records", result);
     }
 
     public async Task<Ok<List<PublicationRecordResponseDto>>> GetMediaPostRecordsAsync(IMediator mediator, Guid mediaPostId)
