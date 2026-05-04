@@ -89,19 +89,6 @@ export type ConnectionsVm = {
     connections?: Array<FullSocialAccountDto>;
 };
 
-export type MediaPostResponseDto = {
-    id?: string;
-    projectId?: string;
-    description?: string;
-    mediaUrl?: string;
-    coverUrl?: string | null;
-    publicationType?: PublicationType;
-    publicationRecords?: Array<PublicationRecordResponseDto>;
-    instagramSettings?: InstagramSettingsDto | null;
-};
-
-export type PublicationType = 'Manual' | 'AutoList';
-
 export type PublicationRecordResponseDto = {
     id?: string;
     provider?: SocialProvider;
@@ -117,13 +104,15 @@ export type PublicationRecordResponseDto = {
 
 export type PublicationStatus = 'None' | 'Scheduled' | 'Processing' | 'Published' | 'Failed';
 
+export type PublicationType = 'Manual' | 'AutoList';
+
 export type PublishVideoCommand = {
-    mediaId?: string;
-    projectId?: string;
+    mediaPostId?: string;
     accountIds?: Array<string>;
     description?: string | null;
     coverMediaId?: string | null;
-    instagramPublishingPreset?: InstagramSettingsDto | null;
+    scheduledAt?: string | null;
+    instagramSettings?: InstagramSettingsDto | null;
 };
 
 export type GetData = {
@@ -334,7 +323,7 @@ export type PostApiPublicationsVideoErrors = {
 };
 
 export type PostApiPublicationsVideoResponses = {
-    201: MediaPostResponseDto;
+    201: Array<PublicationRecordResponseDto>;
 };
 
 export type PostApiPublicationsVideoResponse = PostApiPublicationsVideoResponses[keyof PostApiPublicationsVideoResponses];

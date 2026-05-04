@@ -100,6 +100,19 @@ export const getTemplatesByProjectV1TemplatesProjectProjectIdGet = <ThrowOnError
 });
 
 /**
+ * Duplicate a Library Template into a Project
+ *
+ * Duplicates a read-only Library Template into a new editable Project Template.
+ * No JSON body required — the backend fetches the source template and copies its graph.
+ */
+export const duplicateFromLibraryV1TemplatesFromLibraryPost = <ThrowOnError extends boolean = false>(options: Options<DuplicateFromLibraryV1TemplatesFromLibraryPostData, ThrowOnError>) => (options.client ?? client).post<DuplicateFromLibraryV1TemplatesFromLibraryPostResponses, DuplicateFromLibraryV1TemplatesFromLibraryPostErrors, ThrowOnError>({
+    responseType: 'json',
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/v1/templates/from-library',
+    ...options
+});
+
+/**
  * Get all node schemas
  *
  * Returns the full schema (inputs, outputs, metadata) for every
@@ -207,6 +220,379 @@ export const clearHistoryV1EngineHistoryPost = <ThrowOnError extends boolean = f
     headers: {
         'Content-Type': 'application/json',
         ...options?.headers
+    }
+});
+
+/**
+ * List Library Templates
+ *
+ * Lists all available library template cards with pagination.
+ */
+export const listLibraryTemplatesV1LibraryTemplatesGet = <ThrowOnError extends boolean = false>(options?: Options<ListLibraryTemplatesV1LibraryTemplatesGetData, ThrowOnError>) => (options?.client ?? client).get<ListLibraryTemplatesV1LibraryTemplatesGetResponses, ListLibraryTemplatesV1LibraryTemplatesGetErrors, ThrowOnError>({
+    responseType: 'json',
+    url: '/v1/library-templates/',
+    ...options
+});
+
+/**
+ * Get Library Template by ID
+ *
+ * Retrieves a specific library template by its UUID.
+ */
+export const getLibraryTemplateV1LibraryTemplatesTemplateIdGet = <ThrowOnError extends boolean = false>(options: Options<GetLibraryTemplateV1LibraryTemplatesTemplateIdGetData, ThrowOnError>) => (options.client ?? client).get<GetLibraryTemplateV1LibraryTemplatesTemplateIdGetResponses, GetLibraryTemplateV1LibraryTemplatesTemplateIdGetErrors, ThrowOnError>({
+    responseType: 'json',
+    url: '/v1/library-templates/{template_id}',
+    ...options
+});
+
+/**
+ * Create ambassador for a project
+ */
+export const createAmbassadorV1AmbassadorsPost = <ThrowOnError extends boolean = false>(options: Options<CreateAmbassadorV1AmbassadorsPostData, ThrowOnError>) => (options.client ?? client).post<CreateAmbassadorV1AmbassadorsPostResponses, CreateAmbassadorV1AmbassadorsPostErrors, ThrowOnError>({
+    responseType: 'json',
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/v1/ambassadors/',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+/**
+ * Get ambassador by project ID
+ */
+export const getAmbassadorByProjectV1AmbassadorsProjectProjectIdGet = <ThrowOnError extends boolean = false>(options: Options<GetAmbassadorByProjectV1AmbassadorsProjectProjectIdGetData, ThrowOnError>) => (options.client ?? client).get<GetAmbassadorByProjectV1AmbassadorsProjectProjectIdGetResponses, GetAmbassadorByProjectV1AmbassadorsProjectProjectIdGetErrors, ThrowOnError>({
+    responseType: 'json',
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/v1/ambassadors/project/{project_id}',
+    ...options
+});
+
+/**
+ * Delete ambassador
+ */
+export const deleteAmbassadorV1AmbassadorsAmbassadorIdDelete = <ThrowOnError extends boolean = false>(options: Options<DeleteAmbassadorV1AmbassadorsAmbassadorIdDeleteData, ThrowOnError>) => (options.client ?? client).delete<DeleteAmbassadorV1AmbassadorsAmbassadorIdDeleteResponses, DeleteAmbassadorV1AmbassadorsAmbassadorIdDeleteErrors, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/v1/ambassadors/{ambassador_id}',
+    ...options
+});
+
+/**
+ * Get ambassador by ID
+ */
+export const getAmbassadorV1AmbassadorsAmbassadorIdGet = <ThrowOnError extends boolean = false>(options: Options<GetAmbassadorV1AmbassadorsAmbassadorIdGetData, ThrowOnError>) => (options.client ?? client).get<GetAmbassadorV1AmbassadorsAmbassadorIdGetResponses, GetAmbassadorV1AmbassadorsAmbassadorIdGetErrors, ThrowOnError>({
+    responseType: 'json',
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/v1/ambassadors/{ambassador_id}',
+    ...options
+});
+
+/**
+ * Update ambassador
+ */
+export const updateAmbassadorV1AmbassadorsAmbassadorIdPatch = <ThrowOnError extends boolean = false>(options: Options<UpdateAmbassadorV1AmbassadorsAmbassadorIdPatchData, ThrowOnError>) => (options.client ?? client).patch<UpdateAmbassadorV1AmbassadorsAmbassadorIdPatchResponses, UpdateAmbassadorV1AmbassadorsAmbassadorIdPatchErrors, ThrowOnError>({
+    responseType: 'json',
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/v1/ambassadors/{ambassador_id}',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+/**
+ * List reference images
+ */
+export const listReferenceImagesV1AmbassadorsAmbassadorIdImagesGet = <ThrowOnError extends boolean = false>(options: Options<ListReferenceImagesV1AmbassadorsAmbassadorIdImagesGetData, ThrowOnError>) => (options.client ?? client).get<ListReferenceImagesV1AmbassadorsAmbassadorIdImagesGetResponses, ListReferenceImagesV1AmbassadorsAmbassadorIdImagesGetErrors, ThrowOnError>({
+    responseType: 'json',
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/v1/ambassadors/{ambassador_id}/images',
+    ...options
+});
+
+/**
+ * Add a reference image
+ */
+export const addReferenceImageV1AmbassadorsAmbassadorIdImagesPost = <ThrowOnError extends boolean = false>(options: Options<AddReferenceImageV1AmbassadorsAmbassadorIdImagesPostData, ThrowOnError>) => (options.client ?? client).post<AddReferenceImageV1AmbassadorsAmbassadorIdImagesPostResponses, AddReferenceImageV1AmbassadorsAmbassadorIdImagesPostErrors, ThrowOnError>({
+    responseType: 'json',
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/v1/ambassadors/{ambassador_id}/images',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+/**
+ * Remove a reference image
+ */
+export const deleteReferenceImageV1AmbassadorsAmbassadorIdImagesMediaIdDelete = <ThrowOnError extends boolean = false>(options: Options<DeleteReferenceImageV1AmbassadorsAmbassadorIdImagesMediaIdDeleteData, ThrowOnError>) => (options.client ?? client).delete<DeleteReferenceImageV1AmbassadorsAmbassadorIdImagesMediaIdDeleteResponses, DeleteReferenceImageV1AmbassadorsAmbassadorIdImagesMediaIdDeleteErrors, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/v1/ambassadors/{ambassador_id}/images/{media_id}',
+    ...options
+});
+
+/**
+ * Create a manual review task (called by nodes)
+ */
+export const createTaskV1ReviewPost = <ThrowOnError extends boolean = false>(options: Options<CreateTaskV1ReviewPostData, ThrowOnError>) => (options.client ?? client).post<CreateTaskV1ReviewPostResponses, CreateTaskV1ReviewPostErrors, ThrowOnError>({
+    responseType: 'json',
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/v1/review/',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+/**
+ * Get review task status (polled by nodes)
+ */
+export const getTaskV1ReviewTaskIdGet = <ThrowOnError extends boolean = false>(options: Options<GetTaskV1ReviewTaskIdGetData, ThrowOnError>) => (options.client ?? client).get<GetTaskV1ReviewTaskIdGetResponses, GetTaskV1ReviewTaskIdGetErrors, ThrowOnError>({
+    responseType: 'json',
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/v1/review/{task_id}',
+    ...options
+});
+
+/**
+ * Submit user decision for a review task
+ */
+export const completeTaskV1ReviewTaskIdCompletePost = <ThrowOnError extends boolean = false>(options: Options<CompleteTaskV1ReviewTaskIdCompletePostData, ThrowOnError>) => (options.client ?? client).post<CompleteTaskV1ReviewTaskIdCompletePostResponses, CompleteTaskV1ReviewTaskIdCompletePostErrors, ThrowOnError>({
+    responseType: 'json',
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/v1/review/{task_id}/complete',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+/**
+ * Get the pending review task for a job (used by frontend to show UI)
+ */
+export const getPendingByJobV1ReviewJobJobIdPendingGet = <ThrowOnError extends boolean = false>(options: Options<GetPendingByJobV1ReviewJobJobIdPendingGetData, ThrowOnError>) => (options.client ?? client).get<GetPendingByJobV1ReviewJobJobIdPendingGetResponses, GetPendingByJobV1ReviewJobJobIdPendingGetErrors, ThrowOnError>({
+    responseType: 'json',
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/v1/review/job/{job_id}/pending',
+    ...options
+});
+
+/**
+ * Get the review task for a specific job + node (used by frontend to show UI)
+ */
+export const getByJobAndNodeV1ReviewJobJobIdNodeNodeIdGet = <ThrowOnError extends boolean = false>(options: Options<GetByJobAndNodeV1ReviewJobJobIdNodeNodeIdGetData, ThrowOnError>) => (options.client ?? client).get<GetByJobAndNodeV1ReviewJobJobIdNodeNodeIdGetResponses, GetByJobAndNodeV1ReviewJobJobIdNodeNodeIdGetErrors, ThrowOnError>({
+    responseType: 'json',
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/v1/review/job/{job_id}/node/{node_id}',
+    ...options
+});
+
+/**
+ * Trigger re-generation of a single shot with (optionally edited) params
+ *
+ * Marks ``payload.shots[slot_index].regen_status = "regenerating"`` immediately
+ * and returns 202.  A background task then calls the Veo API, registers the new
+ * clip with MediaIngest, and patches ``current_uuid`` + clears ``regen_status``.
+ *
+ * The frontend polls ``GET /review/{task_id}`` to detect the UUID swap
+ * (``regen_status: null`` + changed ``current_uuid``) and swap the player.
+ */
+export const regenerateShotV1ReviewTaskIdRegenerateShotPost = <ThrowOnError extends boolean = false>(options: Options<RegenerateShotV1ReviewTaskIdRegenerateShotPostData, ThrowOnError>) => (options.client ?? client).post<RegenerateShotV1ReviewTaskIdRegenerateShotPostResponses, RegenerateShotV1ReviewTaskIdRegenerateShotPostErrors, ThrowOnError>({
+    responseType: 'json',
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/v1/review/{task_id}/regenerate-shot',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+/**
+ * List Brands
+ *
+ * Lists all brands with pagination.
+ */
+export const listBrandsV1BrandsGet = <ThrowOnError extends boolean = false>(options?: Options<ListBrandsV1BrandsGetData, ThrowOnError>) => (options?.client ?? client).get<ListBrandsV1BrandsGetResponses, ListBrandsV1BrandsGetErrors, ThrowOnError>({
+    responseType: 'json',
+    url: '/v1/brands/',
+    ...options
+});
+
+/**
+ * Create Brand
+ *
+ * Creates a new brand.
+ */
+export const createBrandV1BrandsPost = <ThrowOnError extends boolean = false>(options: Options<CreateBrandV1BrandsPostData, ThrowOnError>) => (options.client ?? client).post<CreateBrandV1BrandsPostResponses, CreateBrandV1BrandsPostErrors, ThrowOnError>({
+    responseType: 'json',
+    url: '/v1/brands/',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+/**
+ * Delete Brand
+ *
+ * Deletes a brand by ID.
+ */
+export const deleteBrandV1BrandsBrandIdDelete = <ThrowOnError extends boolean = false>(options: Options<DeleteBrandV1BrandsBrandIdDeleteData, ThrowOnError>) => (options.client ?? client).delete<DeleteBrandV1BrandsBrandIdDeleteResponses, DeleteBrandV1BrandsBrandIdDeleteErrors, ThrowOnError>({ url: '/v1/brands/{brand_id}', ...options });
+
+/**
+ * Get Brand by ID
+ *
+ * Returns a single brand by its UUID.
+ */
+export const getBrandV1BrandsBrandIdGet = <ThrowOnError extends boolean = false>(options: Options<GetBrandV1BrandsBrandIdGetData, ThrowOnError>) => (options.client ?? client).get<GetBrandV1BrandsBrandIdGetResponses, GetBrandV1BrandsBrandIdGetErrors, ThrowOnError>({
+    responseType: 'json',
+    url: '/v1/brands/{brand_id}',
+    ...options
+});
+
+/**
+ * Update Brand
+ *
+ * Partially updates a brand. Only provided fields are changed.
+ */
+export const updateBrandV1BrandsBrandIdPatch = <ThrowOnError extends boolean = false>(options: Options<UpdateBrandV1BrandsBrandIdPatchData, ThrowOnError>) => (options.client ?? client).patch<UpdateBrandV1BrandsBrandIdPatchResponses, UpdateBrandV1BrandsBrandIdPatchErrors, ThrowOnError>({
+    responseType: 'json',
+    url: '/v1/brands/{brand_id}',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+/**
+ * List Products
+ */
+export const listProductsV1ProductsGet = <ThrowOnError extends boolean = false>(options?: Options<ListProductsV1ProductsGetData, ThrowOnError>) => (options?.client ?? client).get<ListProductsV1ProductsGetResponses, ListProductsV1ProductsGetErrors, ThrowOnError>({
+    responseType: 'json',
+    url: '/v1/products/',
+    ...options
+});
+
+/**
+ * Create Product
+ */
+export const createProductV1ProductsPost = <ThrowOnError extends boolean = false>(options: Options<CreateProductV1ProductsPostData, ThrowOnError>) => (options.client ?? client).post<CreateProductV1ProductsPostResponses, CreateProductV1ProductsPostErrors, ThrowOnError>({
+    responseType: 'json',
+    url: '/v1/products/',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+/**
+ * Delete Product
+ */
+export const deleteProductV1ProductsProductIdDelete = <ThrowOnError extends boolean = false>(options: Options<DeleteProductV1ProductsProductIdDeleteData, ThrowOnError>) => (options.client ?? client).delete<DeleteProductV1ProductsProductIdDeleteResponses, DeleteProductV1ProductsProductIdDeleteErrors, ThrowOnError>({ url: '/v1/products/{product_id}', ...options });
+
+/**
+ * Get Product
+ */
+export const getProductV1ProductsProductIdGet = <ThrowOnError extends boolean = false>(options: Options<GetProductV1ProductsProductIdGetData, ThrowOnError>) => (options.client ?? client).get<GetProductV1ProductsProductIdGetResponses, GetProductV1ProductsProductIdGetErrors, ThrowOnError>({
+    responseType: 'json',
+    url: '/v1/products/{product_id}',
+    ...options
+});
+
+/**
+ * Update Product
+ */
+export const updateProductV1ProductsProductIdPatch = <ThrowOnError extends boolean = false>(options: Options<UpdateProductV1ProductsProductIdPatchData, ThrowOnError>) => (options.client ?? client).patch<UpdateProductV1ProductsProductIdPatchResponses, UpdateProductV1ProductsProductIdPatchErrors, ThrowOnError>({
+    responseType: 'json',
+    url: '/v1/products/{product_id}',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+/**
+ * Add Image
+ */
+export const addImageV1ProductsProductIdImagesPost = <ThrowOnError extends boolean = false>(options: Options<AddImageV1ProductsProductIdImagesPostData, ThrowOnError>) => (options.client ?? client).post<AddImageV1ProductsProductIdImagesPostResponses, AddImageV1ProductsProductIdImagesPostErrors, ThrowOnError>({
+    responseType: 'json',
+    url: '/v1/products/{product_id}/images',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+/**
+ * Remove Image
+ */
+export const removeImageV1ProductsProductIdImagesMediaUuidDelete = <ThrowOnError extends boolean = false>(options: Options<RemoveImageV1ProductsProductIdImagesMediaUuidDeleteData, ThrowOnError>) => (options.client ?? client).delete<RemoveImageV1ProductsProductIdImagesMediaUuidDeleteResponses, RemoveImageV1ProductsProductIdImagesMediaUuidDeleteErrors, ThrowOnError>({ url: '/v1/products/{product_id}/images/{media_uuid}', ...options });
+
+/**
+ * Add Store Link
+ */
+export const addStoreLinkV1ProductsProductIdLinksPost = <ThrowOnError extends boolean = false>(options: Options<AddStoreLinkV1ProductsProductIdLinksPostData, ThrowOnError>) => (options.client ?? client).post<AddStoreLinkV1ProductsProductIdLinksPostResponses, AddStoreLinkV1ProductsProductIdLinksPostErrors, ThrowOnError>({
+    responseType: 'json',
+    url: '/v1/products/{product_id}/links',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+/**
+ * Remove Store Link
+ */
+export const removeStoreLinkV1ProductsProductIdLinksLinkIdDelete = <ThrowOnError extends boolean = false>(options: Options<RemoveStoreLinkV1ProductsProductIdLinksLinkIdDeleteData, ThrowOnError>) => (options.client ?? client).delete<RemoveStoreLinkV1ProductsProductIdLinksLinkIdDeleteResponses, RemoveStoreLinkV1ProductsProductIdLinksLinkIdDeleteErrors, ThrowOnError>({ url: '/v1/products/{product_id}/links/{link_id}', ...options });
+
+/**
+ * Create a Library Template
+ *
+ * Creates a new library template card (internal use only).
+ */
+export const createLibraryTemplateInternalLibraryTemplatesPost = <ThrowOnError extends boolean = false>(options: Options<CreateLibraryTemplateInternalLibraryTemplatesPostData, ThrowOnError>) => (options.client ?? client).post<CreateLibraryTemplateInternalLibraryTemplatesPostResponses, CreateLibraryTemplateInternalLibraryTemplatesPostErrors, ThrowOnError>({
+    responseType: 'json',
+    url: '/internal/library-templates/',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+/**
+ * Delete a Library Template
+ *
+ * Deletes a library template from the library (internal use only).
+ */
+export const deleteLibraryTemplateInternalLibraryTemplatesTemplateIdDelete = <ThrowOnError extends boolean = false>(options: Options<DeleteLibraryTemplateInternalLibraryTemplatesTemplateIdDeleteData, ThrowOnError>) => (options.client ?? client).delete<DeleteLibraryTemplateInternalLibraryTemplatesTemplateIdDeleteResponses, DeleteLibraryTemplateInternalLibraryTemplatesTemplateIdDeleteErrors, ThrowOnError>({ url: '/internal/library-templates/{template_id}', ...options });
+
+/**
+ * Update a Library Template
+ *
+ * Partially updates a library template (internal use only).
+ * Only fields sent in the payload will be updated.
+ */
+export const updateLibraryTemplateInternalLibraryTemplatesTemplateIdPatch = <ThrowOnError extends boolean = false>(options: Options<UpdateLibraryTemplateInternalLibraryTemplatesTemplateIdPatchData, ThrowOnError>) => (options.client ?? client).patch<UpdateLibraryTemplateInternalLibraryTemplatesTemplateIdPatchResponses, UpdateLibraryTemplateInternalLibraryTemplatesTemplateIdPatchErrors, ThrowOnError>({
+    responseType: 'json',
+    url: '/internal/library-templates/{template_id}',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
     }
 });
 
