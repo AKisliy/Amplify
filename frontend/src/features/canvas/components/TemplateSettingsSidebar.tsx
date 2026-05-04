@@ -1,9 +1,8 @@
 "use client";
 
 import { useState, useRef, useCallback, useEffect } from "react";
-import { Check, CalendarDays, Captions, PanelRightClose, PanelRightOpen } from "lucide-react";
+import { Captions, PanelRightClose, PanelRightOpen } from "lucide-react";
 import { motion } from "framer-motion";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Tooltip,
   TooltipContent,
@@ -11,16 +10,8 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
-import { Separator } from "@/components/ui/separator";
-import { Badge } from "@/components/ui/badge";
-import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
-import { useAutolists } from "@/features/autolists/hooks/useAutolists";
-import type { PostDescriptionConfig } from "@/lib/api/generated/template-service/types.gen";
 import type { CanvasNode } from "../types";
-
-export type { PostDescriptionConfig };
 
 // ---------------------------------------------------------------------------
 // Caption styles — mirrors video-editor/captions/styles.py (visual props only)
@@ -78,10 +69,11 @@ function StyleCard({ style, selected, onClick }: {
   onClick: () => void;
 }) {
   return (
-    <button
+    <Button
+      variant="ghost"
       onClick={onClick}
       className={cn(
-        "flex flex-col gap-1.5 p-2 rounded-lg border transition-all",
+        "w-full flex flex-col gap-1.5 p-2 rounded-lg border transition-all h-auto",
         "hover:border-white/20 hover:bg-white/[0.04]",
         selected ? "border-primary/60 bg-primary/10" : "border-white/[0.07] bg-white/[0.02]"
       )}
@@ -107,7 +99,7 @@ function StyleCard({ style, selected, onClick }: {
       <span className="text-[10px] text-muted-foreground/60 text-center w-full truncate">
         {style.name}
       </span>
-    </button>
+    </Button>
   );
 }
 
@@ -214,33 +206,19 @@ function PositionPicker({ position, onPositionChange, styleCode }: {
 // Main component
 // ---------------------------------------------------------------------------
 
-type SettingsTab = "autolist" | "captions";
-
 const SIDEBAR_WIDTH = 260;
 const ICON_STRIP_WIDTH = 48;
 
 export interface TemplateSettingsSidebarProps {
-  projectId: string;
-  autoListIds: string[];
-  onAutoListIdsChange: (ids: string[]) => void;
-  postDescriptionConfig: PostDescriptionConfig | null;
-  onPostDescriptionConfigChange: (config: PostDescriptionConfig | null) => void;
   nodes: CanvasNode[];
   updateNodeConfig: (nodeId: string, field: string, value: unknown) => void;
 }
 
 export function TemplateSettingsSidebar({
-  projectId,
-  autoListIds,
-  onAutoListIdsChange,
-  postDescriptionConfig,
-  onPostDescriptionConfigChange,
   nodes,
   updateNodeConfig,
 }: TemplateSettingsSidebarProps) {
-  const [expanded, setExpanded]     = useState(false);
-  const [activeTab, setActiveTab]   = useState<SettingsTab>("autolist");
-  const { autolists, isLoading }    = useAutolists(projectId);
+  const [expanded, setExpanded] = useState(false);
 
   // ── Caption state ──────────────────────────────────────────────────────────
   const captionsNode = findCaptionsNode(nodes);
@@ -282,19 +260,6 @@ export function TemplateSettingsSidebar({
     [captionsNode, updateNodeConfig]
   );
 
-  // ── Autolist ───────────────────────────────────────────────────────────────
-  const toggleAutoList = (id: string) => {
-    const next = autoListIds.includes(id)
-      ? autoListIds.filter((x) => x !== id)
-      : [...autoListIds, id];
-    onAutoListIdsChange(next);
-  };
-
-  const openTab = (tab: SettingsTab) => {
-    setActiveTab(tab);
-    setExpanded(true);
-  };
-
   // ── Render ─────────────────────────────────────────────────────────────────
   return (
     <TooltipProvider delayDuration={300}>
@@ -306,11 +271,7 @@ export function TemplateSettingsSidebar({
       >
         {expanded ? (
           // ── Expanded ──────────────────────────────────────────────────────
-          <Tabs
-            value={activeTab}
-            onValueChange={(v) => setActiveTab(v as SettingsTab)}
-            className="flex flex-col h-full overflow-hidden"
-          >
+          <div className="flex flex-col h-full overflow-hidden">
             {/* Header */}
             <div className="h-10 flex items-center gap-1.5 px-1.5 border-b border-border/40 shrink-0">
               <SidebarIconButton
@@ -320,187 +281,61 @@ export function TemplateSettingsSidebar({
               >
                 <PanelRightClose className="size-4" />
               </SidebarIconButton>
-
-              <TabsList className="flex-1 h-7">
-                <TabsTrigger value="autolist" className="flex-1 text-xs gap-1 h-full">
-                  <CalendarDays className="size-3" />
-                  Posting
-                </TabsTrigger>
-                <TabsTrigger value="captions" className="flex-1 text-xs gap-1 h-full">
-                  <Captions className="size-3" />
-                  Captions
-                </TabsTrigger>
-              </TabsList>
+              <span className="flex items-center gap-1.5 text-xs text-muted-foreground/60 ml-1">
+                <Captions className="size-3.5" />
+                Captions
+              </span>
             </div>
 
-            {/* Posting tab */}
-            <TabsContent value="autolist" className="flex-1 overflow-y-auto mt-0 flex flex-col min-h-0">
-              {/* AutoList section */}
-              <div className="p-2">
-                <Label className="px-2 pt-1 pb-1.5 block text-[10px] text-muted-foreground/40 uppercase tracking-wide">
-                  Auto-publish
-                </Label>
-                {isLoading && (
-                  <p className="px-2 py-3 text-xs text-muted-foreground/40">Loading…</p>
-                )}
-                {!isLoading && autolists.length === 0 && (
-                  <p className="px-2 py-3 text-xs text-muted-foreground/40">No AutoLists found</p>
-                )}
-                {autolists.map((al) => {
-                  const selected = autoListIds.includes(al.id);
-                  return (
-                    <button
-                      key={al.id}
-                      onClick={() => toggleAutoList(al.id)}
-                      className={cn(
-                        "w-full flex items-center gap-2.5 px-2 py-1.5 rounded-md text-xs text-left transition-colors",
-                        "hover:bg-sidebar-accent",
-                        selected ? "text-sidebar-foreground" : "text-sidebar-foreground/60"
-                      )}
-                    >
-                      <span
-                        className={cn(
-                          "w-3.5 h-3.5 rounded shrink-0 border flex items-center justify-center",
-                          selected ? "bg-primary border-primary" : "border-sidebar-foreground/20"
-                        )}
-                      >
-                        {selected && <Check className="w-2.5 h-2.5 text-primary-foreground" />}
-                      </span>
-                      <span className="truncate">{al.name}</span>
-                    </button>
-                  );
-                })}
+            {/* Content */}
+            {!captionsNode ? (
+              <div className="flex-1 flex flex-col items-center justify-center gap-3 px-5 text-center">
+                <Captions className="w-7 h-7 text-muted-foreground/15" />
+                <p className="text-xs text-muted-foreground/40 leading-snug">
+                  Add a{" "}
+                  <span className="text-muted-foreground/60 font-medium">Video Editor</span>{" "}
+                  node and enable{" "}
+                  <span className="text-muted-foreground/60 font-medium">Add captions</span>.
+                </p>
               </div>
-
-              <Separator className="mx-2 w-auto" />
-
-              {/* Post description section */}
-              <div className="p-2 flex flex-col gap-2">
-                <div className="flex items-center gap-1.5 px-2 pt-1">
-                  <Label className="text-[10px] text-muted-foreground/40 uppercase tracking-wide flex-1">
-                    Post Description
-                  </Label>
-                  {autoListIds.length === 0 && (
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <span className="text-[9px] text-muted-foreground/25 cursor-default select-none">
-                          Requires auto-list
-                        </span>
-                      </TooltipTrigger>
-                      <TooltipContent side="left" className="max-w-[180px] text-xs">
-                        Description is used only for auto-publishing. Select an AutoList first.
-                      </TooltipContent>
-                    </Tooltip>
-                  )}
+            ) : (
+              <>
+                {/* Style grid */}
+                <div className="flex-1 overflow-y-auto p-3 min-h-0">
+                  <p className="text-[10px] text-muted-foreground/40 uppercase tracking-wide mb-2">
+                    Style
+                  </p>
+                  <div className="grid grid-cols-2 gap-2">
+                    {CAPTION_STYLES.map((s) => (
+                      <StyleCard
+                        key={s.code}
+                        style={s}
+                        selected={styleCode === s.code}
+                        onClick={() => handleStyleSelect(s.code)}
+                      />
+                    ))}
+                  </div>
                 </div>
 
-                {/* Type toggle */}
-                <div
-                  className={cn(
-                    "flex rounded-md overflow-hidden border border-border/50 bg-muted/20",
-                    autoListIds.length === 0 && "opacity-40 pointer-events-none"
-                  )}
-                >
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() =>
-                      onPostDescriptionConfigChange({ ...postDescriptionConfig, type: "static" })
-                    }
-                    className={cn(
-                      "flex-1 h-7 rounded-none text-[11px]",
-                      (postDescriptionConfig?.type ?? "static") === "static"
-                        ? "bg-primary/20 text-primary hover:bg-primary/25 hover:text-primary"
-                        : "text-muted-foreground"
-                    )}
-                  >
-                    Static
-                  </Button>
-                  <Separator orientation="vertical" className="h-7" />
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    disabled
-                    className="flex-1 h-7 rounded-none text-[11px] gap-1 text-muted-foreground/30 cursor-not-allowed"
-                  >
-                    Generated
-                    <Badge variant="outline" className="text-[8px] h-3.5 px-1 py-0 border-muted-foreground/20 text-muted-foreground/30">
-                      Soon
-                    </Badge>
-                  </Button>
-                </div>
+                <div className="h-px bg-border/40 shrink-0" />
 
-                {/* Static description textarea */}
-                <Textarea
-                  disabled={autoListIds.length === 0}
-                  value={postDescriptionConfig?.value ?? ""}
-                  onChange={(e) =>
-                    onPostDescriptionConfigChange({
-                      type: postDescriptionConfig?.type ?? "static",
-                      value: e.target.value || null,
-                    })
-                  }
-                  placeholder="Enter post description…"
-                  rows={4}
-                  className={cn(
-                    "text-xs resize-none min-h-0",
-                    autoListIds.length === 0 && "opacity-40 cursor-not-allowed"
-                  )}
-                />
-              </div>
-            </TabsContent>
-
-            {/* Captions tab */}
-            <TabsContent value="captions" className="flex-1 flex flex-col overflow-hidden mt-0 min-h-0">
-              {!captionsNode ? (
-                <div className="flex-1 flex flex-col items-center justify-center gap-3 px-5 text-center">
-                  <Captions className="w-7 h-7 text-muted-foreground/15" />
-                  <p className="text-xs text-muted-foreground/40 leading-snug">
-                    Add a{" "}
-                    <span className="text-muted-foreground/60 font-medium">Video Editor</span>{" "}
-                    node and enable{" "}
-                    <span className="text-muted-foreground/60 font-medium">Add captions</span>.
+                {/* Position picker */}
+                <div className="flex-1 min-h-0 p-3 flex flex-col gap-2">
+                  <p className="text-[10px] text-muted-foreground/40 uppercase tracking-wide">
+                    Position
+                  </p>
+                  <PositionPicker
+                    position={position}
+                    onPositionChange={handlePositionChange}
+                    styleCode={styleCode}
+                  />
+                  <p className="text-[9px] text-muted-foreground/25 text-center">
+                    Click or drag to reposition
                   </p>
                 </div>
-              ) : (
-                <>
-                  {/* Style grid */}
-                  <div className="flex-1 overflow-y-auto p-3 min-h-0">
-                    <p className="text-[10px] text-muted-foreground/40 uppercase tracking-wide mb-2">
-                      Style
-                    </p>
-                    <div className="grid grid-cols-2 gap-2">
-                      {CAPTION_STYLES.map((s) => (
-                        <StyleCard
-                          key={s.code}
-                          style={s}
-                          selected={styleCode === s.code}
-                          onClick={() => handleStyleSelect(s.code)}
-                        />
-                      ))}
-                    </div>
-                  </div>
-
-                  <div className="h-px bg-border/40 shrink-0" />
-
-                  {/* Position picker */}
-                  <div className="flex-1 min-h-0 p-3 flex flex-col gap-2">
-                    <p className="text-[10px] text-muted-foreground/40 uppercase tracking-wide">
-                      Position
-                    </p>
-                    <PositionPicker
-                      position={position}
-                      onPositionChange={handlePositionChange}
-                      styleCode={styleCode}
-                    />
-                    <p className="text-[9px] text-muted-foreground/25 text-center">
-                      Click or drag to reposition
-                    </p>
-                  </div>
-                </>
-              )}
-            </TabsContent>
-          </Tabs>
+              </>
+            )}
+          </div>
         ) : (
           // ── Collapsed — icon strip ─────────────────────────────────────────
           <div className="flex flex-col items-center py-1 gap-0.5">
@@ -515,16 +350,7 @@ export function TemplateSettingsSidebar({
             <div className="w-5 h-px bg-border/40 my-0.5" />
 
             <SidebarIconButton
-              onClick={() => openTab("autolist")}
-              tooltip="Auto-publish"
-              tooltipSide="left"
-              active={autoListIds.length > 0}
-            >
-              <CalendarDays className="size-4" />
-            </SidebarIconButton>
-
-            <SidebarIconButton
-              onClick={() => openTab("captions")}
+              onClick={() => setExpanded(true)}
               tooltip="Captions"
               tooltipSide="left"
               active={!!captionsNode}
@@ -552,16 +378,17 @@ function SidebarIconButton({ onClick, tooltip, tooltipSide = "left", active, chi
   return (
     <Tooltip>
       <TooltipTrigger asChild>
-        <button
+        <Button
+          variant="ghost"
+          size="icon"
           onClick={onClick}
           className={cn(
-            "w-7 h-7 flex items-center justify-center rounded-md shrink-0 transition-colors",
-            "hover:bg-sidebar-accent text-sidebar-foreground/70 hover:text-sidebar-foreground",
+            "w-7 h-7 hover:bg-sidebar-accent text-sidebar-foreground/70 hover:text-sidebar-foreground",
             active && "text-sidebar-foreground"
           )}
         >
           {children}
-        </button>
+        </Button>
       </TooltipTrigger>
       <TooltipContent side={tooltipSide}>{tooltip}</TooltipContent>
     </Tooltip>

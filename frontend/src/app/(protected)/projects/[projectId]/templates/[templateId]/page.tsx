@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
-import { ArrowLeft, Play, PanelLeft, Image as ImageIcon, Sparkles, Eye, Copy, Loader2 } from "lucide-react";
+import { ArrowLeft, PanelLeft, Image as ImageIcon, Sparkles, Eye, Copy, Loader2, Package, UserCircle, CalendarDays, Check } from "lucide-react";
 import {
   ReactFlow,
   Background,
@@ -18,10 +18,23 @@ import {
 import "@xyflow/react/dist/style.css";
 
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import {
+  Dialog, DialogContent, DialogHeader, DialogTitle,
+} from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
+import { Separator } from "@/components/ui/separator";
+import { Textarea } from "@/components/ui/textarea";
+import {
+  Tooltip, TooltipContent, TooltipProvider, TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { useToast } from "@/hooks/use-toast";
-import { useProjects } from "@/features/ambassadors/hooks/useProjects";
-import { ProjectHeader } from "@/components/ProjectHeader";
 import { useTheme } from "next-themes";
+import { useProducts } from "@/features/products/hooks/useProducts";
+import { useAmbassador } from "@/features/ambassadors/hooks/useAmbassador";
+import { useAutolists } from "@/features/autolists/hooks/useAutolists";
+import { AmplifyImage } from "@/features/media/components/AmplifyImage";
+import type { ProductResponse, PostDescriptionConfig } from "@/lib/api/generated/template-service";
 import {
   updateTemplateV1TemplatesTemplateIdPatch,
   createTemplateV1TemplatesPost,
@@ -43,7 +56,7 @@ import { NodeLibrarySidebar } from "@/features/canvas/components/NodeLibrarySide
 import { MediaAssetsPanel } from "@/features/canvas/components/MediaAssetsPanel";
 import { TemplateMenu } from "@/features/canvas/components/TemplateMenu";
 import { GeneratedMediaPanel } from "@/features/canvas/components/GeneratedMediaPanel";
-import { TemplateSettingsSidebar, type PostDescriptionConfig } from "@/features/canvas/components/TemplateSettingsSidebar";
+import { TemplateSettingsSidebar } from "@/features/canvas/components/TemplateSettingsSidebar";
 import { ShotReviewDialog } from "@/features/canvas/components/ShotReviewDialog";
 import { ScriptSupervisorDialog } from "@/features/canvas/components/ScriptSupervisorDialog";
 import { useCanvasStore } from "@/features/canvas/hooks/useCanvasStore";
@@ -76,6 +89,365 @@ const SEED_EDGES: CanvasEdge[] = [];
 // ---------------------------------------------------------------------------
 
 type SidebarTab = "nodes" | "media" | "generated";
+
+// ---------------------------------------------------------------------------
+// Product picker dialog
+// ---------------------------------------------------------------------------
+
+function ProductPickerDialog({
+  open,
+  selectedId,
+  onSelect,
+  onClose,
+}: {
+  open: boolean;
+  selectedId: string | null;
+  onSelect: (p: ProductResponse) => void;
+  onClose: () => void;
+}) {
+  const { products, isLoading } = useProducts();
+
+  return (
+    <Dialog open={open} onOpenChange={(o) => { if (!o) onClose(); }}>
+      <DialogContent className="sm:max-w-[640px] max-h-[80vh] flex flex-col gap-0 p-0">
+        <DialogHeader className="px-6 py-4 border-b border-border/50 shrink-0">
+          <DialogTitle>Select Product</DialogTitle>
+        </DialogHeader>
+        <div className="flex-1 overflow-y-auto px-6 py-4">
+          {isLoading ? (
+            <div className="grid grid-cols-3 gap-3">
+              {Array.from({ length: 6 }).map((_, i) => (
+                <div key={i} className="rounded-xl bg-muted/40 animate-pulse aspect-[4/3]" />
+              ))}
+            </div>
+          ) : products.length === 0 ? (
+            <p className="text-sm text-muted-foreground text-center py-12">
+              No products yet. Create one in the Products page.
+            </p>
+          ) : (
+            <div className="grid grid-cols-3 gap-3">
+              {products.map((p) => {
+                const firstImage = (p.images ?? [])[0];
+                const isSelected = p.id === selectedId;
+                return (
+                  <button
+                    key={p.id}
+                    onClick={() => { onSelect(p); onClose(); }}
+                    className={cn(
+                      "relative rounded-xl overflow-hidden border-2 transition-all text-left",
+                      isSelected
+                        ? "border-primary ring-2 ring-primary/20"
+                        : "border-border/50 hover:border-border"
+                    )}
+                  >
+                    <div className="relative aspect-video bg-muted/40 flex items-center justify-center overflow-hidden">
+                      {firstImage ? (
+                        <AmplifyImage mediaId={firstImage.media_uuid} alt={p.name} />
+                      ) : (
+                        <Package className="w-8 h-8 text-muted-foreground/20" />
+                      )}
+                    </div>
+                    <div className="px-3 py-2">
+                      <p className="text-xs font-medium truncate">{p.name}</p>
+                    </div>
+                    {isSelected && (
+                      <div className="absolute top-1.5 right-1.5 w-5 h-5 rounded-full bg-primary flex items-center justify-center">
+                        <svg className="w-3 h-3 text-primary-foreground" fill="none" viewBox="0 0 12 12">
+                          <path d="M2 6l3 3 5-5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                        </svg>
+                      </div>
+                    )}
+                  </button>
+                );
+              })}
+            </div>
+          )}
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Canvas control panel (bottom floating bar)
+// ---------------------------------------------------------------------------
+
+function CanvasControlPanel({
+  projectId,
+  productId,
+  products,
+  onProductChange,
+  onRun,
+  isRunning,
+  autoListIds,
+  onAutoListIdsChange,
+  postDescriptionConfig,
+  onPostDescriptionConfigChange,
+}: {
+  projectId: string;
+  productId: string | null;
+  products: ProductResponse[];
+  onProductChange: (id: string | null) => void;
+  onRun: () => void;
+  isRunning: boolean;
+  autoListIds: string[];
+  onAutoListIdsChange: (ids: string[]) => void;
+  postDescriptionConfig: PostDescriptionConfig | null;
+  onPostDescriptionConfigChange: (config: PostDescriptionConfig | null) => void;
+}) {
+  const { ambassador } = useAmbassador(projectId);
+  const { autolists, isLoading: autolistsLoading } = useAutolists(projectId);
+  const [pickerOpen, setPickerOpen] = useState(false);
+  const [publishOpen, setPublishOpen] = useState(false);
+
+  const selectedProduct = products.find((p) => p.id === productId) ?? null;
+  const productImage = selectedProduct ? (selectedProduct.images ?? [])[0] : null;
+
+  const ambassadorPortrait =
+    ambassador?.referenceImages.find((img) => img.imageType === "portrait")
+    ?? ambassador?.referenceImages[0];
+
+  const toggleAutoList = (id: string) => {
+    const next = autoListIds.includes(id)
+      ? autoListIds.filter((x) => x !== id)
+      : [...autoListIds, id];
+    onAutoListIdsChange(next);
+  };
+
+  return (
+    <>
+      <TooltipProvider delayDuration={300}>
+        <div
+          className="absolute bottom-8 left-1/2 -translate-x-1/2 z-10 flex items-center gap-3 px-4 py-3 rounded-2xl"
+          style={{
+            background: "rgba(15,15,20,0.80)",
+            backdropFilter: "blur(20px)",
+            border: "1px solid rgba(255,255,255,0.08)",
+            boxShadow: "0 8px 32px rgba(0,0,0,0.5), inset 0 0 0 1px rgba(255,255,255,0.04)",
+          }}
+        >
+          {/* Product slot */}
+          <Button
+            variant="ghost"
+            onClick={() => setPickerOpen(true)}
+            className="group flex flex-col items-center gap-1 h-auto p-0 hover:bg-transparent"
+            title={selectedProduct?.name ?? "Select product"}
+          >
+            <div className={cn(
+              "relative w-14 h-14 rounded-xl overflow-hidden border-2 transition-all flex items-center justify-center",
+              selectedProduct
+                ? "border-white/20 group-hover:border-white/40"
+                : "border-dashed border-white/20 group-hover:border-white/40 bg-white/5"
+            )}>
+              {productImage ? (
+                <AmplifyImage mediaId={productImage.media_uuid} alt="" />
+              ) : (
+                <Package className="w-5 h-5 text-white/30" />
+              )}
+            </div>
+            <span className="text-[10px] font-medium tracking-wide text-white/40 uppercase">
+              {selectedProduct ? selectedProduct.name.slice(0, 8) : "Product"}
+            </span>
+          </Button>
+
+          {/* Ambassador slot */}
+          <div
+            className="group flex flex-col items-center gap-1"
+            title={ambassador?.name ?? "No ambassador"}
+          >
+            <div className={cn(
+              "relative w-14 h-14 rounded-xl overflow-hidden border-2 transition-all flex items-center justify-center",
+              ambassadorPortrait
+                ? "border-white/20"
+                : "border-dashed border-white/20 bg-white/5"
+            )}>
+              {ambassadorPortrait ? (
+                <AmplifyImage mediaId={ambassadorPortrait.mediaId} alt="" />
+              ) : (
+                <UserCircle className="w-5 h-5 text-white/30" />
+              )}
+            </div>
+            <span className="text-[10px] font-medium tracking-wide text-white/40 uppercase">
+              {ambassador ? ambassador.name.slice(0, 8) : "Avatar"}
+            </span>
+          </div>
+
+          {/* Divider */}
+          <div className="w-px h-12 bg-white/10" />
+
+          {/* Publish settings button */}
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => setPublishOpen(true)}
+                className={cn(
+                  "w-9 h-9 hover:bg-white/10",
+                  autoListIds.length > 0
+                    ? "text-orange-400 hover:text-orange-300"
+                    : "text-white/40 hover:text-white/70"
+                )}
+              >
+                <CalendarDays className="w-4 h-4" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent side="top">Publishing settings</TooltipContent>
+          </Tooltip>
+
+          {/* Divider */}
+          <div className="w-px h-12 bg-white/10" />
+
+          {/* Generate button */}
+          <Button
+            onClick={onRun}
+            disabled={isRunning}
+            className={cn(
+              "flex items-center gap-2 px-5 py-2.5 rounded-xl font-semibold text-sm border-0 transition-all",
+              !isRunning && "hover:scale-[1.03] active:scale-[0.97]"
+            )}
+            style={{
+              background: isRunning
+                ? "rgba(255,255,255,0.08)"
+                : "linear-gradient(135deg, #ec4899, #f97316)",
+              color: "#fff",
+              boxShadow: isRunning ? "none" : "0 4px 20px rgba(236,72,153,0.4)",
+            }}
+          >
+            {isRunning ? (
+              <Loader2 className="w-4 h-4 animate-spin" />
+            ) : (
+              <Sparkles className="w-4 h-4" />
+            )}
+            {isRunning ? "Running…" : "Generate"}
+          </Button>
+        </div>
+      </TooltipProvider>
+
+      {/* Product picker dialog */}
+      <ProductPickerDialog
+        open={pickerOpen}
+        selectedId={productId}
+        onSelect={(p) => onProductChange(p.id)}
+        onClose={() => setPickerOpen(false)}
+      />
+
+      {/* Publish settings dialog */}
+      <Dialog open={publishOpen} onOpenChange={setPublishOpen}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle>Publishing settings</DialogTitle>
+          </DialogHeader>
+
+          <div className="flex flex-col gap-4 mt-2">
+            {/* AutoLists */}
+            <div className="flex flex-col gap-1">
+              <Label className="px-1 text-[10px] text-muted-foreground/40 uppercase tracking-wide">
+                Auto-publish
+              </Label>
+              {autolistsLoading && (
+                <p className="px-2 py-3 text-xs text-muted-foreground/40">Loading…</p>
+              )}
+              {!autolistsLoading && autolists.length === 0 && (
+                <p className="px-2 py-3 text-xs text-muted-foreground/40">No AutoLists found</p>
+              )}
+              {autolists.map((al) => {
+                const selected = autoListIds.includes(al.id);
+                return (
+                  <Button
+                    key={al.id}
+                    variant="ghost"
+                    onClick={() => toggleAutoList(al.id)}
+                    className={cn(
+                      "w-full justify-start gap-2.5 px-2 h-8 text-xs font-normal",
+                      selected ? "text-foreground" : "text-muted-foreground"
+                    )}
+                  >
+                    <span className={cn(
+                      "w-3.5 h-3.5 rounded shrink-0 border flex items-center justify-center",
+                      selected ? "bg-primary border-primary" : "border-muted-foreground/20"
+                    )}>
+                      {selected && <Check className="w-2.5 h-2.5 text-primary-foreground" />}
+                    </span>
+                    <span className="truncate">{al.name}</span>
+                  </Button>
+                );
+              })}
+            </div>
+
+            <Separator />
+
+            {/* Post Description */}
+            <div className="flex flex-col gap-2">
+              <div className="flex items-center gap-1.5 px-1">
+                <Label className="text-[10px] text-muted-foreground/40 uppercase tracking-wide flex-1">
+                  Post Description
+                </Label>
+                {autoListIds.length === 0 && (
+                  <span className="text-[9px] text-muted-foreground/25 select-none">
+                    Requires auto-list
+                  </span>
+                )}
+              </div>
+
+              {/* Type toggle */}
+              <div className={cn(
+                "flex rounded-md overflow-hidden border border-border/50 bg-muted/20",
+                autoListIds.length === 0 && "opacity-40 pointer-events-none"
+              )}>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() =>
+                    onPostDescriptionConfigChange({ ...postDescriptionConfig, type: "static" })
+                  }
+                  className={cn(
+                    "flex-1 h-7 rounded-none text-[11px]",
+                    (postDescriptionConfig?.type ?? "static") === "static"
+                      ? "bg-primary/20 text-primary hover:bg-primary/25 hover:text-primary"
+                      : "text-muted-foreground"
+                  )}
+                >
+                  Static
+                </Button>
+                <Separator orientation="vertical" className="h-7" />
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  disabled
+                  className="flex-1 h-7 rounded-none text-[11px] gap-1 text-muted-foreground/30 cursor-not-allowed"
+                >
+                  Generated
+                  <Badge variant="outline" className="text-[8px] h-3.5 px-1 py-0 border-muted-foreground/20 text-muted-foreground/30">
+                    Soon
+                  </Badge>
+                </Button>
+              </div>
+
+              {/* Static description textarea */}
+              <Textarea
+                disabled={autoListIds.length === 0}
+                value={postDescriptionConfig?.value ?? ""}
+                onChange={(e) =>
+                  onPostDescriptionConfigChange({
+                    type: postDescriptionConfig?.type ?? "static",
+                    value: e.target.value || null,
+                  })
+                }
+                placeholder="Enter post description…"
+                rows={4}
+                className={cn(
+                  "text-xs resize-none min-h-0",
+                  autoListIds.length === 0 && "opacity-40 cursor-not-allowed"
+                )}
+              />
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+    </>
+  );
+}
 
 // ---------------------------------------------------------------------------
 // Read-only banner
@@ -159,14 +531,16 @@ export default function TemplateCanvasPage() {
   const [isDuplicating, setIsDuplicating] = useState(false);
 
   const { resolvedTheme } = useTheme();
-  const { projects, isLoading: projectsLoading } = useProjects();
-  const { registry, isLoading: registryLoading } = useNodeRegistry();
+const { registry, isLoading: registryLoading } = useNodeRegistry();
   const nodeLibrary = useMemo(() => getNodesByCategory(registry), [registry]);
+
+  const { products } = useProducts();
 
   // ── UI state ────────────────────────────────────────────────────────────────
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [sidebarTab,  setSidebarTab]  = useState<SidebarTab>("nodes");
   const [autoListIds, setAutoListIds] = useState<string[]>([]);
+  const [productId, setProductId] = useState<string | null>(null);
   const [postDescriptionConfig, setPostDescriptionConfig] = useState<PostDescriptionConfig | null>(null);
 
   const [contextMenu, setContextMenu] = useState<{
@@ -192,8 +566,9 @@ export default function TemplateCanvasPage() {
       try {
         const response = await getTemplateV1TemplatesTemplateIdGet({ path: { template_id: templateId } });
         if (response?.data?.name) setTemplateName(response.data.name);
-        const d = response?.data as any;
+        const d = response?.data;
         if (d?.auto_list_ids) setAutoListIds(d.auto_list_ids);
+        if (d?.product_id) setProductId(d.product_id);
         if (d?.post_description_config) setPostDescriptionConfig(d.post_description_config);
       } catch (err) {
         console.error("Failed to fetch template name:", err);
@@ -508,6 +883,19 @@ export default function TemplateCanvasPage() {
     }
   }, [templateId]);
 
+  // ── Product selection ─────────────────────────────────────────────────────
+  const handleProductChange = useCallback(async (id: string | null) => {
+    setProductId(id);
+    try {
+      await updateTemplateV1TemplatesTemplateIdPatch({
+        path: { template_id: templateId },
+        body: { product_id: id } as any,
+      });
+    } catch {
+      // Silently fail — UI state is already updated
+    }
+  }, [templateId]);
+
   // ── Post description config ───────────────────────────────────────────────
   const handlePostDescriptionConfigChange = useCallback(async (config: PostDescriptionConfig | null) => {
     setPostDescriptionConfig(config);
@@ -601,7 +989,6 @@ export default function TemplateCanvasPage() {
 
   return (
     <div className="h-screen bg-background flex flex-col overflow-hidden relative">
-      <ProjectHeader projects={projects} isLoading={projectsLoading} />
 
       {/* Read-only floating banner */}
       {isReadonly && (
@@ -714,28 +1101,16 @@ export default function TemplateCanvasPage() {
         )}
 
         <div className="ml-auto flex items-center gap-2">
-          {isReadonly ? (
+          {isReadonly && (
             <div className="flex items-center gap-1.5 px-3 py-1 rounded-lg bg-white/[0.05] border border-white/[0.08] text-xs text-white/30">
               <Eye className="w-3 h-3" />
               Read-only preview
             </div>
-          ) : (
-            <>
-              {execution.activeJobId && (
-                <span className="text-xs text-muted-foreground/60 font-mono">
-                  {execution.activeJobId.slice(0, 12)}…
-                </span>
-              )}
-              <Button
-                size="sm"
-                onClick={handleRun}
-                disabled={execution.isSubmitting}
-                className="gap-1.5"
-              >
-                <Play className="w-3.5 h-3.5" />
-                {execution.isSubmitting ? "Running…" : "Run"}
-              </Button>
-            </>
+          )}
+          {!isReadonly && execution.activeJobId && (
+            <span className="text-xs text-muted-foreground/60 font-mono">
+              {execution.activeJobId.slice(0, 12)}…
+            </span>
           )}
         </div>
       </motion.div>
@@ -751,7 +1126,7 @@ export default function TemplateCanvasPage() {
         )}
 
         <div className="flex-1 flex" style={{ minHeight: 0 }}>
-          <div className="flex-1" style={{ minHeight: 0 }}>
+          <div className="flex-1 relative" style={{ minHeight: 0 }}>
           <ReactFlow
             nodes={nodesWithCallbacks as any}
             edges={edges}
@@ -792,13 +1167,24 @@ export default function TemplateCanvasPage() {
               }}
             />
           </ReactFlow>
+
+          {/* Bottom control panel — only in edit mode */}
+          {!isReadonly && (
+            <CanvasControlPanel
+              projectId={projectId}
+              productId={productId}
+              products={products}
+              onProductChange={handleProductChange}
+              onRun={handleRun}
+              isRunning={execution.isSubmitting}
+              autoListIds={autoListIds}
+              onAutoListIdsChange={handleAutoListIdsChange}
+              postDescriptionConfig={postDescriptionConfig}
+              onPostDescriptionConfigChange={handlePostDescriptionConfigChange}
+            />
+          )}
           </div>
           <TemplateSettingsSidebar
-            projectId={projectId}
-            autoListIds={autoListIds}
-            onAutoListIdsChange={handleAutoListIdsChange}
-            postDescriptionConfig={postDescriptionConfig}
-            onPostDescriptionConfigChange={handlePostDescriptionConfigChange}
             nodes={nodes}
             updateNodeConfig={updateNodeConfig}
           />
