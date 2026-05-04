@@ -4,9 +4,9 @@ using Publisher.Domain.Entities;
 
 namespace Publisher.Infrastructure.Data.Configurations;
 
-public class MediaPostConfiguration : IEntityTypeConfiguration<MediaPost>
+public class PublicationRecordConfiguration : IEntityTypeConfiguration<PublicationRecord>
 {
-    public void Configure(EntityTypeBuilder<MediaPost> entity)
+    public void Configure(EntityTypeBuilder<PublicationRecord> entity)
     {
         entity.OwnsOne(e => e.PublicationSettings, ps =>
         {

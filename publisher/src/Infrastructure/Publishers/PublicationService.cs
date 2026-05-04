@@ -4,6 +4,7 @@ using Microsoft.Extensions.Logging;
 using Publisher.Application.Common.Interfaces;
 using Publisher.Application.Common.Interfaces.Factory;
 using Publisher.Application.Common.Models;
+using Publisher.Domain.Entities.PublicationSetup;
 using Publisher.Domain.Enums;
 using Publisher.Domain.Exceptions;
 
@@ -32,7 +33,7 @@ public class PublicationService(
         try
         {
             var publisher = socialMediaPublisherFactory.GetSocialMediaPublisher(publicationRecord.Provider);
-            var publicationSettings = publicationRecord.MediaPost.PublicationSettings;
+            var publicationSettings = publicationRecord.PublicationSettings ?? new PublicationSettings();
 
             var config = new SocialMediaPostConfig(
                 publicationRecord.MediaPost.MediaId,

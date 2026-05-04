@@ -10,30 +10,29 @@ public class PublishVideoCommandValidator : AbstractValidator<PublishVideoComman
     {
         _dbContext = dbContext;
 
-        RuleFor(x => x.MediaId)
-            .NotEmpty();
-
-        RuleFor(x => x.ProjectId)
+        RuleFor(x => x.MediaPostId)
             .NotEmpty()
-            .MustAsync(ProjectExists).WithMessage("Project does not exist.");
+            .WithMessage("MediaPostId is required.")
+            .MustAsync(MediaPostExists)
+            .WithMessage("Media post does not exist.");
 
         RuleFor(x => x.AccountIds)
             .NotEmpty().WithMessage("At least one account must be specified.")
             .Must(ids => ids.Distinct().Count() == ids.Count).WithMessage("Account IDs must be unique.")
             .Must(ids => ids.All(id => id != Guid.Empty)).WithMessage("Account IDs must not contain empty GUIDs.")
-            .MustAsync((cmd, ids, ct) => AccountIdsExist(cmd, ids, ct)).WithMessage("One or more account IDs do not exist or are not connected to the project.");
+            .MustAsync(AccountIdsExist).WithMessage("One or more account IDs do not exist or are not connected to the project.");
     }
 
-    private async Task<bool> AccountIdsExist(PublishVideoCommand cmd, IReadOnlyList<Guid> list, CancellationToken token)
+    private async Task<bool> MediaPostExists(Guid mediaPostId, CancellationToken token)
+    {
+        return await _dbContext.MediaPosts.AnyAsync(mp => mp.Id == mediaPostId, token);
+    }
+
+    private async Task<bool> AccountIdsExist(IReadOnlyList<Guid> list, CancellationToken token)
     {
         var existingCount = await _dbContext.SocialAccounts
-            .Where(acc => list.Contains(acc.Id) && acc.Projects.Any(p => p.Id == cmd.ProjectId))
+            .Where(acc => list.Contains(acc.Id))
             .CountAsync(token);
         return existingCount == list.Count;
-    }
-
-    private async Task<bool> ProjectExists(Guid guid, CancellationToken token)
-    {
-        return await _dbContext.Projects.AnyAsync(p => p.Id == guid, token);
     }
 }

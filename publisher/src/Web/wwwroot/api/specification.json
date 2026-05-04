@@ -493,7 +493,10 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/MediaPostResponseDto"
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/PublicationRecordResponseDto"
+                  }
                 }
               }
             }
@@ -824,59 +827,6 @@
           }
         }
       },
-      "MediaPostResponseDto": {
-        "type": "object",
-        "additionalProperties": false,
-        "properties": {
-          "id": {
-            "type": "string",
-            "format": "guid"
-          },
-          "projectId": {
-            "type": "string",
-            "format": "guid"
-          },
-          "description": {
-            "type": "string"
-          },
-          "mediaUrl": {
-            "type": "string"
-          },
-          "coverUrl": {
-            "type": "string",
-            "nullable": true
-          },
-          "publicationType": {
-            "$ref": "#/components/schemas/PublicationType"
-          },
-          "publicationRecords": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/PublicationRecordResponseDto"
-            }
-          },
-          "instagramSettings": {
-            "nullable": true,
-            "oneOf": [
-              {
-                "$ref": "#/components/schemas/InstagramSettingsDto"
-              }
-            ]
-          }
-        }
-      },
-      "PublicationType": {
-        "type": "string",
-        "description": "",
-        "x-enumNames": [
-          "Manual",
-          "AutoList"
-        ],
-        "enum": [
-          "Manual",
-          "AutoList"
-        ]
-      },
       "PublicationRecordResponseDto": {
         "type": "object",
         "additionalProperties": false,
@@ -940,15 +890,23 @@
           "Failed"
         ]
       },
+      "PublicationType": {
+        "type": "string",
+        "description": "",
+        "x-enumNames": [
+          "Manual",
+          "AutoList"
+        ],
+        "enum": [
+          "Manual",
+          "AutoList"
+        ]
+      },
       "PublishVideoCommand": {
         "type": "object",
         "additionalProperties": false,
         "properties": {
-          "mediaId": {
-            "type": "string",
-            "format": "guid"
-          },
-          "projectId": {
+          "mediaPostId": {
             "type": "string",
             "format": "guid"
           },
@@ -968,7 +926,12 @@
             "format": "guid",
             "nullable": true
           },
-          "instagramPublishingPreset": {
+          "scheduledAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "instagramSettings": {
             "nullable": true,
             "oneOf": [
               {

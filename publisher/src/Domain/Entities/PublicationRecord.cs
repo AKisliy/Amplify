@@ -1,4 +1,5 @@
-using Publisher.Domain.Enums;
+using Publisher.Domain.Entities.PublicationSetup;
+using Publisher.Domain.Events;
 using Publisher.Domain.Events.Publications;
 
 namespace Publisher.Domain.Entities;
@@ -45,6 +46,8 @@ public class PublicationRecord : BaseAuditableEntity
 
     public DateTime? StatsUpdatedAt { get; set; }
 
+    public PublicationSettings? PublicationSettings { get; set; }
+
     public virtual MediaPost MediaPost { get; set; } = null!;
 
     public virtual SocialAccount SocialAccount { get; set; } = null!;
@@ -68,5 +71,30 @@ public class PublicationRecord : BaseAuditableEntity
         Status = PublicationStatus.Failed;
         PublicationErrorMessage = errorMessage;
         AddDomainEvent(new PublicationRecordStatusChangedEvent(this));
+    }
+
+    public static PublicationRecord CreateManual(
+        Guid mediaPostId,
+        Guid socialAccountId,
+        SocialProvider provider,
+        string? description,
+        DateTimeOffset? scheduledAt,
+        PublicationSettings? publicationSettings)
+    {
+        var record = new PublicationRecord
+        {
+            MediaPostId = mediaPostId,
+            SocialAccountId = socialAccountId,
+            Provider = provider,
+            Status = PublicationStatus.Scheduled,
+            Description = description,
+            ScheduledAt = scheduledAt,
+            PublicationSettings = publicationSettings,
+            PublicationType = PublicationType.Manual
+        };
+
+        record.AddDomainEvent(new PublicationRecordCreated(record));
+
+        return record;
     }
 }
