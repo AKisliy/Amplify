@@ -76,6 +76,34 @@ class EngineClientService:
         )
         return PromptResponse.model_validate(data)
 
+    # ── Queue ─────────────────────────────────────────────────────────────
+
+    async def get_queue(self) -> dict:
+        """Proxy GET /api/queue → volatile queue snapshot (running + pending)."""
+        return await self._get(f"{settings.engine_base_url}/api/queue")
+
+    async def manage_queue(
+        self,
+        clear: bool | None = None,
+        delete: list[str] | None = None,
+    ) -> None:
+        """Proxy POST /api/queue → cancel pending prompts or clear queue."""
+        body: dict = {}
+        if clear is not None:
+            body["clear"] = clear
+        if delete is not None:
+            body["delete"] = delete
+        await self._post(f"{settings.engine_base_url}/api/queue", json=body)
+
+    # ── Interrupt ─────────────────────────────────────────────────────────
+
+    async def interrupt(self, prompt_id: str | None = None) -> None:
+        """Proxy POST /api/interrupt → stop the currently running graph."""
+        body: dict = {}
+        if prompt_id is not None:
+            body["prompt_id"] = prompt_id
+        await self._post(f"{settings.engine_base_url}/api/interrupt", json=body)
+
     # ── Private Helpers ───────────────────────────────────────────────────
 
     async def _get(self, url: str, params: dict | None = None) -> dict:

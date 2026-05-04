@@ -8,7 +8,7 @@ import aio_pika
 from pydantic import BaseModel
 from pydantic.alias_generators import to_camel
 from pydantic import ConfigDict
-from sqlalchemy import select
+from sqlalchemy import select, update
 from sqlalchemy.orm import selectinload
 
 from backend_template.config import settings
@@ -29,6 +29,7 @@ _STATUS_MAP: dict[str, NodeStatus] = {
     "SUCCESS": NodeStatus.SUCCESS,
     "CACHED": NodeStatus.SUCCESS,
     "FAILURE": NodeStatus.FAILURE,
+    "CANCELLED": NodeStatus.CANCELLED,
     "WAITING_FOR_REVIEW": NodeStatus.WAITING_FOR_REVIEW,
 }
 
@@ -124,7 +125,10 @@ async def _handle_event(data: dict) -> None:
                 _last_media[job_id] = media
                 logger.info(f"Job {job_id}: cached last media {media}")
 
-    if job_status == "COMPLETED":
+    if job_status == "PROCESSING":
+        await _start_job(job_id)
+
+    elif job_status == "COMPLETED":
         await _finish_job(job_id, JobStatus.COMPLETED)
         if user_id:
             await _publish_graph_completed(job_id, user_id)
@@ -136,6 +140,10 @@ async def _handle_event(data: dict) -> None:
 
     elif job_status == "FAILED":
         await _finish_job(job_id, JobStatus.FAILED)
+        _last_media.pop(job_id, None)
+
+    elif job_status == "CANCELLED":
+        await _finish_job(job_id, JobStatus.CANCELLED)
         _last_media.pop(job_id, None)
 
 
@@ -186,6 +194,23 @@ async def _update_node_status(
             await db.commit()
 
 
+async def _start_job(job_id: str) -> None:
+    """Transition job from QUEUED → PROCESSING and set started_at."""
+    try:
+        job_uuid = uuid.UUID(job_id)
+    except (ValueError, AttributeError):
+        return
+
+    async with async_session_maker() as db:
+        result = await db.execute(select(Job).where(Job.id == job_uuid))
+        job = result.scalar_one_or_none()
+        if not job or job.status != JobStatus.QUEUED:
+            return
+        job.status = JobStatus.PROCESSING
+        job.started_at = datetime.now(timezone.utc)
+        await db.commit()
+
+
 async def _finish_job(job_id: str, final_status: JobStatus) -> None:
     try:
         job_uuid = uuid.UUID(job_id)
@@ -195,10 +220,24 @@ async def _finish_job(job_id: str, final_status: JobStatus) -> None:
     async with async_session_maker() as db:
         result = await db.execute(select(Job).where(Job.id == job_uuid))
         job = result.scalar_one_or_none()
-        if not job or job.status in (JobStatus.COMPLETED, JobStatus.FAILED):
+        if not job or job.status in (JobStatus.COMPLETED, JobStatus.FAILED, JobStatus.CANCELLED):
             return
         job.status = final_status
         job.finished_at = datetime.now(timezone.utc)
+
+        # Wire-only nodes (e.g. StringInputNode, ConcatTextNode) don't produce
+        # output_ui, so the engine never emits an `executed` event for them.
+        # If the job completed successfully, these nodes must have succeeded.
+        if final_status == JobStatus.COMPLETED:
+            await db.execute(
+                update(NodeExecution)
+                .where(
+                    NodeExecution.job_id == job_uuid,
+                    NodeExecution.status == NodeStatus.RUNNING,
+                )
+                .values(status=NodeStatus.SUCCESS)
+            )
+
         await db.commit()
 
 

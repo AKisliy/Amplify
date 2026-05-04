@@ -1,3 +1,4 @@
+import logging
 import uuid
 from typing import Any
 
@@ -8,6 +9,8 @@ from comfy_api.latest import IO, ComfyExtension
 from comfy_api.latest._io import Hidden
 from comfy_api_nodes.util import ApiEndpoint, sync_op, poll_op
 from config import video_editor_config
+
+logger = logging.getLogger(__name__)
 
 
 # --- API response models ---
@@ -222,12 +225,23 @@ class BaseUGCEditingNode(IO.ComfyNode):
             ),
         )
 
+        logger.info(
+            "[BaseUGCEditingNode] Submitting task — %d media files, node=%s",
+            len(media_list), node_id,
+        )
+
         submit_response = await sync_op(
             cls,
             ApiEndpoint(path=f"{base_url}/tasks", method="POST"),
             response_model=SubmitTaskResponse,
             data=request,
+            timeout=60.0,
             wait_label="Submitting video editing task...",
+        )
+
+        logger.info(
+            "[BaseUGCEditingNode] Task submitted — task_id=%s, polling for completion",
+            submit_response.task_id,
         )
 
         poll_response = await poll_op(
@@ -237,17 +251,25 @@ class BaseUGCEditingNode(IO.ComfyNode):
             status_extractor=lambda r: r.status.lower(),
             completed_statuses=["success"],
             failed_statuses=["failure", "revoked"],
-            queued_statuses=["pending", "received", "retry"],
+            queued_statuses=["pending", "received"],
             poll_interval=3.0,
+            timeout_per_poll=30.0,
+            max_retries_per_poll=3,
             estimated_duration=120,
         )
 
         if poll_response.status == "FAILURE":
+            logger.error(
+                "[BaseUGCEditingNode] Task %s failed: %s",
+                submit_response.task_id, poll_response.error,
+            )
             raise Exception(f"Video editing failed: {poll_response.error}")
 
-        output_media_field_name = "outputMediaId"
-
-        output_media_id = poll_response.result[output_media_field_name]
+        output_media_id = poll_response.result["outputMediaId"]
+        logger.info(
+            "[BaseUGCEditingNode] Task %s completed — output=%s",
+            submit_response.task_id, output_media_id,
+        )
         return IO.NodeOutput(output_media_id, ui={"video_uuid": [output_media_id]})
 
 
@@ -440,12 +462,23 @@ class BatchUGCEditingNode(IO.ComfyNode):
             ),
         )
 
+        logger.debug(
+            "[BatchUGCEditingNode] Submitting task — %d clips from %d scenes, node=%s",
+            len(media_list), len(scenes) if scenes else 0, node_id,
+        )
+
         submit_response = await sync_op(
             cls,
             ApiEndpoint(path=f"{base_url}/tasks", method="POST"),
             response_model=SubmitTaskResponse,
             data=request,
+            timeout=60.0,
             wait_label="Submitting batch video editing task...",
+        )
+
+        logger.debug(
+            "[BatchUGCEditingNode] Task submitted — task_id=%s, polling for completion",
+            submit_response.task_id,
         )
 
         poll_response = await poll_op(
@@ -455,15 +488,25 @@ class BatchUGCEditingNode(IO.ComfyNode):
             status_extractor=lambda r: r.status.lower(),
             completed_statuses=["success"],
             failed_statuses=["failure", "revoked"],
-            queued_statuses=["pending", "received", "retry"],
+            queued_statuses=["pending", "received"],
             poll_interval=3.0,
+            timeout_per_poll=30.0,
+            max_retries_per_poll=3,
             estimated_duration=120,
         )
 
         if poll_response.status == "FAILURE":
+            logger.error(
+                "[BatchUGCEditingNode] Task %s failed: %s",
+                submit_response.task_id, poll_response.error,
+            )
             raise Exception(f"Video editing failed: {poll_response.error}")
 
         output_media_id = poll_response.result["outputMediaId"]
+        logger.info(
+            "[BatchUGCEditingNode] Task %s completed — output=%s",
+            submit_response.task_id, output_media_id,
+        )
         return IO.NodeOutput(output_media_id, ui={"video_uuid": [output_media_id]})
 
 

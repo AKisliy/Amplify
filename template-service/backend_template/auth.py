@@ -1,4 +1,5 @@
 import logging
+import os
 from typing import Annotated
 
 import aiohttp
@@ -10,6 +11,8 @@ from jwt.algorithms import RSAAlgorithm
 from backend_template.config import auth_config
 
 logger = logging.getLogger(__name__)
+
+SKIP_AUTH = os.getenv("SKIP_AUTH", "").lower() in ("1", "true", "yes")
 
 # ---------------------------------------------------------------------------
 # JWKS cache — fetched once on first request, refreshed on verification error
@@ -45,6 +48,12 @@ _bearer = HTTPBearer()
 
 
 async def _get_user_id(credentials: HTTPAuthorizationCredentials = Depends(_bearer)) -> str:
+    # ── SKIP_AUTH: skip JWT validation, use token value as user_id ──
+    if SKIP_AUTH:
+        user_id = credentials.credentials or "dev-user"
+        logger.warning("[SKIP_AUTH] Auth bypassed — user_id=%s", user_id)
+        return user_id
+
     token = credentials.credentials
 
     jwks = await _get_jwks()
@@ -101,3 +110,4 @@ async def _get_user_id(credentials: HTTPAuthorizationCredentials = Depends(_bear
 
 
 CurrentUserId = Annotated[str, Depends(_get_user_id)]
+

@@ -1,15 +1,22 @@
 from typing import Annotated
-import uuid
+from uuid import UUID
 
 from fastapi import APIRouter, Body, Depends, Query, status
 
 from backend_template.auth import CurrentUserId, _get_user_id
 from backend_template.entities.engine import (
     HistoryEntry,
+    InterruptRequest,
     PromptRequest,
     PromptResponse,
+    QueueInfoResponse,
+    QueueManageRequest,
 )
-from backend_template.entities.job import RunTemplateRequest, RunTemplateResponse
+from backend_template.entities.job import (
+    JobDetailResponse,
+    RunTemplateRequest,
+    RunTemplateResponse,
+)
 from backend_template.services.engine_client import EngineClientService
 from backend_template.services.job import JobService
 
@@ -81,6 +88,89 @@ async def run_template(
     highlight the broken nodes.
     """
     return await service.run_template(payload.template_id, user_id=user_id)
+
+
+# ── Job Details (DB Read) ────────────────────────────────────────────────
+
+
+@router.get(
+    "/jobs/{job_id}",
+    response_model=JobDetailResponse,
+    status_code=status.HTTP_200_OK,
+    summary="Get full job details",
+)
+async def get_job_detail(
+    job_id: UUID,
+    service: JobSvc,
+):
+    """
+    Returns the persistent job record with all node execution states.
+    Used by the frontend on page reload to reconstruct execution state
+    from the DB rather than relying on volatile WS/cache state.
+    """
+    return await service.get_job_detail(job_id)
+
+
+# ── Queue (Engine Proxy) ─────────────────────────────────────────────────
+
+
+@router.get(
+    "/queue",
+    response_model=QueueInfoResponse,
+    status_code=status.HTTP_200_OK,
+    summary="Get queue information",
+)
+async def get_queue(
+    service: Service,
+):
+    """
+    Returns a snapshot of the engine's volatile prompt queue:
+    currently running prompt(s) and pending prompts ordered by priority.
+    """
+    data = await service.get_queue()
+    return QueueInfoResponse.model_validate(data)
+
+
+@router.post(
+    "/queue",
+    status_code=status.HTTP_200_OK,
+    summary="Manage queue operations",
+)
+async def manage_queue(
+    payload: QueueManageRequest,
+    service: Service,
+):
+    """
+    Cancel specific pending prompts by prompt_id or clear the entire
+    pending queue.  Only affects pending prompts — to stop a running
+    graph, use ``POST /interrupt``.
+    """
+    await service.manage_queue(clear=payload.clear, delete=payload.delete)
+
+
+# ── Interrupt (Engine Proxy) ─────────────────────────────────────────────
+
+
+@router.post(
+    "/interrupt",
+    status_code=status.HTTP_200_OK,
+    summary="Interrupt currently running job",
+)
+async def interrupt(
+    service: Service,
+    payload: InterruptRequest | None = None,
+):
+    """
+    Sends an interrupt signal to the engine.  If ``prompt_id`` is provided,
+    only that specific prompt is interrupted (if it is currently running).
+    Otherwise, a global interrupt is issued.
+
+    The engine sets ``processing_interrupted()`` flag, which causes
+    ``sleep_with_interrupt`` to raise ``ProcessingInterrupted`` in the
+    active node's retry/poll loop.
+    """
+    prompt_id = payload.prompt_id if payload else None
+    await service.interrupt(prompt_id=prompt_id)
 
 
 # ── Prompt Submission ─────────────────────────────────────────────────────
@@ -157,4 +247,5 @@ async def clear_history(
     specific entries by prompt_id (if `delete` list is provided).
     """
     await service.clear_history(clear=clear, delete=delete)
+
 

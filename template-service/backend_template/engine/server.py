@@ -32,6 +32,9 @@ class _NodeStatusEvent(BaseModel):
     error: str | None = None
     job_status: str | None = None  # COMPLETED | FAILED on terminal events
 
+def _remove_sensitive_from_queue(queue: list) -> list:
+    """Remove sensitive data (index 5) from queue item tuples."""
+    return [item[:5] for item in queue]
 
 async def send_socket_catch_exception(function, message):
     try:
@@ -185,6 +188,9 @@ class PromptServer():
                         if sensitive_val in extra_data:
                             sensitive[sensitive_val] = extra_data.pop(sensitive_val)
                     extra_data["create_time"] = int(time.time() * 1000)  # timestamp in milliseconds
+                    # Inject prompt_id so nodes can reference it via extra_pnginfo
+                    if "extra_pnginfo" in extra_data:
+                        extra_data["extra_pnginfo"]["prompt_id"] = prompt_id
                     self.prompt_queue.put((number, prompt_id, prompt, extra_data, outputs_to_execute, sensitive))
 
                     # Store metadata for RabbitMQ event publishing
@@ -226,6 +232,60 @@ class PromptServer():
             prompt_id = request.match_info.get("prompt_id", None)
             return web.json_response(self.prompt_queue.get_history(prompt_id=prompt_id))
 
+        @routes.get("/queue")
+        async def get_queue(request):
+            queue_info = {}
+            current_queue = self.prompt_queue.get_current_queue_volatile()
+            queue_info['queue_running'] = _remove_sensitive_from_queue(current_queue[0])
+            queue_info['queue_pending'] = _remove_sensitive_from_queue(current_queue[1])
+            return web.json_response(queue_info)
+
+        @routes.post("/queue")
+        async def post_queue(request):
+            json_data =  await request.json()
+            if "clear" in json_data:
+                if json_data["clear"]:
+                    self.prompt_queue.wipe_queue()
+            if "delete" in json_data:
+                to_delete = json_data['delete']
+                for id_to_delete in to_delete:
+                    delete_func = lambda a: a[1] == id_to_delete
+                    self.prompt_queue.delete_queue_item(delete_func)
+
+            return web.Response(status=200)        
+
+        @routes.post("/interrupt")
+        async def post_interrupt(request):
+            try:
+                json_data = await request.json()
+            except json.JSONDecodeError:
+                json_data = {}
+
+            # Check if a specific prompt_id was provided for targeted interruption
+            prompt_id = json_data.get('prompt_id')
+            if prompt_id:
+                currently_running, _ = self.prompt_queue.get_current_queue()
+
+                # Check if the prompt_id matches any currently running prompt
+                should_interrupt = False
+                for item in currently_running:
+                    # item structure: (number, prompt_id, prompt, extra_data, outputs_to_execute)
+                    if item[1] == prompt_id:
+                        logging.info(f"Interrupting prompt {prompt_id}")
+                        should_interrupt = True
+                        break
+
+                if should_interrupt:
+                    nodes.interrupt_processing()
+                else:
+                    logging.info(f"Prompt {prompt_id} is not currently running, skipping interrupt")
+            else:
+                # No prompt_id provided, do a global interrupt
+                logging.info("Global interrupt (no prompt_id specified)")
+                nodes.interrupt_processing()
+
+            return web.Response(status=200)
+            
         @routes.post("/history")
         async def post_history(request):
             json_data =  await request.json()
@@ -275,7 +335,7 @@ class PromptServer():
         elif sid in self.sockets:
             await send_socket_catch_exception(self.sockets[sid].send_json, message)
 
-        _EXECUTION_EVENTS = {"executing", "execution_cached", "executed", "execution_error", "execution_success"}
+        _EXECUTION_EVENTS = {"execution_start", "executing", "execution_cached", "executed", "execution_error", "execution_interrupted", "execution_success", "WAITING_FOR_REVIEW"}
         if event in _EXECUTION_EVENTS:
             try:
                 await self._publish_exec_event(event, data)
@@ -297,7 +357,14 @@ class PromptServer():
 
         to_publish: list[_NodeStatusEvent] = []
 
-        if event == "executing":
+        if event == "execution_start":
+            to_publish.append(_NodeStatusEvent(
+                job_id=job_id, prompt_id=prompt_id, node_id="",
+                user_id=user_id, status="JOB_STARTED",
+                job_status="PROCESSING",
+            ))
+
+        elif event == "executing":
             node_id = data.get("node")
             if node_id is None:
                 return
@@ -331,12 +398,29 @@ class PromptServer():
             ))
             self.prompt_metadata.pop(prompt_id, None)
 
+        elif event == "execution_interrupted":
+            node_id = data.get("node_id", "")
+            to_publish.append(_NodeStatusEvent(
+                job_id=job_id, prompt_id=prompt_id, node_id=node_id,
+                user_id=user_id, status="CANCELLED",
+                job_status="CANCELLED",
+            ))
+            self.prompt_metadata.pop(prompt_id, None)
+
         elif event == "execution_success":
             to_publish.append(_NodeStatusEvent(
                 job_id=job_id, prompt_id=prompt_id, node_id="",
                 user_id=user_id, status="JOB_COMPLETED", job_status="COMPLETED",
             ))
             self.prompt_metadata.pop(prompt_id, None)
+
+        # ── Custom node status (e.g. HITL nodes) ─────────────────────
+        elif event == "WAITING_FOR_REVIEW":
+            node_id = data.get("node", "")
+            to_publish.append(_NodeStatusEvent(
+                job_id=job_id, prompt_id=prompt_id, node_id=node_id,
+                user_id=user_id, status="WAITING_FOR_REVIEW",
+            ))
 
         for ev in to_publish:
             try:
@@ -345,7 +429,7 @@ class PromptServer():
                 logging.error(f"Failed to publish execution event: {e}")
 
     def send_sync(self, event, data, sid=None):
-        logging.info(f"[SERVER] send_sync {event} {data} {sid}")
+        # logging.debug(f"[SERVER] send_sync {event} {data} {sid}")
         self.loop.call_soon_threadsafe(
             self.messages.put_nowait, (event, data, sid))
 

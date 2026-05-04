@@ -95,3 +95,49 @@ class PromptResponse(BaseModel):
     number: int
     node_errors: dict
 
+
+# ---------------------------------------------------------------------------
+# Queue Info (GET /v1/engine/queue)
+# ---------------------------------------------------------------------------
+class QueueInfoResponse(BaseModel):
+    """Snapshot of the engine's volatile prompt queue."""
+
+    queue_running: list = Field(
+        default_factory=list,
+        description="Currently executing prompt(s).",
+    )
+    queue_pending: list = Field(
+        default_factory=list,
+        description="Prompts waiting to be executed (ordered by priority).",
+    )
+
+
+# ---------------------------------------------------------------------------
+# Queue Management (POST /v1/engine/queue)
+# ---------------------------------------------------------------------------
+class QueueManageRequest(BaseModel):
+    """Request body for managing the engine's prompt queue."""
+
+    delete: list[str] | None = Field(
+        default=None,
+        description="List of prompt_ids to remove from the pending queue.",
+    )
+    clear: bool | None = Field(
+        default=None,
+        description="If true, clear all pending prompts from the queue.",
+    )
+
+
+# ---------------------------------------------------------------------------
+# Interrupt (POST /v1/engine/interrupt)
+# ---------------------------------------------------------------------------
+class InterruptRequest(BaseModel):
+    """Optional request body for targeted interrupt."""
+
+    prompt_id: str | None = Field(
+        default=None,
+        description="Interrupt a specific running prompt. "
+        "If omitted, interrupts the currently running prompt globally.",
+    )
+
+
