@@ -8,24 +8,12 @@
 import { Handle, Position } from "@xyflow/react";
 import { cn } from "@/lib/utils";
 import type { PortDef, NodePortType, NodeInputPrimitive } from "../types";
+import { PORT_COLORS, PORT_COLOR_FALLBACK } from "../lib/colors";
 
-// ---------------------------------------------------------------------------
-// Port colour palette (one accent per data type)
-// ---------------------------------------------------------------------------
-
-export const PORT_COLORS: Record<NodePortType | NodeInputPrimitive, string> = {
-  STRING:              "#a855f7", // purple-500
-  INT:                 "#22c55e", // green-500
-  FLOAT:               "#06b6d4", // cyan-500
-  BOOLEAN:             "#eab308", // yellow-500
-  COMBO:               "#f97316", // orange-500
-  IMAGE:               "#ec4899", // pink-500
-  VIDEO:               "#ef4444", // red-500
-  COMFY_AUTOGROW_V3:   "#3b82f6", // blue-500
-};
+export { PORT_COLORS } from "../lib/colors";
 
 function portColor(type: string): string {
-  return PORT_COLORS[type as NodePortType] ?? "#94a3b8";
+  return PORT_COLORS[type as NodePortType] ?? PORT_COLOR_FALLBACK;
 }
 
 // ---------------------------------------------------------------------------

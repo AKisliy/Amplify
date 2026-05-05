@@ -10,9 +10,10 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Bot, ImageIcon, UserCheck, VideoIcon, Wrench } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { NodeLibraryItem, NodeCategory } from "../types";
+import { CATEGORY_COLORS } from "../lib/colors";
 
 // ---------------------------------------------------------------------------
-// Visual config (mirrors AmplifyNode / NodePort palette)
+// Visual config
 // ---------------------------------------------------------------------------
 
 const CATEGORY_ICONS: Record<NodeCategory, React.FC<{ className?: string }>> = {
@@ -21,14 +22,6 @@ const CATEGORY_ICONS: Record<NodeCategory, React.FC<{ className?: string }>> = {
   video:   ({ className }) => <VideoIcon className={className} />,
   utility: ({ className }) => <Wrench    className={className} />,
   manual:  ({ className }) => <UserCheck className={className} />,
-};
-
-const CATEGORY_COLORS: Record<NodeCategory, string> = {
-  text:    "#a855f7",
-  image:   "#ec4899",
-  video:   "#ef4444",
-  utility: "#64748b",
-  manual:  "#f97316",
 };
 
 const CATEGORY_ORDER: NodeCategory[] = ["text", "image", "video", "manual", "utility"];
