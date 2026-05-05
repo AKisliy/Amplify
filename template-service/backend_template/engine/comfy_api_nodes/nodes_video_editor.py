@@ -39,6 +39,10 @@ class MusicSettings(BaseModel):
     volume: float
 
 
+class VoiceoverSettings(BaseModel):
+    voice_id: str
+
+
 class TrimDecision(BaseModel):
     trim_start: float
     trim_end: float
@@ -48,6 +52,8 @@ class BaseUgcCreationArgs(BaseModel):
     format_type: str = "base-ugc"
     media_files: list[str]
     remove_silence: bool = False
+    generate_voiceover: bool = False
+    voiceover_settings: VoiceoverSettings | None = None
     add_captions: bool = False
     captions_settings: CaptionsSettings | None = None
     add_music: bool = False
@@ -90,6 +96,12 @@ class BaseUGCEditingNode(IO.ComfyNode):
                     "remove_silence",
                     default=False,
                     tooltip="Remove silence/pauses from videos",
+                ),
+                IO.String.Input(
+                    "voice_id",
+                    optional=True,
+                    advanced=True,
+                    tooltip="11Labs voice ID — when provided, the original audio track is replaced with an AI-generated voiceover",
                 ),
                 IO.Boolean.Input(
                     "add_captions",
@@ -154,6 +166,7 @@ class BaseUGCEditingNode(IO.ComfyNode):
         cls,
         media_files: dict[str, list[str] | str],
         remove_silence: list[bool] | None = None,
+        voice_id: list[str | None] | None = None,
         add_captions: list[bool] | None = None,
         caption_style_code: list[str] | None = None,
         caption_position_x: list[float] | None = None,
@@ -175,6 +188,7 @@ class BaseUGCEditingNode(IO.ComfyNode):
 
         # Scalar inputs arrive as single-element lists; unwrap them.
         _remove_silence = remove_silence[0] if remove_silence else False
+        _voice_id = voice_id[0] if voice_id else None
         _add_captions = add_captions[0] if add_captions else False
         _caption_style_code = caption_style_code[0] if caption_style_code else "default"
         _caption_position_x = caption_position_x[0] if caption_position_x else 0.5
@@ -210,6 +224,10 @@ class BaseUGCEditingNode(IO.ComfyNode):
             creation_args=BaseUgcCreationArgs(
                 media_files=media_list,
                 remove_silence=_remove_silence,
+                generate_voiceover=bool(_voice_id),
+                voiceover_settings=VoiceoverSettings(
+                    voice_id=_voice_id,
+                ) if _voice_id else None,
                 add_captions=_add_captions,
                 captions_settings=CaptionsSettings(
                     style_code=_caption_style_code,
@@ -326,6 +344,12 @@ class BatchUGCEditingNode(IO.ComfyNode):
                     default=False,
                     tooltip="Remove silence/pauses from videos",
                 ),
+                IO.String.Input(
+                    "voice_id",
+                    optional=True,
+                    advanced=True,
+                    tooltip="11Labs voice ID — when provided, the original audio track is replaced with an AI-generated voiceover",
+                ),
                 IO.Boolean.Input(
                     "add_captions",
                     default=False,
@@ -391,6 +415,7 @@ class BatchUGCEditingNode(IO.ComfyNode):
         # the connected Veo auto-batch. Scalar inputs arrive as single-element lists.
         scenes: dict[str, list[str] | str] | None = None,
         remove_silence: list[bool] | None = None,
+        voice_id: list[str | None] | None = None,
         add_captions: list[bool] | None = None,
         caption_style_code: list[str] | None = None,
         caption_position_x: list[float] | None = None,
@@ -415,6 +440,7 @@ class BatchUGCEditingNode(IO.ComfyNode):
             )
 
         _remove_silence      = remove_silence[0]      if remove_silence      else False
+        _voice_id            = voice_id[0]            if voice_id            else None
         _add_captions        = add_captions[0]        if add_captions        else False
         _caption_style_code  = caption_style_code[0]  if caption_style_code  else "default"
         _caption_position_x  = caption_position_x[0]  if caption_position_x  else 0.5
@@ -447,6 +473,10 @@ class BatchUGCEditingNode(IO.ComfyNode):
             creation_args=BaseUgcCreationArgs(
                 media_files=media_list,
                 remove_silence=_remove_silence,
+                generate_voiceover=bool(_voice_id),
+                voiceover_settings=VoiceoverSettings(
+                    voice_id=_voice_id,
+                ) if _voice_id else None,
                 add_captions=_add_captions,
                 captions_settings=CaptionsSettings(
                     style_code=_caption_style_code,
