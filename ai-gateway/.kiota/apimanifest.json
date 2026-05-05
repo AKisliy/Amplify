@@ -54,11 +54,15 @@
         {
           "method": "POST",
           "uriTemplate": "api/internal/media"
+        },
+        {
+          "method": "GET",
+          "uriTemplate": "api/media/{mediaId}"
         }
       ],
       "extensions": {
-        "x-ms-kiota-hash": "FBB559B70F3AA037558DC4C7B07C863C0D14B5D23D9D8E2BF55549BB86474EFC",
-        "x-ms-kiota-version": "1.30.0"
+        "x-ms-kiota-hash": "955658FFCB37BA4C8A09DC681012C70CAEF3EF72768AD6BE4B547FFB70BBF952",
+        "x-ms-kiota-version": "1.31.1"
       }
     }
   }

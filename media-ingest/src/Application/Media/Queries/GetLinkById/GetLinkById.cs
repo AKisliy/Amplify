@@ -3,7 +3,7 @@ using MediaIngest.Domain.Enums;
 
 namespace MediaIngest.Application.Media.Queries.GetLinkById;
 
-public record GetLinkByIdQuery(Guid MediaId, LinkType linkType, bool IncludeMetadata = true) : IRequest<GetLinkByIdResponse>;
+public record GetLinkByIdQuery(Guid MediaId, LinkType LinkType, bool IncludeMetadata = true) : IRequest<GetLinkByIdResponse>;
 
 internal class GetLinkByIdQueryHandler(ILinkGeneratorFactory linkGeneratorFactory)
     : IRequestHandler<GetLinkByIdQuery, GetLinkByIdResponse>
@@ -11,10 +11,10 @@ internal class GetLinkByIdQueryHandler(ILinkGeneratorFactory linkGeneratorFactor
     public async Task<GetLinkByIdResponse> Handle(GetLinkByIdQuery request, CancellationToken cancellationToken)
     {
         Guard.Against.Null(request.MediaId, nameof(request.MediaId));
-        Guard.Against.Null(request.linkType, nameof(request.linkType));
+        Guard.Against.Null(request.LinkType, nameof(request.LinkType));
 
-        var linkGenerator = linkGeneratorFactory.GetLinkGenerator(request.linkType);
-        var link = await linkGenerator.GenerateLinkAsync(request.MediaId, request.linkType, cancellationToken, request.IncludeMetadata);
+        var linkGenerator = linkGeneratorFactory.GetLinkGenerator(request.LinkType);
+        var link = await linkGenerator.GenerateLinkAsync(request.MediaId, request.LinkType, cancellationToken, request.IncludeMetadata);
 
         return new GetLinkByIdResponse
         {
