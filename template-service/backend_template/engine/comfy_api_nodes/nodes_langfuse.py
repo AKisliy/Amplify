@@ -49,7 +49,7 @@ class StringInputNode(IO.ComfyNode):
     @classmethod
     async def execute(cls, value: str) -> IO.NodeOutput:
         logger.info("[StringInputNode] value=%r", value)
-        return IO.NodeOutput(value)
+        return IO.NodeOutput(value, ui={"text": [value]})
 
 
 # ── Langfuse Prompt Node ──────────────────────────────────────────────
@@ -212,7 +212,7 @@ class LangfusePromptNode(IO.ComfyNode):
             "present" if schema_str else "absent",
         )
 
-        return IO.NodeOutput(compiled, schema_str)
+        return IO.NodeOutput(compiled, schema_str, ui={"text": [compiled]})
 
 
 # ── Extension & Entry Point ───────────────────────────────────────────
