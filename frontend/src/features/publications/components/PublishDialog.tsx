@@ -1,8 +1,8 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import {
-  Calendar,
+  CalendarDays,
   Check,
   ChevronLeft,
   ChevronRight,
@@ -21,6 +21,8 @@ import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Calendar } from "@/components/ui/calendar";
 import { cn } from "@/lib/utils";
 import {
   getApiConnections,
@@ -30,6 +32,8 @@ import {
 } from "@/lib/api/publisher";
 import type { PublicationRecord } from "@/features/ambassadors/types";
 import { useToast } from "@/hooks/use-toast";
+import { AmplifyVideo } from "@/features/media/components/AmplifyVideo";
+import Image from "next/image";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -108,12 +112,17 @@ function AccountAvatar({
   return (
     <span className="relative inline-block flex-shrink-0" style={{ width: size, height: size }}>
       <span
-        className="block w-full h-full rounded-full overflow-hidden"
-        style={ring ? { boxShadow: "0 0 0 2px oklch(0.62 0.21 264)" } : undefined}
+        className={cn("block w-full h-full rounded-full overflow-hidden", ring && "ring-2 ring-primary")}
       >
         {account.avatarUrl ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img src={account.avatarUrl} alt={username} className="w-full h-full object-cover" />
+          <Image
+            src={account.avatarUrl}
+            alt={username}
+            width={size}
+            height={size}
+            className="w-full h-full object-cover rounded-full"
+            unoptimized
+          />
         ) : (
           <div className="w-full h-full bg-white/20 flex items-center justify-center">
             <span className="text-white font-bold" style={{ fontSize: size * 0.35 }}>
@@ -147,10 +156,9 @@ function InstagramReelPreview({ account, description, mediaUrl, mediaType }: {
     <div className="relative w-full h-full bg-black rounded-[28px] overflow-hidden">
       {/* Media */}
       {mediaType === "Video" ? (
-        <video src={mediaUrl} className="absolute inset-0 w-full h-full object-cover" loop muted playsInline autoPlay />
+        <AmplifyVideo src={mediaUrl} mode="hover-play" loop muted />
       ) : (
-        // eslint-disable-next-line @next/next/no-img-element
-        <img src={mediaUrl} alt="" className="absolute inset-0 w-full h-full object-cover" />
+        <Image src={mediaUrl} alt="" fill className="object-cover" unoptimized />
       )}
       {/* Bottom gradient */}
       <div className="absolute inset-0" style={{ background: "linear-gradient(to bottom, transparent 40%, rgba(0,0,0,0.55) 80%, rgba(0,0,0,0.85))" }} />
@@ -166,10 +174,9 @@ function InstagramReelPreview({ account, description, mediaUrl, mediaType }: {
         {[Heart, MessageCircle, Send, Bookmark, MoreHorizontal].map((Icon, i) => (
           <Icon key={i} className="w-6 h-6" strokeWidth={1.8} />
         ))}
-        <div className="w-7 h-7 rounded-md overflow-hidden border border-white/50 mt-1">
+        <div className="relative w-7 h-7 rounded-md overflow-hidden border border-white/50 mt-1">
           {avatar ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img src={avatar} alt="" className="w-full h-full object-cover" />
+            <Image src={avatar} alt="" fill className="object-cover" unoptimized />
           ) : (
             <div className="w-full h-full bg-white/20" />
           )}
@@ -179,10 +186,9 @@ function InstagramReelPreview({ account, description, mediaUrl, mediaType }: {
       {/* Bottom info */}
       <div className="absolute bottom-4 left-3 right-14 text-white space-y-1">
         <div className="flex items-center gap-2">
-          <span className="w-7 h-7 rounded-full overflow-hidden border border-white/50 flex-shrink-0">
+          <span className="relative w-7 h-7 rounded-full overflow-hidden border border-white/50 flex-shrink-0">
             {avatar ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img src={avatar} alt="" className="w-full h-full object-cover" />
+              <Image src={avatar} alt="" fill className="object-cover" unoptimized />
             ) : (
               <div className="w-full h-full bg-white/20" />
             )}
@@ -212,10 +218,9 @@ function TikTokPreview({ account, description, mediaUrl, mediaType }: {
   return (
     <div className="relative w-full h-full bg-black rounded-[28px] overflow-hidden">
       {mediaType === "Video" ? (
-        <video src={mediaUrl} className="absolute inset-0 w-full h-full object-cover" loop muted playsInline autoPlay />
+        <AmplifyVideo src={mediaUrl} mode="hover-play" loop muted />
       ) : (
-        // eslint-disable-next-line @next/next/no-img-element
-        <img src={mediaUrl} alt="" className="absolute inset-0 w-full h-full object-cover" />
+        <Image src={mediaUrl} alt="" fill className="object-cover" unoptimized />
       )}
       <div className="absolute inset-0" style={{ background: "linear-gradient(to bottom, rgba(0,0,0,0.35) 0%, transparent 25%, transparent 60%, rgba(0,0,0,0.7))" }} />
 
@@ -231,10 +236,9 @@ function TikTokPreview({ account, description, mediaUrl, mediaType }: {
       {/* Right rail */}
       <div className="absolute right-2 bottom-8 flex flex-col items-center gap-4 text-white">
         <div className="relative">
-          <span className="block w-10 h-10 rounded-full border-2 border-white overflow-hidden">
+          <span className="relative block w-10 h-10 rounded-full border-2 border-white overflow-hidden">
             {avatar ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img src={avatar} alt="" className="w-full h-full object-cover" />
+              <Image src={avatar} alt="" fill className="object-cover" unoptimized />
             ) : (
               <div className="w-full h-full bg-white/20" />
             )}
@@ -274,7 +278,7 @@ function PlatformPreview(props: { account: FullSocialAccountDto; description: st
 }
 
 // ---------------------------------------------------------------------------
-// Preview carousel
+// Preview carousel (account switcher)
 // ---------------------------------------------------------------------------
 
 function PreviewCarousel({ accounts, activeIdx, onSelect }: {
@@ -285,99 +289,37 @@ function PreviewCarousel({ accounts, activeIdx, onSelect }: {
   if (accounts.length <= 1) return null;
   return (
     <div className="inline-flex items-center gap-2.5 px-3.5 py-2.5 rounded-full border border-white/10 bg-white/[0.05] backdrop-blur-sm">
-      <button
-        className="w-6 h-6 rounded-full bg-white/[0.06] flex items-center justify-center text-white/60 hover:text-white transition-colors"
+      <Button
+        variant="ghost"
+        size="icon-sm"
+        className="rounded-full text-white/60 hover:text-white hover:bg-white/[0.06]"
         onClick={() => onSelect((activeIdx - 1 + accounts.length) % accounts.length)}
       >
         <ChevronLeft className="w-3.5 h-3.5" />
-      </button>
+      </Button>
       <div className="flex items-center gap-2">
         {accounts.map((a, i) => (
-          <button
+          <Button
             key={a.id}
+            variant="ghost"
+            size="icon"
             title={a.username ?? ""}
             onClick={() => onSelect(i)}
-            className="transition-transform duration-150"
+            className="rounded-full p-0 h-auto w-auto hover:bg-transparent transition-transform duration-150"
             style={{ transform: i === activeIdx ? "scale(1.1)" : "scale(1)" }}
           >
             <AccountAvatar account={a} size={i === activeIdx ? 32 : 26} badgeSize={i === activeIdx ? 13 : 11} ring={i === activeIdx} />
-          </button>
+          </Button>
         ))}
       </div>
-      <button
-        className="w-6 h-6 rounded-full bg-white/[0.06] flex items-center justify-center text-white/60 hover:text-white transition-colors"
+      <Button
+        variant="ghost"
+        size="icon-sm"
+        className="rounded-full text-white/60 hover:text-white hover:bg-white/[0.06]"
         onClick={() => onSelect((activeIdx + 1) % accounts.length)}
       >
         <ChevronRight className="w-3.5 h-3.5" />
-      </button>
-    </div>
-  );
-}
-
-// ---------------------------------------------------------------------------
-// Mini calendar popover
-// ---------------------------------------------------------------------------
-
-function MiniCalendar({ value, onChange }: { value: Date; onChange: (d: Date) => void }) {
-  const today = new Date();
-  const [view, setView] = useState({ y: value.getFullYear(), m: value.getMonth() });
-
-  const first = new Date(view.y, view.m, 1);
-  const startWeekday = (first.getDay() + 6) % 7;
-  const daysInMonth = new Date(view.y, view.m + 1, 0).getDate();
-  const cells: (number | null)[] = [];
-  for (let i = 0; i < startWeekday; i++) cells.push(null);
-  for (let d = 1; d <= daysInMonth; d++) cells.push(d);
-  while (cells.length % 7) cells.push(null);
-
-  const monthName = new Date(view.y, view.m).toLocaleDateString("en-US", { month: "long", year: "numeric" });
-  const isSel = (d: number) => value.getFullYear() === view.y && value.getMonth() === view.m && value.getDate() === d;
-  const isTd = (d: number) => today.getFullYear() === view.y && today.getMonth() === view.m && today.getDate() === d;
-  const isPast = (d: number) => new Date(view.y, view.m, d) < new Date(today.getFullYear(), today.getMonth(), today.getDate());
-
-  return (
-    <div className="bg-popover border border-border rounded-xl p-3 shadow-2xl" style={{ width: 252 }}>
-      <div className="flex items-center justify-between px-1 pb-2">
-        <button
-          className="w-7 h-7 rounded-md flex items-center justify-center text-foreground/60 hover:bg-white/[0.06] transition-colors"
-          onClick={() => setView(v => ({ y: v.m === 0 ? v.y - 1 : v.y, m: (v.m + 11) % 12 }))}
-        >
-          <ChevronLeft className="w-4 h-4" />
-        </button>
-        <span className="text-sm font-semibold">{monthName}</span>
-        <button
-          className="w-7 h-7 rounded-md flex items-center justify-center text-foreground/60 hover:bg-white/[0.06] transition-colors"
-          onClick={() => setView(v => ({ y: v.m === 11 ? v.y + 1 : v.y, m: (v.m + 1) % 12 }))}
-        >
-          <ChevronRight className="w-4 h-4" />
-        </button>
-      </div>
-      <div className="grid grid-cols-7 gap-0.5">
-        {["Mo", "Tu", "We", "Th", "Fr", "Sa", "Su"].map(d => (
-          <div key={d} className="text-center text-[10px] font-semibold text-muted-foreground py-1">{d}</div>
-        ))}
-        {cells.map((d, i) => {
-          if (!d) return <div key={i} />;
-          const sel = isSel(d), td = isTd(d), past = isPast(d);
-          return (
-            <button
-              key={i}
-              disabled={past}
-              onClick={() => onChange(new Date(view.y, view.m, d))}
-              className={cn(
-                "h-8 rounded-md text-xs font-medium transition-colors",
-                sel && "bg-primary text-primary-foreground",
-                !sel && td && "bg-secondary text-foreground",
-                !sel && !td && !past && "hover:bg-secondary text-foreground",
-                past && "text-muted-foreground opacity-35 cursor-not-allowed",
-                sel && "font-semibold"
-              )}
-            >
-              {d}
-            </button>
-          );
-        })}
-      </div>
+      </Button>
     </div>
   );
 }
@@ -425,12 +367,9 @@ export function PublishDialog({ open, onClose, onPublished, projectId, assetId, 
     return d;
   });
   const [scheduledTime, setScheduledTime] = useState("09:30");
-  const [calOpen, setCalOpen] = useState(false);
   const [shareToFeed, setShareToFeed] = useState(true);
   const [activePreviewIdx, setActivePreviewIdx] = useState(0);
   const [submitting, setSubmitting] = useState(false);
-
-  const calRef = useRef<HTMLDivElement>(null);
 
   // Fetch connections when dialog opens
   useEffect(() => {
@@ -443,16 +382,6 @@ export function PublishDialog({ open, onClose, onPublished, projectId, assetId, 
       .catch(() => setAccounts([]))
       .finally(() => setLoadingAccounts(false));
   }, [open, projectId]);
-
-  // Close calendar on outside click
-  useEffect(() => {
-    if (!calOpen) return;
-    const handler = (e: MouseEvent) => {
-      if (calRef.current && !calRef.current.contains(e.target as Node)) setCalOpen(false);
-    };
-    document.addEventListener("mousedown", handler);
-    return () => document.removeEventListener("mousedown", handler);
-  }, [calOpen]);
 
   // Keep activePreviewIdx valid
   const selectedAccounts = accounts.filter(a => selectedIds.has(a.id ?? ""));
@@ -471,6 +400,8 @@ export function PublishDialog({ open, onClose, onPublished, projectId, assetId, 
   const hasInstagram = selectedAccounts.some(a => a.socialProvider?.toLowerCase() === "instagram");
   const previewAccount = selectedAccounts[activePreviewIdx] ?? selectedAccounts[0];
 
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
   const dateLabel = scheduledDate.toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" });
 
   const canSubmit = selectedAccounts.length > 0 && description.trim().length > 0 && !submitting;
@@ -524,8 +455,7 @@ export function PublishDialog({ open, onClose, onPublished, projectId, assetId, 
 
           {/* ── LEFT: Preview ── */}
           <div
-            className="flex flex-col items-center gap-4 p-6 border-r border-border overflow-y-auto"
-            style={{ background: "oklch(0.20 0.02 264)" }}
+            className="flex flex-col items-center gap-4 p-6 border-r border-border overflow-y-auto bg-background"
           >
             <div className="w-full flex items-center justify-between text-xs text-muted-foreground">
               <span className="flex items-center gap-1.5">
@@ -548,7 +478,7 @@ export function PublishDialog({ open, onClose, onPublished, projectId, assetId, 
                   style={{
                     height: "min(520px, calc(100% - 8px))",
                     aspectRatio: "9 / 16",
-                    boxShadow: "0 25px 60px -10px rgba(0,0,0,0.7), 0 0 0 8px #1a1a1a, 0 0 0 9px #2a2a2a",
+                    boxShadow: "0 25px 60px -10px rgba(0,0,0,0.7), 0 0 0 8px var(--background), 0 0 0 9px var(--card)",
                     borderRadius: 28,
                     overflow: "hidden",
                     flexShrink: 0,
@@ -616,13 +546,14 @@ export function PublishDialog({ open, onClose, onPublished, projectId, assetId, 
                       const id = a.id ?? "";
                       const selected = selectedIds.has(id);
                       return (
-                        <button
+                        <Button
                           key={id}
+                          variant="ghost"
                           onClick={() => toggleAccount(id)}
                           className={cn(
-                            "w-full flex items-center gap-3 px-3 py-2.5 rounded-lg border transition-all duration-150 text-left",
+                            "w-full h-auto flex items-center gap-3 px-3 py-2.5 rounded-lg border transition-all duration-150 justify-start",
                             selected
-                              ? "border-primary/50 bg-primary/10"
+                              ? "border-primary/50 bg-primary/10 hover:bg-primary/15"
                               : "border-border bg-black/15 hover:border-white/15 hover:bg-black/25"
                           )}
                         >
@@ -637,7 +568,7 @@ export function PublishDialog({ open, onClose, onPublished, projectId, assetId, 
                             <span className="text-[13px] font-semibold leading-snug truncate">{a.username}</span>
                             <span className="text-[11px] text-muted-foreground capitalize">{a.socialProvider}</span>
                           </div>
-                        </button>
+                        </Button>
                       );
                     })}
                   </div>
@@ -666,42 +597,48 @@ export function PublishDialog({ open, onClose, onPublished, projectId, assetId, 
                 <p className="text-xs font-semibold text-foreground mb-1.5 tracking-[0.01em]">Publish</p>
                 <div className="flex p-0.5 rounded-lg border border-border bg-black/30 w-full">
                   {(["now", "schedule"] as const).map(mode => (
-                    <button
+                    <Button
                       key={mode}
+                      variant="ghost"
                       onClick={() => setScheduleMode(mode)}
                       className={cn(
-                        "flex-1 flex items-center justify-center gap-1.5 h-8 rounded-md text-sm font-medium transition-all",
+                        "flex-1 h-8 gap-1.5 text-sm font-medium",
                         scheduleMode === mode
-                          ? "bg-card text-foreground shadow-sm"
-                          : "text-muted-foreground hover:text-foreground"
+                          ? "bg-card text-foreground shadow-sm hover:bg-card"
+                          : "text-muted-foreground"
                       )}
                     >
-                      {mode === "now" ? <Zap className="w-3.5 h-3.5" /> : <Calendar className="w-3.5 h-3.5" />}
+                      {mode === "now" ? <Zap className="w-3.5 h-3.5" /> : <CalendarDays className="w-3.5 h-3.5" />}
                       {mode === "now" ? "Now" : "Schedule"}
-                    </button>
+                    </Button>
                   ))}
                 </div>
 
                 {scheduleMode === "schedule" && (
-                  <div className="mt-2.5 flex gap-2 items-start relative" ref={calRef}>
-                    <button
-                      onClick={() => setCalOpen(o => !o)}
-                      className="flex-1 h-9 flex items-center gap-2 px-3 rounded-md border border-border bg-black/20 text-sm font-medium hover:bg-black/30 transition-colors text-left"
-                    >
-                      <Calendar className="w-3.5 h-3.5 text-muted-foreground" />
-                      {dateLabel}
-                    </button>
+                  <div className="mt-2.5 flex gap-2 items-start">
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <Button variant="outline" className="flex-1 h-9 gap-2 justify-start font-medium">
+                          <CalendarDays className="w-3.5 h-3.5 text-muted-foreground" />
+                          {dateLabel}
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-auto p-0" align="start">
+                        <Calendar
+                          mode="single"
+                          selected={scheduledDate}
+                          onSelect={(d) => d && setScheduledDate(d)}
+                          disabled={(d) => d < today}
+                          initialFocus
+                        />
+                      </PopoverContent>
+                    </Popover>
                     <Input
                       type="time"
                       value={scheduledTime}
                       onChange={e => setScheduledTime(e.target.value)}
                       className="w-28 flex-none h-9"
                     />
-                    {calOpen && (
-                      <div className="absolute top-11 left-0 z-50">
-                        <MiniCalendar value={scheduledDate} onChange={d => { setScheduledDate(d); setCalOpen(false); }} />
-                      </div>
-                    )}
                   </div>
                 )}
               </div>
@@ -743,7 +680,7 @@ export function PublishDialog({ open, onClose, onPublished, projectId, assetId, 
                   ) : scheduleMode === "now" ? (
                     <Send className="w-3.5 h-3.5" />
                   ) : (
-                    <Calendar className="w-3.5 h-3.5" />
+                    <CalendarDays className="w-3.5 h-3.5" />
                   )}
                   {scheduleMode === "now" ? "Publish now" : "Schedule"}
                 </Button>

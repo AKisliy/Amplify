@@ -17,7 +17,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
-import { PORT_COLORS } from "./NodePort";
+import { PORT_COLORS } from "../lib/colors";
 import type {
   PortDef,
   StringInputConfig,

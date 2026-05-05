@@ -24,6 +24,7 @@ import {
 import { cn } from "@/lib/utils";
 import { Input } from "@/components/ui/input";
 import type { NodeLibraryItem, NodeCategory } from "../types";
+import { CATEGORY_COLORS } from "../lib/colors";
 
 // ---------------------------------------------------------------------------
 // Visual config
@@ -35,14 +36,6 @@ const CATEGORY_ICONS: Record<NodeCategory, React.FC<{ className?: string }>> = {
   manual:  ({ className }) => <UserCheck className={className} />,
   video:   ({ className }) => <VideoIcon className={className} />,
   utility: ({ className }) => <Wrench    className={className} />,
-};
-
-const CATEGORY_COLORS: Record<NodeCategory, string> = {
-  text:    "#a855f7",
-  image:   "#ec4899",
-  video:   "#ef4444",
-  utility: "#64748b",
-  manual:  "#f97316",
 };
 
 const CATEGORY_ORDER: NodeCategory[] = ["text", "image", "video", "manual", "utility"];

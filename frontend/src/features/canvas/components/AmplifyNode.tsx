@@ -21,21 +21,14 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { CanvasNode, CanvasNodeData, NodeCategory, NodeExecutionStatus, PortDef, ImageBatch } from "../types";
+import { CATEGORY_COLORS } from "../lib/colors";
 import { NodePort } from "./NodePort";
 import { NodeWidget } from "./NodeWidget";
 import { NodeImageGallery } from "./NodeImageGallery";
 
 // ---------------------------------------------------------------------------
-// Category accent colours (inline styles — dynamic at runtime)
+// Category icons
 // ---------------------------------------------------------------------------
-
-const CATEGORY_COLORS: Record<NodeCategory, string> = {
-  text:    "#a855f7",
-  image:   "#ec4899",
-  video:   "#ef4444",
-  utility: "#64748b",
-  manual:  "#f97316",
-};
 
 const CATEGORY_ICONS: Record<NodeCategory, React.FC<{ className?: string }>> = {
   text:    ({ className }) => <Bot       className={className} />,
@@ -210,7 +203,7 @@ export function AmplifyNode({ id, data, selected }: NodeProps<CanvasNode>) {
           <div
             className={cn(
               "flex items-center gap-0.5 px-1.5 py-0.5 rounded-full text-[9px] font-medium shrink-0",
-              "bg-[#ec4899]/15 text-[#ec4899]/80"
+              "bg-canvas-image/15 text-canvas-image/80"
             )}
             title={`${totalImages} image${totalImages !== 1 ? "s" : ""} stored`}
           >

@@ -6,6 +6,19 @@
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
+  /* Canvas semantic colours — node categories & port types */
+  --color-canvas-text: #a855f7;
+  --color-canvas-image: #ec4899;
+  --color-canvas-video: #ef4444;
+  --color-canvas-utility: #64748b;
+  --color-canvas-manual: #f97316;
+  --color-canvas-string: #a855f7;
+  --color-canvas-int: #22c55e;
+  --color-canvas-float: #06b6d4;
+  --color-canvas-boolean: #eab308;
+  --color-canvas-combo: #f97316;
+  --color-canvas-autogrow: #3b82f6;
+  --color-canvas-unknown: #94a3b8;
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
   --color-sidebar-ring: var(--sidebar-ring);

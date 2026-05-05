@@ -82,7 +82,7 @@ function ImageCard({
       className={cn(
         "relative overflow-hidden rounded-md bg-black/30",
         "border border-white/[0.06]",
-        onClick && "cursor-pointer hover:border-[#ec4899]/40 transition-colors duration-150",
+        onClick && "cursor-pointer hover:border-canvas-image/40 transition-colors duration-150",
         className
       )}
     >
@@ -140,7 +140,7 @@ function ModeToggle({
             "nodrag px-1.5 py-0.5 rounded flex items-center gap-1",
             "text-[9px] font-medium transition-all duration-150",
             current === mode
-              ? "bg-[#ec4899]/20 text-[#ec4899]"
+              ? "bg-canvas-image/20 text-canvas-image"
               : "text-white/30 hover:text-white/60"
           )}
         >
@@ -217,7 +217,7 @@ export function NodeImageGallery({ batches, nodeName }: NodeImageGalleryProps) {
               onClick={() => openGallery(currentUuid)}
               className={cn(
                 "nodrag w-5 h-5 rounded flex items-center justify-center",
-                "text-white/25 hover:text-[#ec4899] hover:bg-[#ec4899]/10",
+                "text-white/25 hover:text-canvas-image hover:bg-canvas-image/10",
                 "transition-all duration-150"
               )}
             >

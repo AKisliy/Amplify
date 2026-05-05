@@ -67,20 +67,36 @@ src/
 | `<dialog>` / `createPortal` | `<Dialog>` from `@/components/ui/dialog` |
 | Custom dropdown | `<DropdownMenu>` from `@/components/ui/dropdown-menu` |
 | `<select>` | `<Select>` from `@/components/ui/select` |
-| `<img>` | `<AmplifyImage>` from `@/features/media/components/AmplifyImage` |
+| `<img>` (media-ingest asset) | `<AmplifyImage>` from `@/features/media/components/AmplifyImage` |
+| `<img>` (external URL) | `<Image>` from `next/image` |
 | `<video>` | `<AmplifyVideo>` from `@/features/media/components/AmplifyVideo` |
+| Custom calendar / date picker | `<Calendar>` + `<Popover>` from shadcn |
+| Custom carousel / slider | `<Carousel>` from shadcn |
+| Custom segment control / tabs | `<Tabs>` from `@/components/ui/tabs` |
 
-**Installed shadcn components:** `alert-dialog`, `avatar`, `badge`, `button`, `card`, `dialog`, `dropdown-menu`, `input`, `label`, `popover`, `select`, `separator`, `sheet`, `sidebar`, `skeleton`, `switch`, `table`, `tabs`, `textarea`, `toast`, `tooltip`.
+**`<button>` is NEVER acceptable** — this includes every interactive element regardless of
+how custom or exotic its appearance is: row selectors, day cells, icon-only nav arrows,
+segment toggles, carousel controls. All of these use `<Button>` with an appropriate
+`variant` and `className`. Heavy custom styling belongs in `className`, not in raw HTML.
 
-If a needed component isn't installed: `npx shadcn@latest add <name>`.
+**Installed shadcn components:** `alert-dialog`, `avatar`, `badge`, `button`, `calendar`, `card`, `carousel`, `dialog`, `dropdown-menu`, `input`, `label`, `popover`, `select`, `separator`, `sheet`, `sidebar`, `skeleton`, `switch`, `table`, `tabs`, `textarea`, `toast`, `tooltip`.
+
+If a needed component isn't installed, install it first — **never write a custom
+implementation of something shadcn already provides**: `npx shadcn@latest add <name>`.
 
 **`Button` variants:** `default | destructive | outline | secondary | ghost | link`
 **`Button` sizes:** `default | sm | lg | icon | icon-sm | icon-lg`
 
 ### Images and media
 
-Always use `<AmplifyImage>` for media-ingest assets — never `<img>`. It handles URL
-resolution, blur placeholder, error fallback, and optional lightbox.
+**Rule: raw `<img>` and `<video>` tags are never acceptable.**
+
+| Source | Component | When |
+|---|---|---|
+| media-ingest UUID | `<AmplifyImage mediaId={uuid} …>` | Internal assets managed by media-ingest |
+| External URL (social avatar, CDN) | `<Image src={url} …>` from `next/image` | Avatar URLs from third-party APIs |
+| media-ingest UUID | `<AmplifyVideo mediaId={uuid} …>` | Internal video assets |
+| Direct resolved URL | `<AmplifyVideo src={url} …>` | Pre-resolved video URLs |
 
 `AmplifyImage` uses `fill` — **always wrap in a `relative` container with explicit size**:
 
@@ -93,12 +109,45 @@ resolution, blur placeholder, error fallback, and optional lightbox.
 Variants: `"Tiny" | "Medium" | "Original"`. Use `"Medium"` for thumbnails, `"Tiny"` for
 blur placeholders or micro-previews, `"Original"` for full-res.
 
+`AmplifyVideo` accepts either `mediaId` (resolved automatically) or `src` (direct URL):
+
+```tsx
+<AmplifyVideo mediaId={uuid} mode="hover-play" />          // media-ingest asset
+<AmplifyVideo src={resolvedUrl} mode="controls" loop muted /> // direct URL
+```
+
 ### Styling
 
 - `cn()` from `@/lib/utils` for all conditional classes — it wraps `clsx` + `tailwind-merge`
 - Tailwind only — no CSS-in-JS, no CSS modules
 - Inline `style` only for truly dynamic values that Tailwind can't express (e.g. `style={{ width: px, aspectRatio: "9/16" }}`)
 - Dark-first — the app has a dark theme throughout
+
+### Colors — use design tokens, never hardcode
+
+**Always prefer CSS variables / Tailwind tokens over literal color values.**
+
+| Need | Do this | Not this |
+|---|---|---|
+| UI background / surface | `bg-background`, `bg-card`, `bg-muted` | `bg-[#1a1a1a]`, `style={{ background: "oklch(…)" }}` |
+| Text | `text-foreground`, `text-muted-foreground` | `text-[#999]` |
+| Border | `border-border` | `border-[#333]` |
+| Primary accent | `bg-primary`, `text-primary`, `ring-primary` | `bg-[oklch(…)]` |
+| Box shadow using app colors | `var(--background)`, `var(--card)` inside `style` string | `#1a1a1a`, `#2a2a2a` |
+| Canvas node/port colors | `bg-canvas-image`, `text-canvas-text`, … | `bg-[#ec4899]`, `text-[#a855f7]` |
+
+**Canvas semantic color tokens** (defined in `globals.css @theme inline`, sourced from `canvas/lib/colors.ts`):
+
+| Token | Tailwind class | Use |
+|---|---|---|
+| `--color-canvas-text` | `canvas-text` | text / STRING nodes |
+| `--color-canvas-image` | `canvas-image` | image / IMAGE ports |
+| `--color-canvas-video` | `canvas-video` | video / VIDEO ports |
+| `--color-canvas-manual` | `canvas-manual` | manual review nodes |
+| `--color-canvas-utility` | `canvas-utility` | utility nodes |
+
+When a raw hex string is unavoidable (SVG `stroke`, `box-shadow` alpha composition),
+import from `src/features/canvas/lib/colors.ts` — never repeat the literal elsewhere.
 
 ---
 
@@ -255,9 +304,11 @@ toast({ variant: "destructive", title: "Error", description: err.message });
 ## Common mistakes to avoid
 
 1. **Editing generated files** — `src/lib/api/generated/**` and `TypedSignalR.Client/` are auto-generated. Never touch them.
-2. **Raw `<img>`** — always `<AmplifyImage>` for media-ingest assets; wrap in a `relative` sized container.
-3. **Raw `<button>`, `<input>`, `<textarea>`** — always use shadcn equivalents.
-4. **`createPortal` for modals** — always `<Dialog>` from shadcn.
-5. **Unstable SignalR deps** — don't put `edges`, `nodes`, or freshly-created callbacks in the `useEffect` array that registers SignalR handlers.
-6. **`clsx` directly** — use `cn()` from `@/lib/utils` which also runs `tailwind-merge`.
-7. **Adding auth headers manually** — the axios interceptor handles this automatically.
+2. **Raw `<img>`** — use `<AmplifyImage>` for media-ingest assets or `<Image>` from `next/image` for external URLs. Never `<img>`.
+3. **Raw `<video>`** — use `<AmplifyVideo mediaId={…}>` or `<AmplifyVideo src={…}>`. Never `<video>`.
+4. **Raw `<button>`, `<input>`, `<textarea>`** — always use shadcn equivalents, no exceptions. A "heavily styled" element is not an excuse — put custom styles in `className`.
+5. **Reinventing shadcn components** — before writing a custom calendar, carousel, combobox, date picker, etc., check if shadcn has it. If it's not installed yet, run `npx shadcn@latest add <name>` first.
+6. **`createPortal` for modals** — always `<Dialog>` from shadcn.
+7. **Unstable SignalR deps** — don't put `edges`, `nodes`, or freshly-created callbacks in the `useEffect` array that registers SignalR handlers.
+8. **`clsx` directly** — use `cn()` from `@/lib/utils` which also runs `tailwind-merge`.
+9. **Adding auth headers manually** — the axios interceptor handles this automatically.
