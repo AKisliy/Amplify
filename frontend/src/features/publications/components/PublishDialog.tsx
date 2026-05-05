@@ -14,7 +14,6 @@ import {
   Bookmark,
   MoreHorizontal,
   Zap,
-  X,
   Eye,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -145,7 +144,7 @@ function InstagramReelPreview({ account, description, mediaUrl, mediaType }: {
   const desc = description.trim() || "Write a caption to see it here…";
 
   return (
-    <div className="relative w-full bg-black rounded-[28px] overflow-hidden" style={{ aspectRatio: "9/16" }}>
+    <div className="relative w-full h-full bg-black rounded-[28px] overflow-hidden">
       {/* Media */}
       {mediaType === "Video" ? (
         <video src={mediaUrl} className="absolute inset-0 w-full h-full object-cover" loop muted playsInline autoPlay />
@@ -163,7 +162,7 @@ function InstagramReelPreview({ account, description, mediaUrl, mediaType }: {
       </div>
 
       {/* Right action rail */}
-      <div className="absolute right-2 bottom-24 flex flex-col items-center gap-4 text-white">
+      <div className="absolute right-2 bottom-8 flex flex-col items-center gap-4 text-white">
         {[Heart, MessageCircle, Send, Bookmark, MoreHorizontal].map((Icon, i) => (
           <Icon key={i} className="w-6 h-6" strokeWidth={1.8} />
         ))}
@@ -178,7 +177,7 @@ function InstagramReelPreview({ account, description, mediaUrl, mediaType }: {
       </div>
 
       {/* Bottom info */}
-      <div className="absolute bottom-12 left-3 right-14 text-white space-y-1">
+      <div className="absolute bottom-4 left-3 right-14 text-white space-y-1">
         <div className="flex items-center gap-2">
           <span className="w-7 h-7 rounded-full overflow-hidden border border-white/50 flex-shrink-0">
             {avatar ? (
@@ -196,14 +195,6 @@ function InstagramReelPreview({ account, description, mediaUrl, mediaType }: {
           <span>Original audio · {username}</span>
         </div>
       </div>
-
-      {/* Tab bar */}
-      <div className="absolute bottom-0 left-0 right-0 h-10 bg-black/55 flex items-center justify-around text-white">
-        {(["home", "search", "plus-square", "film", "user"] as const).map((_, i) => {
-          const icons = ["⌂", "◎", "⊕", "▶", "○"];
-          return <span key={i} className={cn("text-lg", i === 3 ? "opacity-100" : "opacity-60")}>{icons[i]}</span>;
-        })}
-      </div>
     </div>
   );
 }
@@ -219,7 +210,7 @@ function TikTokPreview({ account, description, mediaUrl, mediaType }: {
   const desc = description.trim() || "Write a caption to see it here…";
 
   return (
-    <div className="relative w-full bg-black rounded-[28px] overflow-hidden" style={{ aspectRatio: "9/16" }}>
+    <div className="relative w-full h-full bg-black rounded-[28px] overflow-hidden">
       {mediaType === "Video" ? (
         <video src={mediaUrl} className="absolute inset-0 w-full h-full object-cover" loop muted playsInline autoPlay />
       ) : (
@@ -238,7 +229,7 @@ function TikTokPreview({ account, description, mediaUrl, mediaType }: {
       </div>
 
       {/* Right rail */}
-      <div className="absolute right-2 bottom-24 flex flex-col items-center gap-4 text-white">
+      <div className="absolute right-2 bottom-8 flex flex-col items-center gap-4 text-white">
         <div className="relative">
           <span className="block w-10 h-10 rounded-full border-2 border-white overflow-hidden">
             {avatar ? (
@@ -264,29 +255,13 @@ function TikTokPreview({ account, description, mediaUrl, mediaType }: {
       </div>
 
       {/* Bottom info */}
-      <div className="absolute bottom-12 left-3 right-14 text-white space-y-1">
+      <div className="absolute bottom-4 left-3 right-14 text-white space-y-1">
         <p className="text-[14px] font-bold">{username}</p>
         <p className="text-[13px] leading-snug line-clamp-3">{desc}</p>
         <div className="flex items-center gap-1 text-[12px] opacity-90">
           <Music2 className="w-3 h-3" />
           <span>original sound · {username}</span>
         </div>
-      </div>
-
-      {/* Tab bar */}
-      <div className="absolute bottom-0 left-0 right-0 h-11 bg-black/85 flex items-center justify-around text-white text-[10px]">
-        {["Home", "Friends", "", "Inbox", "Profile"].map((label, i) => (
-          <div key={i} className={cn("flex flex-col items-center gap-0.5", i !== 0 && "opacity-70")}>
-            {i === 2 ? (
-              <span className="w-10 h-6 rounded-md flex items-center justify-center font-black text-xl text-black" style={{ background: "linear-gradient(90deg,#25f4ee,#fff 50%,#fe2c55)" }}>+</span>
-            ) : (
-              <>
-                <span className="text-base">{"⌂★⊕✉○"[i]}</span>
-                <span>{label}</span>
-              </>
-            )}
-          </div>
-        ))}
       </div>
     </div>
   );
@@ -542,10 +517,10 @@ export function PublishDialog({ open, onClose, onPublished, projectId, assetId, 
 
   return (
     <Dialog open={open} onOpenChange={(o) => { if (!o) onClose(); }}>
-      <DialogContent className="p-0 border-border bg-card max-w-none w-[min(960px,96vw)] max-h-[92vh] overflow-hidden rounded-2xl">
+      <DialogContent className="p-0 border-border bg-card max-w-none sm:max-w-none w-[min(960px,96vw)] overflow-hidden rounded-2xl">
         <DialogTitle className="sr-only">Publish to social media</DialogTitle>
 
-        <div className="grid grid-cols-2 h-full min-h-0" style={{ maxHeight: "92vh" }}>
+        <div className="grid grid-cols-2" style={{ height: "min(720px, 90vh)" }}>
 
           {/* ── LEFT: Preview ── */}
           <div
@@ -567,13 +542,16 @@ export function PublishDialog({ open, onClose, onPublished, projectId, assetId, 
               )}
             </div>
 
-            <div className="w-full max-w-[240px] flex-1 flex items-center justify-center">
+            <div className="flex-1 flex items-center justify-center min-h-0 w-full">
               {previewAccount ? (
                 <div
-                  className="w-full"
                   style={{
+                    height: "min(520px, calc(100% - 8px))",
+                    aspectRatio: "9 / 16",
                     boxShadow: "0 25px 60px -10px rgba(0,0,0,0.7), 0 0 0 8px #1a1a1a, 0 0 0 9px #2a2a2a",
                     borderRadius: 28,
+                    overflow: "hidden",
+                    flexShrink: 0,
                   }}
                 >
                   <PlatformPreview
@@ -584,7 +562,10 @@ export function PublishDialog({ open, onClose, onPublished, projectId, assetId, 
                   />
                 </div>
               ) : (
-                <div className="w-full aspect-[9/16] rounded-2xl border border-dashed border-white/10 flex items-center justify-center">
+                <div
+                  className="border border-dashed border-white/10 rounded-[28px] flex items-center justify-center"
+                  style={{ height: "min(520px, calc(100% - 8px))", aspectRatio: "9 / 16" }}
+                >
                   <p className="text-xs text-muted-foreground text-center px-4">Select an account to preview</p>
                 </div>
               )}
@@ -602,19 +583,14 @@ export function PublishDialog({ open, onClose, onPublished, projectId, assetId, 
           {/* ── RIGHT: Form ── */}
           <div className="flex flex-col min-h-0">
             {/* Header */}
-            <div className="flex items-start justify-between gap-3 px-5 py-4 border-b border-border">
-              <div>
-                <p className="text-base font-semibold">Publish to social media</p>
-                {assetName && (
-                  <p className="text-xs text-muted-foreground flex items-center gap-1.5 mt-0.5">
-                    <Film className="w-3 h-3" />
-                    {assetName}
-                  </p>
-                )}
-              </div>
-              <Button variant="ghost" size="icon-sm" onClick={onClose} className="rounded-md">
-                <X className="w-4 h-4" />
-              </Button>
+            <div className="px-5 py-4 border-b border-border pr-12">
+              <p className="text-base font-semibold">Publish to social media</p>
+              {assetName && (
+                <p className="text-xs text-muted-foreground flex items-center gap-1.5 mt-0.5">
+                  <Film className="w-3 h-3" />
+                  {assetName}
+                </p>
+              )}
             </div>
 
             {/* Body */}

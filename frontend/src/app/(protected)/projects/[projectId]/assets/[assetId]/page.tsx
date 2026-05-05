@@ -509,7 +509,7 @@ export default function AssetDetailPage() {
                   </div>
                 </div>
 
-                {/* Download / open / publish */}
+                {/* Download / open */}
                 <div className="flex items-center gap-3">
                   <a
                     href={asset.mediaUrl}
@@ -528,20 +528,6 @@ export default function AssetDetailPage() {
                     <Download className="w-3.5 h-3.5" />
                     Download
                   </a>
-                  <div className="ml-auto">
-                    {isVideo ? (
-                      <Button size="sm" onClick={() => setPublishDialogOpen(true)} className="gap-1.5">
-                        <Send className="w-3.5 h-3.5" />
-                        Publish to social media
-                      </Button>
-                    ) : (
-                      <Button size="sm" disabled className="gap-1.5 opacity-50 cursor-not-allowed">
-                        <Send className="w-3.5 h-3.5" />
-                        Publish to social media
-                        <span className="text-[10px] font-medium opacity-70">coming soon</span>
-                      </Button>
-                    )}
-                  </div>
                 </div>
               </div>
 
@@ -599,6 +585,30 @@ export default function AssetDetailPage() {
                       <span className="text-white/25 ml-1.5">/ {records.length} total</span>
                     )}
                   </MetaRow>
+                </div>
+
+                {/* Publish button */}
+                <div className="mt-3">
+                  {isVideo ? (
+                    <Button
+                      size="sm"
+                      onClick={() => setPublishDialogOpen(true)}
+                      className="w-full gap-1.5"
+                    >
+                      <Send className="w-3.5 h-3.5" />
+                      Publish to social media
+                    </Button>
+                  ) : (
+                    <Button
+                      size="sm"
+                      disabled
+                      className="w-full gap-1.5"
+                    >
+                      <Send className="w-3.5 h-3.5" />
+                      Publish to social media
+                      <span className="text-[10px] font-medium opacity-60 ml-1">coming soon</span>
+                    </Button>
+                  )}
                 </div>
               </div>
             </div>
