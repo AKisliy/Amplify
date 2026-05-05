@@ -137,3 +137,25 @@ class ProjectTemplateResponse(ProjectTemplateBase):
 
     # Pydantic V2 Configuration for ORM mapping
     model_config = ConfigDict(from_attributes=True)
+
+
+# -----------------------------------------------------------------------------
+# 5. Canvas Response (GET /v1/templates/{template_id}/canvas)
+# -----------------------------------------------------------------------------
+# Import here to avoid circular imports — job entities have no dependency on
+# project_template entities, so this direction is safe.
+from backend_template.entities.job import JobDetailResponse  # noqa: E402
+
+
+class CanvasResponse(BaseModel):
+    """
+    Single-request payload for rendering the template canvas.
+
+    Combines the workflow definition (template.current_graph_json) with the
+    latest execution state (last_job.node_executions) so the frontend never
+    needs a second round-trip.
+
+    last_job is None when the template has never been executed.
+    """
+    template: ProjectTemplateResponse
+    last_job: JobDetailResponse | None = None
