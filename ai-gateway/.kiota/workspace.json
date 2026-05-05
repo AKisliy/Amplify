@@ -48,7 +48,8 @@
         "/api/internal/media/{mediaId}",
         "/api/internal/media/{mediaId}/link",
         "/api/internal/media/{mediaId}/presigned-upload",
-        "/api/internal/media/{mediaId}/stream"
+        "/api/internal/media/{mediaId}/stream",
+        "/api/media/{mediaId}"
       ],
       "excludePatterns": [],
       "outputPath": "./src/Web/Clients/MediaIngest"

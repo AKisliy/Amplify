@@ -1,11 +1,11 @@
-using FluentValidation;
-using MediaIngest.Domain.Enums;
-
 namespace MediaIngest.Application.Media.Commands.CreateUploadPresignedUrl;
 
 public class CreateUploadPresignedUrlCommandValidator : AbstractValidator<CreateUploadPresignedUrlCommand>
 {
-    private string[] AllowedContentTypes = ["image/jpeg", "image/png", "image/webp", "video/mp4", "video/webm"];
+    private string[] AllowedContentTypes = [
+        "image/jpeg",  "image/png", "image/webp",
+        "video/mp4", "video/webm",
+        "audio/mpeg", "audio/wav", "audio/mp3"];
 
     private const long MaxFileSize = 100 * 1024 * 1024;
 
