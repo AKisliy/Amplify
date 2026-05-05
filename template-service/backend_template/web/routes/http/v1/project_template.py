@@ -4,6 +4,7 @@ from uuid import UUID
 from fastapi import APIRouter, Depends, Query, status
 
 from backend_template.entities.project_template import (
+    CanvasResponse,
     ProjectTemplateCreate,
     ProjectTemplateResponse,
     ProjectTemplateUpdate,
@@ -54,6 +55,30 @@ async def get_template(
     Retrieves a specific template by its UUID.
     """
     return await service.get_template(template_id)
+
+
+@router.get(
+    "/{template_id}/canvas",
+    response_model=CanvasResponse,
+    status_code=status.HTTP_200_OK,
+    summary="Get Template Canvas State",
+)
+async def get_canvas(
+    template_id: UUID,
+    service: Service,
+):
+    """
+    Returns the template definition and its latest execution state in a single
+    response, giving the frontend everything it needs to render the canvas:
+
+    - **template**: workflow definition (`current_graph_json`) for graph rendering.
+    - **last_job**: most recent job with per-node statuses for execution overlay.
+      `null` when the template has never been executed.
+
+    The frontend can use `last_job.prompt_id` to subscribe to live WS deltas
+    when `last_job.status` is `QUEUED` or `PROCESSING`.
+    """
+    return await service.get_canvas(template_id)
 
 
 @router.get(

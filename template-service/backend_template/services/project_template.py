@@ -4,8 +4,11 @@ from typing import Annotated, Sequence
 from uuid import UUID
 
 from fastapi import Depends, HTTPException, status
+from sqlalchemy import select
+from sqlalchemy.orm import selectinload
 
 from backend_template.entities.project_template import (
+    CanvasResponse,
     ProjectTemplateCreate,
     ProjectTemplateResponse,
     ProjectTemplateUpdate,
@@ -15,6 +18,9 @@ from backend_template.entities.events import (
     ProjectTemplateUpdatedEvent,
     ProjectTemplateDeletedEvent,
 )
+from backend_template.entities.job import JobDetailResponse
+from backend_template.models.job import Job
+from backend_template.models.template_version import TemplateVersion
 from backend_template.repositories.project_template import ProjectTemplateRepository
 from backend_template.repositories.library_template import LibraryTemplateRepository
 from backend_template.utils.broker import PROJECT_TEMPLATE_EVENTS_EXCHANGE, publish_event
@@ -34,10 +40,13 @@ class ProjectTemplateService:
         """
         :param repo: Injected ProjectTemplate Repository layer.
         :param library_repo: Injected LibraryTemplate Repository (for duplicate operations).
-        Service does NOT touch the raw DB session.
+        Service does NOT touch the raw DB session directly — except get_canvas,
+        which requires a join query not expressible through BaseRepository.
         """
         self.repo = repo
         self.library_repo = library_repo
+        # Raw session exposed only for the canvas join query.
+        self.db = repo.db
 
     async def create_template(
         self, payload: ProjectTemplateCreate
@@ -214,4 +223,41 @@ class ProjectTemplateService:
         )
 
         return response
-        
+
+    async def get_canvas(self, template_id: UUID) -> CanvasResponse:
+        """
+        Returns everything needed to render the template canvas in a single
+        response: the workflow definition plus the latest job execution state.
+
+        Query strategy (two focused DB round-trips):
+          1. Template lookup via repository (reuses existing get_by_id).
+          2. Latest Job for this template, joined through TemplateVersion,
+             with node_executions eagerly loaded via selectinload.
+
+        last_job is None when the template has never been executed.
+        """
+        # 1. Fetch template (raises 404 if not found via existing service method)
+        orm_template = await self.repo.get_by_id(template_id)
+        if not orm_template:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"ProjectTemplate with ID {template_id} not found.",
+            )
+
+        # 2. Fetch the latest Job linked to this template through TemplateVersion.
+        #    Join: jobs -> template_versions (filtered by template_id), order by
+        #    job.created_at DESC, limit 1.  selectinload avoids N+1 on node_executions.
+        result = await self.db.execute(
+            select(Job)
+            .join(TemplateVersion, Job.template_version_id == TemplateVersion.id)
+            .where(TemplateVersion.template_id == template_id)
+            .options(selectinload(Job.node_executions))
+            .order_by(Job.created_at.desc())
+            .limit(1)
+        )
+        last_job_orm = result.scalar_one_or_none()
+
+        return CanvasResponse(
+            template=ProjectTemplateResponse.model_validate(orm_template),
+            last_job=JobDetailResponse.model_validate(last_job_orm) if last_job_orm else None,
+        )
