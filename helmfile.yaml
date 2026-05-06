@@ -15,8 +15,6 @@ environments:
       - namespace: amplify-dev
 ---
 repositories:
-  - name: bitnami
-    url: https://charts.bitnami.com/bitnami
   - name: open-telemetry
     url: https://open-telemetry.github.io/opentelemetry-helm-charts
   - name: jetstack
@@ -88,26 +86,6 @@ releases:
       - ./publisher/charts/envs/values.{{ .Environment.Name }}.yaml
     needs:
       - gateway
-
-  - name: postgres
-    namespace: test-env
-    chart: bitnami/postgresql
-    version: 15.0.0
-    labels:
-      tier: infra
-    values:
-      - auth:
-          postgresPassword: "superSecretPassword123"
-          username: "app_user"
-          password: "app_password"
-          database: "amplify_db"
-      - architecture: standalone
-      - primary:
-          persistence:
-            enabled: true
-            size: 8Gi
-      - image:
-          tag: latest
 
   - name: mediaingest
     namespace: "{{ .Values.namespace }}"
