@@ -15,6 +15,7 @@ import {
   Sun,
   Moon,
   Monitor,
+  LayoutDashboard,
 } from "lucide-react";
 import { useTheme } from "next-themes";
 
@@ -24,10 +25,12 @@ import {
   SidebarFooter,
   SidebarGroup,
   SidebarGroupContent,
+  SidebarGroupLabel,
   SidebarHeader,
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
+  SidebarSeparator,
 } from "@/components/ui/sidebar";
 import {
   DropdownMenu,
@@ -146,8 +149,30 @@ export function AppSidebar() {
         </SidebarMenu>
       </SidebarHeader>
 
-      <SidebarContent>
+      <SidebarContent className="overflow-hidden">
+        {/* ── Back to Dashboard ──────────────────────────────────────── */}
         <SidebarGroup>
+          <SidebarGroupContent>
+            <SidebarMenu>
+              <SidebarMenuItem>
+                <SidebarMenuButton
+                  onClick={() => router.push("/dashboard")}
+                  tooltip="Back to Dashboard"
+                  className="text-muted-foreground hover:text-foreground"
+                >
+                  <LayoutDashboard />
+                  <span>Dashboard</span>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
+
+        <SidebarSeparator />
+
+        {/* ── Project Navigation ─────────────────────────────────────── */}
+        <SidebarGroup>
+          <SidebarGroupLabel>Project</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
               {NAV_ITEMS.map(({ label, href, icon: Icon, exact }) => {
