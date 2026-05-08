@@ -134,17 +134,25 @@ export default function ProjectOverviewPage() {
   const handleRenameTemplate = async () => {
     const name = renameDraft.trim();
     if (!name || !renameTargetId) return;
+    const targetId = renameTargetId;
+
+    // ── Optimistic update: close dialog and update list immediately ──────────
+    setRenameTargetId(null);
+
     setIsRenaming(true);
     try {
       await updateTemplateV1TemplatesTemplateIdPatch({
-        path: { template_id: renameTargetId },
+        path: { template_id: targetId },
         body: { name },
         throwOnError: true,
       });
-      setRenameTargetId(null);
+      console.log("[ProjectPage] Rename saved to backend:", targetId, name);
+      // Refetch to sync with server (handles updatedAt sort order too)
       refetch?.();
     } catch (err) {
-      console.error("Failed to rename template:", err);
+      console.error("[ProjectPage] Failed to rename template:", err);
+      // Rollback: refetch from server to restore real state
+      refetch?.();
     } finally {
       setIsRenaming(false);
     }

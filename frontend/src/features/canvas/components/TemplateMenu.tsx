@@ -48,6 +48,7 @@ export function TemplateMenu({
   // Rename inline state
   const [renaming, setRenaming] = useState(false);
   const [renameValue, setRenameValue] = useState("");
+  const [isSavingName, setIsSavingName] = useState(false);
   const renameInputRef = useRef<HTMLInputElement>(null);
 
   // Clamp to viewport after render
@@ -118,21 +119,30 @@ export function TemplateMenu({
     }
   };
 
-  // Rename confirm handler
+  // Rename confirm handler — optimistic update first, then persist
   const handleRenameConfirm = async () => {
     const name = renameValue.trim();
-    if (!name) return;
+    if (!name || isSavingName) return;
+
+    // ── Optimistic update: close the menu and update UI immediately ───────────
+    // This ensures the user sees the name change regardless of API result.
+    onRename(name);
+    setRenaming(false);
+    onClose();
+
+    // ── Then persist to backend ───────────────────────────────────────────────
+    setIsSavingName(true);
     try {
-      await updateTemplateV1TemplatesTemplateIdPatch({
+      const result = await updateTemplateV1TemplatesTemplateIdPatch({
         path: { template_id: templateId },
         body: { name },
       });
-      onRename(name);
-    } catch {
-      // silent fail
+      console.log("[TemplateMenu] Rename saved to backend:", result);
+    } catch (err) {
+      console.error("[TemplateMenu] Failed to persist rename to backend:", err);
+    } finally {
+      setIsSavingName(false);
     }
-    setRenaming(false);
-    onClose();
   };
 
   return (
