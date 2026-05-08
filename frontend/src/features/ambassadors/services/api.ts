@@ -229,6 +229,7 @@ export const projectApi = {
     await updateProjectSdk({
       path: { id: data.id },
       body: {
+        id: data.id, 
         name: data.name,
         description: data.description ?? null,
         photo: data.photo ?? null,
@@ -245,6 +246,7 @@ export const projectApi = {
     await updateProjectSdk({
       path: { id },
       body: {
+        id,           // UpdateProjectCommand requires id in the body too
         name,
         description: current.description ?? null,
         photo: current.photo ?? null,
