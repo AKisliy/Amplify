@@ -11,6 +11,7 @@ import {
   Home,
   Layers,
   ChevronRight,
+  Pencil,
 } from "lucide-react";
 
 import { UserMenu } from "@/components/UserMenu";
@@ -23,6 +24,15 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
 import { useProjects } from "@/features/ambassadors/hooks/useProjects";
 import { ProjectDialog } from "@/features/ambassadors/components/ProjectDialog";
 import { ProjectFormValues } from "@/features/ambassadors/schemas/project.schema";
@@ -68,11 +78,13 @@ function ProjectCard({
   index,
   onOpen,
   onDelete,
+  onRename,
 }: {
   project: { id: string; name: string; description?: string | null };
   index: number;
   onOpen: (id: string) => void;
   onDelete: (id: string, e: React.MouseEvent) => void;
+  onRename: (id: string, name: string, e: React.MouseEvent) => void;
 }) {
   return (
     <motion.div variants={fadeUp} className="group/card relative">
@@ -87,21 +99,35 @@ function ProjectCard({
               <FolderKanban className="w-5 h-5 text-primary" />
             </div>
 
-            {/* Delete — appears on hover */}
-            <button
-              id={`delete-project-${project.id}`}
-              aria-label={`Delete project ${project.name}`}
-              onClick={(e) => onDelete(project.id, e)}
-              className="
-                p-1.5 rounded-md
-                text-muted-foreground/50
-                opacity-0 group-hover/card:opacity-100
-                hover:text-destructive hover:bg-destructive/10
-                transition-all duration-150
-              "
-            >
-              <Trash2 className="w-3.5 h-3.5" />
-            </button>
+            {/* Actions — appear on hover */}
+            <div className="flex gap-1 opacity-0 group-hover/card:opacity-100 transition-all duration-150">
+              <button
+                id={`rename-project-${project.id}`}
+                aria-label={`Rename project ${project.name}`}
+                onClick={(e) => onRename(project.id, project.name, e)}
+                className="
+                  p-1.5 rounded-md
+                  text-muted-foreground/50
+                  hover:text-primary hover:bg-primary/10
+                  transition-all duration-150
+                "
+              >
+                <Pencil className="w-3.5 h-3.5" />
+              </button>
+              <button
+                id={`delete-project-${project.id}`}
+                aria-label={`Delete project ${project.name}`}
+                onClick={(e) => onDelete(project.id, e)}
+                className="
+                  p-1.5 rounded-md
+                  text-muted-foreground/50
+                  hover:text-destructive hover:bg-destructive/10
+                  transition-all duration-150
+                "
+              >
+                <Trash2 className="w-3.5 h-3.5" />
+              </button>
+            </div>
           </div>
 
           <div className="mt-3">
@@ -180,8 +206,13 @@ function EmptyState({ onCreateClick }: { onCreateClick: () => void }) {
 
 export default function DashboardPage() {
   const router = useRouter();
-  const { projects, isLoading, createProject, deleteProject } = useProjects();
+  const { projects, isLoading, createProject, deleteProject, renameProject } = useProjects();
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
+
+  // Rename state
+  const [renameTargetId, setRenameTargetId] = useState<string | null>(null);
+  const [renameDraft, setRenameDraft] = useState("");
+  const [isRenaming, setIsRenaming] = useState(false);
 
   const handleNavigateToProject = (projectId: string) => {
     router.push(`/projects/${projectId}`);
@@ -211,6 +242,30 @@ export default function DashboardPage() {
       } catch (error) {
         console.error("Failed to delete project:", error);
       }
+    }
+  };
+
+  const handleOpenRenameDialog = (
+    projectId: string,
+    currentName: string,
+    e: React.MouseEvent
+  ) => {
+    e.stopPropagation();
+    setRenameTargetId(projectId);
+    setRenameDraft(currentName);
+  };
+
+  const handleRenameProject = async () => {
+    const name = renameDraft.trim();
+    if (!name || !renameTargetId) return;
+    setIsRenaming(true);
+    try {
+      await renameProject(renameTargetId, name);
+      setRenameTargetId(null);
+    } catch (error) {
+      console.error("Failed to rename project:", error);
+    } finally {
+      setIsRenaming(false);
     }
   };
 
@@ -311,6 +366,7 @@ export default function DashboardPage() {
                     index={index}
                     onOpen={handleNavigateToProject}
                     onDelete={handleDeleteProject}
+                    onRename={handleOpenRenameDialog}
                   />
                 ))}
               </motion.div>
@@ -349,6 +405,44 @@ export default function DashboardPage() {
         onOpenChange={setIsCreateDialogOpen}
         onSubmit={handleCreateProject}
       />
+
+      {/* ── Rename Project dialog ───────────────────────────────────────────── */}
+      <Dialog
+        open={!!renameTargetId}
+        onOpenChange={(open) => {
+          if (!open) setRenameTargetId(null);
+        }}
+      >
+        <DialogContent className="sm:max-w-sm">
+          <DialogHeader>
+            <DialogTitle>Rename Project</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-2 py-2">
+            <Label htmlFor="rename-project-input">New name</Label>
+            <Input
+              id="rename-project-input"
+              value={renameDraft}
+              onChange={(e) => setRenameDraft(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") handleRenameProject();
+              }}
+              autoFocus
+              disabled={isRenaming}
+            />
+          </div>
+          <DialogFooter>
+            <Button variant="ghost" onClick={() => setRenameTargetId(null)} disabled={isRenaming}>
+              Cancel
+            </Button>
+            <Button
+              onClick={handleRenameProject}
+              disabled={!renameDraft.trim() || isRenaming}
+            >
+              {isRenaming ? "Saving…" : "Save"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

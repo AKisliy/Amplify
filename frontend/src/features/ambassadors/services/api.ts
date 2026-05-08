@@ -59,12 +59,16 @@ function mapAmbassador(dto: AmbassadorResponse): Ambassador {
 }
 
 function mapProject(dto: any): Project {
+  const id: string = dto?.id ?? "";
   return {
-    id: dto?.id ?? "",
+    id,
     name: dto?.name ?? "",
     description: dto?.description ?? null,
     photo: dto?.photo ?? null,
     ambassadorId: dto?.ambassadorId ?? null,
+    localUpdatedAt: typeof window !== "undefined"
+      ? (localStorage.getItem(`project-updated-${id}`) ?? undefined)
+      : undefined,
   };
 }
 
@@ -234,6 +238,21 @@ export const projectApi = {
 
   async deleteProject(id: string): Promise<void> {
     await deleteProjectSdk({ path: { id } });
+  },
+
+  async renameProject(id: string, name: string): Promise<void> {
+    const current = await projectApi.getProject(id);
+    await updateProjectSdk({
+      path: { id },
+      body: {
+        name,
+        description: current.description ?? null,
+        photo: current.photo ?? null,
+      },
+    });
+    if (typeof window !== "undefined") {
+      localStorage.setItem(`project-updated-${id}`, new Date().toISOString());
+    }
   },
 
   async getProjectAssets(
