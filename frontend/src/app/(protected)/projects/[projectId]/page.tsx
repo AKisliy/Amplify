@@ -138,7 +138,7 @@ export default function ProjectOverviewPage() {
     try {
       await updateTemplateV1TemplatesTemplateIdPatch({
         path: { template_id: renameTargetId },
-        body: { name } as any,
+        body: { name },
         throwOnError: true,
       });
       setRenameTargetId(null);

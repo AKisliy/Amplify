@@ -21,6 +21,7 @@ import type { CanvasNode, CanvasEdge } from "../types";
 interface TemplateMenuProps {
   position: { x: number; y: number } | null;
   templateId: string;
+  currentName: string;
   nodes: CanvasNode[];
   edges: CanvasEdge[];
   onRename: (name: string) => void;
@@ -34,6 +35,7 @@ interface TemplateMenuProps {
 export function TemplateMenu({
   position,
   templateId,
+  currentName,
   nodes,
   edges,
   onRename,
@@ -214,7 +216,10 @@ export function TemplateMenu({
             </div>
           ) : (
             <button
-              onClick={() => setRenaming(true)}
+              onClick={() => {
+                setRenameValue(currentName);
+                setRenaming(true);
+              }}
               className={cn(
                 "w-full flex items-center gap-2 px-3 py-1.5",
                 "text-[12px] text-white/70 hover:text-white/95",
