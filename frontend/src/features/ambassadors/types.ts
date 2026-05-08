@@ -96,6 +96,7 @@ export type Template = {
   projectId: string;
   thumbnailUrl?: string | null;
   createdAt?: string;
+  updatedAt?: string;
 };
 
 export type TemplateNode = {
