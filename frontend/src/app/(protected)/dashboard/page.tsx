@@ -11,9 +11,9 @@ import {
   Layers,
   ChevronRight,
   Pencil,
-  Users,
   LayoutTemplate,
-  Activity,
+  Link as LinkIcon,
+  Calendar,
   Sparkles,
   Clock,
   Search,
@@ -51,6 +51,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { useProjects } from "@/features/ambassadors/hooks/useProjects";
+import { useDashboardStats } from "@/features/ambassadors/hooks/useDashboardStats";
 import { ProjectDialog } from "@/features/ambassadors/components/ProjectDialog";
 import { ProjectFormValues } from "@/features/ambassadors/schemas/project.schema";
 
@@ -369,6 +370,7 @@ export default function DashboardPage() {
   const { user } = useAuth();
   const { projects, isLoading, createProject, deleteProject, renameProject } =
     useProjects();
+  const { stats, isLoading: statsLoading } = useDashboardStats(projects);
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
 
   // Search / filter
@@ -519,7 +521,7 @@ export default function DashboardPage() {
           </motion.div>
 
           {/* ── Stats Strip ──────────────────────────────────────────── */}
-          {isLoading ? (
+          {isLoading || statsLoading ? (
             <StatSkeletons />
           ) : (
             <motion.div
@@ -535,21 +537,21 @@ export default function DashboardPage() {
                 accent="bg-primary/10 text-primary"
               />
               <StatCard
-                icon={Users}
-                label="Ambassadors"
-                value={projects.length}
-                accent="bg-violet-500/10 text-violet-600 dark:text-violet-400"
-              />
-              <StatCard
                 icon={LayoutTemplate}
-                label="Workflows"
-                value="—"
+                label="Templates"
+                value={stats.totalTemplates}
                 accent="bg-sky-500/10 text-sky-600 dark:text-sky-400"
               />
               <StatCard
-                icon={Activity}
-                label="Status"
-                value="Active"
+                icon={Calendar}
+                label="Autolists"
+                value={stats.totalAutolists}
+                accent="bg-violet-500/10 text-violet-600 dark:text-violet-400"
+              />
+              <StatCard
+                icon={LinkIcon}
+                label="Connections"
+                value={stats.totalConnections}
                 accent="bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
               />
             </motion.div>
