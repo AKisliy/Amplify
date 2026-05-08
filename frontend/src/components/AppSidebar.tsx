@@ -149,7 +149,7 @@ export function AppSidebar() {
         </SidebarMenu>
       </SidebarHeader>
 
-      <SidebarContent>
+      <SidebarContent className="overflow-hidden">
         {/* ── Back to Dashboard ──────────────────────────────────────── */}
         <SidebarGroup>
           <SidebarGroupContent>
