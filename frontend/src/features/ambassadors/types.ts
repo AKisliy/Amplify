@@ -40,6 +40,8 @@ export type Project = {
   description?: string | null;
   photo?: string | null;
   ambassadorId?: string | null;
+  /** ISO string stored in localStorage when project is renamed; used for client-side sort */
+  localUpdatedAt?: string;
 };
 
 export type CreateProjectDto = {
@@ -96,6 +98,7 @@ export type Template = {
   projectId: string;
   thumbnailUrl?: string | null;
   createdAt?: string;
+  updatedAt?: string;
 };
 
 export type TemplateNode = {

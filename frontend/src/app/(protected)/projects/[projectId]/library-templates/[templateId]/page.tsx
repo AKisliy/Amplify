@@ -28,7 +28,7 @@ import "@xyflow/react/dist/style.css";
 import { Button }      from "@/components/ui/button";
 import { useToast }    from "@/hooks/use-toast";
 import { useTheme } from "next-themes";
-import { createTemplateV1TemplatesPost } from "@/lib/api/template-service";
+import { createTemplateV1TemplatesPost, getTemplatesByProjectV1TemplatesProjectProjectIdGet } from "@/lib/api/template-service";
 import { getLibraryTemplate, type LibraryTemplate } from "@/features/templates/hooks/useLibraryTemplates";
 
 import { AmplifyNode }      from "@/features/canvas/components/AmplifyNode";
@@ -179,10 +179,30 @@ export default function LibraryTemplatePreviewPage() {
     if (!projectId || !template || isDuplicating) return;
     setIsDuplicating(true);
     try {
+      // Fetch existing template names to avoid clashes
+      let existingNames: Set<string> = new Set();
+      try {
+        const { data: existing } = await getTemplatesByProjectV1TemplatesProjectProjectIdGet({
+          path: { project_id: projectId },
+        });
+        existingNames = new Set((existing ?? []).map((t) => t.name));
+      } catch {
+        // Non-fatal — proceed without uniqueness check
+      }
+
+      // Generate a unique name
+      const base = `Copy of ${template.name}`;
+      let candidateName = base;
+      let counter = 2;
+      while (existingNames.has(candidateName)) {
+        candidateName = `${base} (${counter})`;
+        counter++;
+      }
+
       const { data: newTpl } = await createTemplateV1TemplatesPost({
         body: {
           project_id: projectId,
-          name: `Copy of ${template.name}`,
+          name: candidateName,
           description: template.description ?? undefined,
           current_graph_json: template.graph_json ?? {},
         },
@@ -190,7 +210,7 @@ export default function LibraryTemplatePreviewPage() {
       });
       toast({
         title: "Duplicated!",
-        description: `"${newTpl!.name}" added to your templates.`,
+        description: `“${newTpl!.name}” added to your templates.`,
         duration: 5000,
       });
       router.push(`/projects/${projectId}/templates/${newTpl!.id}`);

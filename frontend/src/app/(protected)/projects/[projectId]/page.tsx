@@ -2,7 +2,7 @@
 
 import { useParams, useRouter } from "next/navigation";
 import { motion } from "framer-motion";
-import { User, ArrowRight, LayoutTemplate, Plus, Trash2, Camera, Image as ImageIcon, X } from "lucide-react";
+import { User, ArrowRight, LayoutTemplate, Plus, Trash2, Camera, Image as ImageIcon, X, Pencil } from "lucide-react";
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -75,6 +75,11 @@ export default function ProjectOverviewPage() {
   const [deleteTargetName, setDeleteTargetName] = useState<string>("");
   const [isDeleting, setIsDeleting] = useState(false);
 
+  // Rename state
+  const [renameTargetId, setRenameTargetId] = useState<string | null>(null);
+  const [renameDraft, setRenameDraft] = useState("");
+  const [isRenaming, setIsRenaming] = useState(false);
+
   const handleCreateTemplate = async () => {
     const name = newTemplateName.trim();
     if (!name || !projectId) return;
@@ -123,6 +128,33 @@ export default function ProjectOverviewPage() {
       console.error("Failed to delete template:", err);
     } finally {
       setIsDeleting(false);
+    }
+  };
+
+  const handleRenameTemplate = async () => {
+    const name = renameDraft.trim();
+    if (!name || !renameTargetId) return;
+    const targetId = renameTargetId;
+
+    // ── Optimistic update: close dialog and update list immediately ──────────
+    setRenameTargetId(null);
+
+    setIsRenaming(true);
+    try {
+      await updateTemplateV1TemplatesTemplateIdPatch({
+        path: { template_id: targetId },
+        body: { name },
+        throwOnError: true,
+      });
+      console.log("[ProjectPage] Rename saved to backend:", targetId, name);
+      // Refetch to sync with server (handles updatedAt sort order too)
+      refetch?.();
+    } catch (err) {
+      console.error("[ProjectPage] Failed to rename template:", err);
+      // Rollback: refetch from server to restore real state
+      refetch?.();
+    } finally {
+      setIsRenaming(false);
     }
   };
 
@@ -287,28 +319,47 @@ export default function ProjectOverviewPage() {
                       </CardContent>
                     </Card>
 
-                    {/* Delete button — visible on card hover */}
-                    <button
-                      id={`delete-template-${template.id}`}
-                      aria-label={`Delete template ${template.name}`}
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setDeleteTargetId(template.id);
-                        setDeleteTargetName(template.name);
-                      }}
-                      className="
-                        absolute top-2 right-2 z-10
-                        p-1.5 rounded-md
-                        bg-background/80 backdrop-blur-sm
-                        border border-border/50
-                        text-muted-foreground
-                        opacity-0 group-hover/card:opacity-100
-                        hover:text-destructive hover:border-destructive/40 hover:bg-destructive/10
-                        transition-all duration-150
-                      "
-                    >
-                      <Trash2 className="w-3.5 h-3.5" />
-                    </button>
+                    {/* Rename + Delete buttons — visible on card hover */}
+                    <div className="absolute top-2 right-2 z-10 flex gap-1 opacity-0 group-hover/card:opacity-100 transition-all duration-150">
+                      <button
+                        id={`rename-template-${template.id}`}
+                        aria-label={`Rename template ${template.name}`}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setRenameTargetId(template.id);
+                          setRenameDraft(template.name);
+                        }}
+                        className="
+                          p-1.5 rounded-md
+                          bg-background/80 backdrop-blur-sm
+                          border border-border/50
+                          text-muted-foreground
+                          hover:text-primary hover:border-primary/40 hover:bg-primary/10
+                          transition-all duration-150
+                        "
+                      >
+                        <Pencil className="w-3.5 h-3.5" />
+                      </button>
+                      <button
+                        id={`delete-template-${template.id}`}
+                        aria-label={`Delete template ${template.name}`}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setDeleteTargetId(template.id);
+                          setDeleteTargetName(template.name);
+                        }}
+                        className="
+                          p-1.5 rounded-md
+                          bg-background/80 backdrop-blur-sm
+                          border border-border/50
+                          text-muted-foreground
+                          hover:text-destructive hover:border-destructive/40 hover:bg-destructive/10
+                          transition-all duration-150
+                        "
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
                   </motion.div>
                 ))}
               </SectionGrid>
@@ -406,6 +457,44 @@ export default function ProjectOverviewPage() {
               disabled={!newTemplateName.trim() || isCreating}
             >
               {isCreating ? "Creating…" : "Create"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* ── Rename Template dialog ───────────────────────────────────────────── */}
+      <Dialog
+        open={!!renameTargetId}
+        onOpenChange={(open) => {
+          if (!open) setRenameTargetId(null);
+        }}
+      >
+        <DialogContent className="sm:max-w-sm">
+          <DialogHeader>
+            <DialogTitle>Rename Template</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-2 py-2">
+            <Label htmlFor="rename-template-input">New name</Label>
+            <Input
+              id="rename-template-input"
+              value={renameDraft}
+              onChange={(e) => setRenameDraft(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") handleRenameTemplate();
+              }}
+              autoFocus
+              disabled={isRenaming}
+            />
+          </div>
+          <DialogFooter>
+            <Button variant="ghost" onClick={() => setRenameTargetId(null)} disabled={isRenaming}>
+              Cancel
+            </Button>
+            <Button
+              onClick={handleRenameTemplate}
+              disabled={!renameDraft.trim() || isRenaming}
+            >
+              {isRenaming ? "Saving…" : "Save"}
             </Button>
           </DialogFooter>
         </DialogContent>

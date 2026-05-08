@@ -1208,6 +1208,7 @@ const { registry, isLoading: registryLoading } = useNodeRegistry();
           <TemplateMenu
             position={templateMenuPos}
             templateId={templateId}
+            currentName={templateName}
             nodes={nodes}
             edges={edges}
             onRename={setTemplateName}

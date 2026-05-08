@@ -17,6 +17,7 @@ function mapToTemplate(dto: ProjectTemplateResponse): Template {
     // Use API thumbnail_url when available, fall back to localStorage
     thumbnailUrl: (dto as any).thumbnail_url ?? getLocalCover(dto.id),
     createdAt: dto.created_at,
+    updatedAt: dto.updated_at,
   };
 }
 
@@ -33,7 +34,15 @@ export function useProjectTemplates(projectId?: string) {
         path: { project_id: id },
         throwOnError: true,
       });
-      setTemplates((data ?? []).map(mapToTemplate));
+      setTemplates(
+        (data ?? [])
+          .map(mapToTemplate)
+          .sort((a, b) => {
+            const ta = a.updatedAt ?? a.createdAt ?? "";
+            const tb = b.updatedAt ?? b.createdAt ?? "";
+            return tb.localeCompare(ta);
+          })
+      );
     } catch (err: any) {
       console.error("Failed to fetch templates:", err);
       setError(err.message || "Failed to fetch templates");
