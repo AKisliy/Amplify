@@ -260,7 +260,7 @@ export function AmplifyNode({ id, data, selected }: NodeProps<CanvasNode>) {
               port={port}
               value={data.config[port.id]}
               onChange={(v) => handleValueChange(port.id, v)}
-              disabled={data.status === "processing" || data.status === "queued"}
+              disabled={false}
               isConnected={connectedInputIds.has(port.id)}
             />
           ))}
@@ -332,7 +332,7 @@ export function AmplifyNode({ id, data, selected }: NodeProps<CanvasNode>) {
                       port={port}
                       value={data.config[port.id]}
                       onChange={(v) => handleValueChange(port.id, v)}
-                      disabled={data.status === "processing" || data.status === "queued"}
+                      disabled={false}
                       isConnected={connectedInputIds.has(port.id)}
                     />
                   ))}
