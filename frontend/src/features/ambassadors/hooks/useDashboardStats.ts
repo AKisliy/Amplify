@@ -1,7 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
-import { listTemplatesV1TemplatesGet } from "@/lib/api/template-service";
-import { getAutoListsForProject } from "@/lib/api/publisher";
-import { getApiConnections } from "@/lib/api/publisher";
+import { getTemplatesByProjectV1TemplatesProjectProjectIdGet } from "@/lib/api/template-service";
+import { getAutoListsForProject, getApiConnections } from "@/lib/api/publisher";
 import type { Project } from "../types";
 
 export interface DashboardStats {
@@ -34,10 +33,16 @@ export function useDashboardStats(projects: Project[]) {
     setIsLoading(true);
 
     try {
-      // ── Templates: single call returns ALL user templates ────────────
-      const templatesPromise = listTemplatesV1TemplatesGet()
-        .then((res) => (res.data ?? []).length)
-        .catch(() => 0);
+      // ── Templates: per-project, aggregate ───────────────────────────
+      const templatesPromise = Promise.all(
+        projects.map((p) =>
+          getTemplatesByProjectV1TemplatesProjectProjectIdGet({
+            path: { project_id: p.id },
+          })
+            .then((res) => (res.data ?? []).length)
+            .catch(() => 0)
+        )
+      ).then((counts) => counts.reduce((sum, c) => sum + c, 0));
 
       // ── Autolists: per-project, aggregate ───────────────────────────
       const autolistsPromise = Promise.all(
