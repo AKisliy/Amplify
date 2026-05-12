@@ -508,3 +508,6 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+# Wiki raw files
+wiki/**/raw/
