@@ -27,6 +27,7 @@ dev-cluster-reset: ## Удалить существующий кластер min
 dev-cluster: ## Запустить minikube, установить Istio и External Secrets Operator
 	minikube start --memory=$(MINIKUBE_MEMORY) --cpus=$(MINIKUBE_CPUS)
 	@echo "→ Installing Istio..."
+	@which istioctl > /dev/null 2>&1 || brew install istioctl
 	istioctl install --set profile=demo -y
 	@echo "→ Creating namespace $(NAMESPACE)..."
 	kubectl create namespace $(NAMESPACE) --dry-run=client -o yaml | kubectl apply -f -
