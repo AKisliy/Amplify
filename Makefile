@@ -28,7 +28,7 @@ dev-cluster: ## Запустить minikube, установить Istio и Exter
 	minikube start --memory=$(MINIKUBE_MEMORY) --cpus=$(MINIKUBE_CPUS)
 	@echo "→ Installing Istio..."
 	@which istioctl > /dev/null 2>&1 || brew install istioctl
-	istioctl install --set profile=demo -y
+	istioctl install --set profile=default -y
 	@echo "→ Creating namespace $(NAMESPACE)..."
 	kubectl create namespace $(NAMESPACE) --dry-run=client -o yaml | kubectl apply -f -
 	kubectl label namespace $(NAMESPACE) istio-injection=enabled --overwrite
