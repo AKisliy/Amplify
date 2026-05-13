@@ -1,0 +1,25 @@
+environment: Development
+
+secrets:
+  rabbitMqConnection:
+    key: rabbitmq-test
+
+volumeMounts:
+  - name: config-volume
+    mountPath: /app/appsettings.Development.json
+    subPath: appsettings_override.json
+
+appConfig:
+  Logging:
+    LogLevel:
+      Default: Information
+      Microsoft.AspNetCore: Warning
+  RabbitMQ:
+    Url: ""
+  CorsOptions:
+    AllowedOrigins:
+      - "http://localhost:3000"
+    DefaultPolicyName: "DevCorsPolicy"
+  Jwt:
+    Issuer: "http://userservice.amplify-dev.svc.cluster.local/userservice/api/auth"
+    Audience: "MyAppDevelopmentUsers"

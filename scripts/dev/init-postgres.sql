@@ -1,0 +1,6 @@
+CREATE DATABASE amplify_publisher;
+CREATE DATABASE amplify_publisher_hangfire;
+CREATE DATABASE amplify_userservice;
+CREATE DATABASE amplify_media_ingest;
+CREATE DATABASE amplify_media_ingest_hangfire;
+CREATE DATABASE amplify_template_service;

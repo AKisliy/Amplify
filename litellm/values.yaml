@@ -1,0 +1,3 @@
+# LiteLLM Helm chart values.
+# Значения для конкретного окружения определяются в values.<env>.yaml.
+replicaCount: 1

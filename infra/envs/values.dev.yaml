@@ -1,0 +1,74 @@
+# ESO fake provider — заменяет GCP Secret Manager для локальной разработки.
+# Все значения хранятся здесь в открытом виде (только dev-данные без реальных ключей).
+secretStore:
+  fake: true
+  fakeData:
+    # --- Publisher ---
+    - key: publisher-db-conn-test
+      value: "Host=host.minikube.internal;Port=15432;Database=amplify_publisher;Username=postgres;Password=postgres"
+    - key: publisher-hangfire-db-conn-test
+      value: "Host=host.minikube.internal;Port=15432;Database=amplify_publisher_hangfire;Username=postgres;Password=postgres"
+    - key: tiktok-client-key-sandbox
+      value: "dev-tiktok-key"
+    - key: tiktok-client-secret-sandbox
+      value: "dev-tiktok-secret"
+    - key: instagram-app-id
+      value: "dev-instagram-id"
+    - key: instagram-app-secret
+      value: "dev-instagram-secret"
+    # --- Userservice ---
+    - key: userservice-db-conn
+      value: "Host=host.minikube.internal;Port=15432;Database=amplify_userservice;Username=postgres;Password=postgres"
+    - key: resend-api-key-test
+      value: "dev-resend-key"
+    # --- Media Ingest ---
+    - key: media-ingest-db-conn-dev
+      value: "Host=host.minikube.internal;Port=15432;Database=amplify_media_ingest;Username=postgres;Password=postgres"
+    - key: media-ingest-hangfire-db-conn
+      value: "Host=host.minikube.internal;Port=15432;Database=amplify_media_ingest_hangfire;Username=postgres;Password=postgres"
+    - key: test-bucket-access-key
+      value: "minioadmin"
+    - key: test-bucket-secret-key
+      value: "minioadmin"
+    # --- Video Editor ---
+    - key: video-editor-bucket-access-key
+      value: "minioadmin"
+    - key: video-editor-bucket-secret-key
+      value: "minioadmin"
+    - key: celery-result-backend
+      value: "redis://host.minikube.internal:6379/0"
+    # --- Template Service ---
+    - key: template-service-db-conn-test
+      value: "postgresql://postgres:postgres@host.minikube.internal:15432/amplify_template_service"
+    - key: template-service-sa-key-test
+      value: "{}"
+    - key: test-langfuse-secret-key
+      value: "dev-langfuse-secret"
+    - key: test-langfuse-public-key
+      value: "dev-langfuse-public"
+    - key: litellm-api-key
+      value: "sk-dev-litellm-api"
+    # --- AI Gateway ---
+    - key: openai-test-api-key
+      value: "dev-openai-key"
+    - key: elevenlabs-test-key
+      value: "dev-elevenlabs-key"
+    # --- RabbitMQ (shared) ---
+    - key: rabbitmq-test
+      value: "amqp://guest:guest@host.minikube.internal:5672/"
+    # --- LiteLLM ---
+    - key: litellm-master-key-test
+      value: "sk-dev-litellm-master"
+
+observability:
+  enabled: false
+  collector:
+    name: otel
+  grafana:
+    otlpEndpoint: ""
+    secretKey: "grafana-cloud-otlp-token"
+    instanceIdKey: "grafana-cloud-instance-id"
+
+auth:
+  enabled: false
+  publicPaths: []

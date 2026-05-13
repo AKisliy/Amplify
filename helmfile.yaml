@@ -9,6 +9,10 @@ environments:
   prod:
     values:
       - infra/globals/values.prod.yaml
+  dev:
+    values:
+      - infra/globals/values.dev.yaml
+      - namespace: amplify-dev
 ---
 repositories:
   - name: bitnami

@@ -1,0 +1,36 @@
+environment: "Development"
+
+secret:
+  name: mediaingest-k8s-secret
+
+secrets:
+  s3AccessKey: test-bucket-access-key
+  s3SecretKey: test-bucket-secret-key
+  connectionStringKey: media-ingest-db-conn-dev
+  rabbitMqConnectionKey: rabbitmq-test
+  hangfireConnectionStringKey: media-ingest-hangfire-db-conn
+
+volumeMounts:
+  - name: config-volume
+    mountPath: /app/appsettings.Development.json
+    subPath: appsettings_override.json
+
+appConfig:
+  S3:
+    Host: "host.minikube.internal:9000"
+    AccessKey: ""
+    SecretKey: ""
+    BucketName: "amplify-dev"
+    UseSsl: false
+    PublicBucketUrl: "http://localhost:9000/amplify-dev/"
+  YtDlp:
+    YoutubeDlPath: "/usr/local/bin/yt-dlp"
+  MediaIngest:
+    BasePath: "/media"
+  CorsOptions:
+    DefaultPolicyName: DefaultCorsPolicy
+    AllowedOrigins:
+      - "http://localhost:3000"
+  Jwt:
+    Issuer: "http://userservice.amplify-dev.svc.cluster.local/userservice/api/auth"
+    Audience: "MyAppDevelopmentUsers"
