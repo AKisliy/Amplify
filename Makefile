@@ -1,6 +1,6 @@
 NAMESPACE ?= amplify-dev
-MINIKUBE_MEMORY ?= 4096
-MINIKUBE_CPUS ?= 2
+MINIKUBE_MEMORY ?= 10240
+MINIKUBE_CPUS ?= 4
 
 # ─── Инфраструктура (docker-compose) ──────────────────────────────────────────
 
