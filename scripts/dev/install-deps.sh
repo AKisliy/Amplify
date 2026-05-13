@@ -41,10 +41,8 @@ fi
 # helmfile
 if ! command -v helmfile &>/dev/null; then
   echo "→ Installing helmfile..."
-  HELMFILE_VERSION="1.1.2"
-  curl -fsSL "https://github.com/helmfile/helmfile/releases/download/v${HELMFILE_VERSION}/helmfile_${HELMFILE_VERSION}_linux_amd64.tar.gz" | tar -xz helmfile
-  sudo install -o root -g root -m 0755 helmfile /usr/local/bin/helmfile
-  rm -f helmfile
+  curl -fsSL "https://github.com/helmfile/helmfile/releases/latest/download/helmfile_$(uname -s)_$(uname -m)" -o /tmp/helmfile
+  sudo install -o root -g root -m 0755 /tmp/helmfile /usr/local/bin/helmfile
 else
   echo "→ helmfile already installed"
 fi
