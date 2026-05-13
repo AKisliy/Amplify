@@ -41,8 +41,8 @@ fi
 # helmfile
 if ! command -v helmfile &>/dev/null; then
   echo "→ Installing helmfile..."
-  HELMFILE_VERSION=$(curl -fsSL https://api.github.com/repos/helmfile/helmfile/releases/latest | grep '"tag_name"' | cut -d'"' -f4)
-  curl -fsSL "https://github.com/helmfile/helmfile/releases/download/${HELMFILE_VERSION}/helmfile_linux_amd64.tar.gz" | tar -xz helmfile
+  HELMFILE_VERSION="1.1.2"
+  curl -fsSL "https://github.com/helmfile/helmfile/releases/download/v${HELMFILE_VERSION}/helmfile_${HELMFILE_VERSION}_linux_amd64.tar.gz" | tar -xz helmfile
   sudo install -o root -g root -m 0755 helmfile /usr/local/bin/helmfile
   rm -f helmfile
 else
@@ -60,7 +60,7 @@ fi
 # istioctl
 if ! command -v istioctl &>/dev/null; then
   echo "→ Installing istioctl..."
-  curl -fsSL https://istio.io/downloadIstio | ISTIO_VERSION=1.24.3 TARGET_ARCH=x86_64 sh -
+  curl -fsSL https://istio.io/downloadIstio | ISTIO_VERSION=1.25.2 TARGET_ARCH=x86_64 sh -
   sudo install -o root -g root -m 0755 istio-*/bin/istioctl /usr/local/bin/istioctl
   rm -rf istio-*/
 else
