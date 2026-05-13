@@ -43,7 +43,8 @@ if ! command -v helmfile &>/dev/null; then
   echo "→ Installing helmfile..."
   OS=$(uname -s | tr '[:upper:]' '[:lower:]')
   ARCH=$(uname -m | sed 's/x86_64/amd64/;s/aarch64/arm64/')
-  curl -fsSL "https://github.com/helmfile/helmfile/releases/latest/download/helmfile_${OS}_${ARCH}" -o /tmp/helmfile
+  VERSION=$(curl -fsSL https://api.github.com/repos/helmfile/helmfile/releases/latest | grep '"tag_name"' | cut -d'"' -f4 | tr -d 'v')
+  curl -fsSL "https://github.com/helmfile/helmfile/releases/latest/download/helmfile_${VERSION}_${OS}_${ARCH}.tar.gz" | tar -xz -C /tmp helmfile
   sudo install -o root -g root -m 0755 /tmp/helmfile /usr/local/bin/helmfile
 else
   echo "→ helmfile already installed"
