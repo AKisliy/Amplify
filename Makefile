@@ -55,9 +55,8 @@ dev-build-svc: ## Собрать один сервис: make dev-build-svc SVC=a
 .PHONY: dev-operators
 dev-operators: ## Установить ESO, задеплоить gateway (ClusterSecretStore, Istio Gateway)
 	@echo "→ Installing External Secrets Operator..."
-	helm repo add external-secrets https://charts.external-secrets.io || true
-	helm repo update external-secrets
-	helm upgrade --install external-secrets external-secrets/external-secrets \
+	helm upgrade --install external-secrets \
+	  oci://ghcr.io/external-secrets/charts/external-secrets \
 	  --namespace external-secrets-system --create-namespace \
 	  --set installCRDs=true --wait
 	helmfile -e dev apply -l name=gateway
