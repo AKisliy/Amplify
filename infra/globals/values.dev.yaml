@@ -1,0 +1,7 @@
+global:
+  appDomain: "*"
+  clusterDomain: "*"
+  gateway:
+    name: amplify-gateway
+  secretStore:
+    name: gcp-store

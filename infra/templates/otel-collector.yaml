@@ -1,3 +1,4 @@
+{{- if .Values.observability.enabled }}
 apiVersion: opentelemetry.io/v1beta1
 kind: OpenTelemetryCollector
 metadata:
@@ -35,7 +36,7 @@ spec:
             endpoint: 0.0.0.0:4317
           http:
             endpoint: 0.0.0.0:4318
-    
+
     extensions:
       basicauth/grafana_cloud:
         client_auth:
@@ -86,3 +87,4 @@ spec:
           receivers: [otlp]
           processors: [memory_limiter, resourcedetection/gcp, k8sattributes, batch]
           exporters: [otlphttp/grafana]
+{{- end }}

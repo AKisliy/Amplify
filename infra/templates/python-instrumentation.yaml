@@ -1,3 +1,4 @@
+{{- if .Values.observability.enabled }}
 apiVersion: opentelemetry.io/v1alpha1
 kind: Instrumentation
 metadata:
@@ -26,3 +27,4 @@ spec:
         value: "true"
       - name: OTEL_PYTHON_LOGGING_AUTO_INSTRUMENTATION_ENABLED
         value: "true"
+{{- end }}

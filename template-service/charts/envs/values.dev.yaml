@@ -1,0 +1,25 @@
+otel:
+  injectPython: false
+
+secrets:
+  postgresDsn:
+    key: template-service-db-conn-test
+  serviceAccountKeyFile:
+    key: template-service-sa-key-test
+  rabbitmqUrl:
+    key: rabbitmq-test
+  langfuseSecretKey:
+    key: test-langfuse-secret-key
+  langfusePublicKey:
+    key: test-langfuse-public-key
+  litellmApiKey:
+    key: litellm-api-key
+
+config:
+  mediaIngestUrl: "http://mediaingest.amplify-dev.svc.cluster.local/media/api"
+  gcpProjectId: "dev-local"
+  gcpLocation: "global"
+  gcpStorageUri: "gs://amplify-dev"
+  userServiceUrl: "http://userservice.amplify-dev.svc.cluster.local/userservice/api"
+  videoEditorUrl: "http://video-editor.amplify-dev.svc.cluster.local:8000"
+  langfuseUrl: "https://cloud.langfuse.com"

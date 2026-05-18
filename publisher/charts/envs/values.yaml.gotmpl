@@ -6,8 +6,7 @@ gateway:
 
 virtualService:
   hosts:
-    - {{ .Values.global.appDomain }}
-    - {{ .Values.global.clusterDomain }}
+    {{- list .Values.global.appDomain .Values.global.clusterDomain | uniq | toYaml | nindent 4 }}
 
 cors:
   allowedOrigins:

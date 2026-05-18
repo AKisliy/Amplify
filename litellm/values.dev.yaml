@@ -1,0 +1,2 @@
+# LiteLLM отключён в dev — используйте прямые API-ключи в appConfig сервисов.
+replicaCount: 0

@@ -1,0 +1,19 @@
+environment: Development
+
+secrets:
+  openAiApiKey:
+    key: openai-test-api-key
+  elevenLabsApiKey:
+    key: elevenlabs-test-key
+
+volumeMounts:
+  - name: config-volume
+    mountPath: /app/appsettings.Development.json
+    subPath: appsettings_override.json
+
+appConfig:
+  MediaIngest:
+    BaseUrl: "http://mediaingest.amplify-dev.svc.cluster.local"
+  OpenAi:
+    BaseUrl: "https://api.openai.com/v1"
+    TranscriptionModel: "whisper-1"
