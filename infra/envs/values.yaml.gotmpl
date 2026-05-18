@@ -8,6 +8,7 @@ gateway:
     hosts:
     - {{ .Values.global.clusterDomain | quote }}
 observability:
+  enabled: true
   collector:
     name: otel
   grafana:
