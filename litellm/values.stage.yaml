@@ -8,7 +8,7 @@ proxy_config:
       litellm_params:
         model: vertex_ai/imagen-3.0-generate-002
         vertex_project: "project-d72a81f9-0097-4b5b-a62"
-        vertex_location: "us-central1"
+        vertex_location: "global"
 
     # ── Gemini image generation (Gemini 3 Pro Image) ────────────────────────
     - model_name: gemini-3-pro-image-preview
@@ -22,50 +22,50 @@ proxy_config:
       litellm_params:
         model: vertex_ai/gemini-2.0-flash-exp
         vertex_project: "project-d72a81f9-0097-4b5b-a62"
-        vertex_location: "us-central1"
+        vertex_location: "global"
 
     - model_name: gemini-2.5-flash-preview-05-20
       litellm_params:
         model: vertex_ai/gemini-2.5-flash-preview-05-20
         vertex_project: "project-d72a81f9-0097-4b5b-a62"
-        vertex_location: "us-central1"
+        vertex_location: "global"
 
     # ── Veo video generation ────────────────────────────────────────────────
     - model_name: veo-2.0-generate-001
       litellm_params:
         model: vertex_ai/veo-2.0-generate-001
         vertex_project: "project-d72a81f9-0097-4b5b-a62"
-        vertex_location: "us-central1"
+        vertex_location: "global"
 
     - model_name: veo-3.0-generate-001
       litellm_params:
         model: vertex_ai/veo-3.0-generate-001
         vertex_project: "project-d72a81f9-0097-4b5b-a62"
-        vertex_location: "us-central1"
+        vertex_location: "global"
 
     - model_name: veo-3.0-fast-generate-001
       litellm_params:
         model: vertex_ai/veo-3.0-fast-generate-001
         vertex_project: "project-d72a81f9-0097-4b5b-a62"
-        vertex_location: "us-central1"
+        vertex_location: "global"
 
     - model_name: veo-3.1-generate-001
       litellm_params:
         model: vertex_ai/veo-3.1-generate-001
         vertex_project: "project-d72a81f9-0097-4b5b-a62"
-        vertex_location: "us-central1"
+        vertex_location: "global"
 
     - model_name: veo-3.1-fast-generate-001
       litellm_params:
         model: vertex_ai/veo-3.1-fast-generate-001
         vertex_project: "project-d72a81f9-0097-4b5b-a62"
-        vertex_location: "us-central1"
+        vertex_location: "global"
 
     - model_name: veo-3.1-lite-generate-001
       litellm_params:
         model: vertex_ai/veo-3.1-lite-generate-001
         vertex_project: "project-d72a81f9-0097-4b5b-a62"
-        vertex_location: "us-central1"
+        vertex_location: "global"
 
     # ── ElevenLabs TTS (via video-editor / ai-gateway) ──────────────────────
     - model_name: eleven_multilingual_v2
