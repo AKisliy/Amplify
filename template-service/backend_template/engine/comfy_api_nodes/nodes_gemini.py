@@ -805,13 +805,16 @@ class GeminiImage2Node(IO.ComfyNode):
         # TODO: input image support (images param) requires downloading GCS bytes
         # and passing via extra_body["contents"]. Not implemented in this POC.
 
-        response = await litellm.aimage_generation(
+        from openai import AsyncOpenAI
+        client = AsyncOpenAI(
+            base_url=f"{litellm_config.litellm_base_url}/v1",
+            api_key=litellm_config.litellm_api_key,
+        )
+        response = await client.images.generate(
             model=model,
             prompt=prompt,
             n=1,
             size=size,
-            api_base=litellm_config.litellm_base_url,
-            api_key=litellm_config.litellm_api_key,
             extra_body=extra_body,
         )
 

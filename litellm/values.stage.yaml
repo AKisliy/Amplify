@@ -10,6 +10,13 @@ proxy_config:
         vertex_project: "project-d72a81f9-0097-4b5b-a62"
         vertex_location: "us-central1"
 
+    # ── Gemini image generation (Gemini 3 Pro Image) ────────────────────────
+    - model_name: gemini-3-pro-image-preview
+      litellm_params:
+        model: vertex_ai/gemini-3-pro-image-preview
+        vertex_ai_project: "project-d72a81f9-0097-4b5b-a62"
+        vertex_ai_location: "global"
+
     # ── Gemini multimodal LLM ───────────────────────────────────────────────
     - model_name: gemini-2.0-flash-exp
       litellm_params:
