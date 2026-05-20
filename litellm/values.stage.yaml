@@ -1,0 +1,90 @@
+# Stage-specific overrides for LiteLLM proxy.
+# The proxy_config section is injected as config.yaml into the LiteLLM container.
+
+proxy_config:
+  model_list:
+    # ── Gemini image generation (Imagen 3) ──────────────────────────────────
+    - model_name: imagen-3.0-generate-002
+      litellm_params:
+        model: vertex_ai/imagen-3.0-generate-002
+        vertex_project: "project-d72a81f9-0097-4b5b-a62"
+        vertex_location: "us-central1"
+
+    # ── Gemini multimodal LLM ───────────────────────────────────────────────
+    - model_name: gemini-2.0-flash-exp
+      litellm_params:
+        model: vertex_ai/gemini-2.0-flash-exp
+        vertex_project: "project-d72a81f9-0097-4b5b-a62"
+        vertex_location: "us-central1"
+
+    - model_name: gemini-2.5-flash-preview-05-20
+      litellm_params:
+        model: vertex_ai/gemini-2.5-flash-preview-05-20
+        vertex_project: "project-d72a81f9-0097-4b5b-a62"
+        vertex_location: "us-central1"
+
+    # ── Veo video generation ────────────────────────────────────────────────
+    - model_name: veo-2.0-generate-001
+      litellm_params:
+        model: vertex_ai/veo-2.0-generate-001
+        vertex_project: "project-d72a81f9-0097-4b5b-a62"
+        vertex_location: "us-central1"
+
+    - model_name: veo-3.0-generate-001
+      litellm_params:
+        model: vertex_ai/veo-3.0-generate-001
+        vertex_project: "project-d72a81f9-0097-4b5b-a62"
+        vertex_location: "us-central1"
+
+    - model_name: veo-3.0-fast-generate-001
+      litellm_params:
+        model: vertex_ai/veo-3.0-fast-generate-001
+        vertex_project: "project-d72a81f9-0097-4b5b-a62"
+        vertex_location: "us-central1"
+
+    - model_name: veo-3.1-generate-001
+      litellm_params:
+        model: vertex_ai/veo-3.1-generate-001
+        vertex_project: "project-d72a81f9-0097-4b5b-a62"
+        vertex_location: "us-central1"
+
+    - model_name: veo-3.1-fast-generate-001
+      litellm_params:
+        model: vertex_ai/veo-3.1-fast-generate-001
+        vertex_project: "project-d72a81f9-0097-4b5b-a62"
+        vertex_location: "us-central1"
+
+    - model_name: veo-3.1-lite-generate-001
+      litellm_params:
+        model: vertex_ai/veo-3.1-lite-generate-001
+        vertex_project: "project-d72a81f9-0097-4b5b-a62"
+        vertex_location: "us-central1"
+
+    # ── ElevenLabs TTS (via video-editor / ai-gateway) ──────────────────────
+    - model_name: eleven_multilingual_v2
+      litellm_params:
+        model: elevenlabs/eleven_multilingual_v2
+        api_key: "os.environ/ELEVENLABS_API_KEY"
+
+    # ── OpenAI Whisper transcription (via video-editor / ai-gateway) ────────
+    - model_name: whisper-1
+      litellm_params:
+        model: openai/whisper-1
+        api_key: "os.environ/OPENAI_API_KEY"
+
+  litellm_settings:
+    success_callback: ["langfuse"]
+    failure_callback: ["langfuse"]
+
+  general_settings:
+    store_model_in_db: true
+  
+db:
+  useExisting: true
+  deployStandalone: false
+  database: neondb
+  secret:
+    name: litellm-secret
+    usernameKey: DATABASE_USERNAME
+    passwordKey: DATABASE_PASSWORD
+    endpointKey: DATABASE_HOST

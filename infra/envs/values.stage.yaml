@@ -1,3 +1,29 @@
+litellm:
+  virtualService:
+    enabled: true
+
+  secrets:
+    serviceAccountKeyFile:
+      key: template-service-sa-key-test
+    masterKey:
+      key: litellm-master-key-test
+    langfuseSecretKey:
+      key: test-langfuse-secret-key
+    langfusePublicKey:
+      key: test-langfuse-public-key
+    databaseUsername:
+      key: db-username-test
+    databasePassword:
+      key: db-password-test
+    databaseName:
+      key: db-name-test
+    databaseHost:
+      key: db-host-test
+    openAiApiKey:
+      key: openai-test-api-key
+    elevenLabsApiKey:
+      key: elevenlabs-test-key
+
 # Istio JWT authentication settings for the staging environment.
 # issuer/audience must match userservice Jwt:Issuer and Jwt:Audience appsettings.
 # jwksUri must be reachable by the Istio ingressgateway within the cluster.

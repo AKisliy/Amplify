@@ -15,10 +15,10 @@ internal sealed class PublicationRecordCreatedEventHandler(
     {
         var record = notification.PublicationRecord;
 
-        if (record.PublicationType == PublicationType.AutoList && record.ScheduledAt.HasValue)
+        if (record.ScheduledAt.HasValue)
         {
             logger.LogInformation(
-                "Scheduling AutoList publication for PublicationRecord {Id} at {ScheduledAt}",
+                "Scheduling publication for PublicationRecord {Id} at {ScheduledAt}",
                 record.Id, record.ScheduledAt);
 
             backgroundJobClient.Schedule<IPublicationService>(

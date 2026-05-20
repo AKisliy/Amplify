@@ -65,6 +65,8 @@ spec:
               value: "{{ .Values.config.videoEditorUrl }}"
             - name: LANGFUSE_HOST
               value: "{{ .Values.config.langfuseUrl }}"
+            - name: LITELLM_BASE_URL
+              value: "{{ .Values.config.litellmBaseUrl }}"
           envFrom:
             - secretRef:
                 name: {{ .Values.secret.name }}

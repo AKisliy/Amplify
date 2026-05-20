@@ -1,0 +1,21 @@
+{{- if .Values.litellm.virtualService.enabled }}
+apiVersion: networking.istio.io/v1
+kind: VirtualService
+metadata:
+  name: litellm
+spec:
+  hosts:
+  - {{ .Values.gateway.servers | first | dig "hosts" (list) | first | quote }}
+  gateways:
+  - {{ .Values.gateway.name }}
+  http:
+  - match:
+    - uri:
+        prefix: "/litellm/"
+    route:
+    - destination:
+        host: "litellm.{{ .Release.Namespace }}.svc.cluster.local"
+        port:
+          number: 4000
+    timeout: 600s
+{{- end }}

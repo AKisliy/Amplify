@@ -19,6 +19,9 @@ repositories:
     url: https://open-telemetry.github.io/opentelemetry-helm-charts
   - name: jetstack
     url: https://charts.jetstack.io
+  - name: litellm
+    url: docker.litellm.ai/berriai
+    oci: true
 releases:
   - name: cert-manager
     namespace: cert-manager
@@ -54,6 +57,16 @@ releases:
     values:
       - ./infra/envs/values.yaml.gotmpl
       - ./infra/envs/values.{{ .Environment.Name }}.yaml
+    
+  - name: litellm
+    namespace: "{{ .Values.namespace }}"
+    chart: litellm/litellm-helm
+    labels:
+      tier: backend
+      app: litellm
+    values:
+      - ./litellm/values.yaml
+      - ./litellm/values.{{ .Environment.Name }}.yaml
 
   - name: userservice
     namespace: "{{ .Values.namespace }}"

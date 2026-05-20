@@ -1,3 +1,30 @@
-# LiteLLM Helm chart values.
-# Значения для конкретного окружения определяются в values.<env>.yaml.
 replicaCount: 1
+
+image:
+  repository: ghcr.io/berriai/litellm-database
+  pullPolicy: Always
+  tag: "1.85.0"
+
+masterkeySecretName: litellm-secret
+masterkeySecretKey: LITELLM_MASTER_KEY
+
+environmentSecrets:
+  - litellm-secret
+
+envVars:
+  GOOGLE_APPLICATION_CREDENTIALS: "/secrets/sa-key.json"
+  LANGFUSE_HOST: "https://cloud.langfuse.com"
+  SERVER_ROOT_PATH: "/litellm"
+
+volumes:
+  - name: sa-key
+    secret:
+      secretName: litellm-secret
+      items:
+        - key: sa-key.json
+          path: sa-key.json
+
+volumeMounts:
+  - name: sa-key
+    mountPath: /secrets
+    readOnly: true

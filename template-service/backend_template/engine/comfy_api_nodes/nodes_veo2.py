@@ -1,32 +1,20 @@
-import base64
 import asyncio
 import logging
+
+import litellm
 
 from comfy_api.latest import IO, ComfyExtension
 from comfy_api.latest._io import Hidden
 from typing_extensions import override
-from comfy_api_nodes.apis.veo import (
-    VeoGenVidPollRequest,
-    VeoGenVidPollResponse,
-    VeoGenVidRequest,
-    VeoGenVidResponse,
-    VeoRequestInstance,
-    VeoRequestInstanceImage,
-    VeoRequestParameters,
-)
+
 from comfy_api_nodes.util import (
-    ApiEndpoint,
-    poll_op,
-    sync_op,
+    fetch_media_uri_from_ingest,
+    register_media_uri_with_ingest,
     RAIFilteredError,
     VeoTransientError,
 )
-
-from comfy_api_nodes.util import get_vertex_ai_access_token, fetch_media_uri_from_ingest, register_media_uri_with_ingest
 from comfy_api_nodes.context_keys import GenParamKey, MediaNodeOutput, with_media_context
-
-from config import gemini_config
-import base64
+from config import gemini_config, litellm_config
 
 AVERAGE_DURATION_VIDEO_GEN = 32
 MODELS_MAP = {
@@ -38,16 +26,112 @@ MODELS_MAP = {
     "veo-3.1-lite-generate-001": "veo-3.1-lite-generate-001",
 }
 
-GEMINI_BASE_ENDPOINT = f"https://aiplatform.googleapis.com/v1/projects/{gemini_config.project_id}/locations/{gemini_config.location}/publishers/google/models"
-
 _RAI_MAX_ATTEMPTS = 3
 _RAI_RETRY_BASE_DELAY = 5.0        # delays: 5s, 10s
 
 _TRANSIENT_MAX_ATTEMPTS = 5
 _TRANSIENT_RETRY_BASE_DELAY = 30.0  # delays: 30s, 60s, 120s, 240s
 
+# Retryable HTTP status codes from the LiteLLM proxy (timeout, rate limit, unavailable).
+_TRANSIENT_HTTP_CODES = frozenset({408, 429, 502, 503, 504})
+
 logger = logging.getLogger(__name__)
 
+
+def _litellm_to_transient(exc: Exception) -> VeoTransientError | None:
+    """
+    If *exc* is a retryable LiteLLM exception, return the equivalent
+    VeoTransientError.  Otherwise return None.
+    """
+    status_code = getattr(exc, "status_code", None)
+    if status_code not in _TRANSIENT_HTTP_CODES:
+        return None
+    return VeoTransientError(message=str(exc), code=status_code)
+
+
+async def _call_veo_via_litellm(
+    model: str,
+    prompt: str,
+    duration_seconds: int,
+    aspect_ratio: str,
+    person_generation: str,
+    enhance_prompt: bool,
+    negative_prompt: str,
+    seed: int,
+    generate_audio: bool,
+    first_frame_uri: str | None,
+    last_frame_uri: str | None,
+    attempt: int = 0,
+) -> str:
+    """
+    Submit a Veo generation request through the LiteLLM proxy and wait for
+    completion.  The proxy handles GCP authentication and Langfuse cost tracking.
+
+    Vertex-specific request fields (instances + parameters) are passed wholesale
+    via *extra_body* so nothing is lost in translation.  Vertex writes the video
+    to our GCS bucket (storageUri); we receive the gcsUri and register it with
+    media-ingest — no video bytes flow through this service.
+
+    Returns the GCS URI of the generated video.
+    """
+    instance: dict = {"prompt": prompt}
+    if first_frame_uri:
+        instance["image"] = {"gcsUri": first_frame_uri, "mimeType": "image/png"}
+    if last_frame_uri:
+        instance["lastFrame"] = {"gcsUri": last_frame_uri, "mimeType": "image/png"}
+
+    is_veo2 = "veo-2" in model
+    parameters: dict = {
+        "aspectRatio": aspect_ratio,
+        "personGeneration": person_generation,
+        "durationSeconds": duration_seconds,
+        "enhancePrompt": enhance_prompt if is_veo2 else True,
+        "storageUri": gemini_config.storage_uri,
+    }
+    if negative_prompt:
+        parameters["negativePrompt"] = negative_prompt
+    if seed > 0:
+        parameters["seed"] = seed
+    if not is_veo2:
+        parameters["generateAudio"] = generate_audio
+
+    litellm.api_base = litellm_config.litellm_base_url
+    litellm.api_key = litellm_config.litellm_api_key
+
+    op = await litellm.avideo_generation(
+        model=model,
+        prompt=prompt,
+        seconds=str(duration_seconds),
+        extra_body={
+            "instances": [instance],
+            "parameters": parameters,
+        },
+    )
+
+    # 2. Poll until the operation completes.
+    while True:
+        status = await litellm.avideo_status(
+            video_id=op.id
+        )
+        if status.status == "completed":
+            break
+        if status.status == "failed":
+            error_msg = str(getattr(status, "error", "") or "")
+            if any(kw in error_msg.lower() for kw in ("safety", "rai", "responsible ai", "policy")):
+                raise RAIFilteredError(reasons=[error_msg], attempt=attempt)
+            raise Exception(f"Veo generation failed: {error_msg}")
+        await asyncio.sleep(5.0)
+
+    video_bytes = await litellm.avideo_content(
+        video_id=op.id
+    )
+
+    gcs_uri = str(video_bytes)
+    logger.info("gcs_uri - %s", gcs_uri)
+    if not gcs_uri:
+        raise RAIFilteredError(reasons=[], attempt=attempt)
+
+    return gcs_uri
 
 
 class VeoVideoGenerationNode(IO.ComfyNode):
@@ -141,7 +225,7 @@ class VeoVideoGenerationNode(IO.ComfyNode):
                 IO.String.Output(display_name="video_uuid"),
             ],
         )
-    
+
     @classmethod
     @with_media_context
     async def execute(
@@ -158,126 +242,41 @@ class VeoVideoGenerationNode(IO.ComfyNode):
         generate_audio=False,
     ):
         model = MODELS_MAP[model]
-        # Prepare the instances for the request
-        instances = []
 
-        instance = {"prompt": prompt}
-
-        # Add image if provided
+        image_uri: str | None = None
         if image_uuid is not None:
-            gcs_uri = await fetch_media_uri_from_ingest(cls, image_uuid)
-            instance["image"] = {"gcsUri": gcs_uri, "mimeType": "image/png"}
+            image_uri = await fetch_media_uri_from_ingest(cls, image_uuid)
 
-        instances.append(instance)
-
-        # Create parameters dictionary
-        parameters = {
-            "aspectRatio": aspect_ratio,
-            "personGeneration": person_generation,
-            "durationSeconds": duration_seconds,
-            "enhancePrompt": enhance_prompt,
-            "storageUri": gemini_config.storage_uri,
-        }
-
-        # Add optional parameters if provided
-        if negative_prompt:
-            parameters["negativePrompt"] = negative_prompt
-        if seed > 0:
-            parameters["seed"] = seed
-        # Only add generateAudio for Veo 3 models
-        if model.find("veo-2.0") == -1:
-            parameters["generateAudio"] = generate_audio
-            # force "enhance_prompt" to True for Veo3 models
-            parameters["enhancePrompt"] = True
-
-        initial_response = await sync_op(
-            cls,
-            ApiEndpoint(
-                path=f"{GEMINI_BASE_ENDPOINT}/{model}:predictLongRunning", 
-                method="POST", 
-                headers={"Authorization": f"Bearer {get_vertex_ai_access_token()}"}
-            ),
-            response_model=VeoGenVidResponse,
-            data=VeoGenVidRequest(
-                instances=instances,
-                parameters=parameters,
-            ),
+        gcs_uri = await _call_veo_via_litellm(
+            model=model,
+            prompt=prompt,
+            duration_seconds=duration_seconds,
+            aspect_ratio=aspect_ratio,
+            person_generation=person_generation,
+            enhance_prompt=enhance_prompt,
+            negative_prompt=negative_prompt,
+            seed=seed,
+            generate_audio=generate_audio,
+            first_frame_uri=image_uri,
+            last_frame_uri=None,
         )
 
-        def status_extractor(response):
-            # Only return "completed" if the operation is done, regardless of success or failure
-            # We'll check for errors after polling completes
-            return "completed" if response.done else "pending"
-
-        poll_response = await poll_op(
-            cls,
-            ApiEndpoint(
-                path=f"{GEMINI_BASE_ENDPOINT}/{model}:fetchPredictOperation", 
-                method="POST", 
-                headers={"Authorization": f"Bearer {get_vertex_ai_access_token()}"}
-            ),
-            response_model=VeoGenVidPollResponse,
-            status_extractor=status_extractor,
-            data=VeoGenVidPollRequest(
-                operationName=initial_response.name,
-            ),
-            poll_interval=5.0,
-            estimated_duration=AVERAGE_DURATION_VIDEO_GEN,
+        media_id = await register_media_uri_with_ingest(cls, gcs_uri, "video/mp4")
+        return MediaNodeOutput(
+            media_id,
+            context=[{
+                GenParamKey.MEDIA_ID:         media_id,
+                GenParamKey.PROMPT:           prompt,
+                GenParamKey.MODEL:            model,
+                GenParamKey.ASPECT_RATIO:     aspect_ratio,
+                GenParamKey.DURATION:         duration_seconds,
+                GenParamKey.RESOLUTION:       "",
+                GenParamKey.NEGATIVE_PROMPT:  negative_prompt,
+                GenParamKey.FIRST_FRAME_UUID: image_uuid,
+                GenParamKey.LAST_FRAME_UUID:  None,
+            }],
+            ui={"video_uuid": [media_id]},
         )
-
-        # Now check for errors in the final response
-        # Check for error in poll response
-        if poll_response.error:
-            raise Exception(f"Veo API error: {poll_response.error.message} (code: {poll_response.error.code})")
-
-        # Check for RAI filtered content
-        if (
-            hasattr(poll_response.response, "raiMediaFilteredCount")
-            and poll_response.response.raiMediaFilteredCount > 0
-        ):
-
-            # Extract reason message if available
-            if (
-                hasattr(poll_response.response, "raiMediaFilteredReasons")
-                and poll_response.response.raiMediaFilteredReasons
-            ):
-                reason = poll_response.response.raiMediaFilteredReasons[0]
-                error_message = f"Content filtered by Google's Responsible AI practices: {reason} ({poll_response.response.raiMediaFilteredCount} videos filtered.)"
-            else:
-                error_message = f"Content filtered by Google's Responsible AI practices ({poll_response.response.raiMediaFilteredCount} videos filtered.)"
-
-            raise Exception(error_message)
-
-        # Extract video data
-        if (
-            poll_response.response
-            and hasattr(poll_response.response, "videos")
-            and poll_response.response.videos
-            and len(poll_response.response.videos) > 0
-        ):
-            video = poll_response.response.videos[0]
-
-            if hasattr(video, "gcsUri") and video.gcsUri:
-
-                media_id = await register_media_uri_with_ingest(cls, video.gcsUri, "video/mp4")
-                return MediaNodeOutput(
-                    media_id,
-                    context=[{
-                        GenParamKey.MEDIA_ID:         media_id,
-                        GenParamKey.PROMPT:           prompt,
-                        GenParamKey.MODEL:            model,
-                        GenParamKey.ASPECT_RATIO:     aspect_ratio,
-                        GenParamKey.DURATION:         duration_seconds,
-                        GenParamKey.RESOLUTION:       "",
-                        GenParamKey.NEGATIVE_PROMPT:  negative_prompt,
-                        GenParamKey.FIRST_FRAME_UUID: image_uuid,
-                        GenParamKey.LAST_FRAME_UUID:  None,
-                    }],
-                    ui={"video_uuid": [media_id]},
-                )
-
-            raise Exception("Video returned but no data or URL was provided")
-        raise Exception("Video generation completed but no video was returned")
 
 
 class Veo3VideoGenerationNode(VeoVideoGenerationNode):
@@ -483,81 +482,36 @@ class Veo3FirstLastFrameNode(IO.ComfyNode):
         attempt: int,
     ) -> str:
         """
-        Submit one Veo generation request and wait for completion.
+        Submit one Veo generation request through the LiteLLM proxy and wait for
+        completion.  Returns the registered MediaIngest media_id on success.
 
-        Returns the registered MediaIngest media_id on success.
         Raises RAIFilteredError when the generated video is blocked by RAI filters.
+        Raises VeoTransientError for retryable service failures.
         All other failures propagate as-is.
         """
-        initial_response = await sync_op(
-            cls,
-            ApiEndpoint(
-                path=f"{GEMINI_BASE_ENDPOINT}/{model}:predictLongRunning",
-                method="POST",
-                headers={"Authorization": f"Bearer {get_vertex_ai_access_token()}"}
-            ),
-            response_model=VeoGenVidResponse,
-            data=VeoGenVidRequest(
-                instances=[
-                    VeoRequestInstance(
-                        prompt=prompt,
-                        image=VeoRequestInstanceImage(
-                            gcsUri=first_frame_uri, mimeType="image/png"
-                        ) if first_frame_uri else None,
-                        lastFrame=VeoRequestInstanceImage(
-                            gcsUri=last_frame_uri, mimeType="image/png"
-                        ) if last_frame_uri else None,
-                    ),
-                ],
-                parameters=VeoRequestParameters(
-                    aspectRatio=aspect_ratio,
-                    personGeneration="ALLOW",
-                    durationSeconds=duration,
-                    enhancePrompt=True,
-                    seed=seed,
-                    generateAudio=generate_audio,
-                    negativePrompt=negative_prompt,
-                    resolution=resolution,
-                    storageUri=gemini_config.storage_uri,
-                ),
-            ),
-        )
+        try:
+            gcs_uri = await _call_veo_via_litellm(
+                model=model,
+                prompt=prompt,
+                duration_seconds=duration,
+                aspect_ratio=aspect_ratio,
+                person_generation="ALLOW",
+                enhance_prompt=True,
+                negative_prompt=negative_prompt,
+                seed=seed,
+                generate_audio=generate_audio,
+                first_frame_uri=first_frame_uri,
+                last_frame_uri=last_frame_uri,
+            )
+        except RAIFilteredError:
+            raise RAIFilteredError(reasons=[], attempt=attempt)
+        except Exception as exc:
+            transient = _litellm_to_transient(exc)
+            if transient is not None:
+                raise transient from exc
+            raise
 
-        poll_response = await poll_op(
-            cls,
-            ApiEndpoint(
-                path=f"{GEMINI_BASE_ENDPOINT}/{model}:fetchPredictOperation",
-                method="POST",
-                headers={"Authorization": f"Bearer {get_vertex_ai_access_token()}"}
-            ),
-            response_model=VeoGenVidPollResponse,
-            status_extractor=lambda r: "completed" if r.done else "pending",
-            data=VeoGenVidPollRequest(
-                operationName=initial_response.name,
-            ),
-            poll_interval=5.0,
-            estimated_duration=AVERAGE_DURATION_VIDEO_GEN,
-        )
-
-        if poll_response.error:
-            code = poll_response.error.code
-            message = poll_response.error.message
-            if code in VeoTransientError.RETRYABLE_CODES:
-                raise VeoTransientError(message=message, code=code)
-            raise Exception(f"Veo API error: {message} (code: {code})")
-
-        response = poll_response.response
-        filtered_count = response.raiMediaFilteredCount
-        if filtered_count:
-            reasons = response.raiMediaFilteredReasons or []
-            raise RAIFilteredError(reasons=reasons, attempt=attempt)
-
-        if response.videos:
-            video = response.videos[0]
-            if video.gcsUri:
-                return await register_media_uri_with_ingest(cls, video.gcsUri, "video/mp4")
-            raise Exception("Video returned but no data or URL was provided")
-        raise Exception("Video generation completed but no video was returned")
+        return await register_media_uri_with_ingest(cls, gcs_uri, "video/mp4")
 
     @classmethod
     @with_media_context
@@ -628,16 +582,14 @@ class Veo3FirstLastFrameNode(IO.ComfyNode):
                     except RAIFilteredError as e:
                         last_rai_error = e
                         logger.warning(
-                            "[Veo3FirstLastFrameNode] RAI filter triggered (attempt %d/%d). "
-                            "Reasons: %s",
+                            "[Veo3FirstLastFrameNode] RAI filter triggered (attempt %d/%d).",
                             attempt,
                             _RAI_MAX_ATTEMPTS,
-                            e.reasons,
                         )
                         if attempt < _RAI_MAX_ATTEMPTS:
                             await asyncio.sleep(_RAI_RETRY_BASE_DELAY * (2 ** (attempt - 1)))
 
-                break  # RAI exhausted normally — exit while loop to return fallback
+                break  # RAI exhausted — exit while loop
 
             except VeoTransientError as e:
                 transient_attempt += 1
@@ -663,17 +615,15 @@ class Veo3FirstLastFrameNode(IO.ComfyNode):
                 )
                 await asyncio.sleep(delay)
 
-        # RAI exhausted — log and return designated fallback placeholder.
+        # RAI exhausted — return designated fallback placeholder.
         logger.error(
             "[Veo3FirstLastFrameNode] RAI filter exhausted after %d attempts. "
-            "Returning fallback UUID.\nPrompt: %s\nFinal reasons: %s",
+            "Returning fallback UUID.\nPrompt: %s",
             _RAI_MAX_ATTEMPTS,
             prompt,
-            last_rai_error.reasons if last_rai_error else [],
         )
         fallback = gemini_config.rai_fallback_video_uuid
         return IO.NodeOutput(fallback, ui={"video_uuid": [fallback]})
-
 
 
 class VeoExtension(ComfyExtension):
