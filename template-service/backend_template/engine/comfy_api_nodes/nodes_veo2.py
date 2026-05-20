@@ -95,12 +95,14 @@ async def _call_veo_via_litellm(
     if not is_veo2:
         parameters["generateAudio"] = generate_audio
 
-    op = await litellm.avideo_generation(
+    litellm.api_base = litellm_config.litellm_base_url
+    litellm.api_key = litellm_config.litellm_api_key
+
+    op = await asyncio.to_thread(
+        litellm.video_generation,
         model=model,
         prompt=prompt,
         seconds=str(duration_seconds),
-        api_base=litellm_config.litellm_base_url,
-        api_key=litellm_config.litellm_api_key,
         extra_body={
             "instances": [instance],
             "parameters": parameters,
@@ -109,11 +111,7 @@ async def _call_veo_via_litellm(
 
     # 2. Poll until the operation completes.
     while True:
-        status = await litellm.avideo_status(
-            video_id=op.id,
-            api_base=litellm_config.litellm_base_url,
-            api_key=litellm_config.litellm_api_key,
-        )
+        status = await asyncio.to_thread(litellm.video_status, video_id=op.id)
         if status.status == "completed":
             break
         if status.status == "failed":
@@ -123,11 +121,7 @@ async def _call_veo_via_litellm(
             raise Exception(f"Veo generation failed: {error_msg}")
         await asyncio.sleep(5.0)
 
-    video_bytes = await litellm.avideo_content(
-        video_id=op.id,
-        api_base=litellm_config.litellm_base_url,
-        api_key=litellm_config.litellm_api_key,
-    )
+    video_bytes = await asyncio.to_thread(litellm.video_content, video_id=op.id)
 
     gcs_uri = str(video_bytes)
     logger.info("gcs_uri - %s", gcs_uri)
