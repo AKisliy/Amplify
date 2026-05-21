@@ -111,12 +111,12 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "CLAUDE.md",
+                "file": "issues/AMPLIFY-368/concepts/output-volume-velocity.md",
                 "mode": "source",
                 "source": false
               },
               "icon": "lucide-file",
-              "title": "CLAUDE"
+              "title": "output-volume-velocity"
             }
           }
         ],
@@ -143,7 +143,7 @@
                 "autoReveal": false
               },
               "icon": "lucide-folder-closed",
-              "title": "Файловый менеджер"
+              "title": "Files"
             }
           },
           {
@@ -273,23 +273,34 @@
   },
   "left-ribbon": {
     "hiddenItems": {
-      "graph:Граф": false,
-      "switcher:Меню быстрого перехода": false,
-      "canvas:Создать новый холст": false,
-      "daily-notes:Сегодняшняя заметка": false,
-      "templates:Вставить шаблон": false,
-      "command-palette:Открыть палитру команд": false,
-      "bases:Создать новую базу": false
+      "switcher:Open quick switcher": false,
+      "graph:Open graph view": false,
+      "canvas:Create new canvas": false,
+      "daily-notes:Open today's daily note": false,
+      "templates:Insert template": false,
+      "command-palette:Open command palette": false,
+      "bases:Create new base": false
     }
   },
-  "active": "b8cfdc5cf456b36e",
+  "active": "2cbc11c3dfc4bc97",
   "lastOpenFiles": [
+    "assets/Pasted image 20260512135240.png",
+    "assets/Pasted image 20260512115405.png",
+    "assets/Pasted image 20260512115354.png",
+    "assets/Pasted image 20260512115353.png",
+    "assets/Pasted image 20260512113645.png",
+    "assets/Pasted image 20260512113636.png",
+    "assets/Pasted image 20260512113636 1.png",
+    "CLAUDE.md",
+    "issues/AMPLIFY-368/concepts/format-volume-velocity.md",
+    "issues/AMPLIFY-368/concepts/entity-efficiency.md",
+    "issues/AMPLIFY-368/concepts/cpa.md",
+    "issues/AMPLIFY-368/concepts/capital-burn.md",
     "issues/AMPLIFY-368/research.md",
     "Без названия.md",
     "issues/AMPLIFY-368/concepts/output-volume-velocity.md",
     "issues/index.md",
     "issues/AMPLIFY-368/concepts/pipeline-failure-rate.md",
-    "issues/AMPLIFY-368/concepts/entity-efficiency.md",
     "issues/AMPLIFY-368/concepts/yield-efficiency.md",
     "issues/AMPLIFY-368/raw/Pipeline Failure Rate.md",
     "assets/Pasted image 20260512161206.png",
@@ -300,27 +311,16 @@
     "wikilink.md",
     "issues/AMPLIFY-368/concepts/README.md",
     "issues/AMPLIFY-368/raw/Yield Efficiency.md",
-    "issues/AMPLIFY-368/concepts/cpa.md",
-    "assets/Pasted image 20260512150830.png",
     "issues/AMPLIFY-368/raw/CPA.md",
-    "assets/Pasted image 20260512145031.png",
-    "issues/AMPLIFY-368/concepts/format-volume-velocity.md",
     "issues/AMPLIFY-368/concepts/generation-velocity.md",
     "issues/AMPLIFY-368/raw/Format Volume Velocity.md",
-    "assets/Pasted image 20260512142755.png",
     "issues/AMPLIFY-368/raw/Output Volume Velocity.md",
-    "assets/Pasted image 20260512140846.png",
-    "assets/Pasted image 20260512140838.png",
-    "issues/AMPLIFY-368/concepts/capital-burn.md",
     "issues/AMPLIFY-368/raw/Generation Velocity.md",
-    "assets/Pasted image 20260512135240.png",
     "issues/AMPLIFY-368/plan.md",
     "issues/AMPLIFY-368/log.md",
     "issues/AMPLIFY-368/decisions.md",
-    "CLAUDE.md",
     "issues/AMPLIFY-368/raw/README.md",
     "issues/AMPLIFY-368/assets",
-    "issues/AMPLIFY-368/raw/Capital Burn.md",
     "concepts",
     "assets",
     "issues/AMPLIFY-368/concepts",

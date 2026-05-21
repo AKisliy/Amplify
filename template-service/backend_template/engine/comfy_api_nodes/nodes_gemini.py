@@ -41,10 +41,9 @@ import uuid
 
 import litellm
 
-from comfy_api_nodes.util import get_vertex_ai_access_token, fetch_media_uri_from_ingest
+from comfy_api_nodes.util import fetch_media_uri_from_ingest
 
-
-GEMINI_BASE_ENDPOINT = f"https://aiplatform.googleapis.com/v1/projects/{gemini_config.project_id}/locations/{gemini_config.location}/publishers/google/models"
+GEMINI_BASE_ENDPOINT = f"{litellm_config.litellm_base_url}/vertex_ai/v1/projects/{gemini_config.project_id}/locations/{gemini_config.location}/publishers/google/models"
 
 # ---------------------------------------------------------------------------
 # Pacing zone table — empirically calibrated from avatar video experiments.
@@ -458,14 +457,12 @@ class GeminiNode(IO.ComfyNode):
                 responseSchema=schema_dict,
             )
 
-        token = get_vertex_ai_access_token()
-        
         response = await sync_op(
             cls,
             endpoint=ApiEndpoint(
-                path=f"{GEMINI_BASE_ENDPOINT}/{model}:generateContent", 
-                method="POST", 
-                headers={"Authorization": f"Bearer {token}"}
+                path=f"{GEMINI_BASE_ENDPOINT}/{model}:generateContent",
+                method="POST",
+                headers={"Authorization": f"Bearer {litellm_config.litellm_api_key}"},
             ),
             data=GeminiGenerateContentRequest(
                 contents=[
@@ -643,14 +640,12 @@ class GeminiImageNode(IO.ComfyNode):
         if system_prompt:
             gemini_system_prompt = GeminiSystemInstructionContent(parts=[GeminiTextPart(text=system_prompt)], role=None)
 
-        token = get_vertex_ai_access_token()
-
         response = await sync_op(
             cls,
             endpoint=ApiEndpoint(
-                path=f"{GEMINI_BASE_ENDPOINT}/{model}:generateContent", 
-                method="POST", 
-                headers={"Authorization": f"Bearer {token}"}
+                path=f"{GEMINI_BASE_ENDPOINT}/{model}:generateContent",
+                method="POST",
+                headers={"Authorization": f"Bearer {litellm_config.litellm_api_key}"},
             ),
             data=GeminiImageGenerateContentRequest(
                 contents=[
