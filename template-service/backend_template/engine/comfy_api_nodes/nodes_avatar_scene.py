@@ -305,7 +305,7 @@ class AvatarSceneNode(IO.ComfyNode):
             ApiEndpoint(
                 path=f"{GEMINI_BASE_ENDPOINT}/{gemini_model}:generateContent",
                 method="POST",
-                headers={"Authorization": f"Bearer {litellm_config.litellm_api_key}"},
+                headers={"x-litellm-api-key": f"Bearer {litellm_config.litellm_api_key}"},
             ),
             response_model=GeminiGenerateContentResponse,
             data=GeminiGenerateContentRequest(
@@ -374,7 +374,7 @@ class AvatarSceneNode(IO.ComfyNode):
                 ApiEndpoint(
                     path=f"{GEMINI_BASE_ENDPOINT}/{veo_model}:predictLongRunning",
                     method="POST",
-                    headers={"Authorization": f"Bearer {litellm_config.litellm_api_key}"},
+                    headers={"x-litellm-api-key": f"Bearer {litellm_config.litellm_api_key}"},
                 ),
                 response_model=VeoGenVidResponse,
                 data=VeoGenVidRequest(
@@ -399,7 +399,7 @@ class AvatarSceneNode(IO.ComfyNode):
                 ApiEndpoint(
                     path=f"{GEMINI_BASE_ENDPOINT}/{veo_model}:fetchPredictOperation",
                     method="POST",
-                    headers={"Authorization": f"Bearer {litellm_config.litellm_api_key}"},
+                    headers={"x-litellm-api-key": f"Bearer {litellm_config.litellm_api_key}"},
                 ),
                 response_model=VeoGenVidPollResponse,
                 status_extractor=lambda r: "completed" if r.done else "pending",

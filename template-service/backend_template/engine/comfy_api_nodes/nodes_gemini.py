@@ -462,7 +462,7 @@ class GeminiNode(IO.ComfyNode):
             endpoint=ApiEndpoint(
                 path=f"{GEMINI_BASE_ENDPOINT}/{model}:generateContent",
                 method="POST",
-                headers={"Authorization": f"Bearer {litellm_config.litellm_api_key}"},
+                headers={"x-litellm-api-key": f"Bearer {litellm_config.litellm_api_key}"},
             ),
             data=GeminiGenerateContentRequest(
                 contents=[
@@ -645,7 +645,7 @@ class GeminiImageNode(IO.ComfyNode):
             endpoint=ApiEndpoint(
                 path=f"{GEMINI_BASE_ENDPOINT}/{model}:generateContent",
                 method="POST",
-                headers={"Authorization": f"Bearer {litellm_config.litellm_api_key}"},
+                headers={"x-litellm-api-key": f"Bearer {litellm_config.litellm_api_key}"},
             ),
             data=GeminiImageGenerateContentRequest(
                 contents=[

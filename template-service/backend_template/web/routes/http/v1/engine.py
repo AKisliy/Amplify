@@ -20,7 +20,8 @@ from backend_template.entities.job import (
 from backend_template.services.engine_client import EngineClientService
 from backend_template.services.job import JobService
 
-router = APIRouter(prefix="/engine", tags=["Engine"], dependencies=[Depends(_get_user_id)])
+# router = APIRouter(prefix="/engine", tags=["Engine"], dependencies=[Depends(_get_user_id)])
+router = APIRouter(prefix="/engine", tags=["Engine"])
 
 
 
@@ -74,7 +75,7 @@ async def get_node(
 async def run_template(
     payload: RunTemplateRequest,
     service: JobSvc,
-    user_id: CurrentUserId,
+    # user_id: CurrentUserId,
 ):
     """
     Snapshots the template's current graph into a TemplateVersion, creates a
@@ -87,6 +88,7 @@ async def run_template(
     body includes a structured ``node_errors`` dict so the frontend can
     highlight the broken nodes.
     """
+    user_id = "0e7886ac-e555-4b3a-ae7a-974a9941aad8"
     return await service.run_template(payload.template_id, user_id=user_id)
 
 

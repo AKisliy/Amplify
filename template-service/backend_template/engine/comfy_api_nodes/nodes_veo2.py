@@ -48,7 +48,7 @@ logger = logging.getLogger(__name__)
 
 
 def _litellm_auth_headers() -> dict:
-    return {"Authorization": f"Bearer {litellm_config.litellm_api_key}"}
+    return {"x-litellm-api-key": f"Bearer {litellm_config.litellm_api_key}"}
 
 
 class VeoVideoGenerationNode(IO.ComfyNode):
