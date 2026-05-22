@@ -12,6 +12,7 @@ from typing import Any, Literal, TypeVar
 from urllib.parse import urljoin, urlparse
 
 import aiohttp
+import yarl
 from aiohttp.client_exceptions import ClientError, ContentTypeError
 from pydantic import BaseModel
 
@@ -673,7 +674,7 @@ async def _request_base(cfg: _RequestConfig, expect_binary: bool):
                 request_data=request_body_log,
             )
 
-            req_coro = sess.request(method, url, params=params, **payload_kw)
+            req_coro = sess.request(method, yarl.URL(url, encoded=True), params=params, **payload_kw)
             req_task = asyncio.create_task(req_coro)
 
             # Race: request vs. monitor (interruption)
