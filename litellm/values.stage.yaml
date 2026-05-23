@@ -100,7 +100,12 @@ proxy_config:
     vertex_project: "project-d72a81f9-0097-4b5b-a62"
     vertex_location: "global"
     vertex_credentials: "/secrets/sa-key.json"
-  
+
+envVars:
+  DEFAULT_VERTEXAI_PROJECT: "project-d72a81f9-0097-4b5b-a62"
+  DEFAULT_VERTEXAI_LOCATION: "global"
+  DEFAULT_GOOGLE_APPLICATION_CREDENTIALS: "/secrets/sa-key.json"
+
 db:
   useExisting: true
   deployStandalone: false
