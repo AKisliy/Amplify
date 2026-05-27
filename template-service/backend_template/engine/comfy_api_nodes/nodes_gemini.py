@@ -332,7 +332,7 @@ class GeminiNode(IO.ComfyNode):
     def define_schema(cls):
         autogrow_template = IO.Autogrow.TemplatePrefix(
             input=IO.String.Input("image_uuid", optional=True, tooltip="A Media Ingest API UUID representing an uploaded image"),
-            prefix="image_uuid",
+            prefix="image_uuid_",
             min=1,
             max=10
         )
@@ -557,7 +557,7 @@ class GeminiImageNode(IO.ComfyNode):
     def define_schema(cls):
         autogrow_template = IO.Autogrow.TemplatePrefix(
             input=IO.String.Input("image_uuid", optional=True, tooltip="A Media Ingest API UUID representing an uploaded image"),
-            prefix="image_uuid",
+            prefix="image_uuid_",
             min=1,
             max=3
         )
@@ -714,7 +714,7 @@ class GeminiImage2Node(IO.ComfyNode):
     def define_schema(cls):
         autogrow_template = IO.Autogrow.TemplatePrefix(
             input=IO.String.Input("image_uuid", optional=True, tooltip="A Media Ingest API UUID representing an uploaded image"),
-            prefix="image_uuid",
+            prefix="image_uuid_",
             min=1,
             max=14
         )
