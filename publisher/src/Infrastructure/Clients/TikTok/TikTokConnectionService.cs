@@ -1,5 +1,4 @@
 using System.Text;
-using System.Transactions;
 using Ardalis.GuardClauses;
 using FluentValidation;
 using Flurl;
@@ -112,15 +111,10 @@ internal class TikTokConnectionService(
             socialAccount.Projects.Add(project);
         }
 
-        using var transaction = new TransactionScope(TransactionScopeAsyncFlowOption.Enabled);
-        {
-            await dbContext.SaveChangesAsync(cancellationToken);
+        await dbContext.SaveChangesAsync(cancellationToken);
 
-            if (!string.IsNullOrEmpty(user.AvatarUrl))
-                backgroundJobClient.Enqueue<ImportAvatarJob>(j => j.ImportAsync(socialAccount.Id, user.AvatarUrl, CancellationToken.None));
-
-            transaction.Complete();
-        }
+        if (!string.IsNullOrEmpty(user.AvatarUrl))
+            backgroundJobClient.Enqueue<ImportAvatarJob>(j => j.ImportAsync(socialAccount.Id, user.AvatarUrl, CancellationToken.None));
 
         logger.LogInformation(
             "Successfully connected TikTok account with OpenID {OpenId} for project {ProjectId}",
