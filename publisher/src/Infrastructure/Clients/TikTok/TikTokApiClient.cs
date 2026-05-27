@@ -48,6 +48,8 @@ public class TikTokApiClient(
             throw new Exception($"TikTok OAuth Error: {content}");
         }
 
+        logger.LogInformation("Received TikTok token response: {Response}", content);
+
         var tokenResponse = JsonConvert.DeserializeObject<TikTokTokenResponse>(content)
             ?? throw new Exception("Failed to deserialize TikTok token response.");
 
