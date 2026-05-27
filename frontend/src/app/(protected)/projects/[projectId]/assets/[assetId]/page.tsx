@@ -264,7 +264,7 @@ function InstagramReelsPreview({ rec, videoUrl }: { rec: PublicationRecord; vide
 // Publication card (social post)
 // ---------------------------------------------------------------------------
 
-function PublicationCard({ rec, thumbnailUrl, onClick }: { rec: PublicationRecord; thumbnailUrl: string; onClick: () => void }) {
+function PublicationCard({ rec, mediaId, onClick }: { rec: PublicationRecord; mediaId: string; onClick: () => void }) {
   const statusLow = rec.status.toLowerCase();
   const isPublished = statusLow === "published";
   const timeLabel = isPublished && rec.publishedAt
@@ -279,8 +279,7 @@ function PublicationCard({ rec, thumbnailUrl, onClick }: { rec: PublicationRecor
       "border border-white/[0.06] hover:border-white/[0.15]",
       "transition-all duration-200"
     )}>
-      {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img src={thumbnailUrl} alt="" className="w-full h-full object-cover" />
+      <AmplifyImage mediaId={mediaId} variant="Medium" sizes="300px" className="object-cover" />
       <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/10 to-transparent" />
 
       {/* Top-left: avatar */}
@@ -686,7 +685,7 @@ export default function AssetDetailPage() {
               ) : (
                 <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
                   {records.map((rec) => (
-                    <PublicationCard key={rec.id} rec={rec} thumbnailUrl={asset.mediaUrl} onClick={() => setPreviewRec(rec)} />
+                    <PublicationCard key={rec.id} rec={rec} mediaId={asset.mediaId} onClick={() => setPreviewRec(rec)} />
                   ))}
                 </div>
               )}
