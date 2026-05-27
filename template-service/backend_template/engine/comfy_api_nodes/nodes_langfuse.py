@@ -83,7 +83,7 @@ class LangfusePromptNode(IO.ComfyNode):
                 optional=True,
                 tooltip="Value for a template variable (positional mapping)",
             ),
-            prefix="var",
+            prefix="var_",
             min=1,
             max=20,
         )
