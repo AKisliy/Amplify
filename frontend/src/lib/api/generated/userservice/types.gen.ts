@@ -4,6 +4,43 @@ export type ClientOptions = {
     baseURL: `${string}://${string}/userservice` | (string & {});
 };
 
+export type SpendSummaryDto = {
+    totalCostUsd?: number;
+    totalTokens?: number;
+    requestCount?: number;
+};
+
+export type SpendTrendPointDto = {
+    date?: string;
+    costUsd?: number;
+    tokens?: number;
+    requests?: number;
+};
+
+export type ModelSpendDto = {
+    model?: string;
+    costUsd?: number;
+    tokens?: number;
+    requests?: number;
+};
+
+export type TemplateSpendDto = {
+    templateId?: string;
+    costUsd?: number;
+    tokens?: number;
+    requests?: number;
+    jobCount?: number;
+};
+
+export type JobSpendDto = {
+    jobId?: string;
+    templateId?: string | null;
+    costUsd?: number;
+    tokens?: number;
+    requests?: number;
+    startedAt?: string;
+};
+
 export type RegisterUserCommand = {
     email?: string;
     password?: string;
@@ -71,6 +108,96 @@ export type ProjectDto = {
     description?: string | null;
     photo?: string | null;
 };
+
+export type GetSpendSummaryData = {
+    body?: never;
+    path: {
+        projectId: string;
+    };
+    query: {
+        from: string;
+        to: string;
+    };
+    url: '/api/analytics/{projectId}/spend/summary';
+};
+
+export type GetSpendSummaryResponses = {
+    200: SpendSummaryDto;
+};
+
+export type GetSpendSummaryResponse = GetSpendSummaryResponses[keyof GetSpendSummaryResponses];
+
+export type GetSpendTrendData = {
+    body?: never;
+    path: {
+        projectId: string;
+    };
+    query: {
+        from: string;
+        to: string;
+    };
+    url: '/api/analytics/{projectId}/spend/trend';
+};
+
+export type GetSpendTrendResponses = {
+    200: Array<SpendTrendPointDto>;
+};
+
+export type GetSpendTrendResponse = GetSpendTrendResponses[keyof GetSpendTrendResponses];
+
+export type GetSpendByModelData = {
+    body?: never;
+    path: {
+        projectId: string;
+    };
+    query: {
+        from: string;
+        to: string;
+    };
+    url: '/api/analytics/{projectId}/spend/by-model';
+};
+
+export type GetSpendByModelResponses = {
+    200: Array<ModelSpendDto>;
+};
+
+export type GetSpendByModelResponse = GetSpendByModelResponses[keyof GetSpendByModelResponses];
+
+export type GetSpendByTemplateData = {
+    body?: never;
+    path: {
+        projectId: string;
+    };
+    query: {
+        from: string;
+        to: string;
+    };
+    url: '/api/analytics/{projectId}/spend/by-template';
+};
+
+export type GetSpendByTemplateResponses = {
+    200: Array<TemplateSpendDto>;
+};
+
+export type GetSpendByTemplateResponse = GetSpendByTemplateResponses[keyof GetSpendByTemplateResponses];
+
+export type GetSpendByJobData = {
+    body?: never;
+    path: {
+        projectId: string;
+    };
+    query: {
+        from: string;
+        to: string;
+    };
+    url: '/api/analytics/{projectId}/spend/by-job';
+};
+
+export type GetSpendByJobResponses = {
+    200: Array<JobSpendDto>;
+};
+
+export type GetSpendByJobResponse = GetSpendByJobResponses[keyof GetSpendByJobResponses];
 
 export type PostApiAuthRegisterData = {
     body: RegisterUserCommand;

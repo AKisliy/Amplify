@@ -2,7 +2,7 @@
 
 import type { Client, Options as Options2, TDataShape } from './client';
 import { client } from './client.gen';
-import type { CreateProjectData, CreateProjectResponses, DeleteProjectData, DeleteProjectResponses, GetApiAuthConfirmEmailData, GetApiAuthConfirmEmailResponses, GetApiAuthWellKnownOpenidConfigurationData, GetApiAuthWellKnownOpenidConfigurationResponses, GetProjectAssetData, GetProjectAssetResponses, GetProjectAssetsData, GetProjectAssetsResponses, GetProjectData, GetProjectResponses, GetUserProjectsData, GetUserProjectsResponses, JwksData, JwksResponses, LoginUserData, LoginUserResponses, PostApiAuthForgotPasswordData, PostApiAuthForgotPasswordResponses, PostApiAuthLogoutData, PostApiAuthLogoutResponses, PostApiAuthRegisterData, PostApiAuthRegisterResponses, PostApiAuthResetPasswordData, PostApiAuthResetPasswordResponses, RefreshTokenData, RefreshTokenResponses, UpdateProjectData, UpdateProjectErrors, UpdateProjectResponses } from './types.gen';
+import type { CreateProjectData, CreateProjectResponses, DeleteProjectData, DeleteProjectResponses, GetApiAuthConfirmEmailData, GetApiAuthConfirmEmailResponses, GetApiAuthWellKnownOpenidConfigurationData, GetApiAuthWellKnownOpenidConfigurationResponses, GetProjectAssetData, GetProjectAssetResponses, GetProjectAssetsData, GetProjectAssetsResponses, GetProjectData, GetProjectResponses, GetSpendByJobData, GetSpendByJobResponses, GetSpendByModelData, GetSpendByModelResponses, GetSpendByTemplateData, GetSpendByTemplateResponses, GetSpendSummaryData, GetSpendSummaryResponses, GetSpendTrendData, GetSpendTrendResponses, GetUserProjectsData, GetUserProjectsResponses, JwksData, JwksResponses, LoginUserData, LoginUserResponses, PostApiAuthForgotPasswordData, PostApiAuthForgotPasswordResponses, PostApiAuthLogoutData, PostApiAuthLogoutResponses, PostApiAuthRegisterData, PostApiAuthRegisterResponses, PostApiAuthResetPasswordData, PostApiAuthResetPasswordResponses, RefreshTokenData, RefreshTokenResponses, UpdateProjectData, UpdateProjectErrors, UpdateProjectResponses } from './types.gen';
 
 export type Options<TData extends TDataShape = TDataShape, ThrowOnError extends boolean = boolean> = Options2<TData, ThrowOnError> & {
     /**
@@ -17,6 +17,41 @@ export type Options<TData extends TDataShape = TDataShape, ThrowOnError extends 
      */
     meta?: Record<string, unknown>;
 };
+
+export const getSpendSummary = <ThrowOnError extends boolean = false>(options: Options<GetSpendSummaryData, ThrowOnError>) => (options.client ?? client).get<GetSpendSummaryResponses, unknown, ThrowOnError>({
+    responseType: 'json',
+    security: [{ name: 'Authorization', type: 'apiKey' }],
+    url: '/api/analytics/{projectId}/spend/summary',
+    ...options
+});
+
+export const getSpendTrend = <ThrowOnError extends boolean = false>(options: Options<GetSpendTrendData, ThrowOnError>) => (options.client ?? client).get<GetSpendTrendResponses, unknown, ThrowOnError>({
+    responseType: 'json',
+    security: [{ name: 'Authorization', type: 'apiKey' }],
+    url: '/api/analytics/{projectId}/spend/trend',
+    ...options
+});
+
+export const getSpendByModel = <ThrowOnError extends boolean = false>(options: Options<GetSpendByModelData, ThrowOnError>) => (options.client ?? client).get<GetSpendByModelResponses, unknown, ThrowOnError>({
+    responseType: 'json',
+    security: [{ name: 'Authorization', type: 'apiKey' }],
+    url: '/api/analytics/{projectId}/spend/by-model',
+    ...options
+});
+
+export const getSpendByTemplate = <ThrowOnError extends boolean = false>(options: Options<GetSpendByTemplateData, ThrowOnError>) => (options.client ?? client).get<GetSpendByTemplateResponses, unknown, ThrowOnError>({
+    responseType: 'json',
+    security: [{ name: 'Authorization', type: 'apiKey' }],
+    url: '/api/analytics/{projectId}/spend/by-template',
+    ...options
+});
+
+export const getSpendByJob = <ThrowOnError extends boolean = false>(options: Options<GetSpendByJobData, ThrowOnError>) => (options.client ?? client).get<GetSpendByJobResponses, unknown, ThrowOnError>({
+    responseType: 'json',
+    security: [{ name: 'Authorization', type: 'apiKey' }],
+    url: '/api/analytics/{projectId}/spend/by-job',
+    ...options
+});
 
 export const postApiAuthRegister = <ThrowOnError extends boolean = false>(options: Options<PostApiAuthRegisterData, ThrowOnError>) => (options.client ?? client).post<PostApiAuthRegisterResponses, unknown, ThrowOnError>({
     security: [{ name: 'Authorization', type: 'apiKey' }],

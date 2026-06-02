@@ -2,7 +2,7 @@
 
 import { type Client, formDataBodySerializer, type Options as Options2, type TDataShape } from './client';
 import { client } from './client.gen';
-import type { DeleteApiInternalMediaData, DeleteApiInternalMediaErrors, DeleteApiInternalMediaResponses, GetApiInternalMediaLinkData, GetApiInternalMediaLinkErrors, GetApiInternalMediaLinkResponses, GetApiInternalMediaPresignedUploadData, GetApiInternalMediaPresignedUploadErrors, GetApiInternalMediaPresignedUploadResponses, GetApiInternalMediaStreamData, GetApiInternalMediaStreamErrors, GetApiInternalMediaStreamResponses, GetApiMediaData, GetApiMediaErrors, GetApiMediaResponses, PostApiImagesImportData, PostApiImagesImportErrors, PostApiImagesImportResponses, PostApiInternalMediaData, PostApiInternalMediaErrors, PostApiInternalMediaImportGsData, PostApiInternalMediaImportGsErrors, PostApiInternalMediaImportGsResponses, PostApiInternalMediaImportUrlData, PostApiInternalMediaImportUrlErrors, PostApiInternalMediaImportUrlResponses, PostApiInternalMediaPresignedUploadData, PostApiInternalMediaPresignedUploadResponses, PostApiInternalMediaResponses, PostApiMediaPresignedUploadData, PostApiMediaPresignedUploadResponses, PostApiMediaUploadCompletedData, PostApiMediaUploadCompletedErrors, PostApiMediaUploadCompletedResponses, PostApiVideosData, PostApiVideosErrors, PostApiVideosResponses, UploadFromFileData, UploadFromFileErrors, UploadFromFileResponses } from './types.gen';
+import type { DeleteApiInternalMediaData, DeleteApiInternalMediaErrors, DeleteApiInternalMediaResponses, GetApiInternalMediaLinkData, GetApiInternalMediaLinkErrors, GetApiInternalMediaLinkResponses, GetApiInternalMediaPresignedUploadData, GetApiInternalMediaPresignedUploadErrors, GetApiInternalMediaPresignedUploadResponses, GetApiInternalMediaStreamData, GetApiInternalMediaStreamErrors, GetApiInternalMediaStreamResponses, GetApiMediaData, GetApiMediaErrors, GetApiMediaResponses, PostApiImagesImportData, PostApiImagesImportErrors, PostApiImagesImportResponses, PostApiInternalMediaData, PostApiInternalMediaErrors, PostApiInternalMediaImportGsData, PostApiInternalMediaImportGsErrors, PostApiInternalMediaImportGsResponses, PostApiInternalMediaImportUrlData, PostApiInternalMediaImportUrlErrors, PostApiInternalMediaImportUrlResponses, PostApiInternalMediaPresignedUploadData, PostApiInternalMediaPresignedUploadResponses, PostApiInternalMediaResponses, PostApiInternalMediaUploadCompletedData, PostApiInternalMediaUploadCompletedErrors, PostApiInternalMediaUploadCompletedResponses, PostApiMediaPresignedUploadData, PostApiMediaPresignedUploadResponses, PostApiMediaUploadCompletedData, PostApiMediaUploadCompletedErrors, PostApiMediaUploadCompletedResponses } from './types.gen';
 
 export type Options<TData extends TDataShape = TDataShape, ThrowOnError extends boolean = boolean> = Options2<TData, ThrowOnError> & {
     /**
@@ -17,23 +17,6 @@ export type Options<TData extends TDataShape = TDataShape, ThrowOnError extends 
      */
     meta?: Record<string, unknown>;
 };
-
-/**
- * Upload an image
- *
- * Accepts JPEG, PNG, WebP, GIF. Max size: 10 MB. Returns the assigned mediaId and public URL.
- */
-export const uploadFromFile = <ThrowOnError extends boolean = false>(options?: Options<UploadFromFileData, ThrowOnError>) => (options?.client ?? client).post<UploadFromFileResponses, UploadFromFileErrors, ThrowOnError>({
-    ...formDataBodySerializer,
-    responseType: 'json',
-    security: [{ name: 'Authorization', type: 'apiKey' }],
-    url: '/api/images',
-    ...options,
-    headers: {
-        'Content-Type': null,
-        ...options?.headers
-    }
-});
 
 /**
  * Import an image from URL
@@ -140,6 +123,18 @@ export const postApiInternalMediaPresignedUpload = <ThrowOnError extends boolean
 });
 
 /**
+ * Confirm upload completion (internal)
+ *
+ * Service-to-service only. Marks the file as uploaded and triggers preprocessing pipeline.
+ */
+export const postApiInternalMediaUploadCompleted = <ThrowOnError extends boolean = false>(options: Options<PostApiInternalMediaUploadCompletedData, ThrowOnError>) => (options.client ?? client).post<PostApiInternalMediaUploadCompletedResponses, PostApiInternalMediaUploadCompletedErrors, ThrowOnError>({
+    responseType: 'json',
+    security: [{ name: 'Authorization', type: 'apiKey' }],
+    url: '/api/internal/media/{mediaId}/upload-completed',
+    ...options
+});
+
+/**
  * Import file from Google Storage (internal)
  *
  * Service-to-service only. Downloads file from Google Storage and stores it in S3. Returns mediaId.
@@ -193,21 +188,4 @@ export const postApiMediaUploadCompleted = <ThrowOnError extends boolean = false
     security: [{ name: 'Authorization', type: 'apiKey' }],
     url: '/api/media/{mediaId}/upload-completed',
     ...options
-});
-
-/**
- * Upload a video
- *
- * Accepts MP4 and WebM. Max size: 100 MB. Returns the assigned mediaId and presigned URL.
- */
-export const postApiVideos = <ThrowOnError extends boolean = false>(options?: Options<PostApiVideosData, ThrowOnError>) => (options?.client ?? client).post<PostApiVideosResponses, PostApiVideosErrors, ThrowOnError>({
-    ...formDataBodySerializer,
-    responseType: 'json',
-    security: [{ name: 'Authorization', type: 'apiKey' }],
-    url: '/api/videos',
-    ...options,
-    headers: {
-        'Content-Type': null,
-        ...options?.headers
-    }
 });
