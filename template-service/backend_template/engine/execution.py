@@ -32,6 +32,7 @@ from comfy_execution.validation import validate_node_input
 from comfy_execution.progress import get_progress_state, reset_progress_state, add_progress_handler, WebUIProgressHandler
 from comfy_execution.utils import CurrentNodeContext
 from comfy_api.internal import _ComfyNodeInternal, _NodeOutputInternal, first_real_override, is_class, make_locked_method_func
+from comfy_api_nodes.util.client import set_litellm_context
 from comfy_api.latest import io, _io
 
 
@@ -665,6 +666,13 @@ class PromptExecutor:
 
     async def execute_async(self, prompt, prompt_id, extra_data={}, execute_outputs=[]):
         # set_preview_method(extra_data.get("preview_method"))
+
+        pnginfo = extra_data.get("extra_pnginfo") or {}
+        set_litellm_context(
+            template_id=pnginfo.get("template_id"),
+            project_id=pnginfo.get("project_id"),
+            job_id=pnginfo.get("job_id"),
+        )
 
         nodes.interrupt_processing(False)
 

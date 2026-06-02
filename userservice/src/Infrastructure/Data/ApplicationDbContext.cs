@@ -18,6 +18,7 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
     public DbSet<Project> Projects => Set<Project>();
     public DbSet<ProjectAsset> ProjectAssets => Set<ProjectAsset>();
     public DbSet<DataProtectionKey> DataProtectionKeys => Set<DataProtectionKey>();
+    public DbSet<GenerationSpendLog> GenerationSpendLogs => Set<GenerationSpendLog>();
 
     protected override void OnModelCreating(ModelBuilder builder)
     {
@@ -25,5 +26,11 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
         builder.HasDefaultSchema(DefaultSchemaName);
         builder.ApplyConfigurationsFromAssembly(Assembly.GetExecutingAssembly());
         builder.ChangeIdentityTablesNaming();
+
+        builder.Entity<GenerationSpendLog>(e =>
+        {
+            e.HasNoKey();
+            e.ToView("generation_spend");
+        });
     }
 }

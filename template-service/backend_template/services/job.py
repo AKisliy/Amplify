@@ -147,6 +147,7 @@ class JobService:
                                 "project_id": project_id,
                                 "job_id": str(job.id),
                                 "product": product_context,
+                                "template_id": str(template.id) # пока нельзя лить, ибо нужен library_template (не просто template)
                             },
                         },
                     },

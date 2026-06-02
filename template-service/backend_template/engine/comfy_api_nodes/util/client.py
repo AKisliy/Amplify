@@ -5,6 +5,7 @@ import logging
 import time
 import uuid
 from collections.abc import Callable, Iterable
+from contextvars import ContextVar
 from dataclasses import dataclass
 from enum import Enum
 from io import BytesIO
@@ -29,6 +30,19 @@ from ._helpers import (
 from .common_exceptions import ApiServerError, LocalNetworkError, ProcessingInterrupted
 
 M = TypeVar("M", bound=BaseModel)
+
+_litellm_context: ContextVar[dict[str, str]] = ContextVar("_litellm_context", default={})
+
+
+def set_litellm_context(template_id: str | None, project_id: str | None, job_id: str | None = None) -> None:
+    ctx: dict[str, str] = {}
+    if template_id:
+        ctx["template_id"] = template_id
+    if project_id:
+        ctx["project_id"] = project_id
+    if job_id:
+        ctx["job_id"] = job_id
+    _litellm_context.set(ctx)
 
 
 class ApiEndpoint:
@@ -663,7 +677,11 @@ async def _request_base(cfg: _RequestConfig, expect_binary: bool):
                 payload_kw["data"] = cfg.data or {}
             elif method != "GET":
                 payload_headers["Content-Type"] = "application/json"
-                payload_kw["json"] = cfg.data or {}
+                body = dict(cfg.data or {})
+                ctx = _litellm_context.get()
+                if ctx:
+                    body["litellm_metadata"] = {"spend_logs_metadata": ctx}
+                payload_kw["json"] = body
 
             request_logger.log_request_response(
                 operation_id=operation_id,
