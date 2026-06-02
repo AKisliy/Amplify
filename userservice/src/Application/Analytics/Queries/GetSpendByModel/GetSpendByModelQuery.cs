@@ -13,8 +13,8 @@ public class GetSpendByModelQueryHandler(IApplicationDbContext dbContext)
 {
     public async Task<IReadOnlyList<ModelSpendDto>> Handle(GetSpendByModelQuery request, CancellationToken cancellationToken)
     {
-        var from = request.From.ToDateTime(TimeOnly.MinValue);
-        var to = request.To.ToDateTime(TimeOnly.MaxValue);
+        var from = DateTime.SpecifyKind(request.From.ToDateTime(TimeOnly.MinValue), DateTimeKind.Utc);
+        var to = DateTime.SpecifyKind(request.To.ToDateTime(TimeOnly.MaxValue), DateTimeKind.Utc);
 
         var rows = await dbContext.GenerationSpendLogs
             .Where(x => x.ProjectId == request.ProjectId
