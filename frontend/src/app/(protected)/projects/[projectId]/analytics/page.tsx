@@ -1,16 +1,14 @@
 "use client";
 
 import { useState } from "react";
-import { useParams, useRouter } from "next/navigation";
+import { useParams } from "next/navigation";
 import { motion } from "framer-motion";
-import { ArrowLeft, BarChart3 } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { BarChart3 } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Separator } from "@/components/ui/separator";
 import { DateRangePicker } from "@/features/analytics/components/DateRangePicker";
 import { SpendSummaryCards } from "@/features/analytics/components/SpendSummaryCards";
 import { SpendTrendChart } from "@/features/analytics/components/SpendTrendChart";
-import { SpendByModelChart } from "@/features/analytics/components/SpendByModelChart";
+import { SpendModelRow } from "@/features/analytics/components/SpendModelRow";
 import { SpendByTemplateTable } from "@/features/analytics/components/SpendByTemplateTable";
 import { SpendByJobTable } from "@/features/analytics/components/SpendByJobTable";
 import {
@@ -25,10 +23,10 @@ import {
 
 export default function AnalyticsPage() {
   const params = useParams();
-  const router = useRouter();
   const projectId = params?.projectId as string;
 
-  const [range, setRange] = useState<DateRange>(useDefaultRange());
+  const defaultRange = useDefaultRange();
+  const [range, setRange] = useState<DateRange>(defaultRange);
 
   const { data: summary, isLoading: summaryLoading } = useSpendSummary(projectId, range);
   const { data: trend, isLoading: trendLoading } = useSpendTrend(projectId, range);
@@ -38,36 +36,30 @@ export default function AnalyticsPage() {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Header */}
-      <motion.header
-        initial={{ opacity: 0, y: -20 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="border-b border-border/50 bg-card/50 backdrop-blur-sm sticky top-0 z-10"
-      >
-        <div className="container mx-auto px-6 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => router.back()}
-                className="hover:bg-muted/80"
-              >
-                <ArrowLeft className="w-5 h-5" />
-              </Button>
-              <Separator orientation="vertical" className="h-6" />
-              <div className="flex items-center gap-2">
-                <BarChart3 className="w-5 h-5 text-primary" />
-                <h1 className="text-lg font-semibold">Analytics</h1>
-              </div>
-            </div>
-            <DateRangePicker value={range} onChange={setRange} />
-          </div>
-        </div>
-      </motion.header>
+      <div className="container mx-auto px-6 py-8 max-w-6xl space-y-6">
 
-      {/* Content */}
-      <main className="container mx-auto px-6 py-8 max-w-6xl space-y-6">
+        {/* Page header — same style as Assets page */}
+        <motion.div
+          initial={{ opacity: 0, y: -8 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.3 }}
+          className="flex items-end justify-between"
+        >
+          <div>
+            <div className="flex items-center gap-2 mb-1">
+              <BarChart3 className="w-4 h-4 text-primary/70" />
+              <span className="text-[11px] font-semibold uppercase tracking-widest text-white/30">
+                Cost Tracking
+              </span>
+            </div>
+            <h1 className="text-3xl font-bold text-white/90 tracking-tight">Analytics</h1>
+            <p className="text-sm text-white/35 mt-1.5">
+              AI generation spend broken down by model, template, and job.
+            </p>
+          </div>
+          <DateRangePicker value={range} onChange={setRange} />
+        </motion.div>
+
         {/* KPI cards */}
         <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }}>
           <SpendSummaryCards data={summary} isLoading={summaryLoading} />
@@ -78,17 +70,18 @@ export default function AnalyticsPage() {
           <SpendTrendChart data={trend} isLoading={trendLoading} />
         </motion.div>
 
-        {/* Breakdowns */}
+        {/* Model breakdown — donut + bar side by side */}
         <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }}>
-          <Tabs defaultValue="model">
+          <SpendModelRow data={byModel ?? []} isLoading={modelLoading} />
+        </motion.div>
+
+        {/* Breakdowns by template / job */}
+        <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}>
+          <Tabs defaultValue="template">
             <TabsList className="mb-4">
-              <TabsTrigger value="model">By Model</TabsTrigger>
               <TabsTrigger value="template">By Template</TabsTrigger>
               <TabsTrigger value="job">By Job</TabsTrigger>
             </TabsList>
-            <TabsContent value="model">
-              <SpendByModelChart data={byModel} isLoading={modelLoading} />
-            </TabsContent>
             <TabsContent value="template">
               <SpendByTemplateTable data={byTemplate} isLoading={templateLoading} />
             </TabsContent>
@@ -97,7 +90,8 @@ export default function AnalyticsPage() {
             </TabsContent>
           </Tabs>
         </motion.div>
-      </main>
+
+      </div>
     </div>
   );
 }

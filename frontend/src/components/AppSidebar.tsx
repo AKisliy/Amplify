@@ -16,6 +16,7 @@ import {
   Moon,
   Monitor,
   LayoutDashboard,
+  BarChart3,
 } from "lucide-react";
 import { useTheme } from "next-themes";
 
@@ -82,6 +83,12 @@ const NAV_ITEMS = [
     label: "Assets",
     href: (id: string) => `/projects/${id}/assets`,
     icon: Images,
+    exact: false,
+  },
+  {
+    label: "Analytics",
+    href: (id: string) => `/projects/${id}/analytics`,
+    icon: BarChart3,
     exact: false,
   },
 ];
