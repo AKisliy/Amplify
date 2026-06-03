@@ -1,0 +1,331 @@
+{
+  "main": {
+    "id": "6729bb2e68b3e8e5",
+    "type": "split",
+    "children": [
+      {
+        "id": "3d42dfe14dde1abe",
+        "type": "tabs",
+        "children": [
+          {
+            "id": "e6ae5d95c802d05c",
+            "type": "leaf",
+            "state": {
+              "type": "markdown",
+              "state": {
+                "file": "issues/AMPLIFY-368/concepts/generation-velocity.md",
+                "mode": "source",
+                "source": false
+              },
+              "icon": "lucide-file",
+              "title": "generation-velocity"
+            }
+          },
+          {
+            "id": "b617b94165e05648",
+            "type": "leaf",
+            "state": {
+              "type": "markdown",
+              "state": {
+                "file": "issues/AMPLIFY-368/raw/Output Volume Velocity.md",
+                "mode": "source",
+                "source": false
+              },
+              "icon": "lucide-file",
+              "title": "Output Volume Velocity"
+            }
+          },
+          {
+            "id": "a7fafed2d71457ca",
+            "type": "leaf",
+            "state": {
+              "type": "markdown",
+              "state": {
+                "file": "issues/AMPLIFY-368/concepts/output-volume-velocity.md",
+                "mode": "source",
+                "source": false
+              },
+              "icon": "lucide-file",
+              "title": "output-volume-velocity"
+            }
+          },
+          {
+            "id": "d81e83829514e9de",
+            "type": "leaf",
+            "state": {
+              "type": "markdown",
+              "state": {
+                "file": "issues/AMPLIFY-368/concepts/generation-velocity.md",
+                "mode": "source",
+                "source": false
+              },
+              "icon": "lucide-file",
+              "title": "generation-velocity"
+            }
+          },
+          {
+            "id": "babcfabca3b70144",
+            "type": "leaf",
+            "state": {
+              "type": "markdown",
+              "state": {
+                "file": "issues/AMPLIFY-368/raw/CPA.md",
+                "mode": "source",
+                "source": false
+              },
+              "icon": "lucide-file",
+              "title": "CPA"
+            }
+          },
+          {
+            "id": "4b2d395b74123caf",
+            "type": "leaf",
+            "state": {
+              "type": "markdown",
+              "state": {
+                "file": "issues/AMPLIFY-368/concepts/yield-efficiency.md",
+                "mode": "source",
+                "source": false
+              },
+              "icon": "lucide-file",
+              "title": "yield-efficiency"
+            }
+          },
+          {
+            "id": "381c0b2e208721ae",
+            "type": "leaf",
+            "state": {
+              "type": "markdown",
+              "state": {
+                "file": "issues/AMPLIFY-368/raw/Entity Efficiency.md",
+                "mode": "source",
+                "source": false
+              },
+              "icon": "lucide-file",
+              "title": "Entity Efficiency"
+            }
+          },
+          {
+            "id": "b8cfdc5cf456b36e",
+            "type": "leaf",
+            "state": {
+              "type": "markdown",
+              "state": {
+                "file": "CLAUDE.md",
+                "mode": "source",
+                "source": false
+              },
+              "icon": "lucide-file",
+              "title": "CLAUDE"
+            }
+          }
+        ],
+        "currentTab": 7
+      }
+    ],
+    "direction": "vertical"
+  },
+  "left": {
+    "id": "5ba53d8fc2e2c506",
+    "type": "split",
+    "children": [
+      {
+        "id": "057e4ea20bf8ef4c",
+        "type": "tabs",
+        "children": [
+          {
+            "id": "2cbc11c3dfc4bc97",
+            "type": "leaf",
+            "state": {
+              "type": "file-explorer",
+              "state": {
+                "sortOrder": "alphabetical",
+                "autoReveal": false
+              },
+              "icon": "lucide-folder-closed",
+              "title": "Файловый менеджер"
+            }
+          },
+          {
+            "id": "eb8730c6c4cf2be4",
+            "type": "leaf",
+            "state": {
+              "type": "search",
+              "state": {
+                "query": "",
+                "matchingCase": false,
+                "explainSearch": false,
+                "collapseAll": false,
+                "extraContext": false,
+                "sortOrder": "alphabetical"
+              },
+              "icon": "lucide-search",
+              "title": "Поиск"
+            }
+          },
+          {
+            "id": "8f1112049967dbdc",
+            "type": "leaf",
+            "state": {
+              "type": "bookmarks",
+              "state": {},
+              "icon": "lucide-bookmark",
+              "title": "Закладки"
+            }
+          }
+        ]
+      }
+    ],
+    "direction": "horizontal",
+    "width": 300
+  },
+  "right": {
+    "id": "19d9088d6f77e02b",
+    "type": "split",
+    "children": [
+      {
+        "id": "cd0339c5798fc994",
+        "type": "tabs",
+        "children": [
+          {
+            "id": "1a38eca2d908c192",
+            "type": "leaf",
+            "state": {
+              "type": "backlink",
+              "state": {
+                "file": "CLAUDE.md",
+                "collapseAll": false,
+                "extraContext": false,
+                "sortOrder": "alphabetical",
+                "showSearch": false,
+                "searchQuery": "",
+                "backlinkCollapsed": false,
+                "unlinkedCollapsed": true
+              },
+              "icon": "links-coming-in",
+              "title": "Обратные ссылки для CLAUDE"
+            }
+          },
+          {
+            "id": "9d19555235767bb3",
+            "type": "leaf",
+            "state": {
+              "type": "outgoing-link",
+              "state": {
+                "file": "CLAUDE.md",
+                "linksCollapsed": false,
+                "unlinkedCollapsed": true
+              },
+              "icon": "links-going-out",
+              "title": "Исходящие ссылки из CLAUDE"
+            }
+          },
+          {
+            "id": "b0a83b210f871ec8",
+            "type": "leaf",
+            "state": {
+              "type": "tag",
+              "state": {
+                "sortOrder": "frequency",
+                "useHierarchy": true,
+                "showSearch": false,
+                "searchQuery": ""
+              },
+              "icon": "lucide-tags",
+              "title": "Теги"
+            }
+          },
+          {
+            "id": "d02e5acaf86d68e4",
+            "type": "leaf",
+            "state": {
+              "type": "all-properties",
+              "state": {
+                "sortOrder": "frequency",
+                "showSearch": false,
+                "searchQuery": ""
+              },
+              "icon": "lucide-archive",
+              "title": "Все свойства"
+            }
+          },
+          {
+            "id": "8a6da068e819d4a0",
+            "type": "leaf",
+            "state": {
+              "type": "outline",
+              "state": {
+                "file": "CLAUDE.md",
+                "followCursor": false,
+                "showSearch": false,
+                "searchQuery": ""
+              },
+              "icon": "lucide-list",
+              "title": "Структура CLAUDE"
+            }
+          }
+        ]
+      }
+    ],
+    "direction": "horizontal",
+    "width": 300,
+    "collapsed": true
+  },
+  "left-ribbon": {
+    "hiddenItems": {
+      "graph:Граф": false,
+      "switcher:Меню быстрого перехода": false,
+      "canvas:Создать новый холст": false,
+      "daily-notes:Сегодняшняя заметка": false,
+      "templates:Вставить шаблон": false,
+      "command-palette:Открыть палитру команд": false,
+      "bases:Создать новую базу": false
+    }
+  },
+  "active": "b8cfdc5cf456b36e",
+  "lastOpenFiles": [
+    "issues/AMPLIFY-368/research.md",
+    "Без названия.md",
+    "issues/AMPLIFY-368/concepts/output-volume-velocity.md",
+    "issues/index.md",
+    "issues/AMPLIFY-368/concepts/pipeline-failure-rate.md",
+    "issues/AMPLIFY-368/concepts/entity-efficiency.md",
+    "issues/AMPLIFY-368/concepts/yield-efficiency.md",
+    "issues/AMPLIFY-368/raw/Pipeline Failure Rate.md",
+    "assets/Pasted image 20260512161206.png",
+    "assets/Pasted image 20260512161204.png",
+    "assets/Pasted image 20260512161158.png",
+    "issues/AMPLIFY-368/raw/Entity Efficiency.md",
+    "assets/Pasted image 20260512160606.png",
+    "wikilink.md",
+    "issues/AMPLIFY-368/concepts/README.md",
+    "issues/AMPLIFY-368/raw/Yield Efficiency.md",
+    "issues/AMPLIFY-368/concepts/cpa.md",
+    "assets/Pasted image 20260512150830.png",
+    "issues/AMPLIFY-368/raw/CPA.md",
+    "assets/Pasted image 20260512145031.png",
+    "issues/AMPLIFY-368/concepts/format-volume-velocity.md",
+    "issues/AMPLIFY-368/concepts/generation-velocity.md",
+    "issues/AMPLIFY-368/raw/Format Volume Velocity.md",
+    "assets/Pasted image 20260512142755.png",
+    "issues/AMPLIFY-368/raw/Output Volume Velocity.md",
+    "assets/Pasted image 20260512140846.png",
+    "assets/Pasted image 20260512140838.png",
+    "issues/AMPLIFY-368/concepts/capital-burn.md",
+    "issues/AMPLIFY-368/raw/Generation Velocity.md",
+    "assets/Pasted image 20260512135240.png",
+    "issues/AMPLIFY-368/plan.md",
+    "issues/AMPLIFY-368/log.md",
+    "issues/AMPLIFY-368/decisions.md",
+    "CLAUDE.md",
+    "issues/AMPLIFY-368/raw/README.md",
+    "issues/AMPLIFY-368/assets",
+    "issues/AMPLIFY-368/raw/Capital Burn.md",
+    "concepts",
+    "assets",
+    "issues/AMPLIFY-368/concepts",
+    "issues/AMPLIFY-368/raw",
+    "issues/AMPLIFY-368",
+    "issues"
+  ]
+}
