@@ -1,0 +1,36 @@
+{{- if .Values.serviceEntries }}
+{{- with .Values.serviceEntries.postgres }}
+apiVersion: networking.istio.io/v1
+kind: ServiceEntry
+metadata:
+  name: external-postgres
+spec:
+  hosts:
+    - {{ .host }}
+  ports:
+    - number: 5432
+      name: tcp-postgres
+      protocol: TCP
+  location: MESH_EXTERNAL
+  resolution: DNS
+{{- end }}
+---
+{{- with .Values.serviceEntries.rabbitmq }}
+apiVersion: networking.istio.io/v1
+kind: ServiceEntry
+metadata:
+  name: external-rabbitmq
+spec:
+  hosts:
+    - {{ .host }}
+  ports:
+    - number: 5672
+      name: tcp-amqp
+      protocol: TCP
+    - number: 5671
+      name: tcp-amqps
+      protocol: TCP
+  location: MESH_EXTERNAL
+  resolution: DNS
+{{- end }}
+{{- end }}

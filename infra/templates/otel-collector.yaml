@@ -6,6 +6,9 @@ metadata:
 spec:
   image: otel/opentelemetry-collector-contrib:0.91.0
 
+  podAnnotations:
+    sidecar.istio.io/inject: "false"
+
   env:
     - name: GRAFANA_CLOUD_INSTANCE_ID
       valueFrom:
@@ -37,6 +40,42 @@ spec:
           http:
             endpoint: 0.0.0.0:4318
 
+      prometheus/istio:
+        config:
+          scrape_configs:
+            - job_name: istio-mesh
+              scrape_interval: 15s
+              metrics_path: /stats/prometheus
+              kubernetes_sd_configs:
+                - role: pod
+              relabel_configs:
+                # Keep only pods with Envoy sidecar (port named *-envoy-prom injected by Istio)
+                - source_labels: [__meta_kubernetes_pod_container_port_name]
+                  action: keep
+                  regex: '.*-envoy-prom'
+                - source_labels: [__meta_kubernetes_namespace]
+                  target_label: namespace
+                - source_labels: [__meta_kubernetes_pod_name]
+                  target_label: pod_name
+
+            - job_name: istio-gateway
+              scrape_interval: 15s
+              metrics_path: /stats/prometheus
+              kubernetes_sd_configs:
+                - role: pod
+                  namespaces:
+                    names: [istio-system]
+              relabel_configs:
+                # Keep only ingress/egress gateway pods
+                - source_labels: [__meta_kubernetes_pod_label_istio]
+                  action: keep
+                  regex: (ingressgateway|egressgateway)
+                - source_labels: [__address__]
+                  action: replace
+                  regex: ([^:]+)(?::\d+)?
+                  replacement: $1:15090
+                  target_label: __address__
+
     extensions:
       basicauth/grafana_cloud:
         client_auth:
@@ -62,6 +101,21 @@ spec:
             - k8s.pod.name
             - k8s.node.name
             - k8s.container.name
+      # Keep only the Istio metrics required by Kiali — drops the bulk of raw Envoy stats
+      # that would otherwise exhaust the Grafana Cloud free-tier active-series quota.
+      filter/istio:
+        metrics:
+          include:
+            match_type: regexp
+            metric_names:
+              - "istio_requests_total"
+              - "istio_request_duration_milliseconds.*"
+              - "istio_request_bytes.*"
+              - "istio_response_bytes.*"
+              - "istio_tcp_connections_opened_total"
+              - "istio_tcp_connections_closed_total"
+              - "istio_tcp_received_bytes_total"
+              - "istio_tcp_sent_bytes_total"
 
     exporters:
       otlphttp/grafana:
@@ -78,9 +132,14 @@ spec:
           processors: [memory_limiter, resourcedetection/gcp, k8sattributes, batch]
           exporters: [otlphttp/grafana]
 
-        metrics:
+        metrics/app:
           receivers: [otlp]
           processors: [memory_limiter, resourcedetection/gcp, k8sattributes, batch]
+          exporters: [otlphttp/grafana]
+
+        metrics/istio:
+          receivers: [prometheus/istio]
+          processors: [memory_limiter, filter/istio, batch]
           exporters: [otlphttp/grafana]
 
         logs:

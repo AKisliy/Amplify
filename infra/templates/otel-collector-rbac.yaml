@@ -4,8 +4,10 @@ metadata:
   name: otel-collector
 rules:
   - apiGroups: [""]
-    resources: ["namespaces", "pods", "nodes"]
+    resources: ["namespaces", "pods", "nodes", "nodes/proxy", "services", "endpoints"]
     verbs: ["get", "list", "watch"]
+  - nonResourceURLs: ["/metrics"]
+    verbs: ["get"]
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding

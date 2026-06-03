@@ -1,0 +1,20 @@
+{{- if .Values.kiali.virtualService.enabled }}
+apiVersion: networking.istio.io/v1
+kind: VirtualService
+metadata:
+  name: kiali
+spec:
+  hosts:
+  - {{ .Values.gateway.servers | first | dig "hosts" (list) | first | quote }}
+  gateways:
+  - {{ .Values.gateway.name }}
+  http:
+  - match:
+    - uri:
+        prefix: "/kiali"
+    route:
+    - destination:
+        host: "kiali.istio-system.svc.cluster.local"
+        port:
+          number: 20001
+{{- end }}

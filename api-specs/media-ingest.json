@@ -12,75 +12,6 @@
     }
   ],
   "paths": {
-    "/api/images": {
-      "post": {
-        "tags": [
-          "images"
-        ],
-        "summary": "Upload an image",
-        "description": "Accepts JPEG, PNG, WebP, GIF. Max size: 10 MB. Returns the assigned mediaId and public URL.",
-        "operationId": "UploadFromFile",
-        "requestBody": {
-          "content": {
-            "multipart/form-data": {
-              "schema": {
-                "type": "object",
-                "properties": {
-                  "file": {
-                    "type": "string",
-                    "format": "binary",
-                    "nullable": true
-                  }
-                }
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "OK",
-            "content": {
-              "application/json": {}
-            }
-          },
-          "201": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/UploadFileDto"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              }
-            }
-          }
-        },
-        "security": [
-          {
-            "JWT": []
-          }
-        ]
-      }
-    },
     "/api/images/import": {
       "post": {
         "tags": [
@@ -475,6 +406,49 @@
         }
       }
     },
+    "/api/internal/media/{mediaId}/upload-completed": {
+      "post": {
+        "tags": [
+          "internal/media"
+        ],
+        "summary": "Confirm upload completion (internal)",
+        "description": "Service-to-service only. Marks the file as uploaded and triggers preprocessing pipeline.",
+        "operationId": "PostApiInternalMediaUploadCompleted",
+        "parameters": [
+          {
+            "name": "mediaId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "guid"
+            },
+            "x-position": 1
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {}
+            }
+          },
+          "204": {
+            "description": ""
+          },
+          "404": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/internal/media/import-gs": {
       "post": {
         "tags": [
@@ -673,75 +647,6 @@
           }
         ]
       }
-    },
-    "/api/videos": {
-      "post": {
-        "tags": [
-          "videos"
-        ],
-        "summary": "Upload a video",
-        "description": "Accepts MP4 and WebM. Max size: 100 MB. Returns the assigned mediaId and presigned URL.",
-        "operationId": "PostApiVideos",
-        "requestBody": {
-          "content": {
-            "multipart/form-data": {
-              "schema": {
-                "type": "object",
-                "properties": {
-                  "file": {
-                    "type": "string",
-                    "format": "binary",
-                    "nullable": true
-                  }
-                }
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "OK",
-            "content": {
-              "application/json": {}
-            }
-          },
-          "201": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/UploadFileDto"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              }
-            }
-          }
-        },
-        "security": [
-          {
-            "JWT": []
-          }
-        ]
-      }
     }
   },
   "components": {
@@ -761,30 +666,6 @@
             "type": "string"
           }
         }
-      },
-      "HttpValidationProblemDetails": {
-        "allOf": [
-          {
-            "$ref": "#/components/schemas/ProblemDetails"
-          },
-          {
-            "type": "object",
-            "additionalProperties": {
-              "nullable": true
-            },
-            "properties": {
-              "errors": {
-                "type": "object",
-                "additionalProperties": {
-                  "type": "array",
-                  "items": {
-                    "type": "string"
-                  }
-                }
-              }
-            }
-          }
-        ]
       },
       "ProblemDetails": {
         "type": "object",
@@ -814,6 +695,30 @@
             "nullable": true
           }
         }
+      },
+      "HttpValidationProblemDetails": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/ProblemDetails"
+          },
+          {
+            "type": "object",
+            "additionalProperties": {
+              "nullable": true
+            },
+            "properties": {
+              "errors": {
+                "type": "object",
+                "additionalProperties": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        ]
       },
       "GetLinkByIdResponse": {
         "type": "object",
@@ -891,8 +796,35 @@
           "fileSize": {
             "type": "integer",
             "format": "int64"
+          },
+          "parentMediaId": {
+            "type": "string",
+            "format": "guid",
+            "nullable": true
+          },
+          "variant": {
+            "nullable": true,
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/MediaVariant"
+              }
+            ]
           }
         }
+      },
+      "MediaVariant": {
+        "type": "string",
+        "description": "",
+        "x-enumNames": [
+          "Original",
+          "Medium",
+          "Tiny"
+        ],
+        "enum": [
+          "Original",
+          "Medium",
+          "Tiny"
+        ]
       },
       "ImportFromGoogleStorageCommand": {
         "type": "object",
@@ -917,20 +849,6 @@
             "type": "string"
           }
         }
-      },
-      "MediaVariant": {
-        "type": "string",
-        "description": "",
-        "x-enumNames": [
-          "Original",
-          "Medium",
-          "Tiny"
-        ],
-        "enum": [
-          "Original",
-          "Medium",
-          "Tiny"
-        ]
       }
     },
     "securitySchemes": {

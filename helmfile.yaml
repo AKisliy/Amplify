@@ -22,7 +22,20 @@ repositories:
   - name: litellm
     url: docker.litellm.ai/berriai
     oci: true
+  - name: kiali
+    url: https://kiali.org/helm-charts
 releases:
+  - name: kiali-server
+    condition: kiali.enabled
+    namespace: istio-system
+    chart: kiali/kiali-server
+    createNamespace: true
+    labels:
+      tier: infra
+    values:
+      - ./infra/kiali/values.yaml
+      - ./infra/kiali/values.{{ .Environment.Name }}.yaml
+
   - name: cert-manager
     namespace: cert-manager
     chart: jetstack/cert-manager

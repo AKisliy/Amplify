@@ -518,3 +518,6 @@ litellm/local/config.local.yaml
 
 # obsidian
 .obsidian/
+
+# MacOS
+.DS_Store

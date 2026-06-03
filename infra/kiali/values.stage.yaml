@@ -1,0 +1,9 @@
+external_services:
+  grafana:
+    enabled: false
+  prometheus:
+    url: "https://prometheus-prod-39-prod-eu-north-0.grafana.net/api/prom"
+    health_check_url: "https://prometheus-prod-39-prod-eu-north-0.grafana.net/api/prom/api/v1/labels"
+    auth:
+      type: basic
+      secret_name: "kiali-prometheus-auth"

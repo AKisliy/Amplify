@@ -1,7 +1,6 @@
 litellm:
   virtualService:
     enabled: true
-
   secrets:
     serviceAccountKeyFile:
       key: template-service-sa-key-test
@@ -23,6 +22,23 @@ litellm:
       key: openai-test-api-key
     elevenLabsApiKey:
       key: elevenlabs-test-key
+    rabbitmqUrl:
+      key: rabbitmq-test
+kiali:
+  enabled: false
+  virtualService:
+    enabled: true
+  prometheus:
+    secrets:
+      usernameKey: kiali-prometheus-username-test
+      passwordKey: kiali-prometheus-password-test
+
+serviceEntries:
+  postgres:
+    host: "ep-twilight-star-ab1y78pz-pooler.eu-west-2.aws.neon.tech"
+  rabbitmq:
+    host: "kebnekaise.lmq.cloudamqp.com"
+
 
 # Istio JWT authentication settings for the staging environment.
 # issuer/audience must match userservice Jwt:Issuer and Jwt:Audience appsettings.
