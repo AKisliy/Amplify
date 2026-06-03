@@ -517,4 +517,4 @@ litellm/local/sa-key.json
 litellm/local/config.local.yaml
 
 # obsidian
-.obsidian/
+# .obsidian/
