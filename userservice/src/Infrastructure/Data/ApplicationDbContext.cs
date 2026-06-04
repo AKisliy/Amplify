@@ -19,6 +19,8 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
     public DbSet<ProjectAsset> ProjectAssets => Set<ProjectAsset>();
     public DbSet<DataProtectionKey> DataProtectionKeys => Set<DataProtectionKey>();
     public DbSet<GenerationSpendLog> GenerationSpendLogs => Set<GenerationSpendLog>();
+    public DbSet<JobExecution> JobExecutions => Set<JobExecution>();
+    public DbSet<NodeExecutionLog> NodeExecutionLogs => Set<NodeExecutionLog>();
 
     protected override void OnModelCreating(ModelBuilder builder)
     {
@@ -31,6 +33,18 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
         {
             e.HasNoKey();
             e.ToView("generation_spend");
+        });
+
+        builder.Entity<JobExecution>(e =>
+        {
+            e.HasNoKey();
+            e.ToView("job_executions");
+        });
+
+        builder.Entity<NodeExecutionLog>(e =>
+        {
+            e.HasNoKey();
+            e.ToView("node_execution_log");
         });
     }
 }
