@@ -31,27 +31,25 @@ public class GetEntityEfficiencyQueryHandler(IApplicationDbContext dbContext, IU
 
         var projectIds = projects.Select(p => p.Id).ToList();
 
-        var spendTask = dbContext.GenerationSpendLogs
+        var spendRows = await dbContext.GenerationSpendLogs
             .Where(x => x.ProjectId != null
                      && projectIds.Contains(x.ProjectId.Value)
                      && x.OccurredAt >= from
                      && x.OccurredAt <= to)
             .ToListAsync(cancellationToken);
 
-        var jobsTask = dbContext.JobExecutions
+        var jobRows = await dbContext.JobExecutions
             .Where(x => projectIds.Contains(x.ProjectId)
                      && x.Status == "COMPLETED"
                      && x.StartedAt >= from
                      && x.StartedAt <= to)
             .ToListAsync(cancellationToken);
 
-        await Task.WhenAll(spendTask, jobsTask);
-
-        var spendByProject = spendTask.Result
+        var spendByProject = spendRows
             .GroupBy(x => x.ProjectId!.Value)
             .ToDictionary(g => g.Key, g => g.Sum(x => x.CostUsd ?? 0));
 
-        var jobsByProject = jobsTask.Result
+        var jobsByProject = jobRows
             .GroupBy(x => x.ProjectId)
             .ToDictionary(g => g.Key, g => g.Count());
 

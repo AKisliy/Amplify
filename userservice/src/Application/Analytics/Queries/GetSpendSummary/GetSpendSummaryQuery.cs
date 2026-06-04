@@ -21,13 +21,13 @@ public class GetSpendSummaryQueryHandler(IApplicationDbContext dbContext)
         var from = DateTime.SpecifyKind(request.From.ToDateTime(TimeOnly.MinValue), DateTimeKind.Utc);
         var to = DateTime.SpecifyKind(request.To.ToDateTime(TimeOnly.MaxValue), DateTimeKind.Utc);
 
-        var spendTask = dbContext.GenerationSpendLogs
+        var rows = await dbContext.GenerationSpendLogs
             .Where(x => x.ProjectId == request.ProjectId
                      && x.OccurredAt >= from
                      && x.OccurredAt <= to)
             .ToListAsync(cancellationToken);
 
-        var jobsTask = dbContext.JobExecutions
+        var jobs = await dbContext.JobExecutions
             .Where(x => x.ProjectId == request.ProjectId
                      && x.StartedAt >= from
                      && x.StartedAt <= to)
@@ -38,11 +38,6 @@ public class GetSpendSummaryQueryHandler(IApplicationDbContext dbContext)
                 Failed = g.Count(x => x.Status == "FAILED"),
             })
             .FirstOrDefaultAsync(cancellationToken);
-
-        await Task.WhenAll(spendTask, jobsTask);
-
-        var rows = spendTask.Result;
-        var jobs = jobsTask.Result;
 
         return new SpendSummaryDto(
             TotalCostUsd: rows.Sum(x => x.CostUsd ?? 0),
