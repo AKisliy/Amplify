@@ -13,7 +13,7 @@ public class GetGlobalSpendSummaryQueryHandler(IApplicationDbContext dbContext, 
     public async Task<SpendSummaryDto> Handle(GetGlobalSpendSummaryQuery request, CancellationToken cancellationToken)
     {
         var from = DateTime.SpecifyKind(request.From.ToDateTime(TimeOnly.MinValue), DateTimeKind.Utc);
-        var to   = DateTime.SpecifyKind(request.To.ToDateTime(TimeOnly.MaxValue),   DateTimeKind.Utc);
+        var to = DateTime.SpecifyKind(request.To.ToDateTime(TimeOnly.MaxValue), DateTimeKind.Utc);
 
         var projectIds = await dbContext.Projects
             .Where(p => p.UserId == user.Id!.Value)
@@ -38,7 +38,7 @@ public class GetGlobalSpendSummaryQueryHandler(IApplicationDbContext dbContext, 
             .Select(g => new
             {
                 Completed = g.Count(x => x.Status == "COMPLETED"),
-                Failed    = g.Count(x => x.Status == "FAILED"),
+                Failed = g.Count(x => x.Status == "FAILED"),
             })
             .FirstOrDefaultAsync(cancellationToken);
 
@@ -48,10 +48,10 @@ public class GetGlobalSpendSummaryQueryHandler(IApplicationDbContext dbContext, 
         var jobs = jobsTask.Result;
 
         return new SpendSummaryDto(
-            TotalCostUsd:      rows.Sum(x => x.CostUsd ?? 0),
-            TotalTokens:       rows.Sum(x => (long)x.TotalTokens),
-            RequestCount:      rows.Count,
+            TotalCostUsd: rows.Sum(x => x.CostUsd ?? 0),
+            TotalTokens: rows.Sum(x => (long)x.TotalTokens),
+            RequestCount: rows.Count,
             CompletedJobCount: jobs?.Completed ?? 0,
-            FailedJobCount:    jobs?.Failed ?? 0);
+            FailedJobCount: jobs?.Failed ?? 0);
     }
 }

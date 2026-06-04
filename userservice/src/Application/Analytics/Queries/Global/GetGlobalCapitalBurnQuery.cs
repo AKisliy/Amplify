@@ -15,7 +15,7 @@ public class GetGlobalCapitalBurnQueryHandler(IApplicationDbContext dbContext, I
     public async Task<IReadOnlyList<CapitalBurnPointDto>> Handle(GetGlobalCapitalBurnQuery request, CancellationToken cancellationToken)
     {
         var from = DateTime.SpecifyKind(request.From.ToDateTime(TimeOnly.MinValue), DateTimeKind.Utc);
-        var to   = DateTime.SpecifyKind(request.To.ToDateTime(TimeOnly.MaxValue),   DateTimeKind.Utc);
+        var to = DateTime.SpecifyKind(request.To.ToDateTime(TimeOnly.MaxValue), DateTimeKind.Utc);
 
         var projectIds = await dbContext.Projects
             .Where(p => p.UserId == user.Id!.Value)
@@ -36,8 +36,8 @@ public class GetGlobalCapitalBurnQueryHandler(IApplicationDbContext dbContext, I
             .GroupBy(x => (Date: DateOnly.FromDateTime(x.OccurredAt), x.Model))
             .OrderBy(g => g.Key.Date)
             .Select(g => new CapitalBurnPointDto(
-                Date:    g.Key.Date,
-                Model:   g.Key.Model,
+                Date: g.Key.Date,
+                Model: g.Key.Model,
                 CostUsd: g.Sum(x => x.CostUsd ?? 0)))
             .ToList();
     }

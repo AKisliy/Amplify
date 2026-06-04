@@ -13,7 +13,7 @@ public class GetGlobalSpendByModelQueryHandler(IApplicationDbContext dbContext, 
     public async Task<IReadOnlyList<ModelSpendDto>> Handle(GetGlobalSpendByModelQuery request, CancellationToken cancellationToken)
     {
         var from = DateTime.SpecifyKind(request.From.ToDateTime(TimeOnly.MinValue), DateTimeKind.Utc);
-        var to   = DateTime.SpecifyKind(request.To.ToDateTime(TimeOnly.MaxValue),   DateTimeKind.Utc);
+        var to = DateTime.SpecifyKind(request.To.ToDateTime(TimeOnly.MaxValue), DateTimeKind.Utc);
 
         var projectIds = await dbContext.Projects
             .Where(p => p.UserId == user.Id!.Value)
@@ -34,9 +34,9 @@ public class GetGlobalSpendByModelQueryHandler(IApplicationDbContext dbContext, 
             .GroupBy(x => x.Model)
             .OrderByDescending(g => g.Sum(x => x.CostUsd ?? 0))
             .Select(g => new ModelSpendDto(
-                Model:    g.Key,
-                CostUsd:  g.Sum(x => x.CostUsd ?? 0),
-                Tokens:   g.Sum(x => (long)x.TotalTokens),
+                Model: g.Key,
+                CostUsd: g.Sum(x => x.CostUsd ?? 0),
+                Tokens: g.Sum(x => (long)x.TotalTokens),
                 Requests: g.Count()))
             .ToList();
     }

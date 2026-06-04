@@ -19,7 +19,7 @@ public class GetEntityEfficiencyQueryHandler(IApplicationDbContext dbContext, IU
     public async Task<IReadOnlyList<EntityEfficiencyDto>> Handle(GetEntityEfficiencyQuery request, CancellationToken cancellationToken)
     {
         var from = DateTime.SpecifyKind(request.From.ToDateTime(TimeOnly.MinValue), DateTimeKind.Utc);
-        var to   = DateTime.SpecifyKind(request.To.ToDateTime(TimeOnly.MaxValue),   DateTimeKind.Utc);
+        var to = DateTime.SpecifyKind(request.To.ToDateTime(TimeOnly.MaxValue), DateTimeKind.Utc);
 
         var projects = await dbContext.Projects
             .Where(p => p.UserId == user.Id!.Value)
@@ -60,15 +60,15 @@ public class GetEntityEfficiencyQueryHandler(IApplicationDbContext dbContext, IU
         return projectIds
             .Select(id =>
             {
-                var spend    = spendByProject.GetValueOrDefault(id, 0);
-                var jobs     = jobsByProject.GetValueOrDefault(id, 0);
-                var avgCpa   = jobs > 0 ? spend / jobs : 0;
+                var spend = spendByProject.GetValueOrDefault(id, 0);
+                var jobs = jobsByProject.GetValueOrDefault(id, 0);
+                var avgCpa = jobs > 0 ? spend / jobs : 0;
                 return new EntityEfficiencyDto(
-                    ProjectId:         id,
-                    ProjectName:       nameMap[id],
-                    TotalCostUsd:      spend,
+                    ProjectId: id,
+                    ProjectName: nameMap[id],
+                    TotalCostUsd: spend,
                     CompletedJobCount: jobs,
-                    AvgCpa:            avgCpa);
+                    AvgCpa: avgCpa);
             })
             .OrderByDescending(x => x.TotalCostUsd)
             .ToList();

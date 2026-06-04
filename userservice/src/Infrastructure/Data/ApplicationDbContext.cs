@@ -28,23 +28,5 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
         builder.HasDefaultSchema(DefaultSchemaName);
         builder.ApplyConfigurationsFromAssembly(Assembly.GetExecutingAssembly());
         builder.ChangeIdentityTablesNaming();
-
-        builder.Entity<GenerationSpendLog>(e =>
-        {
-            e.HasNoKey();
-            e.ToView("generation_spend");
-        });
-
-        builder.Entity<JobExecution>(e =>
-        {
-            e.HasNoKey();
-            e.ToView("job_executions");
-        });
-
-        builder.Entity<NodeExecutionLog>(e =>
-        {
-            e.HasNoKey();
-            e.ToView("node_execution_log");
-        });
     }
 }
