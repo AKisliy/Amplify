@@ -85,7 +85,10 @@ export function GlobalCpaEfficiencyChart({ data, isLoading, baseline, onBaseline
                 borderRadius: 8,
                 fontSize: 12,
               }}
-              formatter={(value: number) => [`$${value.toFixed(2)}`, "Daily CPA"]}
+              formatter={(value, name) => [
+                typeof value === "number" ? `$${value.toFixed(2)}` : String(value),
+                String(name).split("/").pop() ?? String(name),
+              ]}
             />
             {/* Human baseline */}
             <ReferenceLine

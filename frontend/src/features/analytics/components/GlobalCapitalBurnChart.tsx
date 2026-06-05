@@ -117,9 +117,9 @@ export function GlobalCapitalBurnChart({ data, isLoading }: Props) {
               borderRadius: 8,
               fontSize: 12,
             }}
-            formatter={(value: number, name: string) => [
-              `$${value.toFixed(2)}`,
-              name.split("/").pop() ?? name,
+            formatter={(value, name) => [
+              typeof value === "number" ? `$${value.toFixed(2)}` : String(value),
+              String(name).split("/").pop() ?? String(name),
             ]}
           />
           {/* Stack order: openai bottom → elevenlabs → veo3 top (matches design) */}

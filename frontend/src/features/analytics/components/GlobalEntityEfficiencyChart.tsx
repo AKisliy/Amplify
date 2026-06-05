@@ -95,8 +95,10 @@ export function GlobalEntityEfficiencyChart({ data, isLoading }: Props) {
                 borderRadius: 8,
                 fontSize: 12,
               }}
-              formatter={(value: number, name: string) => [
-                name === "avgCpa" ? `$${value.toFixed(2)}` : `$${Math.round(value).toLocaleString()}`,
+              formatter={(value, name) => [
+                name === "avgCpa"
+                  ? `$${typeof value === "number" ? value.toFixed(2) : value}`
+                  : `$${typeof value === "number" ? Math.round(value).toLocaleString() : value}`,
                 name === "avgCpa" ? "Avg CPA" : "Total Spend",
               ]}
             />
@@ -107,7 +109,7 @@ export function GlobalEntityEfficiencyChart({ data, isLoading }: Props) {
               <LabelList
                 dataKey="avgCpa"
                 position="top"
-                formatter={(v: number) => `$${v.toFixed(2)}`}
+                formatter={(v) => typeof v === "number" ? `$${v.toFixed(2)}` : String(v)}
                 style={{ fontSize: 11, fontWeight: 600, fill: "var(--foreground)" }}
               />
             </Bar>
