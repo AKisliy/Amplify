@@ -84,13 +84,7 @@ const NAV_ITEMS = [
     href: (id: string) => `/projects/${id}/assets`,
     icon: Images,
     exact: false,
-  },
-  {
-    label: "Analytics",
-    href: (id: string) => `/projects/${id}/analytics`,
-    icon: BarChart3,
-    exact: false,
-  },
+  }
 ];
 
 export function AppSidebar() {
