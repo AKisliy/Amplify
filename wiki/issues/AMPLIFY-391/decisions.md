@@ -68,6 +68,22 @@
 
 ---
 
+## 2026-06-05: Template name в аналитике — отложено, выбран путь денормализации
+
+**What changed:** Yield Efficiency и Generation Velocity per-template не реализованы на глобальном дашборде, в том числе потому что `template_id` (Guid) нечитаем без имени, а имя шаблона живёт в template-service.
+
+**Why:** Cross-service join в query time создаёт coupling и latency. Три варианта рассмотрены — подробно в [[concepts/template-naming-in-analytics]].
+
+**Принятое решение:** денормализация `template_name` в `job_executions` при создании job. Исторически корректно ("имя на момент запуска"), не зависит от library, работает для любых шаблонов.
+
+**Отклонённые варианты:**
+- LiteLLM metadata — покрывает только spend path, не Generation Velocity
+- Library template link — продуктовое решение, требует admin UI и определяет, разрешены ли кастомные шаблоны вне library; должно решаться отдельно
+
+**Impact on plan.md:** Yield Efficiency и Generation Velocity per-template — следующий PR после реализации денормализации.
+
+---
+
 ## Future Work (зафиксировано, не реализовано)
 
 - **Materialized view** — EF Core `ToView()` одинаково работает для обычного и materialized view. Разница только в DDL (`CREATE MATERIALIZED VIEW`) и необходимости `REFRESH MATERIALIZED VIEW` (pg_cron / триггер / hosted service).
