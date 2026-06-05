@@ -664,50 +664,6 @@ class GeminiImageNode(IO.ComfyNode):
         text = get_text_from_response(response)
         return IO.NodeOutput(image_uuid, text, ui={"image_uuid": [image_uuid], "text": [text]})
 
-_ASPECT_RATIO_TO_SIZE: dict[str, str] = {
-    "1:1":  "1024x1024",
-    "2:3":  "768x1152",
-    "3:2":  "1152x768",
-    "3:4":  "768x1024",
-    "4:3":  "1024x768",
-    "4:5":  "896x1120",
-    "5:4":  "1120x896",
-    "9:16": "1080x1920",
-    "16:9": "1920x1080",
-    "21:9": "2560x1080",
-}
-
-
-async def _upload_image_bytes(image_bytes: bytes, ext: str, content_type: str) -> str:
-    """Upload raw image bytes to media-ingest and return the media UUID."""
-    import requests as _requests
-
-    filename = f"gemini_output_{uuid.uuid4().hex[:8]}.{ext}"
-    base_url = f"{media_ingest_config.media_ingest_url}/internal/media"
-
-    def _sync_upload() -> str:
-        resp = _requests.post(
-            f"{base_url}/presigned-upload",
-            json={"fileName": filename, "contentType": content_type, "fileSize": len(image_bytes)},
-            timeout=30,
-        )
-        resp.raise_for_status()
-        data = resp.json()
-        media_id: str = data["mediaId"]
-
-        _requests.put(
-            data["uploadUrl"],
-            data=image_bytes,
-            headers={"Content-Type": content_type},
-            timeout=120,
-        ).raise_for_status()
-
-        _requests.post(f"{base_url}/{media_id}/upload-completed", timeout=30).raise_for_status()
-        return media_id
-
-    return await asyncio.to_thread(_sync_upload)
-
-
 class GeminiImage2Node(IO.ComfyNode):
 
     @classmethod
@@ -788,35 +744,43 @@ class GeminiImage2Node(IO.ComfyNode):
     ) -> IO.NodeOutput:
         prompt = validate_string(prompt, strip_whitespace=True, min_length=1)
 
-        size = _ASPECT_RATIO_TO_SIZE.get(aspect_ratio, "1024x1024")
+        parts: list[GeminiPart] = [GeminiPart(text=prompt)]
+        if images is not None:
+            parts.extend(await create_image_parts(cls, images))
 
-        extra_body: dict = {
-            "imageSize": resolution,
-            "responseModalities": ["IMAGE"] if response_modalities == "IMAGE" else ["TEXT", "IMAGE"],
-        }
+        image_config = GeminiImageConfig(imageSize=resolution)
+        if aspect_ratio != "auto":
+            image_config.aspectRatio = aspect_ratio
+
+        gemini_system_prompt = None
+
         if system_prompt:
-            extra_body["systemInstruction"] = {"parts": [{"text": system_prompt}]}
+            gemini_system_prompt = GeminiSystemInstructionContent(parts=[GeminiTextPart(text=system_prompt)], role=None)
 
-        # TODO: input image support (images param) requires downloading GCS bytes
-        # and passing via extra_body["contents"]. Not implemented in this POC.
-
-        from openai import AsyncOpenAI
-        client = AsyncOpenAI(
-            base_url=f"{litellm_config.litellm_base_url}/v1",
-            api_key=litellm_config.litellm_api_key,
+        response = await sync_op(
+            cls,
+            endpoint=ApiEndpoint(
+                path=f"{GEMINI_BASE_ENDPOINT}/{model}:generateContent", 
+                method="POST", 
+                headers={"x-litellm-api-key": f"Bearer {litellm_config.litellm_api_key}"}
+            ),
+            data=GeminiImageGenerateContentRequest(
+                contents=[
+                    GeminiContent(role=GeminiRole.user, parts=parts),
+                ],
+                generationConfig=GeminiImageGenerationConfig(
+                    responseModalities=(["IMAGE"] if response_modalities == "IMAGE" else ["TEXT", "IMAGE"]),
+                    imageConfig=image_config,
+                ),
+                systemInstruction=gemini_system_prompt
+            ),
+            response_model=GeminiGenerateContentResponse,
+            price_extractor=calculate_tokens_price
         )
-        response = await client.images.generate(
-            model=model,
-            prompt=prompt,
-            n=1,
-            size=size,
-            extra_body=extra_body,
-        )
 
-        image_b64: str = response.data[0].b64_json
-        image_bytes = base64.b64decode(image_b64)
-        image_uuid = await _upload_image_bytes(image_bytes, "png", "image/png")
-        text: str = response.data[0].revised_prompt or ""
+        image_uuid = await upload_images_and_get_uuids(cls, response)
+        text = get_text_from_response(response)
+
         return IO.NodeOutput(image_uuid, text, ui={"image_uuid": [image_uuid], "text": [text]})
 
 class GeminiExtension(ComfyExtension):
