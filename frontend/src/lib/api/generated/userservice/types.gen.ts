@@ -8,6 +8,8 @@ export type SpendSummaryDto = {
     totalCostUsd?: number;
     totalTokens?: number;
     requestCount?: number;
+    completedJobCount?: number;
+    failedJobCount?: number;
 };
 
 export type SpendTrendPointDto = {
@@ -39,6 +41,39 @@ export type JobSpendDto = {
     tokens?: number;
     requests?: number;
     startedAt?: string;
+};
+
+export type OutputVolumeDto = {
+    date?: string;
+    completed?: number;
+    failed?: number;
+};
+
+export type GenerationVelocityDto = {
+    templateId?: string;
+    avgDurationSec?: number;
+    jobCount?: number;
+};
+
+export type NodeFailureRateDto = {
+    className?: string;
+    total?: number;
+    failed?: number;
+    failureRate?: number;
+};
+
+export type CapitalBurnPointDto = {
+    date?: string;
+    model?: string;
+    costUsd?: number;
+};
+
+export type EntityEfficiencyDto = {
+    projectId?: string;
+    projectName?: string;
+    totalCostUsd?: number;
+    completedJobCount?: number;
+    avgCpa?: number;
 };
 
 export type RegisterUserCommand = {
@@ -198,6 +233,156 @@ export type GetSpendByJobResponses = {
 };
 
 export type GetSpendByJobResponse = GetSpendByJobResponses[keyof GetSpendByJobResponses];
+
+export type GetOutputVolumeData = {
+    body?: never;
+    path: {
+        projectId: string;
+    };
+    query: {
+        from: string;
+        to: string;
+    };
+    url: '/api/analytics/{projectId}/jobs/volume';
+};
+
+export type GetOutputVolumeResponses = {
+    200: Array<OutputVolumeDto>;
+};
+
+export type GetOutputVolumeResponse = GetOutputVolumeResponses[keyof GetOutputVolumeResponses];
+
+export type GetGenerationVelocityData = {
+    body?: never;
+    path: {
+        projectId: string;
+    };
+    query: {
+        from: string;
+        to: string;
+    };
+    url: '/api/analytics/{projectId}/jobs/velocity';
+};
+
+export type GetGenerationVelocityResponses = {
+    200: Array<GenerationVelocityDto>;
+};
+
+export type GetGenerationVelocityResponse = GetGenerationVelocityResponses[keyof GetGenerationVelocityResponses];
+
+export type GetNodeFailureRateData = {
+    body?: never;
+    path: {
+        projectId: string;
+    };
+    query: {
+        from: string;
+        to: string;
+    };
+    url: '/api/analytics/{projectId}/nodes/failure-rate';
+};
+
+export type GetNodeFailureRateResponses = {
+    200: Array<NodeFailureRateDto>;
+};
+
+export type GetNodeFailureRateResponse = GetNodeFailureRateResponses[keyof GetNodeFailureRateResponses];
+
+export type GetGlobalSpendSummaryData = {
+    body?: never;
+    path?: never;
+    query: {
+        from: string;
+        to: string;
+    };
+    url: '/api/analytics/global/spend/summary';
+};
+
+export type GetGlobalSpendSummaryResponses = {
+    200: SpendSummaryDto;
+};
+
+export type GetGlobalSpendSummaryResponse = GetGlobalSpendSummaryResponses[keyof GetGlobalSpendSummaryResponses];
+
+export type GetGlobalSpendTrendData = {
+    body?: never;
+    path?: never;
+    query: {
+        from: string;
+        to: string;
+    };
+    url: '/api/analytics/global/spend/trend';
+};
+
+export type GetGlobalSpendTrendResponses = {
+    200: Array<SpendTrendPointDto>;
+};
+
+export type GetGlobalSpendTrendResponse = GetGlobalSpendTrendResponses[keyof GetGlobalSpendTrendResponses];
+
+export type GetGlobalSpendByModelData = {
+    body?: never;
+    path?: never;
+    query: {
+        from: string;
+        to: string;
+    };
+    url: '/api/analytics/global/spend/by-model';
+};
+
+export type GetGlobalSpendByModelResponses = {
+    200: Array<ModelSpendDto>;
+};
+
+export type GetGlobalSpendByModelResponse = GetGlobalSpendByModelResponses[keyof GetGlobalSpendByModelResponses];
+
+export type GetGlobalOutputVolumeData = {
+    body?: never;
+    path?: never;
+    query: {
+        from: string;
+        to: string;
+    };
+    url: '/api/analytics/global/jobs/volume';
+};
+
+export type GetGlobalOutputVolumeResponses = {
+    200: Array<OutputVolumeDto>;
+};
+
+export type GetGlobalOutputVolumeResponse = GetGlobalOutputVolumeResponses[keyof GetGlobalOutputVolumeResponses];
+
+export type GetGlobalCapitalBurnData = {
+    body?: never;
+    path?: never;
+    query: {
+        from: string;
+        to: string;
+    };
+    url: '/api/analytics/global/capital-burn';
+};
+
+export type GetGlobalCapitalBurnResponses = {
+    200: Array<CapitalBurnPointDto>;
+};
+
+export type GetGlobalCapitalBurnResponse = GetGlobalCapitalBurnResponses[keyof GetGlobalCapitalBurnResponses];
+
+export type GetEntityEfficiencyData = {
+    body?: never;
+    path?: never;
+    query: {
+        from: string;
+        to: string;
+    };
+    url: '/api/analytics/global/entity-efficiency';
+};
+
+export type GetEntityEfficiencyResponses = {
+    200: Array<EntityEfficiencyDto>;
+};
+
+export type GetEntityEfficiencyResponse = GetEntityEfficiencyResponses[keyof GetEntityEfficiencyResponses];
 
 export type PostApiAuthRegisterData = {
     body: RegisterUserCommand;
