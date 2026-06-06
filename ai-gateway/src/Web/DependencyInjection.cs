@@ -7,6 +7,7 @@ using AiGateway.Web.Configuration;
 using AiGateway.Web.Configuration.Extensions;
 using AiGateway.Web.Services;
 using AiGateway.Web.Utils;
+using Flurl;
 using Microsoft.Kiota.Abstractions;
 using Microsoft.Kiota.Abstractions.Authentication;
 using Microsoft.Kiota.Http.HttpClientLibrary;
@@ -72,7 +73,7 @@ public static class DependencyInjection
         services.AddHttpClient("elevenlabs", (sp, client) =>
         {
             var options = sp.GetRequiredService<IOptions<LiteLlmOptions>>().Value;
-            client.BaseAddress = new Uri(options.BaseUrl);
+            client.BaseAddress = new Url(options.BaseUrl).AppendPathSegment("elevenlabs").ToUri();
             client.DefaultRequestHeaders.Add("x-litellm-api-key", options.ApiKey);
             client.Timeout = TimeSpan.FromSeconds(300);
         });
@@ -83,7 +84,7 @@ public static class DependencyInjection
             var httpClient = sp.GetRequiredService<IHttpClientFactory>().CreateClient("elevenlabs");
             var adapter = new HttpClientRequestAdapter(new AnonymousAuthenticationProvider(), httpClient: httpClient)
             {
-                BaseUrl = options.BaseUrl
+                BaseUrl = new Url(options.BaseUrl).AppendPathSegment("elevenlabs")
             };
             return new ElevenLabsClient(adapter);
         });
