@@ -10,6 +10,7 @@ services:
       GOOGLE_APPLICATION_CREDENTIALS: /secrets/sa-key.json
       DATABASE_URL: postgresql://litellm:litellm@postgres:5432/litellm
       LITELLM_MASTER_KEY: sk-1234
+      STORE_MODEL_IN_DB: "true"
     command: --config /app/config.yaml
     depends_on:
       postgres:

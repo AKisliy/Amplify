@@ -3,10 +3,12 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
+      target: final-api
     ports:
       - "5070:8080"
     environment:
       - DbConnection__Default=Host=db;Database=my_app;Username=postgres;Password=password
+      - ConnectionStrings__Hangfire=Host=db;Database=my_app;Username=postgres;Password=password
       - ASPNETCORE_ENVIRONMENT=Development
       - ASPNETCORE_URLS=http://+:8080
       - S3__Host=minio:9000
