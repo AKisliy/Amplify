@@ -14,7 +14,7 @@ appConfig:
   MediaIngest:
     BaseUrl: "http://mediaingest.test-env.svc.cluster.local"
   OpenAi:
-    BaseUrl: "http://litellm.test-env.svc.cluster.local"
+    BaseUrl: "http://litellm.test-env.svc.cluster.local/litellm"
     TranscriptionModel: "whisper-1"
   LiteLlm:
-    BaseUrl: "http://litellm.test-env.svc.cluster.local"
+    BaseUrl: "http://litellm.test-env.svc.cluster.local/litellm"
