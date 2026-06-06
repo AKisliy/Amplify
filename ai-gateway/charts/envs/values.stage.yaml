@@ -16,3 +16,5 @@ appConfig:
   OpenAi:
     BaseUrl: "http://litellm.test-env.svc.cluster.local"
     TranscriptionModel: "whisper-1"
+  LiteLlm:
+    BaseUrl: "http://litellm.test-env.svc.cluster.local"
