@@ -24,6 +24,8 @@ litellm:
       key: elevenlabs-test-key
     rabbitmqUrl:
       key: rabbitmq-test
+    resendApiKey:
+      key: resend-api-key-test
 kiali:
   enabled: false
   virtualService:

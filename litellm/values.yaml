@@ -15,6 +15,7 @@ envVars:
   GOOGLE_APPLICATION_CREDENTIALS: "/secrets/sa-key.json"
   LANGFUSE_HOST: "https://cloud.langfuse.com"
   SERVER_ROOT_PATH: "/litellm"
+  LITELLM_WORKER_STARTUP_HOOKS: "custom_startup:patch_model_cost"
 
 volumes:
   - name: sa-key
@@ -23,8 +24,14 @@ volumes:
       items:
         - key: sa-key.json
           path: sa-key.json
+  - name: startup-hook
+    configMap:
+      name: litellm-startup-hook
 
 volumeMounts:
   - name: sa-key
     mountPath: /secrets
     readOnly: true
+  - name: startup-hook
+    mountPath: /app/custom_startup.py
+    subPath: custom_startup.py

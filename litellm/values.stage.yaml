@@ -2,6 +2,17 @@
 # The proxy_config section is injected as config.yaml into the LiteLLM container.
 
 proxy_config:
+  custom_model_cost_map:
+    vertex_ai/veo-3.1-lite-generate-001:
+      litellm_provider: vertex_ai-video-models
+      max_input_tokens: 1024
+      max_tokens: 1024
+      mode: video_generation
+      output_cost_per_second: 0.05
+      output_cost_per_second_1080p: 0.08
+      supported_modalities: ["text"]
+      supported_output_modalities: ["video"]
+
   model_list:
     # ── Gemini image generation (Imagen 3) ──────────────────────────────────
     - model_name: imagen-3.0-generate-002
@@ -12,130 +23,7 @@ proxy_config:
         vertex_credentials: "/secrets/sa-key.json"
         use_in_pass_through: true
 
-    # ── Gemini image generation (Gemini 3 Pro Image) ────────────────────────
-    - model_name: gemini-3-pro-image-preview
-      litellm_params:
-        model: vertex_ai/gemini-3-pro-image-preview
-        vertex_project: "project-d72a81f9-0097-4b5b-a62"
-        vertex_location: "global"
-        vertex_credentials: "/secrets/sa-key.json"
-        use_in_pass_through: true
-
-    # ── Gemini multimodal LLM ───────────────────────────────────────────────
-    - model_name: gemini-2.0-flash-exp
-      litellm_params:
-        model: vertex_ai/gemini-2.0-flash-exp
-        vertex_project: "project-d72a81f9-0097-4b5b-a62"
-        vertex_location: "global"
-        vertex_credentials: "/secrets/sa-key.json"
-        use_in_pass_through: true
-
-    - model_name: gemini-2.5-flash-preview-05-20
-      litellm_params:
-        model: vertex_ai/gemini-2.5-flash-preview-05-20
-        vertex_project: "project-d72a81f9-0097-4b5b-a62"
-        vertex_location: "global"
-        vertex_credentials: "/secrets/sa-key.json"
-        use_in_pass_through: true
-
-    - model_name: gemini-2.5-flash-preview-04-17
-      litellm_params:
-        model: vertex_ai/gemini-2.5-flash-preview-04-17
-        vertex_project: "project-d72a81f9-0097-4b5b-a62"
-        vertex_location: "global"
-        vertex_credentials: "/secrets/sa-key.json"
-        use_in_pass_through: true
-
-    - model_name: gemini-2.5-flash
-      litellm_params:
-        model: vertex_ai/gemini-2.5-flash
-        vertex_project: "project-d72a81f9-0097-4b5b-a62"
-        vertex_location: "global"
-        vertex_credentials: "/secrets/sa-key.json"
-        use_in_pass_through: true
-
-    - model_name: gemini-2.5-pro-preview-05-06
-      litellm_params:
-        model: vertex_ai/gemini-2.5-pro-preview-05-06
-        vertex_project: "project-d72a81f9-0097-4b5b-a62"
-        vertex_location: "global"
-        vertex_credentials: "/secrets/sa-key.json"
-        use_in_pass_through: true
-
-    - model_name: gemini-2.5-pro
-      litellm_params:
-        model: vertex_ai/gemini-2.5-pro
-        vertex_project: "project-d72a81f9-0097-4b5b-a62"
-        vertex_location: "global"
-        vertex_credentials: "/secrets/sa-key.json"
-        use_in_pass_through: true
-
-    - model_name: gemini-3-pro-preview
-      litellm_params:
-        model: vertex_ai/gemini-3-pro-preview
-        vertex_project: "project-d72a81f9-0097-4b5b-a62"
-        vertex_location: "global"
-        vertex_credentials: "/secrets/sa-key.json"
-        use_in_pass_through: true
-
-    # ── Gemini image generation (Flash Image) ────────────────────────────────
-    - model_name: gemini-2.5-flash-image
-      litellm_params:
-        model: vertex_ai/gemini-2.5-flash-image
-        vertex_project: "project-d72a81f9-0097-4b5b-a62"
-        vertex_location: "global"
-        vertex_credentials: "/secrets/sa-key.json"
-        use_in_pass_through: true
-
-    - model_name: gemini-2.5-flash-image-preview
-      litellm_params:
-        model: vertex_ai/gemini-2.5-flash-image-preview
-        vertex_project: "project-d72a81f9-0097-4b5b-a62"
-        vertex_location: "global"
-        vertex_credentials: "/secrets/sa-key.json"
-        use_in_pass_through: true
-
     # ── Veo video generation ────────────────────────────────────────────────
-    - model_name: veo-2.0-generate-001
-      litellm_params:
-        model: vertex_ai/veo-2.0-generate-001
-        vertex_project: "project-d72a81f9-0097-4b5b-a62"
-        vertex_location: "global"
-        vertex_credentials: "/secrets/sa-key.json"
-        use_in_pass_through: true
-
-    - model_name: veo-3.0-generate-001
-      litellm_params:
-        model: vertex_ai/veo-3.0-generate-001
-        vertex_project: "project-d72a81f9-0097-4b5b-a62"
-        vertex_location: "global"
-        vertex_credentials: "/secrets/sa-key.json"
-        use_in_pass_through: true
-
-    - model_name: veo-3.0-fast-generate-001
-      litellm_params:
-        model: vertex_ai/veo-3.0-fast-generate-001
-        vertex_project: "project-d72a81f9-0097-4b5b-a62"
-        vertex_location: "global"
-        vertex_credentials: "/secrets/sa-key.json"
-        use_in_pass_through: true
-
-    - model_name: veo-3.1-generate-001
-      litellm_params:
-        model: vertex_ai/veo-3.1-generate-001
-        vertex_project: "project-d72a81f9-0097-4b5b-a62"
-        vertex_location: "global"
-        vertex_credentials: "/secrets/sa-key.json"
-        use_in_pass_through: true
-
-    - model_name: veo-3.1-fast-generate-001
-      litellm_params:
-        model: vertex_ai/veo-3.1-fast-generate-001
-        vertex_project: "project-d72a81f9-0097-4b5b-a62"
-        vertex_location: "global"
-        vertex_credentials: "/secrets/sa-key.json"
-        use_in_pass_through: true
-
     - model_name: veo-3.1-lite-generate-001
       litellm_params:
         model: vertex_ai/veo-3.1-lite-generate-001
@@ -143,22 +31,14 @@ proxy_config:
         vertex_location: "global"
         vertex_credentials: "/secrets/sa-key.json"
         use_in_pass_through: true
+      model_info:
+        mode: video_generation
 
-    # ── ElevenLabs TTS (via video-editor / ai-gateway) ──────────────────────
-    - model_name: eleven_multilingual_v2
-      litellm_params:
-        model: elevenlabs/eleven_multilingual_v2
-        api_key: "os.environ/ELEVENLABS_API_KEY"
-
-    # ── OpenAI Whisper transcription (via video-editor / ai-gateway) ────────
-    - model_name: whisper-1
-      litellm_params:
-        model: openai/whisper-1
-        api_key: "os.environ/OPENAI_API_KEY"
 
   litellm_settings:
     success_callback: ["langfuse"]
     failure_callback: ["langfuse"]
+    callbacks: ["resend_email"]
 
   general_settings:
     store_model_in_db: true
@@ -172,6 +52,7 @@ envVars:
   DEFAULT_VERTEXAI_PROJECT: "project-d72a81f9-0097-4b5b-a62"
   DEFAULT_VERTEXAI_LOCATION: "global"
   DEFAULT_GOOGLE_APPLICATION_CREDENTIALS: "/secrets/sa-key.json"
+  RESEND_FROM_EMAIL: "dev@mail.alexeykiselev.tech"
 
 db:
   useExisting: true

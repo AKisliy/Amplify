@@ -216,12 +216,10 @@ class AvatarSceneNode(IO.ComfyNode):
                 IO.Combo.Input(
                     "gemini_model",
                     options=[
-                        "gemini-2.5-flash-preview-04-17",
-                        "gemini-2.5-pro-preview-05-06",
                         "gemini-2.5-flash",
                         "gemini-2.5-pro",
                     ],
-                    default="gemini-2.5-flash-preview-04-17",
+                    default="gemini-2.5-flash",
                     tooltip="Gemini model used for transcript segmentation.",
                     optional=True,
                 ),
@@ -248,7 +246,7 @@ class AvatarSceneNode(IO.ComfyNode):
         transcript: str,
         aspect_ratio: str = "16:9",
         veo_model: str = "veo-3.0-generate-001",
-        gemini_model: str = "gemini-2.5-flash-preview-04-17",
+        gemini_model: str = "gemini-2.5-flash",
     ) -> IO.NodeOutput:
         veo_model = MODELS_MAP[veo_model]
         # ── 1. Resolve project → ambassador ──────────────────────────────

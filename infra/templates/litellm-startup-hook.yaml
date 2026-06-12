@@ -1,0 +1,23 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: litellm-startup-hook
+data:
+  custom_startup.py: |
+    import litellm
+    import yaml
+    import os
+
+    CONFIG_PATH = os.getenv("LITELLM_CONFIG_PATH", "/etc/litellm/config.yaml")
+
+    def patch_model_cost():
+        with open(CONFIG_PATH, "r") as f:
+            config = yaml.safe_load(f)
+
+        custom_models = config.get("custom_model_cost_map", {})
+        if not custom_models:
+            return
+
+        for model_name, model_info in custom_models.items():
+            litellm.model_cost[model_name] = model_info
+            print(f"[startup-hook] registered model cost: {model_name} → {model_info}")
