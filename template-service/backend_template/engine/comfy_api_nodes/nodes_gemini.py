@@ -25,7 +25,6 @@ from comfy_api_nodes.apis.gemini import (
     GeminiRole,
     GeminiSystemInstructionContent,
     GeminiTextPart,
-    Modality,
 )
 from comfy_api_nodes.util import (
     ApiEndpoint,
@@ -33,15 +32,17 @@ from comfy_api_nodes.util import (
     validate_string,
 )
 
-from config import gemini_config, media_ingest_config
+from config import gemini_config, media_ingest_config, litellm_config
 
+import asyncio
 import base64
 import uuid
 
-from comfy_api_nodes.util import get_vertex_ai_access_token, fetch_media_uri_from_ingest
+import litellm
 
+from comfy_api_nodes.util import fetch_media_uri_from_ingest
 
-GEMINI_BASE_ENDPOINT = f"https://aiplatform.googleapis.com/v1/projects/{gemini_config.project_id}/locations/{gemini_config.location}/publishers/google/models"
+GEMINI_BASE_ENDPOINT = f"{litellm_config.litellm_base_url}/vertex_ai/v1/projects/{gemini_config.project_id}/locations/{gemini_config.location}/publishers/google/models"
 
 # ---------------------------------------------------------------------------
 # Pacing zone table — empirically calibrated from avatar video experiments.
@@ -77,11 +78,9 @@ class GeminiModel(str, Enum):
     Gemini Model Names allowed by comfy-api
     """
 
-    gemini_2_5_pro_preview_05_06 = "gemini-2.5-pro-preview-05-06"
-    gemini_2_5_flash_preview_04_17 = "gemini-2.5-flash-preview-04-17"
     gemini_2_5_pro = "gemini-2.5-pro"
     gemini_2_5_flash = "gemini-2.5-flash"
-    gemini_3_0_pro = "gemini-3-pro-preview"
+    gemini_3_0_pro = "gemini-3.1-pro-preview"
 
 
 class GeminiImageModel(str, Enum):
@@ -89,7 +88,6 @@ class GeminiImageModel(str, Enum):
     Gemini Image Model Names allowed by comfy-api
     """
 
-    gemini_2_5_flash_image_preview = "gemini-2.5-flash-image-preview"
     gemini_2_5_flash_image = "gemini-2.5-flash-image"
 
 
@@ -272,49 +270,6 @@ async def upload_images_and_get_uuids(cls: type[IO.ComfyNode], response: GeminiG
     return image_uuids[0]
 
 
-def calculate_tokens_price(response: GeminiGenerateContentResponse) -> float | None:
-    if not response.modelVersion:
-        return None
-    # Define prices (Cost per 1,000,000 tokens), see https://cloud.google.com/vertex-ai/generative-ai/pricing
-    if response.modelVersion in ("gemini-2.5-pro-preview-05-06", "gemini-2.5-pro"):
-        input_tokens_price = 1.25
-        output_text_tokens_price = 10.0
-        output_image_tokens_price = 0.0
-    elif response.modelVersion in (
-        "gemini-2.5-flash-preview-04-17",
-        "gemini-2.5-flash",
-    ):
-        input_tokens_price = 0.30
-        output_text_tokens_price = 2.50
-        output_image_tokens_price = 0.0
-    elif response.modelVersion in (
-        "gemini-2.5-flash-image-preview",
-        "gemini-2.5-flash-image",
-    ):
-        input_tokens_price = 0.30
-        output_text_tokens_price = 2.50
-        output_image_tokens_price = 30.0
-    elif response.modelVersion == "gemini-3-pro-preview":
-        input_tokens_price = 2
-        output_text_tokens_price = 12.0
-        output_image_tokens_price = 0.0
-    elif response.modelVersion == "gemini-3-pro-image-preview":
-        input_tokens_price = 2
-        output_text_tokens_price = 12.0
-        output_image_tokens_price = 120.0
-    else:
-        return None
-    final_price = response.usageMetadata.promptTokenCount * input_tokens_price
-    if response.usageMetadata.candidatesTokensDetails:
-        for i in response.usageMetadata.candidatesTokensDetails:
-            if i.modality == Modality.IMAGE:
-                final_price += output_image_tokens_price * i.tokenCount  # for Nano Banana models
-            else:
-                final_price += output_text_tokens_price * i.tokenCount
-    if response.usageMetadata.thoughtsTokenCount:
-        final_price += output_text_tokens_price * response.usageMetadata.thoughtsTokenCount
-    return final_price / 1_000_000.0
-
 
 class GeminiNode(IO.ComfyNode):
     """
@@ -330,7 +285,7 @@ class GeminiNode(IO.ComfyNode):
     def define_schema(cls):
         autogrow_template = IO.Autogrow.TemplatePrefix(
             input=IO.String.Input("image_uuid", optional=True, tooltip="A Media Ingest API UUID representing an uploaded image"),
-            prefix="image_uuid",
+            prefix="image_uuid_",
             min=1,
             max=10
         )
@@ -455,14 +410,12 @@ class GeminiNode(IO.ComfyNode):
                 responseSchema=schema_dict,
             )
 
-        token = get_vertex_ai_access_token()
-        
         response = await sync_op(
             cls,
             endpoint=ApiEndpoint(
-                path=f"{GEMINI_BASE_ENDPOINT}/{model}:generateContent", 
-                method="POST", 
-                headers={"Authorization": f"Bearer {token}"}
+                path=f"{GEMINI_BASE_ENDPOINT}/{model}:generateContent",
+                method="POST",
+                headers={"x-litellm-api-key": f"Bearer {litellm_config.litellm_api_key}"},
             ),
             data=GeminiGenerateContentRequest(
                 contents=[
@@ -557,7 +510,7 @@ class GeminiImageNode(IO.ComfyNode):
     def define_schema(cls):
         autogrow_template = IO.Autogrow.TemplatePrefix(
             input=IO.String.Input("image_uuid", optional=True, tooltip="A Media Ingest API UUID representing an uploaded image"),
-            prefix="image_uuid",
+            prefix="image_uuid_",
             min=1,
             max=3
         )
@@ -640,14 +593,12 @@ class GeminiImageNode(IO.ComfyNode):
         if system_prompt:
             gemini_system_prompt = GeminiSystemInstructionContent(parts=[GeminiTextPart(text=system_prompt)], role=None)
 
-        token = get_vertex_ai_access_token()
-
         response = await sync_op(
             cls,
             endpoint=ApiEndpoint(
-                path=f"{GEMINI_BASE_ENDPOINT}/{model}:generateContent", 
-                method="POST", 
-                headers={"Authorization": f"Bearer {token}"}
+                path=f"{GEMINI_BASE_ENDPOINT}/{model}:generateContent",
+                method="POST",
+                headers={"x-litellm-api-key": f"Bearer {litellm_config.litellm_api_key}"},
             ),
             data=GeminiImageGenerateContentRequest(
                 contents=[
@@ -672,7 +623,7 @@ class GeminiImage2Node(IO.ComfyNode):
     def define_schema(cls):
         autogrow_template = IO.Autogrow.TemplatePrefix(
             input=IO.String.Input("image_uuid", optional=True, tooltip="A Media Ingest API UUID representing an uploaded image"),
-            prefix="image_uuid",
+            prefix="image_uuid_",
             min=1,
             max=14
         )
@@ -755,17 +706,16 @@ class GeminiImage2Node(IO.ComfyNode):
             image_config.aspectRatio = aspect_ratio
 
         gemini_system_prompt = None
+
         if system_prompt:
             gemini_system_prompt = GeminiSystemInstructionContent(parts=[GeminiTextPart(text=system_prompt)], role=None)
-
-        token = get_vertex_ai_access_token()
 
         response = await sync_op(
             cls,
             endpoint=ApiEndpoint(
                 path=f"{GEMINI_BASE_ENDPOINT}/{model}:generateContent", 
                 method="POST", 
-                headers={"Authorization": f"Bearer {token}"}
+                headers={"x-litellm-api-key": f"Bearer {litellm_config.litellm_api_key}"}
             ),
             data=GeminiImageGenerateContentRequest(
                 contents=[
@@ -775,14 +725,15 @@ class GeminiImage2Node(IO.ComfyNode):
                     responseModalities=(["IMAGE"] if response_modalities == "IMAGE" else ["TEXT", "IMAGE"]),
                     imageConfig=image_config,
                 ),
-                systemInstruction=gemini_system_prompt,
+                systemInstruction=gemini_system_prompt
             ),
             response_model=GeminiGenerateContentResponse,
-            price_extractor=calculate_tokens_price,
+
         )
 
         image_uuid = await upload_images_and_get_uuids(cls, response)
         text = get_text_from_response(response)
+
         return IO.NodeOutput(image_uuid, text, ui={"image_uuid": [image_uuid], "text": [text]})
 
 class GeminiExtension(ComfyExtension):

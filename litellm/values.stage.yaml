@@ -1,0 +1,65 @@
+# Stage-specific overrides for LiteLLM proxy.
+# The proxy_config section is injected as config.yaml into the LiteLLM container.
+
+proxy_config:
+  custom_model_cost_map:
+    vertex_ai/veo-3.1-lite-generate-001:
+      litellm_provider: vertex_ai-video-models
+      max_input_tokens: 1024
+      max_tokens: 1024
+      mode: video_generation
+      output_cost_per_second: 0.05
+      output_cost_per_second_1080p: 0.08
+      supported_modalities: ["text"]
+      supported_output_modalities: ["video"]
+
+  model_list:
+    # ── Gemini image generation (Imagen 3) ──────────────────────────────────
+    - model_name: imagen-3.0-generate-002
+      litellm_params:
+        model: vertex_ai/imagen-3.0-generate-002
+        vertex_project: "project-d72a81f9-0097-4b5b-a62"
+        vertex_location: "global"
+        vertex_credentials: "/secrets/sa-key.json"
+        use_in_pass_through: true
+
+    # ── Veo video generation ────────────────────────────────────────────────
+    - model_name: veo-3.1-lite-generate-001
+      litellm_params:
+        model: vertex_ai/veo-3.1-lite-generate-001
+        vertex_project: "project-d72a81f9-0097-4b5b-a62"
+        vertex_location: "global"
+        vertex_credentials: "/secrets/sa-key.json"
+        use_in_pass_through: true
+      model_info:
+        mode: video_generation
+
+
+  litellm_settings:
+    success_callback: ["langfuse"]
+    failure_callback: ["langfuse"]
+    callbacks: ["resend_email"]
+
+  general_settings:
+    store_model_in_db: true
+
+  default_vertex_config:
+    vertex_project: "project-d72a81f9-0097-4b5b-a62"
+    vertex_location: "global"
+    vertex_credentials: "/secrets/sa-key.json"
+
+envVars:
+  DEFAULT_VERTEXAI_PROJECT: "project-d72a81f9-0097-4b5b-a62"
+  DEFAULT_VERTEXAI_LOCATION: "global"
+  DEFAULT_GOOGLE_APPLICATION_CREDENTIALS: "/secrets/sa-key.json"
+  RESEND_FROM_EMAIL: "dev@mail.alexeykiselev.tech"
+
+db:
+  useExisting: true
+  deployStandalone: false
+  database: neondb
+  secret:
+    name: litellm-secret
+    usernameKey: DATABASE_USERNAME
+    passwordKey: DATABASE_PASSWORD
+    endpointKey: DATABASE_HOST

@@ -254,7 +254,7 @@ class TextConcatNode(IO.ComfyNode):
                 optional=True,
                 tooltip="A string to include in the concatenation",
             ),
-            prefix="text",
+            prefix="text_",
             min=1,
             max=20,
         )

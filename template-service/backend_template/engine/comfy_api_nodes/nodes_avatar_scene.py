@@ -55,19 +55,18 @@ from comfy_api_nodes.context_keys import GenParamKey, MediaNodeOutput, with_medi
 from comfy_api_nodes.util import (
     ApiEndpoint,
     fetch_media_uri_from_ingest,
-    get_vertex_ai_access_token,
     poll_op,
     register_media_uri_with_ingest,
     sync_op,
 )
-from config import gemini_config
+from config import gemini_config, litellm_config
 
 logger = logging.getLogger(__name__)
 
 # ── Constants ─────────────────────────────────────────────────────────
 
 GEMINI_BASE_ENDPOINT = (
-    f"https://aiplatform.googleapis.com/v1/projects/{gemini_config.project_id}"
+    f"{litellm_config.litellm_base_url}/vertex_ai/v1/projects/{gemini_config.project_id}"
     f"/locations/{gemini_config.location}/publishers/google/models"
 )
 
@@ -217,12 +216,10 @@ class AvatarSceneNode(IO.ComfyNode):
                 IO.Combo.Input(
                     "gemini_model",
                     options=[
-                        "gemini-2.5-flash-preview-04-17",
-                        "gemini-2.5-pro-preview-05-06",
                         "gemini-2.5-flash",
                         "gemini-2.5-pro",
                     ],
-                    default="gemini-2.5-flash-preview-04-17",
+                    default="gemini-2.5-flash",
                     tooltip="Gemini model used for transcript segmentation.",
                     optional=True,
                 ),
@@ -249,7 +246,7 @@ class AvatarSceneNode(IO.ComfyNode):
         transcript: str,
         aspect_ratio: str = "16:9",
         veo_model: str = "veo-3.0-generate-001",
-        gemini_model: str = "gemini-2.5-flash-preview-04-17",
+        gemini_model: str = "gemini-2.5-flash",
     ) -> IO.NodeOutput:
         veo_model = MODELS_MAP[veo_model]
         # ── 1. Resolve project → ambassador ──────────────────────────────
@@ -306,7 +303,7 @@ class AvatarSceneNode(IO.ComfyNode):
             ApiEndpoint(
                 path=f"{GEMINI_BASE_ENDPOINT}/{gemini_model}:generateContent",
                 method="POST",
-                headers={"Authorization": f"Bearer {get_vertex_ai_access_token()}"},
+                headers={"x-litellm-api-key": f"Bearer {litellm_config.litellm_api_key}"},
             ),
             response_model=GeminiGenerateContentResponse,
             data=GeminiGenerateContentRequest(
@@ -375,7 +372,7 @@ class AvatarSceneNode(IO.ComfyNode):
                 ApiEndpoint(
                     path=f"{GEMINI_BASE_ENDPOINT}/{veo_model}:predictLongRunning",
                     method="POST",
-                    headers={"Authorization": f"Bearer {get_vertex_ai_access_token()}"},
+                    headers={"x-litellm-api-key": f"Bearer {litellm_config.litellm_api_key}"},
                 ),
                 response_model=VeoGenVidResponse,
                 data=VeoGenVidRequest(
@@ -400,7 +397,7 @@ class AvatarSceneNode(IO.ComfyNode):
                 ApiEndpoint(
                     path=f"{GEMINI_BASE_ENDPOINT}/{veo_model}:fetchPredictOperation",
                     method="POST",
-                    headers={"Authorization": f"Bearer {get_vertex_ai_access_token()}"},
+                    headers={"x-litellm-api-key": f"Bearer {litellm_config.litellm_api_key}"},
                 ),
                 response_model=VeoGenVidPollResponse,
                 status_extractor=lambda r: "completed" if r.done else "pending",

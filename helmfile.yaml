@@ -15,13 +15,27 @@ environments:
       - namespace: amplify-dev
 ---
 repositories:
-  - name: bitnami
-    url: https://charts.bitnami.com/bitnami
   - name: open-telemetry
     url: https://open-telemetry.github.io/opentelemetry-helm-charts
   - name: jetstack
     url: https://charts.jetstack.io
+  - name: litellm
+    url: docker.litellm.ai/berriai
+    oci: true
+  - name: kiali
+    url: https://kiali.org/helm-charts
 releases:
+  - name: kiali-server
+    condition: kiali.enabled
+    namespace: istio-system
+    chart: kiali/kiali-server
+    createNamespace: true
+    labels:
+      tier: infra
+    values:
+      - ./infra/kiali/values.yaml
+      - ./infra/kiali/values.{{ .Environment.Name }}.yaml
+
   - name: cert-manager
     namespace: cert-manager
     chart: jetstack/cert-manager
@@ -56,6 +70,16 @@ releases:
     values:
       - ./infra/envs/values.yaml.gotmpl
       - ./infra/envs/values.{{ .Environment.Name }}.yaml
+    
+  - name: litellm
+    namespace: "{{ .Values.namespace }}"
+    chart: litellm/litellm-helm
+    labels:
+      tier: backend
+      app: litellm
+    values:
+      - ./litellm/values.yaml
+      - ./litellm/values.{{ .Environment.Name }}.yaml
 
   - name: userservice
     namespace: "{{ .Values.namespace }}"
@@ -88,26 +112,6 @@ releases:
       - ./publisher/charts/envs/values.{{ .Environment.Name }}.yaml
     needs:
       - gateway
-
-  - name: postgres
-    namespace: test-env
-    chart: bitnami/postgresql
-    version: 15.0.0
-    labels:
-      tier: infra
-    values:
-      - auth:
-          postgresPassword: "superSecretPassword123"
-          username: "app_user"
-          password: "app_password"
-          database: "amplify_db"
-      - architecture: standalone
-      - primary:
-          persistence:
-            enabled: true
-            size: 8Gi
-      - image:
-          tag: latest
 
   - name: mediaingest
     namespace: "{{ .Values.namespace }}"

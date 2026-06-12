@@ -18,6 +18,9 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
     public DbSet<Project> Projects => Set<Project>();
     public DbSet<ProjectAsset> ProjectAssets => Set<ProjectAsset>();
     public DbSet<DataProtectionKey> DataProtectionKeys => Set<DataProtectionKey>();
+    public DbSet<GenerationSpendLog> GenerationSpendLogs => Set<GenerationSpendLog>();
+    public DbSet<JobExecution> JobExecutions => Set<JobExecution>();
+    public DbSet<NodeExecutionLog> NodeExecutionLogs => Set<NodeExecutionLog>();
 
     protected override void OnModelCreating(ModelBuilder builder)
     {

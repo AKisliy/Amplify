@@ -86,9 +86,11 @@ function parseInputPorts(schema: NodeSchemaDef): PortDef[] {
       const cfgRecord = cfg as Record<string, unknown>;
       const canConnectSocket =
         isWidget &&
-        type === "STRING" &&
-        cfgRecord.multiline !== false &&
-        (cfgRecord.multiline === true || required === "optional");
+        (
+          (type === "STRING" && cfgRecord.multiline !== false && (cfgRecord.multiline === true || required === "optional")) ||
+          type === "INT" ||
+          type === "FLOAT"
+        );
       ports.push({
         id: fieldName,
         label: fieldName.replace(/_/g, " "),

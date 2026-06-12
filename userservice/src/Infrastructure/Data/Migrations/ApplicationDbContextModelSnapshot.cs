@@ -211,6 +211,132 @@ namespace UserService.Infrastructure.Data.Migrations
                     b.ToTable("asp_net_user_tokens", "userservice");
                 });
 
+            modelBuilder.Entity("UserService.Domain.Entities.GenerationSpendLog", b =>
+                {
+                    b.Property<int>("CompletionTokens")
+                        .HasColumnType("integer")
+                        .HasColumnName("completion_tokens");
+
+                    b.Property<double?>("CostUsd")
+                        .HasColumnType("double precision")
+                        .HasColumnName("cost_usd");
+
+                    b.Property<int?>("DurationMs")
+                        .HasColumnType("integer")
+                        .HasColumnName("duration_ms");
+
+                    b.Property<Guid?>("JobId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("job_id");
+
+                    b.Property<string>("Model")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("model");
+
+                    b.Property<DateTime>("OccurredAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("occurred_at");
+
+                    b.Property<Guid?>("ProjectId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("project_id");
+
+                    b.Property<int>("PromptTokens")
+                        .HasColumnType("integer")
+                        .HasColumnName("prompt_tokens");
+
+                    b.Property<string>("RequestId")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("request_id");
+
+                    b.Property<string>("Status")
+                        .HasColumnType("text")
+                        .HasColumnName("status");
+
+                    b.Property<Guid?>("TemplateId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("template_id");
+
+                    b.Property<int>("TotalTokens")
+                        .HasColumnType("integer")
+                        .HasColumnName("total_tokens");
+
+                    b.ToTable((string)null);
+
+                    b.ToView("generation_spend", "userservice");
+                });
+
+            modelBuilder.Entity("UserService.Domain.Entities.JobExecution", b =>
+                {
+                    b.Property<int?>("DurationSec")
+                        .HasColumnType("integer")
+                        .HasColumnName("duration_sec");
+
+                    b.Property<DateTime?>("FinishedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("finished_at");
+
+                    b.Property<Guid>("JobId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("job_id");
+
+                    b.Property<Guid>("ProjectId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("project_id");
+
+                    b.Property<DateTime?>("StartedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("started_at");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("status");
+
+                    b.Property<Guid>("TemplateId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("template_id");
+
+                    b.ToTable((string)null);
+
+                    b.ToView("job_executions", "userservice");
+                });
+
+            modelBuilder.Entity("UserService.Domain.Entities.NodeExecutionLog", b =>
+                {
+                    b.Property<string>("ClassName")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("class_name");
+
+                    b.Property<Guid>("ExecutionId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("execution_id");
+
+                    b.Property<Guid>("JobId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("job_id");
+
+                    b.Property<DateTime>("OccurredAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("occurred_at");
+
+                    b.Property<Guid>("ProjectId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("project_id");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("status");
+
+                    b.ToTable((string)null);
+
+                    b.ToView("node_execution_log", "userservice");
+                });
+
             modelBuilder.Entity("UserService.Domain.Entities.Project", b =>
                 {
                     b.Property<Guid>("Id")

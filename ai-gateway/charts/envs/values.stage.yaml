@@ -1,10 +1,8 @@
 environment: Staging
 
 secrets:
-  openAiApiKey:
-    key: openai-test-api-key
-  elevenLabsApiKey:
-    key: elevenlabs-test-key
+  litellmApiKey:
+    key: test-litellm-api-key
 
 
 volumeMounts:
@@ -16,5 +14,7 @@ appConfig:
   MediaIngest:
     BaseUrl: "http://mediaingest.test-env.svc.cluster.local"
   OpenAi:
-    BaseUrl: "https://api.openai.com/v1"
+    BaseUrl: "http://litellm.test-env.svc.cluster.local:4000/litellm"
     TranscriptionModel: "whisper-1"
+  LiteLlm:
+    BaseUrl: "http://litellm.test-env.svc.cluster.local:4000/litellm"

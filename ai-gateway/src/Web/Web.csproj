@@ -8,6 +8,7 @@
     <PackageReference Include="Ardalis.GuardClauses" />
     <PackageReference Include="FluentValidation" />
     <PackageReference Include="FluentValidation.DependencyInjectionExtensions" />
+    <PackageReference Include="Flurl" />
     <PackageReference Include="Microsoft.Kiota.Bundle" />
     <PackageReference Include="Microsoft.Kiota.Serialization.Multipart" />
     <PackageReference Include="MimeTypes">

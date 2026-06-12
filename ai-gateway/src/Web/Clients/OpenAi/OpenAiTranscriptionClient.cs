@@ -1,15 +1,21 @@
+using System.ClientModel;
 using AiGateway.Web.Configuration;
 using AiGateway.Web.Services;
 using AiGateway.Web.Utils;
+using OpenAI;
 using OpenAI.Audio;
 
 namespace AiGateway.Web.Clients.OpenAi;
 
-public class OpenAiTranscriptionClient(IOptions<OpenAiOptions> options, SrtBuilder srtBuilder)
+public class OpenAiTranscriptionClient(
+    IOptions<LiteLlmOptions> llmOptions,
+    IOptions<OpenAiOptions> options,
+    SrtBuilder srtBuilder)
 {
-    private readonly AudioClient _client = new(
-        options.Value.TranscriptionModel,
-        options.Value.ApiKey);
+    private readonly AudioClient _client = new OpenAIClient(
+            new ApiKeyCredential(llmOptions.Value.ApiKey),
+            new OpenAIClientOptions { Endpoint = new Uri(llmOptions.Value.BaseUrl) })
+        .GetAudioClient(options.Value.TranscriptionModel);
 
     private readonly int _defaultMaxWords = options.Value.DefaultMaxWordsPerSegment;
     private readonly int _defaultMaxChars = options.Value.DefaultMaxCharsPerSegment;

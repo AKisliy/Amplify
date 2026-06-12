@@ -7,6 +7,7 @@ using AiGateway.Web.Configuration;
 using AiGateway.Web.Configuration.Extensions;
 using AiGateway.Web.Services;
 using AiGateway.Web.Utils;
+using Flurl;
 using Microsoft.Kiota.Abstractions;
 using Microsoft.Kiota.Abstractions.Authentication;
 using Microsoft.Kiota.Http.HttpClientLibrary;
@@ -24,6 +25,8 @@ public static class DependencyInjection
         var services = builder.Services;
 
         services.AddValidatorsFromAssembly(Assembly.GetExecutingAssembly());
+
+        services.AddOptionsWithFluentValidation<LiteLlmOptions>(LiteLlmOptions.SectionName);
 
         services.AddElevenLabs();
         services.AddOpenAi();
@@ -59,8 +62,6 @@ public static class DependencyInjection
 
     private static IServiceCollection AddElevenLabs(this IServiceCollection services)
     {
-        services.AddOptionsWithFluentValidation<ElevenlabsOptions>(ElevenlabsOptions.ConfigurationSection);
-
         ApiClientBuilder.RegisterDefaultSerializer<JsonSerializationWriterFactory>();
         ApiClientBuilder.RegisterDefaultSerializer<TextSerializationWriterFactory>();
         ApiClientBuilder.RegisterDefaultSerializer<FormSerializationWriterFactory>();
@@ -71,18 +72,19 @@ public static class DependencyInjection
 
         services.AddHttpClient("elevenlabs", (sp, client) =>
         {
-            var options = sp.GetRequiredService<IOptions<ElevenlabsOptions>>().Value;
-            client.DefaultRequestHeaders.Add("xi-api-key", options.ApiKey);
+            var options = sp.GetRequiredService<IOptions<LiteLlmOptions>>().Value;
+            client.BaseAddress = new Url(options.BaseUrl).AppendPathSegment("elevenlabs").ToUri();
+            client.DefaultRequestHeaders.Add("x-litellm-api-key", options.ApiKey);
             client.Timeout = TimeSpan.FromSeconds(300);
         });
 
         services.AddTransient(sp =>
         {
-            var options = sp.GetRequiredService<IOptions<ElevenlabsOptions>>().Value;
+            var options = sp.GetRequiredService<IOptions<LiteLlmOptions>>().Value;
             var httpClient = sp.GetRequiredService<IHttpClientFactory>().CreateClient("elevenlabs");
             var adapter = new HttpClientRequestAdapter(new AnonymousAuthenticationProvider(), httpClient: httpClient)
             {
-                BaseUrl = options.BaseUrl
+                BaseUrl = new Url(options.BaseUrl).AppendPathSegment("elevenlabs")
             };
             return new ElevenLabsClient(adapter);
         });

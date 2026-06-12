@@ -1,0 +1,88 @@
+# Local LiteLLM config for development.
+# Mirrors values.stage.yaml but without store_model_in_db (no Postgres needed).
+# Copy this file to config.local.yaml and adjust as needed — config.local.yaml is gitignored.
+
+model_list:
+  # -- Gemini image generation (Imagen 3) ------------------------------------
+  - model_name: imagen-3.0-generate-002
+    litellm_params:
+      model: vertex_ai/imagen-3.0-generate-002
+      vertex_project: "project-d72a81f9-0097-4b5b-a62"
+      vertex_location: "global"
+
+  # -- Gemini image generation (Gemini 3 Pro Image) --------------------------
+  - model_name: gemini-3-pro-image-preview
+    litellm_params:
+      model: vertex_ai/gemini-3-pro-image-preview
+      vertex_ai_project: "project-d72a81f9-0097-4b5b-a62"
+      vertex_ai_location: "global"
+
+  # -- Gemini multimodal LLM -------------------------------------------------
+  - model_name: gemini-2.5-flash
+    litellm_params:
+      model: vertex_ai/gemini-2.5-flash
+      vertex_project: "project-d72a81f9-0097-4b5b-a62"
+      vertex_location: "global"
+
+  # -- Veo video generation --------------------------------------------------
+  - model_name: veo-2.0-generate-001
+    litellm_params:
+      model: vertex_ai/veo-2.0-generate-001
+      vertex_project: "project-d72a81f9-0097-4b5b-a62"
+      vertex_location: "global"
+      use_in_pass_through: true
+
+  - model_name: veo-3.0-generate-001
+    litellm_params:
+      model: vertex_ai/veo-3.0-generate-001
+      vertex_project: "project-d72a81f9-0097-4b5b-a62"
+      vertex_location: "global"
+
+  - model_name: veo-3.0-fast-generate-001
+    litellm_params:
+      model: vertex_ai/veo-3.0-fast-generate-001
+      vertex_project: "project-d72a81f9-0097-4b5b-a62"
+      vertex_location: "global"
+
+  - model_name: veo-3.1-generate-001
+    litellm_params:
+      model: vertex_ai/veo-3.1-generate-001
+      vertex_project: "project-d72a81f9-0097-4b5b-a62"
+      vertex_location: "global"
+
+  - model_name: veo-3.1-fast-generate-001
+    litellm_params:
+      model: vertex_ai/veo-3.1-fast-generate-001
+      vertex_project: "project-d72a81f9-0097-4b5b-a62"
+      vertex_location: "global"
+
+  - model_name: veo-3.1-lite-generate-001
+    litellm_params:
+      model: vertex_ai/veo-3.1-lite-generate-001
+      vertex_project: "project-d72a81f9-0097-4b5b-a62"
+      vertex_location: "global"
+
+  # # -- ElevenLabs TTS --------------------------------------------------------
+  # - model_name: eleven_multilingual_v2
+  #   litellm_params:
+  #     model: elevenlabs/eleven_multilingual_v2
+  #     api_key: "YOUR_ELEVENLABS_API_KEY"
+
+  # # -- OpenAI Whisper --------------------------------------------------------
+  # - model_name: whisper-1
+  #   litellm_params:
+  #     model: openai/whisper-1
+  #     api_key: "YOUR_OPENAI_API_KEY"
+
+litellm_settings:
+  # Disable Langfuse locally — no need for cost tracking during dev.
+  # To enable: add success_callback/failure_callback and set LANGFUSE_* env vars.
+  drop_params: true
+
+default_vertex_config:
+  vertex_project: "project-d72a81f9-0097-4b5b-a62"
+  vertex_location: "global"
+  vertex_credentials: "/secrets/sa-key.json"
+
+general_settings:
+  master_key: "sk-1234"

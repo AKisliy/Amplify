@@ -45,6 +45,7 @@
     "react-easy-crop": "^5.5.6",
     "react-hook-form": "^7.71.1",
     "react-markdown": "^10.1.0",
+    "recharts": "^3.8.1",
     "rehype-raw": "^7.0.0",
     "remark-gfm": "^4.0.1",
     "shiki": "^4.0.2",

@@ -511,3 +511,14 @@ __marimo__/
 
 # Wiki raw files
 wiki/**/raw/
+
+# LiteLLM local dev — real credentials and local overrides
+litellm/local/sa-key.json
+litellm/local/config.local.yaml
+
+# obsidian
+.obsidian/
+TaskNotes/
+
+# MacOS
+.DS_Store

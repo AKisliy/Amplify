@@ -44,3 +44,9 @@ class VideoEditorConfig(ConfigBase):
 
 rabbitmq_config = RabbitMqConfig()
 video_editor_config = VideoEditorConfig()
+
+class LiteLLMConfig(ConfigBase):
+    litellm_base_url: str = "http://litellm:4000"
+    litellm_api_key: str = "sk-1234"
+
+litellm_config = LiteLLMConfig()

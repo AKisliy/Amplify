@@ -8,6 +8,7 @@
     <PackageVersion Include="ElevenLabs-DotNet" Version="3.7.2" />
     <PackageVersion Include="FluentValidation" Version="12.1.1" />
     <PackageVersion Include="FluentValidation.DependencyInjectionExtensions" Version="11.11.0" />
+    <PackageVersion Include="Flurl" Version="4.0.0" />
     <PackageVersion Include="Microsoft.AspNetCore.OpenApi" Version="$(AspnetVersion)" />
     <PackageVersion Include="Microsoft.Kiota.Bundle" Version="1.22.1" />
     <PackageVersion Include="Microsoft.Kiota.Serialization.Multipart" Version="1.22.1" />

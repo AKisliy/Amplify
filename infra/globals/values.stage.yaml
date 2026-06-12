@@ -1,3 +1,6 @@
+kiali:
+  enabled: false
+
 global:
   appDomain: app.alexeykiselev.tech
   clusterDomain: staging.alexeykiselev.tech

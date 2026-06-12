@@ -17,7 +17,6 @@
                         "default": "gemini-2.5-flash-image",
                         "multiselect": false,
                         "options": [
-                            "gemini-2.5-flash-image-preview",
                             "gemini-2.5-flash-image"
                         ]
                     }

@@ -10,19 +10,19 @@ export type UploadFileDto = {
     contentType?: string;
 };
 
-export type HttpValidationProblemDetails = ProblemDetails & {
-    errors?: {
-        [key: string]: Array<string>;
-    };
-    [key: string]: unknown;
-};
-
 export type ProblemDetails = {
     type?: string | null;
     title?: string | null;
     status?: number | null;
     detail?: string | null;
     instance?: string | null;
+    [key: string]: unknown;
+};
+
+export type HttpValidationProblemDetails = ProblemDetails & {
+    errors?: {
+        [key: string]: Array<string>;
+    };
     [key: string]: unknown;
 };
 
@@ -51,7 +51,11 @@ export type CreateUploadPresignedUrlCommand = {
     fileName?: string;
     contentType?: string;
     fileSize?: number;
+    parentMediaId?: string | null;
+    variant?: MediaVariant | null;
 };
+
+export type MediaVariant = 'Original' | 'Medium' | 'Tiny';
 
 export type ImportFromGoogleStorageCommand = {
     files?: Array<ImportFromGoogleStorageDto>;
@@ -61,34 +65,6 @@ export type ImportFromGoogleStorageDto = {
     gsUri?: string;
     contentType?: string;
 };
-
-export type MediaVariant = 'Original' | 'Medium' | 'Tiny';
-
-export type UploadFromFileData = {
-    body?: {
-        file?: Blob | File | null;
-    };
-    path?: never;
-    query?: never;
-    url: '/api/images';
-};
-
-export type UploadFromFileErrors = {
-    400: HttpValidationProblemDetails;
-    401: ProblemDetails;
-};
-
-export type UploadFromFileError = UploadFromFileErrors[keyof UploadFromFileErrors];
-
-export type UploadFromFileResponses = {
-    /**
-     * OK
-     */
-    200: unknown;
-    201: UploadFileDto;
-};
-
-export type UploadFromFileResponse = UploadFromFileResponses[keyof UploadFromFileResponses];
 
 export type PostApiImagesImportData = {
     body?: never;
@@ -272,6 +248,31 @@ export type PostApiInternalMediaPresignedUploadResponses = {
 
 export type PostApiInternalMediaPresignedUploadResponse = PostApiInternalMediaPresignedUploadResponses[keyof PostApiInternalMediaPresignedUploadResponses];
 
+export type PostApiInternalMediaUploadCompletedData = {
+    body?: never;
+    path: {
+        mediaId: string;
+    };
+    query?: never;
+    url: '/api/internal/media/{mediaId}/upload-completed';
+};
+
+export type PostApiInternalMediaUploadCompletedErrors = {
+    404: ProblemDetails;
+};
+
+export type PostApiInternalMediaUploadCompletedError = PostApiInternalMediaUploadCompletedErrors[keyof PostApiInternalMediaUploadCompletedErrors];
+
+export type PostApiInternalMediaUploadCompletedResponses = {
+    /**
+     * OK
+     */
+    200: unknown;
+    204: void;
+};
+
+export type PostApiInternalMediaUploadCompletedResponse = PostApiInternalMediaUploadCompletedResponses[keyof PostApiInternalMediaUploadCompletedResponses];
+
 export type PostApiInternalMediaImportGsData = {
     body: ImportFromGoogleStorageCommand;
     path?: never;
@@ -360,29 +361,3 @@ export type PostApiMediaUploadCompletedResponses = {
 };
 
 export type PostApiMediaUploadCompletedResponse = PostApiMediaUploadCompletedResponses[keyof PostApiMediaUploadCompletedResponses];
-
-export type PostApiVideosData = {
-    body?: {
-        file?: Blob | File | null;
-    };
-    path?: never;
-    query?: never;
-    url: '/api/videos';
-};
-
-export type PostApiVideosErrors = {
-    400: HttpValidationProblemDetails;
-    401: ProblemDetails;
-};
-
-export type PostApiVideosError = PostApiVideosErrors[keyof PostApiVideosErrors];
-
-export type PostApiVideosResponses = {
-    /**
-     * OK
-     */
-    200: unknown;
-    201: UploadFileDto;
-};
-
-export type PostApiVideosResponse = PostApiVideosResponses[keyof PostApiVideosResponses];

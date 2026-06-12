@@ -28,7 +28,7 @@ public class TikTokPublisher(
         TikTokPostInfo postInfo = new TikTokPostInfo
         {
             PrivacyLevel = TikTokPrivacyLevel.SELF_ONLY,
-            Title = "Funny #cat video",
+            Title = video.Description,
             DisableComment = true,
             VideoCoverTimestampMs = 1000
         };
@@ -52,9 +52,9 @@ public class TikTokPublisher(
             }
         };
 
-        await tikTokApiClient.InitializeVideoPostAsync(creds.AccessToken, request, cancellationToken);
+        var response = await tikTokApiClient.InitializeVideoPostAsync(creds.AccessToken, request, cancellationToken);
 
-        return new PublicationResult(PublicationStatus.Published, "https://www.tiktok.com/@someuser/video/1234567890");
+        return new PublicationResult(PublicationStatus.Published, $"https://www.tiktok.com/@{creatorInfo.Data?.CreatorUsername}/video/{response.Data?.PublishId}");
     }
 
     private async Task<TikTokCredentials> GetCredentialsAsync(Guid accountId)

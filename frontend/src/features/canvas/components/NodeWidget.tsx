@@ -143,8 +143,31 @@ export function NodeWidget({ port, value, onChange, disabled, isConnected }: Nod
     case "FLOAT": {
       const cfg = port.config as IntInputConfig;
       const numVal = (value as number) ?? cfg.default ?? 0;
+      const color = PORT_COLORS[port.portType as "INT" | "FLOAT"];
+      const socketHandle = port.canConnectSocket ? (
+        <Handle
+          id={port.id}
+          type="target"
+          position={Position.Left}
+          style={{
+            position: "relative",
+            inset: "unset",
+            transform: "none",
+            width: 11,
+            height: 11,
+            minWidth: 11,
+            minHeight: 11,
+            borderRadius: "50%",
+            background: color,
+            border: `2px solid ${color}40`,
+            boxShadow: `0 0 0 1px ${color}20, 0 0 8px ${color}44`,
+            flexShrink: 0,
+            cursor: "crosshair",
+          }}
+        />
+      ) : null;
       return (
-        <WidgetRow label={label} tooltip={port.tooltip} inline>
+        <WidgetRow label={label} tooltip={port.tooltip} inline socketHandle={socketHandle} isConnected={isConnected}>
           <Input
             type="number"
             value={numVal}
@@ -155,9 +178,10 @@ export function NodeWidget({ port, value, onChange, disabled, isConnected }: Nod
             className={cn(
               "nodrag nopan nowheel text-[11px] h-7 w-24 text-right",
               "bg-black/20 border-white/[0.06]",
-              "focus-visible:ring-1 focus-visible:ring-white/20"
+              "focus-visible:ring-1 focus-visible:ring-white/20",
+              isConnected && "opacity-30 pointer-events-none",
             )}
-            disabled={disabled}
+            disabled={disabled || isConnected}
           />
         </WidgetRow>
       );
@@ -207,12 +231,18 @@ function WidgetRow({ label, tooltip, inline = false, socketHandle, isConnected, 
   if (inline) {
     return (
       <div className="flex items-center justify-between gap-2 px-3 py-[3px]">
-        <label
-          className="text-[11px] text-muted-foreground/70 shrink-0 select-none"
-          title={tooltip}
-        >
-          {label}
-        </label>
+        <div className="flex items-center gap-1.5 shrink-0">
+          {socketHandle}
+          <label
+            className="text-[11px] text-muted-foreground/70 select-none"
+            title={tooltip}
+          >
+            {label}
+          </label>
+          {isConnected && (
+            <span className="text-[9px] text-purple-400/70 leading-none">socket</span>
+          )}
+        </div>
         {children}
       </div>
     );
