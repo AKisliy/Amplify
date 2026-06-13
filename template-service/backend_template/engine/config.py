@@ -29,7 +29,7 @@ class EngineConfig(ConfigBase):
     log_level: str = "INFO"            
     log_stdout: bool = False           
     # Cache strategy for the prompt executor.
-    cache_type: str = "none"           
+    cache_type: str = "classic"        
 
 class RabbitMqConfig(ConfigBase):
     rabbitmq_url: str = "amqp://guest:guest@localhost:5672/"

@@ -23,7 +23,7 @@ import nodes
 import comfy.utils
 import comfy.model_management
 
-def prompt_worker(q, server_instance, cache_type=execution.CacheType.NONE):
+def prompt_worker(q, server_instance, cache_type=execution.CacheType.CLASSIC):
     current_time: float = 0.0
 
     # Create a persistent event loop for the worker thread.  This loop lives
@@ -157,7 +157,7 @@ def start_comfyui(asyncio_loop=None):
         "classic": execution.CacheType.CLASSIC,
         "lru":     execution.CacheType.LRU,
     }
-    cache_type = _cache_map.get(engine_config.cache_type.lower(), execution.CacheType.NONE)
+    cache_type = _cache_map.get(engine_config.cache_type.lower(), execution.CacheType.CLASSIC)
     logging.info(f"Prompt executor cache type: {cache_type} (ENGINE_CACHE_TYPE='{engine_config.cache_type}')")
 
     threading.Thread(target=prompt_worker, daemon=True, args=(prompt_server.prompt_queue, prompt_server, cache_type)).start()
