@@ -14,6 +14,7 @@ public class ElevenLabsService(
     public async Task<(Guid AudioId, string PresignedUrl)> SpeechToSpeechAsync(
         string presignedUrl,
         string voiceId,
+        PostOutput_formatQueryParameterType outputFormat = PostOutput_formatQueryParameterType.Mp3_44100_128,
         CancellationToken cancellationToken = default)
     {
         var http = httpClientFactory.CreateClient();
@@ -31,7 +32,7 @@ public class ElevenLabsService(
 
         await using var resultStream = await elevenlabsClient.V1.SpeechToSpeech[voiceId].Stream.PostAsync(body, config =>
         {
-            config.QueryParameters.OutputFormatAsPostOutputFormatQueryParameterType = PostOutput_formatQueryParameterType.Mp3_22050_32;
+            config.QueryParameters.OutputFormatAsPostOutputFormatQueryParameterType = outputFormat;
             config.QueryParameters.EnableLogging = false;
         }, cancellationToken);
 

@@ -1,5 +1,5 @@
-using AiGateway.Web.Clients;
 using AiGateway.Web.Clients.ElevenLabs.Models;
+using AiGateway.Web.Clients.ElevenLabs.V1.SpeechToSpeech.Item.StreamNamespace;
 using AiGateway.Web.Configuration;
 using AiGateway.Web.Services;
 
@@ -16,6 +16,11 @@ public record VoiceoverRequest
     /// ElevenLabs voice ID to apply.
     /// </summary>
     public required string VoiceId { get; init; }
+
+    /// <summary>
+    /// Output audio format. Defaults to mp3_44100_128 (best quality available on Free/PAYG tier).
+    /// </summary>
+    public PostOutput_formatQueryParameterType OutputFormat { get; init; } = PostOutput_formatQueryParameterType.Mp3_44100_128;
 }
 
 public record VoiceoverResult(Guid AudioId, string PresignedUrl);
@@ -41,6 +46,7 @@ public static class VoiceoverEndpoints
             var (audioId, presignedUrl) = await elevenLabsService.SpeechToSpeechAsync(
                 request.PresignedUrl,
                 request.VoiceId,
+                request.OutputFormat,
                 cancellationToken);
 
             return Results.Ok(new VoiceoverResult(audioId, presignedUrl));
