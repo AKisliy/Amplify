@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo } from "react";
+import { eachDayOfInterval, format } from "date-fns";
 import {
   AreaChart,
   Area,
@@ -13,26 +14,21 @@ import {
 import { Skeleton } from "@/components/ui/skeleton";
 import type { CapitalBurnPointDto } from "@/lib/api/generated/userservice/types.gen";
 
-// Design-system PALETTE colors — same semantic mapping as the design
-const MODEL_COLORS: Record<string, string> = {
-  veo3:        "oklch(0.65 0.24 18)",    // rose — Veo / Google
-  elevenlabs:  "oklch(0.66 0.16 230)",   // sky — ElevenLabs
-  openai:      "oklch(0.70 0.17 162)",   // emerald — OpenAI / Whisper
-};
-const FALLBACK_COLORS = [
-  "oklch(0.62 0.21 264)",  // primary violet
-  "oklch(0.78 0.17 75)",   // amber
-  "oklch(0.65 0.24 295)",  // violet
-];
+// djb2 hash → hue (0–359)
+function hashHue(str: string): number {
+  let h = 5381;
+  for (let i = 0; i < str.length; i++) h = ((h << 5) + h) ^ str.charCodeAt(i);
+  return Math.abs(h) % 360;
+}
 
-// Match model name to semantic slot
-function slotColor(model: string, fallbackIdx: number): string {
-  const m = model.toLowerCase();
-  if (m.includes("veo"))         return MODEL_COLORS.veo3;
-  if (m.includes("eleven"))      return MODEL_COLORS.elevenlabs;
-  if (m.includes("openai") || m.includes("whisper") || m.includes("gpt") || m.includes("tts"))
-    return MODEL_COLORS.openai;
-  return FALLBACK_COLORS[fallbackIdx % FALLBACK_COLORS.length];
+/** Deterministic color for any model name. Exported for legend use. */
+export function modelColor(model: string): string {
+  return `oklch(0.68 0.18 ${hashHue(model)})`;
+}
+
+// Sanitize model name → safe CSS id fragment
+function gradId(model: string): string {
+  return `burn-grad-${model.replace(/[^a-zA-Z0-9]/g, "-")}`;
 }
 
 const MUTED = "oklch(0.704 0.04 256.788)";
@@ -41,9 +37,11 @@ const GRID  = "oklch(1 0 0 / 0.06)";
 interface Props {
   data: CapitalBurnPointDto[];
   isLoading: boolean;
+  from: Date;
+  to: Date;
 }
 
-export function GlobalCapitalBurnChart({ data, isLoading }: Props) {
+export function GlobalCapitalBurnChart({ data, isLoading, from, to }: Props) {
   const { chartData, models } = useMemo(() => {
     const modelSet = new Set<string>();
     data.forEach((d) => { if (d.model) modelSet.add(d.model); });
@@ -52,21 +50,24 @@ export function GlobalCapitalBurnChart({ data, isLoading }: Props) {
     const byDate = new Map<string, Record<string, number>>();
     data.forEach((d) => {
       if (!d.date) return;
-      if (!byDate.has(d.date)) byDate.set(d.date, {});
-      const row = byDate.get(d.date)!;
-      const key = d.model ?? "unknown";
-      row[key] = (row[key] ?? 0) + (d.costUsd ?? 0);
+      const key = d.date;
+      if (!byDate.has(key)) byDate.set(key, {});
+      const row = byDate.get(key)!;
+      const model = d.model ?? "unknown";
+      row[model] = (row[model] ?? 0) + (d.costUsd ?? 0);
     });
 
-    const chartData = Array.from(byDate.entries())
-      .sort(([a], [b]) => a.localeCompare(b))
-      .map(([date, row]) => {
-        const day = new Date(date).getDate();
-        return { date: String(day), ...row };
-      });
+    // Explicitly zero all model keys for every day in the selected period.
+    // Recharts stacked areas render invisible segments when values are undefined.
+    const emptyRow = Object.fromEntries(models.map((m) => [m, 0]));
+    const chartData = eachDayOfInterval({ start: from, end: to }).map((day) => {
+      const key = format(day, "yyyy-MM-dd");
+      const row = byDate.get(key) ?? {};
+      return { date: format(day, "MMM d"), ...emptyRow, ...row };
+    });
 
     return { chartData, models };
-  }, [data]);
+  }, [data, from, to]);
 
   if (isLoading) return <Skeleton className="h-56 w-full" />;
 
@@ -79,14 +80,14 @@ export function GlobalCapitalBurnChart({ data, isLoading }: Props) {
   }
 
   return (
-    <div style={{ height: 220 }}>
+    <div style={{ height: 220, minWidth: 0 }}>
       <ResponsiveContainer width="100%" height="100%">
         <AreaChart data={chartData} margin={{ top: 8, right: 24, left: 0, bottom: 4 }}>
           <defs>
-            {models.map((model, i) => {
-              const color = slotColor(model, i);
+            {models.map((model) => {
+              const color = modelColor(model);
               return (
-                <linearGradient key={model} id={`burn-grad-${i}`} x1="0" y1="0" x2="0" y2="1">
+                <linearGradient key={model} id={gradId(model)} x1="0" y1="0" x2="0" y2="1">
                   <stop offset="5%"  stopColor={color} stopOpacity={0.35} />
                   <stop offset="95%" stopColor={color} stopOpacity={0.02} />
                 </linearGradient>
@@ -100,7 +101,7 @@ export function GlobalCapitalBurnChart({ data, isLoading }: Props) {
             axisLine={false}
             tick={{ fontSize: 10, fill: MUTED }}
             tickMargin={6}
-            interval={4}
+            interval="preserveStartEnd"
           />
           <YAxis
             tickLine={false}
@@ -122,15 +123,14 @@ export function GlobalCapitalBurnChart({ data, isLoading }: Props) {
               String(name).split("/").pop() ?? String(name),
             ]}
           />
-          {/* Stack order: openai bottom → elevenlabs → veo3 top (matches design) */}
-          {models.map((model, i) => (
+          {models.map((model) => (
             <Area
               key={model}
               type="monotone"
               dataKey={model}
               stackId="burn"
-              stroke={slotColor(model, i)}
-              fill={`url(#burn-grad-${i})`}
+              stroke={modelColor(model)}
+              fill={`url(#${gradId(model)})`}
               strokeWidth={1.6}
             />
           ))}
