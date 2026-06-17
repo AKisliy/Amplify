@@ -14,6 +14,7 @@ import {
   type EdgeTypes,
   type IsValidConnection,
 } from "@xyflow/react";
+import "@xyflow/react/dist/style.css";
 
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
