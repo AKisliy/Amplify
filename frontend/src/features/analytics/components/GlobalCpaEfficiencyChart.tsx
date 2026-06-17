@@ -16,7 +16,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 
 export interface CpaDataPoint {
   label: string;
-  cpa: number;
+  cpa: number | null;
 }
 
 interface Props {
@@ -37,7 +37,7 @@ export function GlobalCpaEfficiencyChart({ data, isLoading, baseline, onBaseline
 
   const handleCommit = () => onBaseline(localBaseline);
 
-  const maxY = Math.max(baseline + 2, ...data.map((d) => d.cpa)) * 1.1;
+  const maxY = Math.max(baseline + 2, ...data.map((d) => d.cpa ?? 0)) * 1.1;
 
   if (isLoading) return <Skeleton className="h-64 w-full" />;
 
@@ -110,6 +110,7 @@ export function GlobalCpaEfficiencyChart({ data, isLoading, baseline, onBaseline
               stroke={SKY}
               strokeWidth={2}
               dot={false}
+              connectNulls
               activeDot={{ r: 4, fill: SKY, stroke: "var(--card)", strokeWidth: 2 }}
             />
           </LineChart>
@@ -123,7 +124,7 @@ export function GlobalCpaEfficiencyChart({ data, isLoading, baseline, onBaseline
           style={{ background: "oklch(0 0 0 / 0.20)", border: "1px solid var(--border)" }}
         >
           <span className="text-xs text-muted-foreground font-medium">Human CPA</span>
-          <span className="text-xs font-bold tabular-nums min-w-[44px]">
+          <span className="text-xs font-bold tabular-nums min-w-11">
             ${localBaseline.toFixed(2)}
           </span>
           <input

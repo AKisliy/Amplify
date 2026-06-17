@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
+import { differenceInDays, eachDayOfInterval, format } from "date-fns";
 import { useRouter } from "next/navigation";
 import {
   FolderKanban,
@@ -18,7 +19,7 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { DateRangePicker } from "./DateRangePicker";
-import { GlobalCapitalBurnChart } from "./GlobalCapitalBurnChart";
+import { GlobalCapitalBurnChart, modelColor } from "./GlobalCapitalBurnChart";
 import { GlobalCpaEfficiencyChart } from "./GlobalCpaEfficiencyChart";
 import { GlobalOutputVolumeChart } from "./GlobalOutputVolumeChart";
 import { GlobalEntityEfficiencyChart } from "./GlobalEntityEfficiencyChart";
@@ -311,6 +312,9 @@ export function GlobalAnalyticsSection({
   const [range, setRange]       = useState(defaultRange);
   const [baseline, setBaseline] = useState(DEFAULT_BASELINE);
 
+  const periodDays  = differenceInDays(range.to, range.from) + 1;
+  const periodLabel = `Last ${periodDays} days`;
+
   useEffect(() => {
     const saved = localStorage.getItem(HUMAN_BASELINE_KEY);
     if (saved) setBaseline(Number(saved));
@@ -337,19 +341,20 @@ export function GlobalAnalyticsSection({
   const avgCpa    = completedJobs > 0 ? totalSpend / completedJobs : 0;
   const arbitrage = baseline > 0 ? ((baseline - avgCpa) / baseline * 100) : 0;
 
-  // CPA efficiency: join trend (daily cost) + volume (daily jobs) by date
+  // CPA efficiency: all days in range; null for days without completions.
+  // connectNulls on the Line skips null gaps visually without breaking the line.
   const cpaData = useMemo(() => {
     const costByDate = new Map<string, number>();
     trendData.forEach((d) => { if (d.date) costByDate.set(d.date, d.costUsd ?? 0); });
-    return volumeData
-      .filter((d) => d.date && (d.completed ?? 0) > 0)
-      .map((d) => {
-        const cost = costByDate.get(d.date!) ?? 0;
-        const cpa  = cost / (d.completed!);
-        const day  = new Date(d.date!).getDate();
-        return { label: String(day), cpa };
-      });
-  }, [trendData, volumeData]);
+    const completedByDate = new Map<string, number>();
+    volumeData.forEach((d) => { if (d.date) completedByDate.set(d.date, d.completed ?? 0); });
+    return eachDayOfInterval({ start: range.from, end: range.to }).map((day) => {
+      const key = format(day, "yyyy-MM-dd");
+      const completed = completedByDate.get(key) ?? 0;
+      const cpa = completed > 0 ? (costByDate.get(key) ?? 0) / completed : null;
+      return { label: format(day, "MMM d"), cpa };
+    });
+  }, [trendData, volumeData, range.from, range.to]);
 
   // Burn totals for legend
   const burnTotals = useMemo(() => {
@@ -415,12 +420,12 @@ export function GlobalAnalyticsSection({
       </KpiRow>
 
       {/* Financial KPI row */}
-      <KpiRow title="Financial · Last 30 days">
+      <KpiRow title={`Financial · ${periodLabel}`}>
         <KpiCard
           icon={DollarSign}
           label="Total Spend"
           value={`$${totalSpend.toFixed(2)}`}
-          sub="last 30 days"
+          sub={periodLabel.toLowerCase()}
           accentColor={PALETTE.primary}
           hasAccentStripe
           isLoading={summaryLoading}
@@ -461,20 +466,20 @@ export function GlobalAnalyticsSection({
       {/* Capital Burn — full width */}
       <ChartCard
         title="Capital Burn"
-        badge="Last 30 days"
+        badge={periodLabel}
         kpis={burnLoading ? [] : [
           { label: "Total Burn",  value: `$${totalSpend.toFixed(2)}` },
-          { label: "Daily Avg",   value: `$${(totalSpend / 30).toFixed(2)}` },
+          { label: "Daily Avg",   value: `$${(totalSpend / periodDays).toFixed(2)}` },
         ]}
         legend={
           <div className="flex gap-4 flex-wrap">
             {Array.from(burnTotals.entries()).map(([model, cost]) => (
-              <LegendDot key={model} color={burnData.find((d) => d.model === model) ? "oklch(0.65 0.24 18)" : "oklch(0.70 0.17 162)"} label={`${model.split("/").pop() ?? model} · $${cost.toFixed(0)}`} />
+              <LegendDot key={model} color={modelColor(model)} label={`${model.split("/").pop() ?? model} · $${cost.toFixed(2)}`} />
             ))}
           </div>
         }
       >
-        <GlobalCapitalBurnChart data={burnData} isLoading={burnLoading} />
+        <GlobalCapitalBurnChart data={burnData} isLoading={burnLoading} from={range.from} to={range.to} />
       </ChartCard>
 
       {/* CPA Efficiency (60%) + Output Volume (40%) */}
