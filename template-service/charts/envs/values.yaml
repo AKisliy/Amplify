@@ -25,6 +25,12 @@ resources: {}
 engine:
   resources: {}
 
+# Temporal worker Deployment
+worker:
+  enabled: false
+  replicaCount: 1
+  resources: {}
+
 livenessProbe:
   httpGet:
     path: /health
@@ -66,3 +72,5 @@ config:
   gcpProjectId: ""
   gcpLocation: ""
   gcpStorageUri: ""
+  temporalHost: "temporal-frontend.temporal.svc.cluster.local:7233"
+  temporalTaskQueue: "template-execution"

@@ -1,0 +1,40 @@
+server:
+  config:
+    persistence:
+      defaultStore: default
+      visibilityStore: visibility
+      numHistoryShards: 512
+      datastores:
+        default:
+          sql:
+            createDatabase: false
+            manageSchema: true
+            pluginName: postgres12
+            driverName: postgres12
+            databaseName: temporal
+            connectAddr: "ep-twilight-star-ab1y78pz.eu-west-2.aws.neon.tech:5432"
+            connectProtocol: tcp
+            user: neondb_owner
+            existingSecret: temporal-db-secret
+            secretKey: password
+            maxConns: 20
+            maxIdleConns: 20
+            maxConnLifetime: "1h"
+            tls:
+              enabled: true
+              enableHostVerification: true
+        visibility:
+          sql:
+            createDatabase: false
+            manageSchema: true
+            pluginName: postgres12
+            driverName: postgres12
+            databaseName: temporal_visibility
+            connectAddr: "ep-twilight-star-ab1y78pz.eu-west-2.aws.neon.tech:5432"
+            connectProtocol: tcp
+            user: neondb_owner
+            existingSecret: temporal-db-secret
+            secretKey: password
+            tls:
+              enabled: true
+              enableHostVerification: true

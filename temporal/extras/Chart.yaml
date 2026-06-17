@@ -1,0 +1,5 @@
+apiVersion: v2
+name: temporal-extras
+description: Extra Kubernetes resources for Temporal (ExternalSecrets, etc.)
+type: application
+version: 0.1.0
