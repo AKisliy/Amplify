@@ -12,10 +12,8 @@ import {
   BackgroundVariant,
   type NodeTypes,
   type EdgeTypes,
-  type Connection,
   type IsValidConnection,
 } from "@xyflow/react";
-import "@xyflow/react/dist/style.css";
 
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -179,6 +177,8 @@ function CanvasControlPanel({
   onProductChange,
   onRun,
   isRunning,
+  onRunV2,
+  isRunningV2,
   autoListIds,
   onAutoListIdsChange,
   postDescriptionConfig,
@@ -190,6 +190,8 @@ function CanvasControlPanel({
   onProductChange: (id: string | null) => void;
   onRun: () => void;
   isRunning: boolean;
+  onRunV2: () => void;
+  isRunningV2: boolean;
   autoListIds: string[];
   onAutoListIdsChange: (ids: string[]) => void;
   postDescriptionConfig: PostDescriptionConfig | null;
@@ -301,10 +303,10 @@ function CanvasControlPanel({
           {/* Generate button */}
           <Button
             onClick={onRun}
-            disabled={isRunning}
+            disabled={isRunning || isRunningV2}
             className={cn(
               "flex items-center gap-2 px-5 py-2.5 rounded-xl font-semibold text-sm border-0 transition-all",
-              !isRunning && "hover:scale-[1.03] active:scale-[0.97]"
+              !isRunning && !isRunningV2 && "hover:scale-[1.03] active:scale-[0.97]"
             )}
             style={{
               background: isRunning
@@ -321,6 +323,35 @@ function CanvasControlPanel({
             )}
             {isRunning ? "Running…" : "Generate"}
           </Button>
+
+          {/* Generate v2 (Temporal) button */}
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                onClick={onRunV2}
+                disabled={isRunning || isRunningV2}
+                className={cn(
+                  "flex items-center gap-2 px-4 py-2.5 rounded-xl font-semibold text-sm border-0 transition-all",
+                  !isRunning && !isRunningV2 && "hover:scale-[1.03] active:scale-[0.97]"
+                )}
+                style={{
+                  background: isRunningV2
+                    ? "rgba(255,255,255,0.08)"
+                    : "linear-gradient(135deg, #7c3aed, #2563eb)",
+                  color: "#fff",
+                  boxShadow: isRunningV2 ? "none" : "0 4px 20px rgba(124,58,237,0.4)",
+                }}
+              >
+                {isRunningV2 ? (
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                ) : (
+                  <Sparkles className="w-4 h-4" />
+                )}
+                {isRunningV2 ? "Running…" : "Generate v2"}
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent side="top">Beta: runs via Temporal workflow engine</TooltipContent>
+          </Tooltip>
         </div>
       </TooltipProvider>
 
@@ -541,6 +572,7 @@ const { registry, isLoading: registryLoading } = useNodeRegistry();
   const [sidebarTab,  setSidebarTab]  = useState<SidebarTab>("nodes");
   const [autoListIds, setAutoListIds] = useState<string[]>([]);
   const [productId, setProductId] = useState<string | null>(null);
+  const [activeRunVersion, setActiveRunVersion] = useState<"v1" | "v2" | null>(null);
   const [postDescriptionConfig, setPostDescriptionConfig] = useState<PostDescriptionConfig | null>(null);
 
   const [contextMenu, setContextMenu] = useState<{
@@ -585,7 +617,7 @@ const { registry, isLoading: registryLoading } = useNodeRegistry();
     appendNodeOutputHistory,
     propagateOutputsDownstream,
     setNodes, setEdges,
-    execution, submitWorkflow,
+    execution, submitWorkflow, submitWorkflowV2,
     setNodeStatus,
   } = useCanvasStore({});
 
@@ -866,8 +898,16 @@ const { registry, isLoading: registryLoading } = useNodeRegistry();
 
   // ── Run ──────────────────────────────────────────────────────────────────────
   const handleRun = useCallback(async () => {
+    setActiveRunVersion("v1");
     await submitWorkflow(templateId);
+    setActiveRunVersion(null);
   }, [submitWorkflow, templateId]);
+
+  const handleRunV2 = useCallback(async () => {
+    setActiveRunVersion("v2");
+    await submitWorkflowV2(templateId);
+    setActiveRunVersion(null);
+  }, [submitWorkflowV2, templateId]);
 
   // ── AutoList settings ────────────────────────────────────────────────────────
   const handleAutoListIdsChange = useCallback(async (ids: string[]) => {
@@ -1176,7 +1216,9 @@ const { registry, isLoading: registryLoading } = useNodeRegistry();
               products={products}
               onProductChange={handleProductChange}
               onRun={handleRun}
-              isRunning={execution.isSubmitting}
+              isRunning={execution.isSubmitting && activeRunVersion === "v1"}
+              onRunV2={handleRunV2}
+              isRunningV2={execution.isSubmitting && activeRunVersion === "v2"}
               autoListIds={autoListIds}
               onAutoListIdsChange={handleAutoListIdsChange}
               postDescriptionConfig={postDescriptionConfig}

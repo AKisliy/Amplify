@@ -266,6 +266,55 @@
         }
       }
     },
+    "/v1/templates/{template_id}/canvas": {
+      "get": {
+        "tags": [
+          "Project Templates"
+        ],
+        "summary": "Get Template Canvas State",
+        "description": "Returns the template definition and its latest execution state in a single\nresponse, giving the frontend everything it needs to render the canvas:\n\n- **template**: workflow definition (`current_graph_json`) for graph rendering.\n- **last_job**: most recent job with per-node statuses for execution overlay.\n  `null` when the template has never been executed.\n\nThe frontend can use `last_job.prompt_id` to subscribe to live WS deltas\nwhen `last_job.status` is `QUEUED` or `PROCESSING`.",
+        "operationId": "get_canvas_v1_templates__template_id__canvas_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "template_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Template Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CanvasResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/v1/templates/project/{project_id}": {
       "get": {
         "tags": [
@@ -479,6 +528,177 @@
                 "schema": {
                   "$ref": "#/components/schemas/RunTemplateResponse"
                 }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/v1/engine/jobs/{job_id}": {
+      "get": {
+        "tags": [
+          "Engine"
+        ],
+        "summary": "Get full job details",
+        "description": "Returns the persistent job record with all node execution states.\nUsed by the frontend on page reload to reconstruct execution state\nfrom the DB rather than relying on volatile WS/cache state.",
+        "operationId": "get_job_detail_v1_engine_jobs__job_id__get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "job_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Job Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/JobDetailResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/engine/queue": {
+      "get": {
+        "tags": [
+          "Engine"
+        ],
+        "summary": "Get queue information",
+        "description": "Returns a snapshot of the engine's volatile prompt queue:\ncurrently running prompt(s) and pending prompts ordered by priority.",
+        "operationId": "get_queue_v1_engine_queue_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/QueueInfoResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      },
+      "post": {
+        "tags": [
+          "Engine"
+        ],
+        "summary": "Manage queue operations",
+        "description": "Cancel specific pending prompts by prompt_id or clear the entire\npending queue.  Only affects pending prompts \u2014 to stop a running\ngraph, use ``POST /interrupt``.",
+        "operationId": "manage_queue_v1_engine_queue_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/QueueManageRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/v1/engine/interrupt": {
+      "post": {
+        "tags": [
+          "Engine"
+        ],
+        "summary": "Interrupt currently running job",
+        "description": "Sends an interrupt signal to the engine.  If ``prompt_id`` is provided,\nonly that specific prompt is interrupted (if it is currently running).\nOtherwise, a global interrupt is issued.\n\nThe engine sets ``processing_interrupted()`` flag, which causes\n``sleep_with_interrupt`` to raise ``ProcessingInterrupted`` in the\nactive node's retry/poll loop.",
+        "operationId": "interrupt_v1_engine_interrupt_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "anyOf": [
+                  {
+                    "$ref": "#/components/schemas/InterruptRequest"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "title": "Payload"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
               }
             }
           },
@@ -2216,6 +2436,48 @@
         }
       }
     },
+    "/v2/templates/{template_id}/run": {
+      "post": {
+        "tags": [
+          "Templates v2"
+        ],
+        "summary": "Run a template via Temporal",
+        "description": "Snapshots the template graph, creates a Job record, and submits execution\nto Temporal. Returns immediately with the job_id.",
+        "operationId": "run_template_v2_templates__template_id__run_post",
+        "parameters": [
+          {
+            "name": "template_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Template Id"
+            }
+          }
+        ],
+        "responses": {
+          "202": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/internal/library-templates/": {
       "post": {
         "tags": [
@@ -2737,6 +2999,29 @@
         "title": "BrandUpdate",
         "description": "All fields optional for PATCH semantics.\nInherits from BaseModel (NOT BrandBase) to make all fields optional."
       },
+      "CanvasResponse": {
+        "properties": {
+          "template": {
+            "$ref": "#/components/schemas/ProjectTemplateResponse"
+          },
+          "last_job": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/JobDetailResponse"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "type": "object",
+        "required": [
+          "template"
+        ],
+        "title": "CanvasResponse",
+        "description": "Single-request payload for rendering the template canvas.\n\nCombines the workflow definition (template.current_graph_json) with the\nlatest execution state (last_job.node_executions) so the frontend never\nneeds a second round-trip.\n\nlast_job is None when the template has never been executed."
+      },
       "ExecutionStatus": {
         "properties": {
           "status_str": {
@@ -2803,6 +3088,111 @@
         ],
         "title": "HistoryEntry",
         "description": "A single prompt's execution history entry."
+      },
+      "InterruptRequest": {
+        "properties": {
+          "prompt_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Prompt Id",
+            "description": "Interrupt a specific running prompt. If omitted, interrupts the currently running prompt globally."
+          }
+        },
+        "type": "object",
+        "title": "InterruptRequest",
+        "description": "Optional request body for targeted interrupt."
+      },
+      "JobDetailResponse": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "status": {
+            "type": "string",
+            "title": "Status"
+          },
+          "prompt_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Prompt Id"
+          },
+          "total_cost": {
+            "type": "number",
+            "title": "Total Cost"
+          },
+          "template_version_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Template Version Id"
+          },
+          "started_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Started At"
+          },
+          "finished_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Finished At"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Updated At"
+          },
+          "node_executions": {
+            "items": {
+              "$ref": "#/components/schemas/NodeExecutionResponse"
+            },
+            "type": "array",
+            "title": "Node Executions",
+            "default": []
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "status",
+          "total_cost",
+          "template_version_id",
+          "created_at",
+          "updated_at"
+        ],
+        "title": "JobDetailResponse",
+        "description": "Full job details including per-node execution state."
       },
       "LibraryTemplateCreate": {
         "properties": {
@@ -3079,6 +3469,84 @@
           "payload"
         ],
         "title": "ManualReviewTaskResponse"
+      },
+      "NodeExecutionResponse": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "node_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Node Id"
+          },
+          "class_name": {
+            "type": "string",
+            "title": "Class Name"
+          },
+          "status": {
+            "type": "string",
+            "title": "Status"
+          },
+          "inputs": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Inputs"
+          },
+          "outputs": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Outputs"
+          },
+          "error_message": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Error Message"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Updated At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "node_id",
+          "class_name",
+          "status",
+          "created_at",
+          "updated_at"
+        ],
+        "title": "NodeExecutionResponse",
+        "description": "Single node's execution state within a job."
       },
       "PostDescriptionConfig": {
         "properties": {
@@ -3718,6 +4186,25 @@
         "title": "PromptResponse",
         "description": "Successful response from POST /api/prompt."
       },
+      "QueueInfoResponse": {
+        "properties": {
+          "queue_running": {
+            "items": {},
+            "type": "array",
+            "title": "Queue Running",
+            "description": "Currently executing prompt(s)."
+          },
+          "queue_pending": {
+            "items": {},
+            "type": "array",
+            "title": "Queue Pending",
+            "description": "Prompts waiting to be executed (ordered by priority)."
+          }
+        },
+        "type": "object",
+        "title": "QueueInfoResponse",
+        "description": "Snapshot of the engine's volatile prompt queue."
+      },
       "QueueItem": {
         "properties": {
           "number": {
@@ -3756,6 +4243,40 @@
         ],
         "title": "QueueItem",
         "description": "Parsed representation of the engine's prompt queue-item tuple.\n\nThe engine stores this as a 5-element tuple:\n    (number, prompt_id, prompt, extra_data, outputs_to_execute)\nThe model_validator converts the tuple into named fields on arrival."
+      },
+      "QueueManageRequest": {
+        "properties": {
+          "delete": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Delete",
+            "description": "List of prompt_ids to remove from the pending queue."
+          },
+          "clear": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Clear",
+            "description": "If true, clear all pending prompts from the queue."
+          }
+        },
+        "type": "object",
+        "title": "QueueManageRequest",
+        "description": "Request body for managing the engine's prompt queue."
       },
       "ReferenceImageCreate": {
         "properties": {

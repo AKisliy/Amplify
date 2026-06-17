@@ -1,12 +1,13 @@
+import aiohttp
 import hashlib
 import json
 import logging
 import os
 import uuid
+from dataclasses import dataclass, field
 from uuid import UUID
 from typing import Annotated
 
-import aiohttp
 from fastapi import Depends, HTTPException, status
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -14,6 +15,8 @@ from sqlalchemy.orm import selectinload
 
 from backend_template.config import settings
 from backend_template.database import get_db
+from backend_template.temporal.client import get_temporal_client
+from backend_template.temporal.workflows.graph import GraphWorkflow, GraphWorkflowParams
 from backend_template.entities.job import JobDetailResponse, RunTemplateResponse
 from backend_template.models.job import Job, JobStatus
 from backend_template.models.node_execution import NodeExecution, NodeStatus
@@ -25,6 +28,15 @@ from backend_template.utils.graph import convert_reactflow_to_comfy
 logger = logging.getLogger(__name__)
 
 DEV_MODE = os.getenv("DEV_MODE", "").lower() in ("1", "true", "yes")
+
+
+@dataclass
+class _PreparedJob:
+    job: Job
+    template_id: UUID
+    comfy_prompt: dict
+    project_id: str
+    product_context: dict = field(default_factory=dict)
 
 
 class JobService:
@@ -43,7 +55,15 @@ class JobService:
             raise HTTPException(status.HTTP_404_NOT_FOUND, detail="Job not found")
         return JobDetailResponse.model_validate(job)
 
-    async def run_template(self, template_id: UUID, user_id: str) -> RunTemplateResponse:
+    async def _prepare_job(self, template_id: UUID, user_id: str) -> _PreparedJob:
+        """
+        Common setup for both v1 (ComfyUI) and v2 (Temporal) execution paths:
+        - resolve template + version
+        - convert graph to ComfyUI prompt format
+        - create Job + NodeExecution records
+        - resolve product context
+        Does NOT commit — callers commit after submitting to the execution backend.
+        """
         template = await self.db.get(ProjectTemplate, template_id)
         if not template:
             raise HTTPException(status.HTTP_404_NOT_FOUND, detail="Template not found")
@@ -52,7 +72,6 @@ class JobService:
         if not graph:
             raise HTTPException(status.HTTP_400_BAD_REQUEST, detail="Template graph is empty")
 
-        # find existing version by hash or create a new one
         graph_str = json.dumps(graph, sort_keys=True)
         version_hash = hashlib.sha256(graph_str.encode()).hexdigest()
 
@@ -71,24 +90,18 @@ class JobService:
             self.db.add(template_version)
             await self.db.flush()
 
-        # Convert ReactFlow graph to ComfyUI prompt format
         if DEV_MODE:
-            comfy_prompt = graph  # already in raw API format
+            comfy_prompt = graph
             logger.debug("[DEV_MODE] Skipping ReactFlow conversion — using graph as-is")
         else:
             comfy_prompt = convert_reactflow_to_comfy(graph)
 
-        logger.debug("Comfy prompt for engine:\n%s", json.dumps(comfy_prompt, indent=2))
+        logger.debug("Comfy prompt:\n%s", json.dumps(comfy_prompt, indent=2))
 
-        
-        job = Job(
-            template_version_id=template_version.id,
-            status=JobStatus.QUEUED,
-        )
+        job = Job(template_version_id=template_version.id, status=JobStatus.QUEUED)
         self.db.add(job)
         await self.db.flush()
 
-        # Create NodeExecution record for each node
         for node_id, node_def in comfy_prompt.items():
             class_type = node_def.get("class_type", "Unknown")
             try:
@@ -103,16 +116,8 @@ class JobService:
                 inputs=node_def.get("inputs"),
             ))
 
-        await self.db.commit()
-        await self.db.refresh(job)
-
-        project_id = str(template.project_id)
-        logger.info(f"Submitting job for project={project_id}")
-
-        # Resolve product context if set on the template
-        product_context: dict | None = None
+        product_context: dict = {}
         if template.product_id:
-            from sqlalchemy.orm import selectinload
             result = await self.db.execute(
                 select(Product)
                 .where(Product.id == template.product_id)
@@ -131,53 +136,30 @@ class JobService:
                     "image_uuids": [str(img.media_uuid) for img in product.images],
                 }
 
-        # Submit to engine.  Pass job_id in extra_data so the engine can include
-        # it in RabbitMQ events; client_id is the user_id for potential WS routing.
+        return _PreparedJob(
+            job=job,
+            template_id=template.id,
+            comfy_prompt=comfy_prompt,
+            project_id=str(template.project_id),
+            product_context=product_context,
+        )
+
+    async def run_template(self, template_id: UUID, user_id: str) -> RunTemplateResponse:
+        """V1 path: submit to ComfyUI engine via aiohttp."""
+        prepared = await self._prepare_job(template_id, user_id)
+        job = prepared.job
+
         try:
             async with aiohttp.ClientSession() as session:
                 async with session.post(
                     f"{settings.engine_base_url}/api/prompt",
-                    json={
-                        "prompt": comfy_prompt,
-                        "client_id": user_id,
-                        "extra_data": {
-                            "job_id": str(job.id),
-                            "extra_pnginfo": {
-                                "client_id": user_id,
-                                "project_id": project_id,
-                                "job_id": str(job.id),
-                                "product": product_context,
-                                "template_id": str(template.id) # пока нельзя лить, ибо нужен library_template (не просто template)
-                            },
-                        },
-                    },
+                    json={"prompt": prepared.comfy_prompt, "client_id": str(job.id)},
                     timeout=aiohttp.ClientTimeout(total=30),
                 ) as resp:
                     body = await resp.json()
                     if resp.status >= 400:
-                        job.status = JobStatus.FAILED
-                        await self.db.commit()
                         raise HTTPException(status_code=resp.status, detail=body)
-
-                    # The engine returns HTTP 200 even when some nodes fail
-                    # validation (partial execution). Treat any node_errors as a
-                    # hard failure so the graph is never run in a broken state.
-                    node_errors: dict = body.get("node_errors") or {}
-                    if node_errors:
-                        job.status = JobStatus.FAILED
-                        await self.db.commit()
-                        logger.warning(
-                            f"Graph validation failed for job {job.id}: {node_errors}"
-                        )
-                        raise HTTPException(
-                            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-                            detail={
-                                "error": "Graph validation failed",
-                                "node_errors": node_errors,
-                            },
-                        )
-
-                    prompt_id: str = body["prompt_id"]
+                    prompt_id = body.get("prompt_id", str(job.id))
         except aiohttp.ClientConnectorError:
             job.status = JobStatus.FAILED
             await self.db.commit()
@@ -186,7 +168,39 @@ class JobService:
                 detail="Engine is not available",
             )
 
-        job.prompt_id = prompt_id
         await self.db.commit()
-
         return RunTemplateResponse(job_id=str(job.id), prompt_id=prompt_id)
+
+    async def run_template_temporal(self, template_id: UUID, user_id: str) -> RunTemplateResponse:
+        """V2 path: submit to Temporal workflow engine."""
+        prepared = await self._prepare_job(template_id, user_id)
+        job = prepared.job
+
+        logger.info("Submitting Temporal job %s for project=%s", job.id, prepared.project_id)
+
+        try:
+            temporal_client = await get_temporal_client()
+            await temporal_client.start_workflow(
+                GraphWorkflow.run,
+                GraphWorkflowParams(
+                    job_id=str(job.id),
+                    user_id=user_id,
+                    graph_json=prepared.comfy_prompt,
+                    template_id=str(prepared.template_id),
+                    project_id=prepared.project_id,
+                    product_context=prepared.product_context,
+                ),
+                id=str(job.id),
+                task_queue=settings.temporal_task_queue,
+            )
+        except Exception as exc:
+            job.status = JobStatus.FAILED
+            await self.db.commit()
+            logger.error("Failed to start Temporal workflow for job %s: %s", job.id, exc)
+            raise HTTPException(
+                status.HTTP_503_SERVICE_UNAVAILABLE,
+                detail="Workflow engine is not available",
+            )
+
+        await self.db.commit()
+        return RunTemplateResponse(job_id=str(job.id), prompt_id=str(job.id))

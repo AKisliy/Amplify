@@ -26,7 +26,7 @@ import type {
   PortDef,
   ImageBatch,
 } from "../types";
-import { runTemplate } from "@/lib/api/template-service";
+import { runTemplate, runTemplateV2 } from "@/lib/api/template-service";
 
 // ---------------------------------------------------------------------------
 // Execution state reducer
@@ -474,6 +474,39 @@ export function useCanvasStore({
     [setNodes, setEdges]
   );
 
+  /**
+   * Calls POST /v2/templates/{id}/run — Temporal-backed execution path.
+   */
+  const submitWorkflowV2 = useCallback(
+    async (templateId: string): Promise<string | null> => {
+      dispatchExec({ type: "SUBMIT_START" });
+
+      setNodes((nds) =>
+        nds.map((n) => ({ ...n, data: { ...n.data, status: "queued" as NodeExecutionStatus } }))
+      );
+      setEdges((eds) =>
+        eds.map((e) => ({ ...e, data: { flowing: false, error: false } }))
+      );
+
+      try {
+        const response = await runTemplateV2(templateId);
+        dispatchExec({ type: "SUBMIT_SUCCESS", jobId: response.job_id });
+        return response.job_id;
+      } catch (err) {
+        console.error("[useCanvasStore] submitWorkflowV2 failed:", err);
+        dispatchExec({ type: "SUBMIT_ERROR" });
+        setNodes((nds) =>
+          nds.map((n) => ({ ...n, data: { ...n.data, status: "idle" as NodeExecutionStatus } }))
+        );
+        setEdges((eds) =>
+          eds.map((e) => ({ ...e, data: { flowing: false, error: false } }))
+        );
+        return null;
+      }
+    },
+    [setNodes, setEdges]
+  );
+
   // ---------------------------------------------------------------------------
   // Expose state + actions
   // ---------------------------------------------------------------------------
@@ -498,5 +531,6 @@ export function useCanvasStore({
 
     execution,
     submitWorkflow,
+    submitWorkflowV2,
   } as const;
 }

@@ -25,7 +25,8 @@ dependencies = [
     "aio-pika (>=9.0.0,<10.0.0)",
     "langfuse (>=3.7.0,<4.0.0)",
     "litellm (>=1.67.0,<2.0.0)",
-    "pyjwt[cryptography] (>=2.8.0,<3.0.0)"
+    "pyjwt[cryptography] (>=2.8.0,<3.0.0)",
+    "temporalio (>=1.7.0,<2.0.0)"
 ]
 
 [tool.poetry]

@@ -1,0 +1,39 @@
+"""Temporal worker startup."""
+import asyncio
+import logging
+
+from temporalio.worker import Worker
+
+from backend_template.config import settings
+from backend_template.temporal.client import get_temporal_client
+from backend_template.temporal.registry import init_registry
+from backend_template.temporal.activities.node import execute_node
+from backend_template.temporal.workflows.graph import (
+    GraphWorkflow,
+    _publish_job_started,
+    _publish_job_finished,
+)
+
+logger = logging.getLogger(__name__)
+
+
+async def run_worker() -> None:
+    """Start the Temporal worker. Can be called from lifespan or as a standalone process."""
+    # Discover all IO.ComfyNode classes from comfy_api_nodes/nodes_*.py —
+    # same dynamic loading as ComfyUI's init_builtin_api_nodes().
+    await init_registry()
+
+    client = await get_temporal_client()
+    worker = Worker(
+        client,
+        task_queue=settings.temporal_task_queue,
+        workflows=[GraphWorkflow],
+        activities=[execute_node, _publish_job_started, _publish_job_finished],
+    )
+    logger.info("Temporal worker started on task queue %r", settings.temporal_task_queue)
+    await worker.run()
+
+
+if __name__ == "__main__":
+    logging.basicConfig(level=logging.INFO)
+    asyncio.run(run_worker())
