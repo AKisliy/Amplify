@@ -1,5 +1,17 @@
 # Log: AMPLIFY-419
 
+## 2026-06-18 (5)
+
+Уточнён дизайн кэша: запись — всегда (каждый ран), чтение — только при can_use_cache=true в UI-зоне. Добавлен глобальный флаг cache_enabled в конфиге (отключает и чтение, и запись). Обновлён concepts/node-result-cache.md.
+
+## 2026-06-18 (4)
+
+Задокументирован финальный дизайн node result cache: UI-зона на канвасе → _meta.can_use_cache в graph JSON → NodeActivityInput.can_use_cache → проверка в динамической активности. TTL=7 дней, кэшируем MinIO UUID, ключ = sha256(class_type + sorted resolved inputs). Переписан concepts/node-result-cache.md.
+
+## 2026-06-18 (3)
+
+Задокументирован сценарий смерти пода в середине выполнения графа: event history, deterministic replay, почему завершённые ноды не перезапускаются. Добавлено в concepts/temporal-dag-execution.md, раздел "Что происходит при смерти пода".
+
 ## 2026-06-18 (2)
 
 Реализован dynamic=True паттерн для нод (по образцу temporal-ai-agent): одна активность обрабатывает все class_type через activity.info().activity_type. Per-node политики retry/timeout вынесены в атрибут temporal_policy на классе ноды; policy_for() читает его через NODE_CLASS_MAPPINGS. Задокументировано в concepts/activity-retry-policy.md.

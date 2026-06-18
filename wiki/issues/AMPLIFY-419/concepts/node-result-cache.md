@@ -1,120 +1,208 @@
 # Node Result Cache
 
-## What ComfyUI does
+## Что делает ComfyUI
 
-`comfy_execution/caching.py` computes a hash of each node's inputs before execution.
-If the hash matches a previous run, the node is skipped and the cached output is returned
-(`execution_cached` event). The cache is **in-memory**: lost on pod restart, not shared
-between workers.
+`comfy_execution/caching.py` вычисляет хэш входов ноды перед выполнением.
+Если хэш совпадает с предыдущим запуском — нода пропускается, возвращается
+кэшированный результат. Кэш **in-memory**: умирает при рестарте пода,
+не делится между воркерами.
 
-## Design: persistent cache in PostgreSQL
+Ключевое отличие алгоритма: ComfyUI получает кэш-ключ из **нерезолвнутых ссылок** —
+ему приходится обходить всё дерево предков, потому что к моменту вычисления ключа
+входы ещё не раскрыты. В нашей реализации воркфлоу разрезолвит все входы до вызова
+активности, поэтому ключ строится из конкретных значений — обход графа не нужен.
 
-Cache lookups happen inside each activity, before calling the external API:
+## Управление кэшем
 
-```python
-@activity.defn
-async def execute_gemini(input: GeminiActivityInput) -> GeminiActivityOutput:
-    cache_key = compute_input_hash(input)  # deterministic hash of all inputs
+### Запись — всегда
 
-    cached = await cache_repo.get(cache_key)
-    if cached:
-        await publish_node_status(input.job_id, input.node_id, "CACHED")
-        return cached
+Каждый ран записывает результат любой ноды в кэш — без условий, без UI-флагов.
+Кэш растёт автоматически и всегда актуален.
 
-    result = await gemini_client.generate(input.prompt)
-    output = GeminiActivityOutput(text=result.text)
-    await cache_repo.set(cache_key, output, ttl_days=7)
-    return output
+### Чтение — через UI-зону
+
+Пользователь рисует **зону кэша** на канвасе, охватывая нужные ноды.
+Фронтенд проставляет флаг `can_use_cache: true` в `_meta` каждой ноды внутри зоны.
+
+Формат в graph JSON:
+
+```json
+{
+  "abc123": {
+    "class_type": "GeminiNode",
+    "inputs": { "prompt": "Напиши сценарий..." },
+    "_meta": { "can_use_cache": true }
+  }
+}
 ```
 
-Schema:
+- `can_use_cache=true` → перед вызовом API смотрим в кэш; при попадании возвращаем результат
+- `can_use_cache=false` (дефолт) → нода всегда выполняется, запись в кэш всё равно происходит
+
+### Глобальный флаг (конфиг сервиса)
+
+В `config.py` добавляется флаг `cache_enabled: bool = True`, аналогично тому как
+ComfyUI позволяет глобально переключить стратегию кэширования.
+
+При `cache_enabled=False`:
+- запись в кэш отключена
+- чтение из кэша отключено
+- UI-зоны игнорируются
+
+Это позволяет отключить кэш для отладки или на окружениях, где нежелательно
+переиспользование результатов, без изменений в графах.
+
+## Архитектура: как флаг доходит до активности
+
+```
+graph JSON (_meta.can_use_cache)
+        ↓
+GraphWorkflow читает флаг при построении NodeActivityInput
+        ↓
+NodeActivityInput.can_use_cache: bool
+        ↓
+execute_node (dynamic activity) проверяет флаг
+```
+
+В `NodeActivityInput` добавляется поле:
+
+```python
+@dataclass
+class NodeActivityInput:
+    ...
+    can_use_cache: bool = False
+```
+
+В активности (`activities/node.py`):
+
+```python
+cache_key = _compute_cache_key(inp.class_type, inp.resolved)
+
+# Чтение — только если нода в UI-зоне И кэш глобально включён
+if inp.can_use_cache and settings.cache_enabled:
+    cached = await cache_repo.get(cache_key)
+    if cached is not None:
+        await publish_node_status(inp.job_id, inp.node_id, inp.user_id, "CACHED")
+        return cached
+
+result = ... # вызов API
+
+# Запись — всегда (если кэш глобально включён)
+if settings.cache_enabled:
+    await cache_repo.set(cache_key, result, ttl_days=7)
+```
+
+## Ключ кэша
+
+```python
+import hashlib, json
+
+def _compute_cache_key(class_type: str, resolved: dict) -> str:
+    payload = json.dumps(
+        {"class_type": class_type, "inputs": resolved},
+        sort_keys=True,
+        ensure_ascii=False,
+    )
+    return hashlib.sha256(payload.encode()).hexdigest()
+```
+
+`resolved` к этому моменту содержит конкретные значения (строки, числа, MinIO UUID).
+Обхода графа не требуется — это прямое следствие того, что воркфлоу разрезолвил
+все ссылки до запуска активности (см. [[concepts/temporal-dag-execution]]).
+
+**UUID входных файлов включаются в ключ как есть.** Если пользователь загружает
+"тот же" файл повторно — он получит новый UUID → промах кэша. Это корректное
+поведение: мы не сравниваем содержимое файлов.
+
+## Что кэшируем
+
+Кэшируем **MinIO UUID** — не бинарные данные. Все тяжёлые артефакты (видео,
+изображения, аудио) уже лежат в MinIO; нода возвращает их UUID. UUID не протухают —
+MinIO хранит объекты до явного удаления.
+
+```json
+// Пример записи в кэше для VeoVideoGenerationNode
+{
+  "video_url": "f47ac10b-58cc-4372-a567-0e02b2c3d479"
+}
+```
+
+## Схема PostgreSQL
 
 ```sql
 CREATE TABLE node_result_cache (
-    input_hash  TEXT PRIMARY KEY,
-    class_type  TEXT NOT NULL,
-    output      JSONB NOT NULL,
-    created_at  TIMESTAMPTZ DEFAULT now(),
-    expires_at  TIMESTAMPTZ
+    input_hash  TEXT        PRIMARY KEY,
+    class_type  TEXT        NOT NULL,
+    output      JSONB       NOT NULL,
+    created_at  TIMESTAMPTZ NOT NULL DEFAULT now(),
+    expires_at  TIMESTAMPTZ NOT NULL
 );
+
+CREATE INDEX idx_node_result_cache_expires ON node_result_cache (expires_at);
 ```
 
-`input_hash` = deterministic hash of `(class_type, sorted input key-value pairs)`.
-For nodes with a `seed` input, the seed is included in the hash — different seeds produce
-different cache entries, which is correct.
+TTL: **7 дней** по умолчанию (фиксировано в коде, будет пересмотрено при накоплении
+данных об использовании).
 
-## PostgreSQL is sufficient at target scale
+Очистка истёкших записей — периодический фоновый процесс или pg_cron:
 
-At 100 concurrent jobs (~500 concurrent cache lookups peak), PostgreSQL PRIMARY KEY
-lookups via asyncpg are not a bottleneck. The performance difference vs. Redis
-(~2-5ms vs. sub-millisecond) is irrelevant when the activity itself calls Veo (2 min)
-or Gemini (~3s).
+```sql
+DELETE FROM node_result_cache WHERE expires_at < now();
+```
 
-PostgreSQL would become a bottleneck at millions of lookups/sec — orders of magnitude
-above the target scale.
+## Область видимости кэша
 
-## Advantages over ComfyUI in-memory cache
+Кэш работает **cross-run и cross-worker** одновременно:
 
-| | ComfyUI | PostgreSQL cache |
-|---|---|---|
-| Survives pod restart | No | Yes |
-| Shared across workers | No (per-process) | Yes |
-| Inspectable / evictable | No | Yes (`DELETE FROM node_result_cache`) |
-| TTL per node type | No | Yes |
-| Scope | per-process session | per-template or global |
+| Сценарий | Результат |
+|---|---|
+| Тот же граф, те же входы, второй запуск | Попадание — ноды с `can_use_cache=true` пропускаются |
+| Два одинаковых узла в одном графе | Попадание — второй получит результат первого из PostgreSQL |
+| Другой воркер-под | Попадание — кэш в общей БД |
+| Под перезапустился в середине запуска | Попадание — завершённые ноды не перевыполняются |
 
 ## Cache abstraction
 
-The cache is hidden behind a `Protocol` so the backend can be swapped without touching
-activity code:
+Кэш скрыт за `Protocol` — бэкенд подключается через DI при старте воркера:
 
 ```python
 class NodeResultCache(Protocol):
-    async def get(self, key: str) -> NodeOutput | None: ...
-    async def set(self, key: str, value: NodeOutput, ttl_days: int) -> None: ...
+    async def get(self, key: str) -> dict | None: ...
+    async def set(self, key: str, value: dict, ttl_days: int) -> None: ...
 
-class PostgresNodeResultCache(NodeResultCache): ...
-class RedisNodeResultCache(NodeResultCache): ...   # see decision below
+class PostgresNodeResultCache:   ...  # текущая реализация
+class RedisNodeResultCache:      ...  # когда Redis войдёт в стек
 ```
 
-Backend is injected via DI at worker startup. Switching = one line in config.
+## PostgreSQL достаточен при целевой нагрузке
 
-## Decision: Redis not added for node result cache
+При 100 одновременных заданиях (~500 одновременных обращений к кэшу пиково)
+PRIMARY KEY-запросы через asyncpg не являются узким местом. Разница в latency
+PostgreSQL vs Redis (~2-5 мс против <1 мс) не имеет значения, когда сама активность
+вызывает Veo (~2 мин) или Gemini (~3 с).
 
-Redis is not in the current stack. At the target scale (100 concurrent jobs), PostgreSQL
-is sufficient. Redis would be introduced only if/when it enters the stack for other
-reasons (see below) — at that point the `RedisNodeResultCache` implementation can be
-swapped in trivially.
+## Где Redis нужен (не для кэша)
 
-## Where Redis belongs when it arrives
+Redis не нужен для node result cache при текущей нагрузке, но нужен для:
 
-Redis is not the right tool for node result caching at this scale, but it is the right
-tool for:
-
-**API rate limiting** (primary motivation for adding Redis):
+**API rate limiting** — атомарный `INCR` для квот RPM/TPM по Gemini, Veo, ElevenLabs:
 ```python
-# Atomic increment — reliable per-minute quota tracking per project
 key = f"veo:rpm:{project_id}:{current_minute()}"
 count = await redis.incr(key)
 await redis.expire(key, 60)
 if count > VEO_RPM_LIMIT:
     raise RateLimitError()
 ```
-Gemini, Veo, ElevenLabs all have RPM/TPM limits. Without Redis, the choices are:
-receive 429 and retry (wastes quota and time) or pessimistic locks in PostgreSQL (slow,
-complex). Redis atomic `INCR` is the standard solution.
 
-**Distributed locks** — prevent duplicate job submissions for the same template:
+**Distributed locks** — предотвращение дублирующих submissions:
 ```python
 async with redis.lock(f"template:{template_id}:running", timeout=300):
     await temporal_client.start_workflow(...)
 ```
 
-**Summary:**
-
-| Concern | Backend |
-|---------|---------|
-| Node result cache | PostgreSQL (now), Redis (if Redis added) |
-| API rate limiting | Redis — primary reason to add it |
+| Задача | Бэкенд |
+|---|---|
+| Node result cache | PostgreSQL (сейчас), Redis (если войдёт в стек) |
+| API rate limiting | Redis — основная причина добавить его |
 | Distributed locks | Redis |
-| Workflow orchestration state | Temporal DB — never touch |
+| Состояние воркфлоу | Temporal DB — не трогать |

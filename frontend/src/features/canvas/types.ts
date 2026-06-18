@@ -185,6 +185,7 @@ export type NodeExecutionStatus =
   | "queued"
   | "processing"
   | "success"
+  | "cached"
   | "error"
   | "waiting_for_review";
 
@@ -242,7 +243,7 @@ export interface CanvasNodeData {
 }
 
 /** Valid ReactFlow node type strings for the canvas */
-export type CanvasNodeType = "amplify-node" | "preview-node" | "import-media-node";
+export type CanvasNodeType = "amplify-node" | "preview-node" | "import-media-node" | "cache-zone";
 
 /** A typed ReactFlow Node for the canvas */
 export type CanvasNode = Node<CanvasNodeData, CanvasNodeType>;

@@ -5,6 +5,8 @@ import logging
 from temporalio.worker import Worker
 
 from backend_template.config import settings
+from backend_template.database import async_session_maker
+from backend_template.temporal.cache import init_cache
 from backend_template.temporal.client import get_temporal_client
 from backend_template.temporal.registry import init_registry
 from backend_template.temporal.activities.node import execute_node
@@ -22,6 +24,10 @@ async def run_worker() -> None:
     # Discover all IO.ComfyNode classes from comfy_api_nodes/nodes_*.py —
     # same dynamic loading as ComfyUI's init_builtin_api_nodes().
     await init_registry()
+
+    if settings.cache_enabled:
+        logger.info("Enabling cache, since config has cache_enabled=True")
+        init_cache(async_session_maker)
 
     client = await get_temporal_client()
     worker = Worker(

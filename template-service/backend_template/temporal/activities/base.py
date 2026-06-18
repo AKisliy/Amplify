@@ -20,3 +20,4 @@ class NodeActivityInput:
     project_id: str
     class_type: str = ""
     resolved: dict = field(default_factory=dict)
+    can_use_cache: bool = False

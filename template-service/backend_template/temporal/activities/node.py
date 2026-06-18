@@ -20,8 +20,10 @@ from collections.abc import Sequence
 from temporalio import activity
 from temporalio.common import RawValue
 
+from backend_template.config import settings
 from backend_template.temporal.activities.base import NodeActivityInput
 from backend_template.temporal.activities.status import publish_node_status
+from backend_template.temporal.cache import compute_cache_key, get_cached, set_cached
 from backend_template.temporal.registry import NODE_CLASS_MAPPINGS
 
 logger = logging.getLogger(__name__)
@@ -72,6 +74,15 @@ async def execute_node(input_args: Sequence[RawValue]) -> dict:
 
     node_cls = NODE_CLASS_MAPPINGS[class_type]
 
+    # --- Cache read (only if node is in UI cache zone AND globally enabled) ---
+    cache_key = compute_cache_key(class_type, inp.resolved)
+    if inp.can_use_cache and settings.cache_enabled:
+        cached = await get_cached(cache_key)
+        if cached is not None:
+            logger.info("Cache hit: %s node_id=%s", class_type, inp.node_id)
+            await publish_node_status(inp.job_id, inp.node_id, inp.user_id, "CACHED")
+            return cached
+
     set_litellm_context(inp.template_id, inp.project_id, inp.job_id)
     await publish_node_status(inp.job_id, inp.node_id, inp.user_id, "RUNNING")
 
@@ -100,6 +111,11 @@ async def execute_node(input_args: Sequence[RawValue]) -> dict:
                 for k, v in outputs.items()
             },
         )
+
+        # --- Cache write (every run, if globally enabled) ---
+        if settings.cache_enabled:
+            await set_cached(cache_key, class_type, outputs)
+
         return outputs
 
     except Exception as exc:

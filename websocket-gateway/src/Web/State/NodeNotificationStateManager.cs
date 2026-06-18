@@ -21,7 +21,7 @@ public class NodeNotificationStateManager(ILogger<NodeNotificationStateManager> 
 {
     private static readonly HashSet<string> TerminalStatuses = new(StringComparer.OrdinalIgnoreCase)
     {
-        "SUCCESS", "FAILURE"
+        "SUCCESS", "FAILURE", "CACHED"
     };
 
     private readonly ConcurrentDictionary<string, string> _states = new();

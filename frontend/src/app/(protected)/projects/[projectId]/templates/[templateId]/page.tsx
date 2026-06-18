@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
-import { ArrowLeft, PanelLeft, Image as ImageIcon, Sparkles, Eye, Copy, Loader2, Package, UserCircle, CalendarDays, Check } from "lucide-react";
+import { ArrowLeft, PanelLeft, Image as ImageIcon, Sparkles, Eye, Copy, Loader2, Package, UserCircle, CalendarDays, Check, Zap } from "lucide-react";
 import {
   ReactFlow,
   Background,
@@ -46,6 +46,7 @@ import type { NodeExecutionStatus } from "@/features/canvas/types";
 
 // Canvas feature imports
 import { AmplifyNode } from "@/features/canvas/components/AmplifyNode";
+import { CacheZoneNode } from "@/features/canvas/components/CacheZoneNode";
 import { PreviewNode } from "@/features/canvas/components/PreviewNode";
 import { ImportMediaNode } from "@/features/canvas/components/ImportMediaNode";
 import { FlowingEdge } from "@/features/canvas/components/FlowingEdge";
@@ -75,6 +76,7 @@ const nodeTypes: NodeTypes = {
   "amplify-node": AmplifyNode as unknown as NodeTypes[string],
   "preview-node":  PreviewNode as unknown as NodeTypes[string],
   "import-media-node": ImportMediaNode as unknown as NodeTypes[string],
+  "cache-zone": CacheZoneNode as unknown as NodeTypes[string],
 };
 
 const edgeTypes: EdgeTypes = {
@@ -662,14 +664,15 @@ const { registry, isLoading: registryLoading } = useNodeRegistry();
       onNodeExecutionStatusChanged: async (nodeId, status, outputs, error) => {
         const mapped: NodeExecutionStatus =
           status === "RUNNING" ? "processing"
-          : status === "SUCCESS" || status === "CACHED" ? "success"
+          : status === "SUCCESS" ? "success"
+          : status === "CACHED" ? "cached"
           : status === "FAILURE" ? "error"
           : status === "WAITING_FOR_REVIEW" ? "waiting_for_review"
           : "idle";
 
         setNodeStatus(nodeId, mapped, error ?? undefined);
 
-        if (outputs && mapped === "success") {
+        if (outputs && (mapped === "success" || mapped === "cached")) {
           updateNodeData(nodeId, { outputValues: outputs as Record<string, unknown> });
           // Accumulate image history — does nothing if outputs has no image_uuid
           appendNodeOutputHistory(nodeId, outputs as Record<string, unknown>);
@@ -846,6 +849,69 @@ const { registry, isLoading: registryLoading } = useNodeRegistry();
     },
     [addNode, registry]
   );
+
+  // ── Cache zone ───────────────────────────────────────────────────────────────
+  const handleAddCacheZone = useCallback(() => {
+    const instance = rfInstanceRef.current;
+    const center = instance
+      ? instance.screenToFlowPosition({ x: window.innerWidth / 2, y: window.innerHeight / 2 })
+      : { x: 200, y: 200 };
+    const zoneNode = {
+      id: crypto.randomUUID(),
+      type: "cache-zone" as const,
+      position: { x: center.x - 200, y: center.y - 150 },
+      style: { width: 400, height: 300 },
+      data: {},
+      // Render behind all other nodes
+      zIndex: -1,
+      // Allow drag/resize
+      draggable: true,
+      selectable: true,
+    } as unknown as CanvasNode;
+    addNode(zoneNode);
+  }, [addNode]);
+
+  // Reactively tag nodes with _meta.can_use_cache based on cache zone membership.
+  useEffect(() => {
+    const zones = nodes.filter((n) => n.type === "cache-zone");
+    // Only work if there's at least one zone or some nodes have the flag set
+    const anyFlagged = nodes.some(
+      (n) => n.type !== "cache-zone" && !!(n.data._meta as Record<string, unknown> | undefined)?.can_use_cache
+    );
+    if (zones.length === 0 && !anyFlagged) return;
+
+    setNodes((nds) => {
+      let changed = false;
+      const updated = nds.map((n) => {
+        if (n.type === "cache-zone") return n;
+
+        const nodeW = n.measured?.width ?? 300;
+        const nodeH = n.measured?.height ?? 100;
+        const nodeX = n.position.x;
+        const nodeY = n.position.y;
+
+        const inZone = zones.some((z) => {
+          const zW = Number(z.style?.width) || 400;
+          const zH = Number(z.style?.height) || 300;
+          return (
+            nodeX < z.position.x + zW &&
+            nodeX + nodeW > z.position.x &&
+            nodeY < z.position.y + zH &&
+            nodeY + nodeH > z.position.y
+          );
+        });
+
+        const currentFlag = !!(n.data._meta as Record<string, unknown> | undefined)?.can_use_cache;
+        if (inZone === currentFlag) return n;
+
+        changed = true;
+        const meta = (n.data._meta as Record<string, unknown> | undefined) ?? {};
+        return { ...n, data: { ...n.data, _meta: { ...meta, can_use_cache: inZone } } };
+      });
+
+      return changed ? updated : nds;
+    });
+  }, [nodes, setNodes]);
 
   // ── Pane context menu ────────────────────────────────────────────────────────
   const handlePaneContextMenu = useCallback((event: React.MouseEvent | MouseEvent) => {
@@ -1083,6 +1149,18 @@ const { registry, isLoading: registryLoading } = useNodeRegistry();
               <Sparkles className="w-4 h-4" />
             </Button>
           </div>
+        )}
+
+        {!isReadonly && (
+          <Button
+            variant="ghost" size="sm"
+            onClick={handleAddCacheZone}
+            className="text-muted-foreground hover:text-cyan-400 gap-1.5 h-8 px-2"
+            title="Add a cache zone — nodes inside will read from cache on the next run"
+          >
+            <Zap className="w-3.5 h-3.5" />
+            <span className="text-xs">Cache Zone</span>
+          </Button>
         )}
 
         <div className="h-4 w-px bg-border" />

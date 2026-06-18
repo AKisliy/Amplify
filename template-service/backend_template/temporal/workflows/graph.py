@@ -138,6 +138,7 @@ class GraphWorkflow:
                         resolved=_resolve_inputs(
                             graph[nid].get("inputs") or {}, node_outputs, class_types
                         ),
+                        can_use_cache=graph[nid].get("_meta", {}).get("can_use_cache", False),
                     )
                     for nid in known
                 ]

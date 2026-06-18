@@ -136,6 +136,70 @@ GraphWorkflow reads the new topology and dispatches different activities
 This is identical to the current ComfyUI constraint — unknown node types fail at
 validation time, not silently at runtime.
 
+## Что происходит при смерти пода во время выполнения
+
+Это одна из ключевых гарантий Temporal: если под с воркером упал в середине графа —
+выполнение **продолжится с того места, где остановилось**, а не с начала.
+
+### Где хранится состояние воркфлоу
+
+`GraphWorkflow` код выполняется на **Temporal Server**, а не в поде воркера.
+Temporal Server хранит **event history** каждого воркфлоу в PostgreSQL (БД `temporal`).
+Event history — append-only лог всего, что произошло:
+
+```
+WorkflowExecutionStarted    {params: ...}
+ActivityTaskScheduled       {activity_type: "GeminiNode"}
+ActivityTaskStarted
+ActivityTaskCompleted       {result: {"text": "..."}}      ← GeminiText готов, сохранён
+ActivityTaskScheduled       {activity_type: "GeminiImageNode"}
+ActivityTaskStarted
+ActivityTaskCompleted       {result: {"image_url": "..."}} ← GeminiImage готов, сохранён
+ActivityTaskScheduled       {activity_type: "GeminiVideoNode"}
+ActivityTaskStarted         ← здесь под умер
+```
+
+### Что происходит при смерти пода
+
+Temporal Server отслеживает heartbeat от активности. При `heartbeat_timeout=60s`
+(наш дефолт в `node_policies.py`) через 60 секунд Server помечает активность как failed
+и ставит её в очередь повторно.
+
+Когда под поднимается и воркер переподключается — он получает `GeminiVideoNode`
+из очереди и выполняет её заново. **GeminiText и GeminiImage не перезапускаются** —
+их результаты уже в event history.
+
+### Deterministic replay
+
+При reconnect Temporal Server отправляет воркеру весь event history.
+Воркер прогоняет код `GraphWorkflow.run()` заново с нуля, но каждый
+`await workflow.execute_activity(...)` сверяется с историей:
+
+```python
+# Replay воркфлоу после перезапуска пода:
+execute_activity("GeminiNode")      # → в истории Completed → возвращает сохранённый результат
+execute_activity("GeminiImageNode") # → в истории Completed → тоже из истории
+execute_activity("GeminiVideoNode") # → в истории только Started, нет Completed → реально вызывает API
+```
+
+Код воркфлоу прогоняется целиком, но реальные вызовы внешних API не повторяются —
+они воспроизводятся из истории.
+
+### Следствие: активности должны быть идемпотентны
+
+Если под умер **в середине** активности (после начала вызова API, но до записи результата
+в event history), активность запустится повторно. Вео может создать видео дважды.
+
+Варианты защиты:
+- **Node result cache** (см. [[concepts/node-result-cache]]): перед вызовом API проверить кэш
+  по хэшу входов — если результат уже есть, вернуть его. Это делает повторный запуск
+  дешёвым и не тратит квоту.
+- **`maximum_attempts=2`** для дорогих нод (Veo) — меньше шансов потратить квоту дважды,
+  но не устраняет проблему дублирования полностью.
+- Для нод, которые принципиально не идемпотентны, можно выставить
+  `non_retryable_error_types` или `CACHEABLE = False` — тогда кэш не будет
+  скрывать дубликат.
+
 ## Graph format compatibility
 
 The existing ComfyUI prompt JSON format is preserved. `parse_graph()` reads the same

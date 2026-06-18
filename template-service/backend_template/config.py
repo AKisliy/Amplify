@@ -53,6 +53,9 @@ class Config(BaseSettings):
     temporal_host: str = "localhost:7233"
     temporal_task_queue: str = "template-execution"
 
+    # Node result cache
+    cache_enabled: bool = True
+
     # RabbitMQ
     rabbitmq_url: str = "amqp://guest:guest@localhost:5672/"
 
