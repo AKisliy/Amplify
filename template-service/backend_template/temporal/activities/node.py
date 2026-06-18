@@ -15,7 +15,7 @@ from __future__ import annotations
 import asyncio
 import logging
 from contextlib import suppress
-from typing import Sequence
+from collections.abc import Sequence
 
 from temporalio import activity
 from temporalio.common import RawValue
@@ -55,7 +55,7 @@ def _preprocess_resolved(node_cls: type, resolved: dict) -> dict:
 
 
 @activity.defn(dynamic=True)
-async def execute_node(args: Sequence[RawValue]) -> dict:
+async def execute_node(input_args: Sequence[RawValue]) -> dict:
     """
     Dynamic activity — handles all graph node class types.
 
@@ -67,7 +67,7 @@ async def execute_node(args: Sequence[RawValue]) -> dict:
 
     class_type = activity.info().activity_type
     inp: NodeActivityInput = activity.payload_converter().from_payload(
-        args[0].payload, NodeActivityInput
+        input_args[0].payload, NodeActivityInput
     )
 
     node_cls = NODE_CLASS_MAPPINGS[class_type]
