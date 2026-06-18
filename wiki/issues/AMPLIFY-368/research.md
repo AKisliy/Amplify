@@ -42,12 +42,21 @@ This is where Inputs and Outputs intersect to prove operational efficiency.
 *   *(Note: Factoring in "publication on X out of Y platforms" falls slightly into Zone 2, but the raw generation cost is firmly Zone 1).*
 
 **6. Yield Efficiency (Cost vs. Format / Template)**
-*   **Definition:** The average generation cost isolated by specific Templates over the last *n* generations.
+*   **Definition:** The average generation cost isolated by specific Templates over the last *n* generations. (bound by Time Frame instead)
 *   **Relationship:** Some templates use 3 heavy video nodes; others use 1 video node and 1 audio node. This data point identifies which Formats are financially viable to run at high volumes and which are too "heavy."
+
+avg cpa (1 x 3 + 2 x 9 )/ 10 = 2.1$ (yield efficiency of the format)
+we know we're more likely produce variation them a full video, so we give this event 90% chance. what's left is to know the cost. because video gen model accounts for major percentage spent per run (about 99%) then we can account only for it's rate per second. Video shot is still a video on it's own so we will be able to combine different video gen models and still get the run cost approximation for format. For that we need to know shot model mapping and shot duration and shot run type mapping (variation or base part).
+
+right now we're only planning to launch. we might have target video per month count but we're not confident whether we can reach it or no. we don't have proven content formats so we will test different formats (don't know the amount either). once we find it we will allocate more budget towards successful content format (content format will take higher probability of occurence in video distribtuion so it will heavily influence the avg cpa, also a median value - it will get closer that cpa of the content format). with that in mind i don't know whether it's good idea or not if we converge all formats into one (essentially don't account for format velocity at any given moment in time) and take it's avg cpa. we know clients budget so we know production capacity or target amount of videos he can afford. but what is the current production capacity and vecoty? given 16 min full run and 8 min variation (16 + 8 x 9 ) / 10 = 8.8 minutes with 4 hours a day it's 27 videos a day. So it's too much of a budget right now that we can handle because with avg cpa being 1$ it's 27$ a day. 
+
+right now i would like not to include and think about infra associated costs and handle them seperately.
+
 
 **7. Entity Efficiency (Cost vs. Projects / Ambassadors)**
 *   **Definition:** Since an Ambassador maps 1:1 to a Project, this metric tracks the generation cost grouped by Project.
 *   **Relationship:** Identifies if producing UGC for Ambassador A is inherently more expensive than Ambassador B (perhaps Ambassador A's prompts require more expensive models or have higher failure rates).
+
 
 **8. Failed Generation Overhead**
 *   **Source:** `SUM(Job.total_cost)` where `Job.status = FAILED` + `SUM(NodeExecution.cost)` from failed nodes in otherwise-completed jobs.
