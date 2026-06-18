@@ -29,11 +29,10 @@ durable workflow; each node becomes a Temporal activity. HITL pauses become sign
 | [[concepts/temporal-infra]] | Self-hosted K8s deployment, component sizing for 100 concurrent jobs |
 | [[concepts/migration-path]] | Big bang cutover: prerequisites, risks, rollback |
 | [[concepts/node-result-cache]] | Persistent node result cache (PostgreSQL now, Redis-ready); Redis scope decision |
+| [[concepts/activity-retry-policy]] | Per-node retry/timeout policy via `temporal_policy` class attribute; dynamic dispatch via `policy_for()` |
 
 ## Open Questions
 
-- What is the retry policy for individual activities? (Gemini 429, Veo transient errors)
-  → out of scope for this issue, but activities must be idempotent by design.
 - Should there be a dedicated Temporal task queue per node type (e.g. separate queue for
   Veo activities with longer schedule-to-close timeout)?
 - Node schema registry: static file checked into repo, or DB table editable via admin UI?

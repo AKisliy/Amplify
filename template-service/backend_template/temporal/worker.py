@@ -28,6 +28,8 @@ async def run_worker() -> None:
         client,
         task_queue=settings.temporal_task_queue,
         workflows=[GraphWorkflow],
+        # execute_node is dynamic=True — handles all node class_types by name.
+        # _publish_job_started/_publish_job_finished are named activities.
         activities=[execute_node, _publish_job_started, _publish_job_finished],
     )
     logger.info("Temporal worker started on task queue %r", settings.temporal_task_queue)

@@ -1,5 +1,8 @@
 import asyncio
 import logging
+from datetime import timedelta
+
+from temporalio.common import RetryPolicy
 
 from comfy_api.latest import IO, ComfyExtension
 from comfy_api.latest._io import Hidden
@@ -58,6 +61,11 @@ class VeoVideoGenerationNode(IO.ComfyNode):
     This node can create videos from text descriptions and optional image inputs,
     with control over parameters like aspect ratio, duration, and more.
     """
+
+    temporal_policy = {
+        "start_to_close_timeout": timedelta(minutes=90),
+        "retry_policy": RetryPolicy(maximum_attempts=2, non_retryable_error_types=["RAIFilteredError"])
+    }
 
     @classmethod
     def define_schema(cls):

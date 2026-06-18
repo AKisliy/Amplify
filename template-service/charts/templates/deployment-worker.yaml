@@ -33,22 +33,20 @@ spec:
             {{- toYaml . | nindent 12 }}
           {{- end }}
           env:
-            - name: MEDIA_INGEST_URL
-              value: "{{ .Values.config.mediaIngestUrl }}"
-            - name: PROJECT_ID
+            - name: GEMINI_PROJECT_ID
               value: "{{ .Values.config.gcpProjectId }}"
-            - name: LOCATION
+            - name: GEMINI_LOCATION
               value: "{{ .Values.config.gcpLocation }}"
-            - name: STORAGE_URI
+            - name: GEMINI_STORAGE_URI
               value: "{{ .Values.config.gcpStorageUri }}"
             - name: SERVICE_ACCOUNT_KEY_FILE
               value: "/secrets/sa-key.json"
             - name: LITELLM_BASE_URL
               value: "{{ .Values.config.litellmBaseUrl }}"
-            - name: VIDEO_EDITOR_URL
-              value: "{{ .Values.config.videoEditorUrl }}"
             - name: MEDIA_INGEST_URL
               value: "{{ .Values.config.mediaIngestUrl }}"
+            - name: VIDEO_EDITOR_URL
+              value: "{{ .Values.config.videoEditorUrl }}"
             - name: TEMPORAL_HOST
               value: "{{ .Values.config.temporalHost }}"
             - name: TEMPORAL_TASK_QUEUE

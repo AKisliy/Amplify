@@ -60,6 +60,42 @@ When the batch contains a HITL node, the workflow:
 1. Executes all non-HITL nodes in the batch normally
 2. For the HITL node: calls `create_review_task` activity, then `wait_condition`
 
+## Как работают топологические батчи
+
+Батч формируется по простому правилу: нода попадает в текущий батч тогда и только тогда,
+когда **все** её зависимости уже выполнены.
+
+```python
+batch = [
+    nid for nid in graph
+    if nid not in completed and deps[nid].issubset(completed)
+]
+```
+
+`issubset(completed)` — это и есть гарантия. Если хотя бы один предшественник не завершён,
+нода ждёт следующей итерации цикла.
+
+Пример для графа `A → B → D`, `C → D`, `C → E`:
+
+```
+Iteration 1 → batch: [A, C]   # у обоих deps = {} ⊆ completed={}
+completed = {A, C}
+
+Iteration 2 → batch: [B]      # deps={A} ⊆ {A,C} ✓
+                               # D: deps={B,C}, B ∉ completed ✗
+completed = {A, B, C}
+
+Iteration 3 → batch: [D, E]   # D: deps={B,C} ⊆ {A,B,C} ✓
+                               # E: deps={C} ⊆ {A,B,C} ✓
+```
+
+Каждый батч — один `asyncio.gather()`: ноды внутри батча выполняются параллельно,
+батчи между собой строго последовательно.
+
+Важное следствие: если граф полностью линейный (`A → B → C → D`), параллелизма нет —
+каждый батч будет из одной ноды. Параллелизм возникает только там, где граф реально
+ветвится.
+
 ## Parallel execution benefit
 
 With ComfyUI: nodes run one-at-a-time regardless of dependencies.

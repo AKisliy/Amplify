@@ -19,15 +19,10 @@ with workflow.unsafe.imports_passed_through():
     from backend_template.engine.comfy_execution.graph_utils import is_link
     from backend_template.temporal.registry import OUTPUT_FIELDS
     from backend_template.temporal.activities.base import NodeActivityInput
-    from backend_template.temporal.activities.node import execute_node
-    from backend_template.temporal.activities.status import publish_node_status
+    from backend_template.temporal.node_policies import policy_for
 
 logger = logging.getLogger(__name__)
 
-# Per-activity timeout. Veo can take ~10-20 min; 45 min is a safe ceiling.
-# Heartbeat timeout: if no heartbeat for 60s, Temporal considers the activity dead.
-_DEFAULT_TIMEOUT = timedelta(minutes=45)
-_HEARTBEAT_TIMEOUT = timedelta(seconds=60)
 
 
 # ---------------------------------------------------------------------------
@@ -149,12 +144,11 @@ class GraphWorkflow:
 
                 results = await asyncio.gather(*[
                     workflow.execute_activity(
-                        execute_node,
+                        class_types[nid],   # class_type string → dynamic activity
                         args=[inp],
-                        start_to_close_timeout=_DEFAULT_TIMEOUT,
-                        heartbeat_timeout=_HEARTBEAT_TIMEOUT,
+                        **policy_for(class_types[nid]),
                     )
-                    for inp in activity_inputs
+                    for nid, inp in zip(known, activity_inputs)
                 ])
 
                 for nid, result in zip(known, results):
