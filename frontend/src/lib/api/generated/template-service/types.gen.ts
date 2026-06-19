@@ -464,6 +464,36 @@ export type ManualReviewCompleteRequest = {
 };
 
 /**
+ * ManualReviewCreateRequest
+ *
+ * Called internally by the node (not exposed to the public API).
+ */
+export type ManualReviewCreateRequest = {
+    /**
+     * Jobid
+     */
+    jobId: string;
+    /**
+     * Nodeid
+     */
+    nodeId: string;
+    /**
+     * Nodetype
+     */
+    nodeType: string;
+    /**
+     * Autoconfirm
+     */
+    autoConfirm?: boolean;
+    /**
+     * Payload
+     */
+    payload?: {
+        [key: string]: unknown;
+    };
+};
+
+/**
  * ManualReviewTaskResponse
  */
 export type ManualReviewTaskResponse = {
@@ -1087,6 +1117,19 @@ export type RunTemplateResponse = {
 };
 
 /**
+ * ShotRegenerateRequest
+ *
+ * Body for POST /review/{task_id}/regenerate-shot.
+ */
+export type ShotRegenerateRequest = {
+    /**
+     * Slotindex
+     */
+    slotIndex: number;
+    params: VeoEditableParams;
+};
+
+/**
  * ValidationError
  */
 export type ValidationError = {
@@ -1102,6 +1145,42 @@ export type ValidationError = {
      * Error Type
      */
     type: string;
+};
+
+/**
+ * VeoEditableParams
+ *
+ * Editable Veo generation params surfaced to the user during script review.
+ *
+ * All fields can be modified before re-generating a single shot.
+ * Locked fields (first_frame_uuid, last_frame_uuid) are read from the task
+ * payload server-side — they are never sent over the wire by the client.
+ */
+export type VeoEditableParams = {
+    /**
+     * Prompt
+     */
+    prompt: string;
+    /**
+     * Negativeprompt
+     */
+    negativePrompt?: string;
+    /**
+     * Resolution
+     */
+    resolution?: string;
+    /**
+     * Aspectratio
+     */
+    aspectRatio?: string;
+    /**
+     * Duration
+     */
+    duration?: number;
+    /**
+     * Model
+     */
+    model?: string;
 };
 
 export type ListTemplatesV1TemplatesGetData = {
@@ -1948,6 +2027,31 @@ export type DeleteReferenceImageV1AmbassadorsAmbassadorIdImagesMediaIdDeleteResp
 
 export type DeleteReferenceImageV1AmbassadorsAmbassadorIdImagesMediaIdDeleteResponse = DeleteReferenceImageV1AmbassadorsAmbassadorIdImagesMediaIdDeleteResponses[keyof DeleteReferenceImageV1AmbassadorsAmbassadorIdImagesMediaIdDeleteResponses];
 
+export type CreateTaskV1ReviewPostData = {
+    body: ManualReviewCreateRequest;
+    path?: never;
+    query?: never;
+    url: '/v1/review/';
+};
+
+export type CreateTaskV1ReviewPostErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type CreateTaskV1ReviewPostError = CreateTaskV1ReviewPostErrors[keyof CreateTaskV1ReviewPostErrors];
+
+export type CreateTaskV1ReviewPostResponses = {
+    /**
+     * Successful Response
+     */
+    201: ManualReviewTaskResponse;
+};
+
+export type CreateTaskV1ReviewPostResponse = CreateTaskV1ReviewPostResponses[keyof CreateTaskV1ReviewPostResponses];
+
 export type GetTaskV1ReviewTaskIdGetData = {
     body?: never;
     path: {
@@ -2075,6 +2179,36 @@ export type GetByJobAndNodeV1ReviewJobJobIdNodeNodeIdGetResponses = {
 };
 
 export type GetByJobAndNodeV1ReviewJobJobIdNodeNodeIdGetResponse = GetByJobAndNodeV1ReviewJobJobIdNodeNodeIdGetResponses[keyof GetByJobAndNodeV1ReviewJobJobIdNodeNodeIdGetResponses];
+
+export type RegenerateShotV1ReviewTaskIdRegenerateShotPostData = {
+    body: ShotRegenerateRequest;
+    path: {
+        /**
+         * Task Id
+         */
+        task_id: string;
+    };
+    query?: never;
+    url: '/v1/review/{task_id}/regenerate-shot';
+};
+
+export type RegenerateShotV1ReviewTaskIdRegenerateShotPostErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type RegenerateShotV1ReviewTaskIdRegenerateShotPostError = RegenerateShotV1ReviewTaskIdRegenerateShotPostErrors[keyof RegenerateShotV1ReviewTaskIdRegenerateShotPostErrors];
+
+export type RegenerateShotV1ReviewTaskIdRegenerateShotPostResponses = {
+    /**
+     * Successful Response
+     */
+    202: ManualReviewTaskResponse;
+};
+
+export type RegenerateShotV1ReviewTaskIdRegenerateShotPostResponse = RegenerateShotV1ReviewTaskIdRegenerateShotPostResponses[keyof RegenerateShotV1ReviewTaskIdRegenerateShotPostResponses];
 
 export type ListBrandsV1BrandsGetData = {
     body?: never;
@@ -2533,6 +2667,134 @@ export type RunTemplateV2TemplatesTemplateIdRunPostResponses = {
      */
     202: unknown;
 };
+
+export type GetTaskV2ReviewTaskIdGetData = {
+    body?: never;
+    path: {
+        /**
+         * Task Id
+         */
+        task_id: string;
+    };
+    query?: never;
+    url: '/v2/review/{task_id}';
+};
+
+export type GetTaskV2ReviewTaskIdGetErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type GetTaskV2ReviewTaskIdGetError = GetTaskV2ReviewTaskIdGetErrors[keyof GetTaskV2ReviewTaskIdGetErrors];
+
+export type GetTaskV2ReviewTaskIdGetResponses = {
+    /**
+     * Successful Response
+     */
+    200: ManualReviewTaskResponse;
+};
+
+export type GetTaskV2ReviewTaskIdGetResponse = GetTaskV2ReviewTaskIdGetResponses[keyof GetTaskV2ReviewTaskIdGetResponses];
+
+export type CompleteTaskV2ReviewTaskIdCompletePostData = {
+    body: ManualReviewCompleteRequest;
+    path: {
+        /**
+         * Task Id
+         */
+        task_id: string;
+    };
+    query?: never;
+    url: '/v2/review/{task_id}/complete';
+};
+
+export type CompleteTaskV2ReviewTaskIdCompletePostErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type CompleteTaskV2ReviewTaskIdCompletePostError = CompleteTaskV2ReviewTaskIdCompletePostErrors[keyof CompleteTaskV2ReviewTaskIdCompletePostErrors];
+
+export type CompleteTaskV2ReviewTaskIdCompletePostResponses = {
+    /**
+     * Successful Response
+     */
+    200: ManualReviewTaskResponse;
+};
+
+export type CompleteTaskV2ReviewTaskIdCompletePostResponse = CompleteTaskV2ReviewTaskIdCompletePostResponses[keyof CompleteTaskV2ReviewTaskIdCompletePostResponses];
+
+export type GetPendingByJobV2ReviewJobJobIdPendingGetData = {
+    body?: never;
+    path: {
+        /**
+         * Job Id
+         */
+        job_id: string;
+    };
+    query?: never;
+    url: '/v2/review/job/{job_id}/pending';
+};
+
+export type GetPendingByJobV2ReviewJobJobIdPendingGetErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type GetPendingByJobV2ReviewJobJobIdPendingGetError = GetPendingByJobV2ReviewJobJobIdPendingGetErrors[keyof GetPendingByJobV2ReviewJobJobIdPendingGetErrors];
+
+export type GetPendingByJobV2ReviewJobJobIdPendingGetResponses = {
+    /**
+     * Response Get Pending By Job V2 Review Job  Job Id  Pending Get
+     *
+     * Successful Response
+     */
+    200: ManualReviewTaskResponse | null;
+};
+
+export type GetPendingByJobV2ReviewJobJobIdPendingGetResponse = GetPendingByJobV2ReviewJobJobIdPendingGetResponses[keyof GetPendingByJobV2ReviewJobJobIdPendingGetResponses];
+
+export type GetByJobAndNodeV2ReviewJobJobIdNodeNodeIdGetData = {
+    body?: never;
+    path: {
+        /**
+         * Job Id
+         */
+        job_id: string;
+        /**
+         * Node Id
+         */
+        node_id: string;
+    };
+    query?: never;
+    url: '/v2/review/job/{job_id}/node/{node_id}';
+};
+
+export type GetByJobAndNodeV2ReviewJobJobIdNodeNodeIdGetErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type GetByJobAndNodeV2ReviewJobJobIdNodeNodeIdGetError = GetByJobAndNodeV2ReviewJobJobIdNodeNodeIdGetErrors[keyof GetByJobAndNodeV2ReviewJobJobIdNodeNodeIdGetErrors];
+
+export type GetByJobAndNodeV2ReviewJobJobIdNodeNodeIdGetResponses = {
+    /**
+     * Response Get By Job And Node V2 Review Job  Job Id  Node  Node Id  Get
+     *
+     * Successful Response
+     */
+    200: ManualReviewTaskResponse | null;
+};
+
+export type GetByJobAndNodeV2ReviewJobJobIdNodeNodeIdGetResponse = GetByJobAndNodeV2ReviewJobJobIdNodeNodeIdGetResponses[keyof GetByJobAndNodeV2ReviewJobJobIdNodeNodeIdGetResponses];
 
 export type CreateLibraryTemplateInternalLibraryTemplatesPostData = {
     body: LibraryTemplateCreate;
