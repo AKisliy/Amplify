@@ -68,7 +68,7 @@ class ScriptSupervisorNode(IO.ComfyNode):
     @classmethod
     def hitl_payload(cls, resolved: dict, exec_context: dict) -> dict:
         """Build ManualReviewTask.payload from resolved inputs + exec_context."""
-        video_uuids: list[str] = resolved.get("video_uuids") or []
+        video_uuids: list[str] = cls._as_list(resolved.get("video_uuids"))
         media_prompts: dict = exec_context.get(MEDIA_PROMPTS, {})
         media_gen_params: dict = exec_context.get(MEDIA_GEN_PARAMS, {})
         shots: list[dict] = [
@@ -98,9 +98,17 @@ class ScriptSupervisorNode(IO.ComfyNode):
         return {"shots": shots}
 
     @classmethod
+    def _as_list(cls, value: object) -> list[str]:
+        if value is None:
+            return []
+        if isinstance(value, list):
+            return value
+        return [str(value)]
+
+    @classmethod
     def hitl_output(cls, resolved: dict, decision: dict) -> tuple:
         """Return wire output tuple (matches define_schema outputs order)."""
-        video_uuids: list[str] = resolved.get("video_uuids") or []
+        video_uuids = cls._as_list(resolved.get("video_uuids"))
         final_uuids: list[str] = decision.get("final_uuids", video_uuids)
         return (final_uuids,)
 

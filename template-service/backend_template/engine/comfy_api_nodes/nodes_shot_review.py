@@ -53,14 +53,23 @@ class ShotReviewNode(IO.ComfyNode):
         return NODE_TYPE
 
     @classmethod
+    def _as_list(cls, value: object) -> list[str]:
+        """Normalise wire value to list — handles single string or missing value."""
+        if value is None:
+            return []
+        if isinstance(value, list):
+            return value
+        return [str(value)]
+
+    @classmethod
     def hitl_payload(cls, resolved: dict, exec_context: dict) -> dict:
         """Build ManualReviewTask.payload from resolved inputs."""
-        return {"video_uuids": resolved.get("video_uuids") or []}
+        return {"video_uuids": cls._as_list(resolved.get("video_uuids"))}
 
     @classmethod
     def hitl_output(cls, resolved: dict, decision: dict) -> tuple:
         """Pass video_uuids through unchanged."""
-        return (resolved.get("video_uuids") or [],)
+        return (cls._as_list(resolved.get("video_uuids")),)
 
     @classmethod
     def hitl_context(cls, resolved: dict, decision: dict) -> dict:

@@ -55,9 +55,8 @@ export function ShotReviewDialog({ jobId, nodeId, onClose, executionVersion = "v
           : await getManualReviewByJobAndNode(jobId, nodeId);
         if (cancelled) return;
         if (!task) { setError("No pending review task found."); return; }
-        const uuids = (
-          (task.payload?.video_uuids ?? task.payload?.videoUuids ?? []) as string[]
-        );
+        const raw = task.payload?.video_uuids ?? task.payload?.videoUuids ?? [];
+        const uuids: string[] = Array.isArray(raw) ? raw : [raw].filter(Boolean) as string[];
         setTaskId(task.id);
         setVideoUuids(uuids);
         setTrims(uuids.map(() => ({ start: 0, end: 8, duration: 8 })));
