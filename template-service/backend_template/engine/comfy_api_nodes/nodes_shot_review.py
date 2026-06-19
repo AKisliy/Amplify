@@ -16,12 +16,19 @@ Flow
 5. Merge the user's decision into ``extra_pnginfo["shot_decisions"]`` so that
    downstream nodes (e.g. VideoEditorNode) can read trim points without an
    explicit wire connection. Multiple ShotReviewNodes merge their decisions.
-6. Return the original ``video_uuids`` list as the sole output.
+6. Return the original ``video_uuids`` list as the first output and a
+   JSON-encoded dict of this node's trim decisions as the second output
+   (``shot_decisions_json``). Wiring this second output to a
+   ``BatchUGCEditingNode`` ensures the decisions survive cache hits on
+   subsequent graph re-runs — the cached output tuple is returned by the
+   engine without re-executing this node, so downstream nodes always receive
+   the correct trim decisions.
 """
 
 from __future__ import annotations
 
 import asyncio
+import json
 import logging
 from uuid import UUID
 
@@ -78,6 +85,14 @@ class ShotReviewNode(IO.ComfyNode):
                     is_output_list=True,
                     tooltip="Same video UUIDs passed through after review.",
                 ),
+                IO.String.Output(
+                    display_name="shot_decisions_json",
+                    tooltip=(
+                        "JSON-encoded dict of trim decisions keyed by media UUID "
+                        "({uuid: {trimStart: float, trimEnd: float}}). "
+                        "Wire to BatchUGCEditingNode so decisions survive cache hits."
+                    ),
+                ),
             ],
         )
 
@@ -116,7 +131,7 @@ class ShotReviewNode(IO.ComfyNode):
             logger.info("[ShotReviewNode] auto_confirm=True, resolving immediately")
             existing = extra_pnginfo.get("shot_decisions", {})
             extra_pnginfo["shot_decisions"] = {**existing}
-            return IO.NodeOutput(video_uuids, ui={"video_uuids": video_uuids})
+            return IO.NodeOutput(video_uuids, json.dumps({}), ui={"video_uuids": video_uuids})
 
         # ── Create the review task ────────────────────────────────────────
         async with engine_session_maker() as session:
@@ -166,7 +181,7 @@ class ShotReviewNode(IO.ComfyNode):
                 )
                 existing = extra_pnginfo.get("shot_decisions", {})
                 extra_pnginfo["shot_decisions"] = {**existing, **decision}
-                return IO.NodeOutput(video_uuids, ui={"video_uuids": video_uuids})
+                return IO.NodeOutput(video_uuids, json.dumps(decision), ui={"video_uuids": video_uuids})
 
             logger.debug(
                 "[ShotReviewNode] Task %s status=%r, still waiting …",
