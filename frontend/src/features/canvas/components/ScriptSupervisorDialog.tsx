@@ -14,6 +14,9 @@ import {
   completeTaskV1ReviewTaskIdCompletePost,
   getTaskV1ReviewTaskIdGet,
   regenerateShotV1ReviewTaskIdRegenerateShotPost,
+  getManualReviewByJobAndNodeV2,
+  getManualReviewTaskV2,
+  completeManualReviewV2,
   type ManualReviewTaskResponse,
 } from "@/lib/api/template-service";
 import { AmplifyImage } from "@/features/media/components/AmplifyImage";
@@ -100,11 +103,12 @@ interface ScriptSupervisorDialogProps {
   jobId: string;
   nodeId: string;
   onClose: () => void;
+  executionVersion?: "v1" | "v2";
 }
 
 // ---------------------------------------------------------------------------
 
-export function ScriptSupervisorDialog({ jobId, nodeId, onClose }: ScriptSupervisorDialogProps) {
+export function ScriptSupervisorDialog({ jobId, nodeId, onClose, executionVersion = "v1" }: ScriptSupervisorDialogProps) {
   const [taskId,       setTaskId]       = useState<string | null>(null);
   const [shots,        setShots]        = useState<ShotState[]>([]);
   const [selectedIdx,  setSelectedIdx]  = useState(0);
@@ -119,11 +123,18 @@ export function ScriptSupervisorDialog({ jobId, nodeId, onClose }: ScriptSupervi
     let cancelled = false;
     (async () => {
       try {
-        const { data, error: apiErr } = await getByJobAndNodeV1ReviewJobJobIdNodeNodeIdGet({
-          path: { job_id: jobId, node_id: nodeId },
-        });
+        let data: ManualReviewTaskResponse | null | undefined;
+        if (executionVersion === "v2") {
+          data = await getManualReviewByJobAndNodeV2(jobId, nodeId) as ManualReviewTaskResponse | null;
+        } else {
+          const result = await getByJobAndNodeV1ReviewJobJobIdNodeNodeIdGet({
+            path: { job_id: jobId, node_id: nodeId },
+          });
+          if (result.error) { setError("No pending review task found."); return; }
+          data = result.data;
+        }
         if (cancelled) return;
-        if (apiErr || !data) { setError("No pending review task found."); return; }
+        if (!data) { setError("No pending review task found."); return; }
         setTaskId(data.id);
         setShots(parseShots(data));
       } catch {
@@ -146,7 +157,13 @@ export function ScriptSupervisorDialog({ jobId, nodeId, onClose }: ScriptSupervi
 
     pollTimerRef.current = setInterval(async () => {
       try {
-        const { data } = await getTaskV1ReviewTaskIdGet({ path: { task_id: taskId } });
+        let data: ManualReviewTaskResponse | null | undefined;
+        if (executionVersion === "v2") {
+          data = await getManualReviewTaskV2(taskId) as ManualReviewTaskResponse;
+        } else {
+          const result = await getTaskV1ReviewTaskIdGet({ path: { task_id: taskId } });
+          data = result.data;
+        }
         if (!data) return;
         setShots(parseShots(data));
       } catch { /* silent */ }
@@ -197,11 +214,16 @@ export function ScriptSupervisorDialog({ jobId, nodeId, onClose }: ScriptSupervi
     if (!taskId) return;
     setIsSubmitting(true);
     try {
-      const { error: apiErr } = await completeTaskV1ReviewTaskIdCompletePost({
-        path: { task_id: taskId },
-        body: { decision: { final_uuids: shots.map((s) => s.currentUuid) } },
-      });
-      if (apiErr) throw apiErr;
+      const decision = { final_uuids: shots.map((s) => s.currentUuid) };
+      if (executionVersion === "v2") {
+        await completeManualReviewV2(taskId, decision);
+      } else {
+        const { error: apiErr } = await completeTaskV1ReviewTaskIdCompletePost({
+          path: { task_id: taskId },
+          body: { decision },
+        });
+        if (apiErr) throw apiErr;
+      }
       onClose();
     } catch {
       setError("Failed to submit. Please try again.");

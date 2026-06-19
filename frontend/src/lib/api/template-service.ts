@@ -68,3 +68,33 @@ export async function completeManualReview(
   );
   return response.data;
 }
+
+// ── Manual review v2 (Temporal path) ─────────────────────────────────────────
+
+export async function getManualReviewTaskV2(taskId: string): Promise<ManualReviewTask> {
+  const response = await api.get<ManualReviewTask>(
+    `${apiBase}/template/v2/review/${taskId}`
+  );
+  return response.data;
+}
+
+export async function getManualReviewByJobAndNodeV2(
+  jobId: string,
+  nodeId: string
+): Promise<ManualReviewTask | null> {
+  const response = await api.get<ManualReviewTask | null>(
+    `${apiBase}/template/v2/review/job/${jobId}/node/${nodeId}`
+  );
+  return response.data ?? null;
+}
+
+export async function completeManualReviewV2(
+  taskId: string,
+  decision: Record<string, unknown>
+): Promise<ManualReviewTask> {
+  const response = await api.post<ManualReviewTask>(
+    `${apiBase}/template/v2/review/${taskId}/complete`,
+    { decision }
+  );
+  return response.data;
+}

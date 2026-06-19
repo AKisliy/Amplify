@@ -1348,12 +1348,14 @@ const { registry, isLoading: registryLoading } = useNodeRegistry();
               jobId={execution.activeJobId!}
               nodeId={reviewNodeId}
               onClose={() => setReviewNodeId(null)}
+              executionVersion={execution.executionVersion ?? "v1"}
             />
           ) : (
             <ShotReviewDialog
               jobId={execution.activeJobId!}
               nodeId={reviewNodeId}
               onClose={() => setReviewNodeId(null)}
+              executionVersion={execution.executionVersion ?? "v1"}
             />
           );
       })()}

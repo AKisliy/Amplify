@@ -34,13 +34,14 @@ import { runTemplate, runTemplateV2 } from "@/lib/api/template-service";
 
 type ExecAction =
   | { type: "SUBMIT_START" }
-  | { type: "SUBMIT_SUCCESS"; jobId: string }
+  | { type: "SUBMIT_SUCCESS"; jobId: string; version: "v1" | "v2" }
   | { type: "SUBMIT_ERROR" }
   | { type: "SET_NODE_STATUS"; nodeId: string; status: NodeExecutionStatus; error?: string }
   | { type: "CLEAR_JOB" };
 
 const initialExecState: CanvasExecutionState = {
   activeJobId: null,
+  executionVersion: null,
   nodeStatuses: {},
   nodeErrors: {},
   isSubmitting: false,
@@ -55,7 +56,7 @@ function execReducer(
       return { ...state, isSubmitting: true };
 
     case "SUBMIT_SUCCESS":
-      return { ...state, isSubmitting: false, activeJobId: action.jobId };
+      return { ...state, isSubmitting: false, activeJobId: action.jobId, executionVersion: action.version };
 
     case "SUBMIT_ERROR":
       return { ...state, isSubmitting: false };
@@ -69,7 +70,7 @@ function execReducer(
     }
 
     case "CLEAR_JOB":
-      return { ...state, activeJobId: null, nodeStatuses: {}, nodeErrors: {} };
+      return { ...state, activeJobId: null, executionVersion: null, nodeStatuses: {}, nodeErrors: {} };
 
     default:
       return state;
@@ -457,7 +458,7 @@ export function useCanvasStore({
 
       try {
         const response = await runTemplate(templateId);
-        dispatchExec({ type: "SUBMIT_SUCCESS", jobId: response.job_id });
+        dispatchExec({ type: "SUBMIT_SUCCESS", jobId: response.job_id, version: "v1" });
         return response.job_id;
       } catch (err) {
         console.error("[useCanvasStore] submitWorkflow failed:", err);
@@ -490,7 +491,7 @@ export function useCanvasStore({
 
       try {
         const response = await runTemplateV2(templateId);
-        dispatchExec({ type: "SUBMIT_SUCCESS", jobId: response.job_id });
+        dispatchExec({ type: "SUBMIT_SUCCESS", jobId: response.job_id, version: "v2" });
         return response.job_id;
       } catch (err) {
         console.error("[useCanvasStore] submitWorkflowV2 failed:", err);

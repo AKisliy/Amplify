@@ -17,6 +17,15 @@ Three root problems:
 durable workflow; each node becomes a Temporal activity. HITL pauses become signal-based
 `wait_condition` calls — the worker is freed while waiting.
 
+**Статус реализации (2026-06-19):**
+- `GraphWorkflow` + топологические батчи + параллельные активности ✅
+- Динамическая активность `execute_node` (все обычные ноды) ✅
+- CACHED статус + UI Cache Zone на канвасе ✅
+- Кэш нод (PostgreSQL, TTL 7 дней) ✅
+- Per-node политики retry/timeout (`temporal_policy`) ✅
+- HITL v2: `hitl_setup`/`hitl_finalize` + `hitl_complete` signal + `exec_context` ✅
+- HITL таймаут 48 ч — ещё не реализован
+
 ## Concepts
 
 | Concept | Summary |
@@ -30,6 +39,7 @@ durable workflow; each node becomes a Temporal activity. HITL pauses become sign
 | [[concepts/migration-path]] | Big bang cutover: prerequisites, risks, rollback |
 | [[concepts/node-result-cache]] | Persistent node result cache (PostgreSQL now, Redis-ready); Redis scope decision |
 | [[concepts/activity-retry-policy]] | Per-node retry/timeout policy via `temporal_policy` class attribute; dynamic dispatch via `policy_for()` |
+| [[concepts/exec-context]] | Per-job execution context (`_exec_context` на workflow); заменяет `extra_pnginfo`; `_context_patch` — дельта от каждой ноды |
 
 ## Open Questions
 

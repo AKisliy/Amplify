@@ -6,8 +6,8 @@ from fastapi import FastAPI
 
 from backend_template.services.job_consumer import consume_job_events
 from backend_template.web.filters.endpoint_filter import EndpointFilter
-from backend_template.web.routes.http.v1 import project_template, engine, library_template, ambassador, manual_review, brand, product
-from backend_template.web.routes.http.v2 import template as v2_template
+from backend_template.web.routes.http.v1 import project_template, engine, library_template, ambassador, brand, product
+from backend_template.web.routes.http.v2 import manual_review, template as v2_template
 from backend_template.web.routes.http.internal import library_template as internal_library_template
 
 

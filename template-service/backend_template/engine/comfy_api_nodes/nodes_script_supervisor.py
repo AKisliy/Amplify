@@ -52,13 +52,62 @@ POLL_INTERVAL_SECONDS = 5.0
 class ScriptSupervisorNode(IO.ComfyNode):
     """Script accuracy & continuity review gate.
 
-    First HITL node in the Ambassador pipeline. Receives the generated shots
-    alongside their Veo prompts. Pauses graph execution while the user reviews
-    each clip, optionally edits a prompt and re-generates a shot. Resumes once
-    the user presses **Approve & Continue**, forwarding the final (possibly
-    partially re-generated) UUID list to the downstream ``ShotReviewNode`` via
-    wire.
+    Temporal HITL interface
+    -----------------------
+    temporal_hitl = True signals the workflow to use hitl_setup / hitl_finalize
+    instead of the regular execute_node dynamic activity.
     """
+
+    # ── Temporal HITL interface ───────────────────────────────────────────
+    temporal_hitl = True
+
+    @classmethod
+    def hitl_node_type(cls) -> str:
+        return NODE_TYPE
+
+    @classmethod
+    def hitl_payload(cls, resolved: dict, exec_context: dict) -> dict:
+        """Build ManualReviewTask.payload from resolved inputs + exec_context."""
+        video_uuids: list[str] = resolved.get("video_uuids") or []
+        media_prompts: dict = exec_context.get(MEDIA_PROMPTS, {})
+        media_gen_params: dict = exec_context.get(MEDIA_GEN_PARAMS, {})
+        shots: list[dict] = [
+            {
+                "slot_index": i,
+                "current_uuid": uuid,
+                "original_uuid": uuid,
+                "regen_status": None,
+                "gen_params": {
+                    "prompt": media_prompts.get(uuid, ""),
+                    **{
+                        k: media_gen_params.get(uuid, {}).get(k, default)
+                        for k, default in [
+                            ("negative_prompt", ""),
+                            ("resolution", "720p"),
+                            ("aspect_ratio", "16:9"),
+                            ("duration", 8),
+                            ("model", "veo-3.1-lite-generate-001"),
+                            ("first_frame_uuid", None),
+                            ("last_frame_uuid", None),
+                        ]
+                    },
+                },
+            }
+            for i, uuid in enumerate(video_uuids)
+        ]
+        return {"shots": shots}
+
+    @classmethod
+    def hitl_output(cls, resolved: dict, decision: dict) -> tuple:
+        """Return wire output tuple (matches define_schema outputs order)."""
+        video_uuids: list[str] = resolved.get("video_uuids") or []
+        final_uuids: list[str] = decision.get("final_uuids", video_uuids)
+        return (final_uuids,)
+
+    @classmethod
+    def hitl_context(cls, resolved: dict, decision: dict) -> dict:
+        """No context patch — final UUIDs travel via wire only."""
+        return {}
 
     @classmethod
     def define_schema(cls):

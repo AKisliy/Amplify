@@ -1,8 +1,8 @@
 # HITL Signal Model
 
-## Current design (polling)
+## v1: ComfyUI polling (заменён)
 
-`ShotReviewNode.execute()` blocks a coroutine indefinitely:
+`ShotReviewNode.execute()` блокировал coroutine бесконечным циклом:
 
 ```python
 while True:
@@ -12,90 +12,142 @@ while True:
         break
 ```
 
-**Problems:**
-- Holds the only ComfyUI worker for the duration of human review (minutes to hours)
-- No timeout — a user who never returns leaves the worker blocked permanently
-- Pod restart destroys the polling loop → job stuck in WAITING_FOR_REVIEW forever
+**Проблемы:**
+- Удерживал единственный ComfyUI-воркер на время ревью (минуты–часы)
+- Нет таймаута — пользователь, который не вернулся, блокирует воркер навсегда
+- Рестарт пода → polling loop уничтожен → job навсегда застрял в WAITING_FOR_REVIEW
 
-## Temporal design (signal-based)
+---
 
-HITL is handled at the **workflow level**, not inside an activity. Activities are
-short-lived compute; the workflow holds durable state between steps.
+## v2: Temporal signals (реализовано)
+
+### Ключевые принципы
+
+- HITL обрабатывается на уровне **workflow**, не внутри activity
+- Activity — короткоживущий compute; workflow удерживает состояние между шагами
+- Воркер **свободен** во время ожидания человека
+- Несколько HITL-нод в одном батче работают **конкурентно**: все переходят в WAITING_FOR_REVIEW одновременно, каждая разблокируется независимо по своему сигналу
+
+### Интерфейс HITL-ноды
+
+Нода объявляет себя HITL-нодой через атрибут класса и четыре classmethod. Это аналог `temporal_policy` для обычных нод.
+
+```python
+class ShotReviewNode(IO.ComfyNode):
+    temporal_hitl = True                          # флаг для workflow
+
+    @classmethod
+    def hitl_node_type(cls) -> str:               # node_type в ManualReviewTask
+        return "shot_review"
+
+    @classmethod
+    def hitl_payload(cls, resolved: dict, exec_context: dict) -> dict:
+        # Что сохранить в ManualReviewTask.payload.
+        # exec_context содержит накопленный контекст job'а (media_prompts, gen_params, ...)
+        return {"video_uuids": resolved.get("video_uuids") or []}
+
+    @classmethod
+    def hitl_output(cls, resolved: dict, decision: dict) -> tuple:
+        # Wire-выходы ноды (порядок совпадает с define_schema().outputs)
+        return (resolved.get("video_uuids") or [],)
+
+    @classmethod
+    def hitl_context(cls, resolved: dict, decision: dict) -> dict:
+        # _context_patch: что эта нода добавляет/меняет в exec_context
+        return {"shot_decisions": decision} if decision else {}
+```
+
+Новая нода добавляется без правок в воркфлоу или воркер — только файл с классом в `comfy_api_nodes/`.
+
+### Две активности вместо одной
+
+| Активность | Что делает |
+|---|---|
+| `hitl_setup` | Проверка кэша → детект auto_confirm → создание `ManualReviewTask` в DB → публикация `WAITING_FOR_REVIEW` |
+| `hitl_finalize` | `hitl_output()` + `hitl_context()` → запись в кэш → публикация `SUCCESS` |
+
+Workflow между ними вызывает `wait_condition` — ни воркер, ни thread не заняты.
+
+### Workflow: сигнал и состояние
 
 ```python
 @workflow.defn
 class GraphWorkflow:
-    def __init__(self):
-        self._review_decisions: dict[str, dict] = {}
+    def __init__(self) -> None:
+        self._pending_hitl: dict[str, dict] = {}  # node_id → decision
+        self._exec_context: dict = {}             # накопленный контекст job'а
 
     @workflow.signal
-    async def shot_review_completed(self, node_id: str, decision: dict) -> None:
-        self._review_decisions[node_id] = decision
+    def hitl_complete(self, node_id: str, decision: dict) -> None:
+        self._pending_hitl[node_id] = decision
 
-    @workflow.run
-    async def run(self, params: GraphWorkflowInput) -> GraphWorkflowResult:
-        ...
-        # When execution reaches a ShotReviewNode:
-        review_id = await workflow.execute_activity(
-            create_review_task,
-            CreateReviewTaskInput(job_id=params.job_id, node_id=node_id, payload=...),
-        )
-        await workflow.execute_activity(
-            publish_waiting_for_review,
-            WaitingForReviewInput(job_id=params.job_id, node_id=node_id),
-        )
+    async def _run_hitl_node(self, nid: str, inp: NodeActivityInput) -> dict:
+        setup = await workflow.execute_activity(hitl_setup, args=[inp], ...)
 
-        # Park the workflow — worker is FREE during this wait
-        try:
-            await workflow.wait_condition(
-                lambda: node_id in self._review_decisions,
-                timeout=timedelta(hours=48),
-            )
-        except asyncio.TimeoutError:
-            await _handle_review_timeout(params.job_id, node_id)
-            return GraphWorkflowResult(status="cancelled", reason="review_expired")
+        if setup.is_cached:
+            return setup.cached_value                   # кэш-хит — финализация не нужна
 
-        decision = self._review_decisions.pop(node_id)
-        # Continue DAG execution with decision data
-        ...
+        if not setup.auto_confirmed:
+            await workflow.wait_condition(lambda: nid in self._pending_hitl)
+            decision = self._pending_hitl.pop(nid)
+        else:
+            decision = {}
+
+        finalize_inp = HitlFinalizeInput(inp=inp, decision=decision, cache_key=setup.cache_key)
+        return await workflow.execute_activity(hitl_finalize, args=[finalize_inp], ...)
 ```
 
-## Resume path (HTTP → Signal)
+`_pending_hitl` — дурабельное состояние в Temporal event history. При рестарте воркера сигналы реплеируются из истории, `_pending_hitl` восстанавливается детерминистически. Данные не теряются.
 
-The existing `POST /v1/review/{task_id}/complete` endpoint is preserved. It gains one
-extra step: signal the workflow.
+### Конкурентность в батче
+
+HITL-ноды в одном топологическом батче помещаются в один `asyncio.gather` с обычными нодами:
 
 ```python
-# In ManualReviewService.complete_task():
-await repo.update(task_id, status="completed", decision=req.decision)
-
-# New: signal the workflow
-handle = temporal_client.get_workflow_handle(job_id)  # job_id == workflow_id
-await handle.signal("shot_review_completed", node_id=str(node_id), decision=req.decision)
+results = await asyncio.gather(*[
+    self._run_hitl_node(nid, inp) if _is_hitl(class_types[nid])
+    else workflow.execute_activity(class_types[nid], args=[inp], **policy_for(...))
+    for nid, inp in zip(known, activity_inputs)
+])
 ```
 
-**Frontend is unchanged.** It still calls the same HTTP endpoint. The signal is an
-implementation detail of the backend.
+Каждый `wait_condition` ждёт в своей корутине. Если два ShotReviewNode стоят в одном батче — оба переходят в WAITING_FOR_REVIEW одновременно и разблокируются независимо.
 
-## Timeout policy
+### Путь возобновления (HTTP → Signal)
 
-| Scenario | Behavior |
-|----------|----------|
-| User submits decision within 48h | Workflow resumes, DAG continues |
-| 48h elapsed, no decision | `TimeoutError` in workflow |
-| On timeout | `cancel_review_task` activity, `finish_job(CANCELLED)` activity, `notify_user` activity |
-| Worker pod restart during wait | Workflow state is in Temporal DB — resumes automatically on any worker |
+`POST /v1/review/{task_id}/complete` сохраняется без изменений. В конце `complete_task()` добавляется один шаг:
 
-The 48h value is a constant defined in `GraphWorkflow` and should be made configurable
-via workflow input parameters in a follow-up.
+```python
+updated = await self.repo.update(task_id, status="completed", decision=req.decision)
+await _send_hitl_signal(str(orm.job_id), str(orm.node_id), req.decision or {})
+```
 
-## Multiple HITL nodes
+`_send_hitl_signal` получает handle workflow'а через `job_id` (он же workflow_id) и отправляет `hitl_complete`. Frontend ничего не знает об этом.
 
-A graph can contain multiple HITL nodes at different DAG positions. Each pause is handled
-sequentially (the second HITL node is only reached after the first is approved). The
-`_review_decisions` dict is keyed by `node_id` to avoid collisions.
+### Кэширование HITL-нод
 
-## ScriptSupervisorNode
+HITL-ноды кэшируются так же, как обычные ноды. `hitl_setup` проверяет кэш первым делом. При попадании публикует `CACHED` и возвращает cached_value немедленно — `hitl_finalize` не вызывается, человек не привлекается.
 
-Follows the same signal pattern. It uses a different `node_type` in `ManualReviewTask`
-and a different signal name (`script_review_completed`) to keep concerns separate.
+Структура закэшированного значения:
+```json
+{
+  "video_uuids": ["uuid1", "uuid2"],
+  "_context_patch": {"shot_decisions": {...}}
+}
+```
+
+Workflow извлекает `_context_patch` из результата и применяет к `_exec_context` — как при нормальном выполнении, так и при кэш-хите.
+
+### Таймаут ревью
+
+**Ещё не реализован** (не войдёт в первую итерацию). В plan.md обозначен как 48 ч.
+`wait_condition` принимает параметр `timeout=timedelta(hours=48)` — можно добавить позже.
+
+## Сигнал vs. Callback
+
+| | Polling (v1) | Signal (v2) |
+|---|---|---|
+| Воркер во время ожидания | Занят (coroutine) | Свободен |
+| Рестарт пода | Job застрял | Автоматическое возобновление |
+| Несколько HITL нод | Нельзя (serial) | Конкурентно |
+| Добавление новой HITL ноды | Правки в воркфлоу | Только новый файл с классом |

@@ -258,6 +258,8 @@ export type CanvasEdge = Edge<{ flowing?: boolean; error?: boolean }, "status">;
 export interface CanvasExecutionState {
   /** Currently running job ID, null when idle */
   activeJobId: string | null;
+  /** Execution backend for the active job: "v1" = ComfyUI, "v2" = Temporal */
+  executionVersion: "v1" | "v2" | null;
   /** Per-node execution status updated from websocket / polling */
   nodeStatuses: Record<string, NodeExecutionStatus>;
   /** Error messages keyed by node ID */

@@ -464,36 +464,6 @@ export type ManualReviewCompleteRequest = {
 };
 
 /**
- * ManualReviewCreateRequest
- *
- * Called internally by the node (not exposed to the public API).
- */
-export type ManualReviewCreateRequest = {
-    /**
-     * Jobid
-     */
-    jobId: string;
-    /**
-     * Nodeid
-     */
-    nodeId: string;
-    /**
-     * Nodetype
-     */
-    nodeType: string;
-    /**
-     * Autoconfirm
-     */
-    autoConfirm?: boolean;
-    /**
-     * Payload
-     */
-    payload?: {
-        [key: string]: unknown;
-    };
-};
-
-/**
  * ManualReviewTaskResponse
  */
 export type ManualReviewTaskResponse = {
@@ -1117,19 +1087,6 @@ export type RunTemplateResponse = {
 };
 
 /**
- * ShotRegenerateRequest
- *
- * Body for POST /review/{task_id}/regenerate-shot.
- */
-export type ShotRegenerateRequest = {
-    /**
-     * Slotindex
-     */
-    slotIndex: number;
-    params: VeoEditableParams;
-};
-
-/**
  * ValidationError
  */
 export type ValidationError = {
@@ -1145,42 +1102,6 @@ export type ValidationError = {
      * Error Type
      */
     type: string;
-};
-
-/**
- * VeoEditableParams
- *
- * Editable Veo generation params surfaced to the user during script review.
- *
- * All fields can be modified before re-generating a single shot.
- * Locked fields (first_frame_uuid, last_frame_uuid) are read from the task
- * payload server-side — they are never sent over the wire by the client.
- */
-export type VeoEditableParams = {
-    /**
-     * Prompt
-     */
-    prompt: string;
-    /**
-     * Negativeprompt
-     */
-    negativePrompt?: string;
-    /**
-     * Resolution
-     */
-    resolution?: string;
-    /**
-     * Aspectratio
-     */
-    aspectRatio?: string;
-    /**
-     * Duration
-     */
-    duration?: number;
-    /**
-     * Model
-     */
-    model?: string;
 };
 
 export type ListTemplatesV1TemplatesGetData = {
@@ -2027,31 +1948,6 @@ export type DeleteReferenceImageV1AmbassadorsAmbassadorIdImagesMediaIdDeleteResp
 
 export type DeleteReferenceImageV1AmbassadorsAmbassadorIdImagesMediaIdDeleteResponse = DeleteReferenceImageV1AmbassadorsAmbassadorIdImagesMediaIdDeleteResponses[keyof DeleteReferenceImageV1AmbassadorsAmbassadorIdImagesMediaIdDeleteResponses];
 
-export type CreateTaskV1ReviewPostData = {
-    body: ManualReviewCreateRequest;
-    path?: never;
-    query?: never;
-    url: '/v1/review/';
-};
-
-export type CreateTaskV1ReviewPostErrors = {
-    /**
-     * Validation Error
-     */
-    422: HttpValidationError;
-};
-
-export type CreateTaskV1ReviewPostError = CreateTaskV1ReviewPostErrors[keyof CreateTaskV1ReviewPostErrors];
-
-export type CreateTaskV1ReviewPostResponses = {
-    /**
-     * Successful Response
-     */
-    201: ManualReviewTaskResponse;
-};
-
-export type CreateTaskV1ReviewPostResponse = CreateTaskV1ReviewPostResponses[keyof CreateTaskV1ReviewPostResponses];
-
 export type GetTaskV1ReviewTaskIdGetData = {
     body?: never;
     path: {
@@ -2179,36 +2075,6 @@ export type GetByJobAndNodeV1ReviewJobJobIdNodeNodeIdGetResponses = {
 };
 
 export type GetByJobAndNodeV1ReviewJobJobIdNodeNodeIdGetResponse = GetByJobAndNodeV1ReviewJobJobIdNodeNodeIdGetResponses[keyof GetByJobAndNodeV1ReviewJobJobIdNodeNodeIdGetResponses];
-
-export type RegenerateShotV1ReviewTaskIdRegenerateShotPostData = {
-    body: ShotRegenerateRequest;
-    path: {
-        /**
-         * Task Id
-         */
-        task_id: string;
-    };
-    query?: never;
-    url: '/v1/review/{task_id}/regenerate-shot';
-};
-
-export type RegenerateShotV1ReviewTaskIdRegenerateShotPostErrors = {
-    /**
-     * Validation Error
-     */
-    422: HttpValidationError;
-};
-
-export type RegenerateShotV1ReviewTaskIdRegenerateShotPostError = RegenerateShotV1ReviewTaskIdRegenerateShotPostErrors[keyof RegenerateShotV1ReviewTaskIdRegenerateShotPostErrors];
-
-export type RegenerateShotV1ReviewTaskIdRegenerateShotPostResponses = {
-    /**
-     * Successful Response
-     */
-    202: ManualReviewTaskResponse;
-};
-
-export type RegenerateShotV1ReviewTaskIdRegenerateShotPostResponse = RegenerateShotV1ReviewTaskIdRegenerateShotPostResponses[keyof RegenerateShotV1ReviewTaskIdRegenerateShotPostResponses];
 
 export type ListBrandsV1BrandsGetData = {
     body?: never;

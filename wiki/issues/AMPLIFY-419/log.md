@@ -1,5 +1,13 @@
 # Log: AMPLIFY-419
 
+## 2026-06-19 (2)
+
+Архитектурный разбор: зачем ManualReviewTask в своей БД, если Temporal хранит workflow state. Вывод: не дублирование — разные роли. БД: payload для UI-рендеринга + idempotency guard (status="completed" блокирует двойной сабмит/двойной сигнал). Temporal: execution state. Decision в нашей БД — теперь лишнее (никуда не читается), но некритично. Shot regeneration (отложен) потребует мутируемого payload — тоже причина держать запись в БД. Добавлены v2-методы в ManualReviewService: complete_task_v2 (DB + Temporal signal), get_task; complete_task оставлен чистым (DB only, v1/ComfyUI совместимость). Обновлён v2 роутер: GET /{task_id}, POST /{task_id}/complete → complete_task_v2.
+
+## 2026-06-19
+
+Реализован HITL v2: две generic-активности `hitl_setup`/`hitl_finalize`, единый сигнал `hitl_complete(node_id, decision)`, интерфейс из 4 classmethod на ноде (`temporal_hitl`, `hitl_node_type/payload/output/context`), конкурентное выполнение HITL-нод в батче через `asyncio.gather`, per-job `exec_context` (замена `extra_pnginfo`) с `_context_patch` механизмом, кэширование HITL-нод с сохранением `_context_patch` в кэш-значении. `ManualReviewService.complete_task` отправляет Temporal-сигнал. Также реализован CACHED-статус и UI Cache Zone (фронтенд). Задокументировано в concepts/hitl-signal-model.md (переписан), concepts/exec-context.md (новый), decisions.md (создан).
+
 ## 2026-06-18 (5)
 
 Уточнён дизайн кэша: запись — всегда (каждый ран), чтение — только при can_use_cache=true в UI-зоне. Добавлен глобальный флаг cache_enabled в конфиге (отключает и чтение, и запись). Обновлён concepts/node-result-cache.md.

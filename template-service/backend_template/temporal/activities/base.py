@@ -21,3 +21,4 @@ class NodeActivityInput:
     class_type: str = ""
     resolved: dict = field(default_factory=dict)
     can_use_cache: bool = False
+    exec_context: dict = field(default_factory=dict)
