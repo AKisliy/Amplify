@@ -31,29 +31,19 @@ logger = logging.getLogger(__name__)
 
 def _preprocess_resolved(node_cls: type, resolved: dict) -> dict:
     """
-    Aggregate IO.Autogrow.TemplatePrefix inputs before calling execute().
+    Aggregate IO.Autogrow inputs before calling execute().
 
-    In the graph JSON, autogrow items are stored as individual keys
-    (e.g. image_uuid_1, image_uuid_2).  ComfyUI's executor groups them into a
-    single dict keyed by the autogrow input name (e.g. images={...}).
-    We replicate that aggregation here by inspecting define_schema().inputs.
+    ComfyUI v3 stores autogrow items in the graph JSON using dot-notation keys
+    (e.g. "media_files.media_file_0").  build_nested_inputs converts them back
+    to the nested dict structure that execute() expects (e.g. media_files={...}).
     """
+    from comfy_api.latest._io import build_nested_inputs, get_finalized_class_inputs
     try:
-        schema = node_cls.define_schema()
+        valid_inputs = node_cls.INPUT_TYPES()
+        _, _, v3_data = get_finalized_class_inputs(valid_inputs, resolved)
+        return build_nested_inputs(dict(resolved), v3_data)
     except Exception:
         return resolved
-
-    result = dict(resolved)
-    for inp in schema.inputs:
-        template = getattr(inp, "template", None)
-        prefix = getattr(template, "prefix", None)
-        inp_name = getattr(inp, "id", None) or getattr(inp, "name", None)
-        if prefix and inp_name and inp_name not in result:
-            items = {k: v for k, v in resolved.items() if k.startswith(prefix) and v}
-            result[inp_name] = items if items else None
-            for k in items:
-                result.pop(k, None)
-    return result
 
 
 @activity.defn(dynamic=True)
