@@ -23,7 +23,7 @@ async def _send_hitl_signal(job_id: str, node_id: str, decision: dict) -> None:
 
         client = await get_temporal_client()
         handle = client.get_workflow_handle_for(GraphWorkflow.run, workflow_id=job_id)
-        await handle.signal(GraphWorkflow.hitl_complete, node_id, decision)
+        await handle.signal(GraphWorkflow.hitl_complete, args=[node_id, decision])
         logger.info("hitl_complete signal sent: job_id=%s node_id=%s", job_id, node_id)
     except Exception as exc:
         # Log but don't fail the HTTP response — the DB is already updated
