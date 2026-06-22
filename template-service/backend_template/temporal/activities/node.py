@@ -47,7 +47,7 @@ def _preprocess_resolved(node_cls: type, resolved: dict) -> dict:
     for inp in schema.inputs:
         template = getattr(inp, "template", None)
         prefix = getattr(template, "prefix", None)
-        inp_name = getattr(inp, "name", None)
+        inp_name = getattr(inp, "id", None) or getattr(inp, "name", None)
         if prefix and inp_name and inp_name not in result:
             items = {k: v for k, v in resolved.items() if k.startswith(prefix) and v}
             result[inp_name] = items if items else None
