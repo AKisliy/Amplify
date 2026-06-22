@@ -34,14 +34,23 @@ def _preprocess_resolved(node_cls: type, resolved: dict) -> dict:
     Aggregate IO.Autogrow inputs before calling execute().
 
     ComfyUI v3 stores autogrow items in the graph JSON using dot-notation keys
-    (e.g. "media_files.media_file_0").  build_nested_inputs converts them back
-    to the nested dict structure that execute() expects (e.g. media_files={...}).
+    (e.g. "media_files.media_file_0"). The config dict also carries stale plain
+    keys (e.g. "media_file_0") for the same slot — ComfyUI silently drops these
+    in get_input_data() by filtering against finalized valid_inputs.
+
+    We replicate that filter here: keep only keys present in the finalized schema,
+    then let build_nested_inputs nest the dot-notation keys into the expected dict.
     """
     from comfy_api.latest._io import build_nested_inputs, get_finalized_class_inputs
     try:
         valid_inputs = node_cls.INPUT_TYPES()
-        _, _, v3_data = get_finalized_class_inputs(valid_inputs, resolved)
-        return build_nested_inputs(dict(resolved), v3_data)
+        finalized, _, v3_data = get_finalized_class_inputs(valid_inputs, resolved)
+        valid_keys = (
+            set(finalized.get("required", {}).keys())
+            | set(finalized.get("optional", {}).keys())
+        )
+        filtered = {k: v for k, v in resolved.items() if k in valid_keys}
+        return build_nested_inputs(filtered, v3_data)
     except Exception:
         return resolved
 
