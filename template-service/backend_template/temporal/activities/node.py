@@ -50,7 +50,10 @@ def _preprocess_resolved(node_cls: type, resolved: dict) -> dict:
             | set(finalized.get("optional", {}).keys())
         )
         filtered = {k: v for k, v in resolved.items() if k in valid_keys}
-        return build_nested_inputs(filtered, v3_data)
+        resolved = build_nested_inputs(filtered, v3_data)
+        if getattr(node_cls, "INPUT_IS_LIST", False):
+            resolved = {k: v if isinstance(v, (list, dict)) else [v] for k, v in resolved.items()}
+        return resolved
     except Exception:
         return resolved
 
@@ -92,8 +95,24 @@ async def execute_node(input_args: Sequence[RawValue]) -> dict:
 
     heartbeat_task = asyncio.create_task(_heartbeat_loop())
     try:
+        from comfy_api.latest._io import Hidden
+
         resolved = _preprocess_resolved(node_cls, inp.resolved)
-        result = await node_cls.execute(**resolved)
+
+        # Build hidden inputs and clone the class (mirrors PREPARE_CLASS_CLONE in ComfyUI).
+        # Cloning prevents hidden state leaking across concurrent activities of the same type.
+        schema = node_cls.define_schema()
+        v3_hidden: dict = {}
+        if schema.hidden:
+            extra_pnginfo = {**inp.exec_context, "job_id": inp.job_id, "client_id": inp.user_id}
+            hidden_names = {h.name for h in schema.hidden}
+            if Hidden.extra_pnginfo.name in hidden_names:
+                v3_hidden[Hidden.extra_pnginfo] = extra_pnginfo
+            if Hidden.unique_id.name in hidden_names:
+                v3_hidden[Hidden.unique_id] = inp.node_id
+        node_clone = node_cls.PREPARE_CLASS_CLONE({"hidden_inputs": v3_hidden})
+
+        result = await node_clone.execute(**resolved)
 
         schema = node_cls.define_schema()
         outputs: dict = {}
