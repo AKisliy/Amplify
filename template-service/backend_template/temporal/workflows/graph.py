@@ -59,28 +59,16 @@ class GraphWorkflowParams:
 # DAG utilities
 # ---------------------------------------------------------------------------
 
-def _topological_batches(graph: dict) -> list[list[str]]:
-    """Return node IDs grouped into parallel batches in dependency order."""
-    deps: dict[str, set[str]] = {}
+def _node_deps(graph: dict) -> dict[str, set[str]]:
+    """Return direct upstream node-ID dependencies for every node in the graph."""
+    result: dict[str, set[str]] = {}
     for node_id, node_def in graph.items():
-        node_deps: set[str] = set()
+        deps: set[str] = set()
         for value in (node_def.get("inputs") or {}).values():
             if is_link(value):
-                node_deps.add(value[0])
-        deps[node_id] = node_deps
-
-    batches: list[list[str]] = []
-    completed: set[str] = set()
-    while len(completed) < len(graph):
-        batch = [
-            nid for nid in graph
-            if nid not in completed and deps[nid].issubset(completed)
-        ]
-        if not batch:
-            raise ValueError("Circular dependency in graph")
-        batches.append(batch)
-        completed.update(batch)
-    return batches
+                deps.add(value[0])
+        result[node_id] = deps
+    return result
 
 
 def _resolve_inputs(raw_inputs: dict, node_outputs: dict[str, Any], class_types: dict[str, str]) -> dict:
@@ -144,58 +132,59 @@ class GraphWorkflow:
 
         node_outputs: dict[str, Any] = {}
 
+        deps = _node_deps(graph)
+        # Per-node completion event: set when the node's result is stored.
+        node_done: dict[str, asyncio.Event] = {nid: asyncio.Event() for nid in graph}
+
+        known_nids = [nid for nid in graph if class_types[nid] in OUTPUT_FIELDS]
+        unknown_nids = [nid for nid in graph if class_types[nid] not in OUTPUT_FIELDS]
+        if unknown_nids:
+            logger.warning(
+                "[GraphWorkflow] job=%s: skipping unknown node types: %s",
+                params.job_id,
+                [class_types[nid] for nid in unknown_nids],
+            )
+        # Unknown nodes have no outputs — mark them done so dependents don't hang.
+        for nid in unknown_nids:
+            node_done[nid].set()
+
+        async def run_node(nid: str) -> None:
+            # Wait for every direct upstream dependency to finish.
+            for dep in deps[nid]:
+                if dep in node_done:
+                    await node_done[dep].wait()
+
+            logger.info("[GraphWorkflow] job=%s starting node %s (%s)", params.job_id, nid, class_types[nid])
+            inp = NodeActivityInput(
+                job_id=params.job_id,
+                node_id=nid,
+                user_id=params.user_id,
+                template_id=params.template_id,
+                project_id=params.project_id,
+                class_type=class_types[nid],
+                resolved=_resolve_inputs(
+                    graph[nid].get("inputs") or {}, node_outputs, class_types
+                ),
+                can_use_cache=graph[nid].get("_meta", {}).get("can_use_cache", False),
+                exec_context=dict(self._exec_context),
+            )
+
+            if _is_hitl(class_types[nid]):
+                result = await self._run_hitl_node(nid, inp)
+            else:
+                result = await workflow.execute_activity(
+                    class_types[nid], args=[inp], **policy_for(class_types[nid])
+                )
+
+            node_outputs[nid] = result
+            if isinstance(result, dict):
+                patch = result.get(_CONTEXT_PATCH_KEY)
+                if patch:
+                    self._exec_context.update(patch)
+            node_done[nid].set()
+
         try:
-            for i, batch in enumerate(_topological_batches(graph)):
-                known = [nid for nid in batch if class_types[nid] in OUTPUT_FIELDS]
-                unknown = [nid for nid in batch if class_types[nid] not in OUTPUT_FIELDS]
-
-                if unknown:
-                    logger.warning(
-                        "[GraphWorkflow] job=%s: skipping unknown node types: %s",
-                        params.job_id,
-                        [class_types[nid] for nid in unknown],
-                    )
-
-                if not known:
-                    continue
-
-                logger.info("[GraphWorkflow] batch %d: %s", i, [class_types[nid] for nid in known])
-
-                activity_inputs = [
-                    NodeActivityInput(
-                        job_id=params.job_id,
-                        node_id=nid,
-                        user_id=params.user_id,
-                        template_id=params.template_id,
-                        project_id=params.project_id,
-                        class_type=class_types[nid],
-                        resolved=_resolve_inputs(
-                            graph[nid].get("inputs") or {}, node_outputs, class_types
-                        ),
-                        can_use_cache=graph[nid].get("_meta", {}).get("can_use_cache", False),
-                        exec_context=dict(self._exec_context),
-                    )
-                    for nid in known
-                ]
-
-                # All nodes in the batch run concurrently — regular via dynamic
-                # execute_node, HITL via setup → wait_condition → finalize.
-                results = await asyncio.gather(*[
-                    self._run_hitl_node(nid, inp) if _is_hitl(class_types[nid])
-                    else workflow.execute_activity(
-                        class_types[nid],
-                        args=[inp],
-                        **policy_for(class_types[nid]),
-                    )
-                    for nid, inp in zip(known, activity_inputs)
-                ])
-
-                for nid, result in zip(known, results):
-                    node_outputs[nid] = result
-                    if isinstance(result, dict):
-                        patch = result.get(_CONTEXT_PATCH_KEY)
-                        if patch:
-                            self._exec_context.update(patch)
+            await asyncio.gather(*[run_node(nid) for nid in known_nids])
 
         except Exception:
             await workflow.execute_activity(
