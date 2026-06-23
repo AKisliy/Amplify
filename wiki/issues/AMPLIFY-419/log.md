@@ -1,5 +1,9 @@
 # Log: AMPLIFY-419
 
+## 2026-06-23
+
+Фикс выполнения нод в Temporal: исправлена цепочка багов в `execute_node` / `_preprocess_resolved`. (1) Autogrow-агрегация: `_preprocess_resolved` переписан — используется `get_finalized_class_inputs` + фильтрация по valid_keys (дропает stale plain-ключи из config, например `media_file_0` рядом с `media_files.media_file_0`) + `build_nested_inputs` для dot-notation нестинга. Это точная репликация `get_input_data` ComfyUI. (2) Реализован `map_node_over_list`: для INPUT_IS_LIST=False нод все значения оборачиваются в `[v]`, execute вызывается N раз (max длина списка среди инпутов), результаты мерджатся через `merge_result_data` из `execution.py`. Для INPUT_IS_LIST=True (BaseUGCEditingNode) — один вызов с полными списками. Это фиксирует cascade: GeminiNode → N сегментов → Veo вызывается N раз → N видео → BaseUGCEditingNode получает список. (3) Hidden inputs: перед вызовом execute создаётся клон класса через `PREPARE_CLASS_CLONE(v3_data)` с заполненным `hidden_inputs` (unique_id=node_id, extra_pnginfo=exec_context+job_id+user_id). Фикс `AttributeError: 'NoneType'.unique_id`. (4) VS Code debug config для Temporal воркера добавлен в `.vscode/launch.json`.
+
 ## 2026-06-19 (2)
 
 Архитектурный разбор: зачем ManualReviewTask в своей БД, если Temporal хранит workflow state. Вывод: не дублирование — разные роли. БД: payload для UI-рендеринга + idempotency guard (status="completed" блокирует двойной сабмит/двойной сигнал). Temporal: execution state. Decision в нашей БД — теперь лишнее (никуда не читается), но некритично. Shot regeneration (отложен) потребует мутируемого payload — тоже причина держать запись в БД. Добавлены v2-методы в ManualReviewService: complete_task_v2 (DB + Temporal signal), get_task; complete_task оставлен чистым (DB only, v1/ComfyUI совместимость). Обновлён v2 роутер: GET /{task_id}, POST /{task_id}/complete → complete_task_v2.

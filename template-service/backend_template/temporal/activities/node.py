@@ -95,7 +95,7 @@ async def execute_node(input_args: Sequence[RawValue]) -> dict:
         from comfy_api.latest._io import Hidden
 
         from comfy_api.latest._io import Hidden
-        from execution import merge_result_data  # engine/ on sys.path
+        from execution import get_output_from_returns  # engine/ on sys.path
 
         resolved = _preprocess_resolved(node_cls, inp.resolved)
 
@@ -121,16 +121,18 @@ async def execute_node(input_args: Sequence[RawValue]) -> dict:
         }
         input_is_list = getattr(node_clone, "INPUT_IS_LIST", False)
         if input_is_list:
-            result_list = [await node_clone.execute(**input_data_all)]
+            result_list = [await node_clone.EXECUTE_NORMALIZED_ASYNC(**input_data_all)]
         else:
             max_len = max((len(v) for v in input_data_all.values() if isinstance(v, list)), default=1)
 
             def slice_dict(d: dict, i: int) -> dict:
                 return {k: v[i if len(v) > i else -1] if isinstance(v, list) else v for k, v in d.items()}
 
-            result_list = [await node_clone.execute(**slice_dict(input_data_all, i)) for i in range(max_len)]
+            result_list = [await node_clone.EXECUTE_NORMALIZED_ASYNC(**slice_dict(input_data_all, i)) for i in range(max_len)]
 
-        merged = merge_result_data(result_list, node_clone)
+        # get_output_from_returns handles NodeOutput → tuple conversion (r.result = r.args)
+        # and calls merge_result_data internally, producing a list per output slot.
+        merged, _, _ = get_output_from_returns(result_list, node_clone)
         outputs: dict = {}
         for i, out in enumerate(schema.outputs):
             try:
