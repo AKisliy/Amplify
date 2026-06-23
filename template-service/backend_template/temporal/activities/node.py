@@ -50,10 +50,7 @@ def _preprocess_resolved(node_cls: type, resolved: dict) -> dict:
             | set(finalized.get("optional", {}).keys())
         )
         filtered = {k: v for k, v in resolved.items() if k in valid_keys}
-        resolved = build_nested_inputs(filtered, v3_data)
-        if getattr(node_cls, "INPUT_IS_LIST", False):
-            resolved = {k: v if isinstance(v, (list, dict)) else [v] for k, v in resolved.items()}
-        return resolved
+        return build_nested_inputs(filtered, v3_data)
     except Exception:
         return resolved
 
@@ -97,6 +94,9 @@ async def execute_node(input_args: Sequence[RawValue]) -> dict:
     try:
         from comfy_api.latest._io import Hidden
 
+        from comfy_api.latest._io import Hidden
+        from execution import merge_result_data  # engine/ on sys.path
+
         resolved = _preprocess_resolved(node_cls, inp.resolved)
 
         # Build hidden inputs and clone the class (mirrors PREPARE_CLASS_CLONE in ComfyUI).
@@ -112,13 +112,29 @@ async def execute_node(input_args: Sequence[RawValue]) -> dict:
                 v3_hidden[Hidden.unique_id] = inp.node_id
         node_clone = node_cls.PREPARE_CLASS_CLONE({"hidden_inputs": v3_hidden})
 
-        result = await node_clone.execute(**resolved)
+        # Mirror _async_map_node_over_list from ComfyUI's execution.py:
+        # wrap scalars in [v], then either pass full lists (INPUT_IS_LIST) or
+        # slice N times and call execute once per element.
+        input_data_all = {
+            k: v if isinstance(v, (list, dict)) else [v]
+            for k, v in resolved.items()
+        }
+        input_is_list = getattr(node_clone, "INPUT_IS_LIST", False)
+        if input_is_list:
+            result_list = [await node_clone.execute(**input_data_all)]
+        else:
+            max_len = max((len(v) for v in input_data_all.values() if isinstance(v, list)), default=1)
 
-        schema = node_cls.define_schema()
+            def slice_dict(d: dict, i: int) -> dict:
+                return {k: v[i if len(v) > i else -1] if isinstance(v, list) else v for k, v in d.items()}
+
+            result_list = [await node_clone.execute(**slice_dict(input_data_all, i)) for i in range(max_len)]
+
+        merged = merge_result_data(result_list, node_clone)
         outputs: dict = {}
         for i, out in enumerate(schema.outputs):
             try:
-                outputs[out.display_name] = result[i]
+                outputs[out.display_name] = merged[i]
             except (IndexError, TypeError):
                 outputs[out.display_name] = None
 

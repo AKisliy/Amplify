@@ -145,7 +145,7 @@ class GraphWorkflow:
         node_outputs: dict[str, Any] = {}
 
         try:
-            for batch in _topological_batches(graph):
+            for i, batch in enumerate(_topological_batches(graph)):
                 known = [nid for nid in batch if class_types[nid] in OUTPUT_FIELDS]
                 unknown = [nid for nid in batch if class_types[nid] not in OUTPUT_FIELDS]
 
@@ -158,6 +158,8 @@ class GraphWorkflow:
 
                 if not known:
                     continue
+
+                logger.info("[GraphWorkflow] batch %d: %s", i, [class_types[nid] for nid in known])
 
                 activity_inputs = [
                     NodeActivityInput(
