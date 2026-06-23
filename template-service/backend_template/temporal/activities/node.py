@@ -128,7 +128,12 @@ async def execute_node(input_args: Sequence[RawValue]) -> dict:
             def slice_dict(d: dict, i: int) -> dict:
                 return {k: v[i if len(v) > i else -1] if isinstance(v, list) else v for k, v in d.items()}
 
-            result_list = [await node_clone.EXECUTE_NORMALIZED_ASYNC(**slice_dict(input_data_all, i)) for i in range(max_len)]
+            result_list = []
+            for i in range(max_len):
+                sliced = slice_dict(input_data_all, i)
+                logger.info("[execute_node] %s call %d/%d inputs=%s", class_type, i+1, max_len,
+                            {k: v for k, v in sliced.items() if k == "prompt"})
+                result_list.append(await node_clone.EXECUTE_NORMALIZED_ASYNC(**sliced))
 
         # get_output_from_returns handles NodeOutput → tuple conversion (r.result = r.args)
         # and calls merge_result_data internally, producing a list per output slot.
