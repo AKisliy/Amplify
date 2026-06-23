@@ -1,3 +1,4 @@
+import json
 import logging
 import uuid
 from typing import Any
@@ -154,6 +155,17 @@ class BaseUGCEditingNode(IO.ComfyNode):
                     advanced=True,
                     tooltip="Background music volume (0–100)",
                 ),
+                IO.String.Input(
+                    "shot_decisions_json",
+                    force_input=True,
+                    optional=True,
+                    tooltip=(
+                        "Wire the 'shot_decisions_json' output of the upstream "
+                        "ShotReviewNode here. When connected, trim decisions are "
+                        "read from this wire and are cache-safe. Falls back to "
+                        "execution-context side-channel when not wired."
+                    ),
+                ),
             ],
             outputs=[
                 IO.String.Output(display_name="video_uuid"),
@@ -174,6 +186,7 @@ class BaseUGCEditingNode(IO.ComfyNode):
         add_music: list[bool] | None = None,
         music_id: list[str | None] | None = None,
         music_volume: list[int] | None = None,
+        shot_decisions_json: list[str | None] | None = None,
     ) -> IO.NodeOutput:
         # is_input_list=True — each autogrow slot may carry a full list (from a
         # list-output node like ShotReviewNode); flatten all slots in order.
@@ -204,7 +217,17 @@ class BaseUGCEditingNode(IO.ComfyNode):
         extra_pnginfo = cls.hidden.extra_pnginfo or {}
         user_id = extra_pnginfo.get("client_id", "")
 
-        raw_decisions: dict | None = extra_pnginfo.get("shot_decisions")
+        # Prefer wired decisions (cache-safe) over extra_pnginfo side-channel.
+        # When ShotReviewNode is a cache hit its execute() never runs, so the
+        # side-channel write is skipped; the wired output carries the cached value.
+        _wired_json = shot_decisions_json[0] if shot_decisions_json else None
+        if _wired_json:
+            try:
+                raw_decisions: dict | None = json.loads(_wired_json)
+            except (json.JSONDecodeError, TypeError):
+                raw_decisions = None
+        else:
+            raw_decisions = extra_pnginfo.get("shot_decisions")
         trim_decisions: dict[str, TrimDecision] | None = None
         if raw_decisions:
             trim_decisions = {
@@ -401,6 +424,17 @@ class BatchUGCEditingNode(IO.ComfyNode):
                     advanced=True,
                     tooltip="Background music volume (0–100)",
                 ),
+                IO.String.Input(
+                    "shot_decisions_json",
+                    force_input=True,
+                    optional=True,
+                    tooltip=(
+                        "Wire the 'shot_decisions_json' output of the upstream "
+                        "ShotReviewNode here. When connected, trim decisions are "
+                        "read from this wire and are cache-safe. Falls back to "
+                        "execution-context side-channel when not wired."
+                    ),
+                ),
             ],
             outputs=[
                 IO.String.Output(display_name="video_uuid"),
@@ -423,6 +457,7 @@ class BatchUGCEditingNode(IO.ComfyNode):
         add_music: list[bool] | None = None,
         music_id: list[str] | None = None,
         music_volume: list[int] | None = None,
+        shot_decisions_json: list[str | None] | None = None,
     ) -> IO.NodeOutput:
         # Flatten scenes dict in slot order: [s1_v1, s1_v2, s1_v3, s2_v1, s2_v2, …]
         media_list: list[str] = []
@@ -453,7 +488,17 @@ class BatchUGCEditingNode(IO.ComfyNode):
         extra_pnginfo = cls.hidden.extra_pnginfo or {}
         user_id = extra_pnginfo.get("client_id", "")
 
-        raw_decisions: dict | None = extra_pnginfo.get("shot_decisions")
+        # Prefer wired decisions (cache-safe) over extra_pnginfo side-channel.
+        # When ShotReviewNode is a cache hit its execute() never runs, so the
+        # side-channel write is skipped; the wired output carries the cached value.
+        _wired_json = shot_decisions_json[0] if shot_decisions_json else None
+        if _wired_json:
+            try:
+                raw_decisions: dict | None = json.loads(_wired_json)
+            except (json.JSONDecodeError, TypeError):
+                raw_decisions = None
+        else:
+            raw_decisions = extra_pnginfo.get("shot_decisions")
         trim_decisions: dict[str, TrimDecision] | None = None
         if raw_decisions:
             trim_decisions = {
