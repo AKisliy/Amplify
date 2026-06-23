@@ -120,6 +120,12 @@ async def execute_node(input_args: Sequence[RawValue]) -> dict:
             for k, v in resolved.items()
         }
         input_is_list = getattr(node_clone, "INPUT_IS_LIST", False)
+        logger.info(
+            "[execute_node] %s: input_is_list=%s input_lengths=%s",
+            class_type,
+            input_is_list,
+            {k: len(v) for k, v in input_data_all.items() if isinstance(v, list)},
+        )
         if input_is_list:
             result_list = [await node_clone.EXECUTE_NORMALIZED_ASYNC(**input_data_all)]
         else:
