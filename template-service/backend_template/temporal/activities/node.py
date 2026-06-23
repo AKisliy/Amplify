@@ -103,8 +103,8 @@ async def execute_node(input_args: Sequence[RawValue]) -> dict:
         # Cloning prevents hidden state leaking across concurrent activities of the same type.
         schema = node_cls.define_schema()
         v3_hidden: dict = {}
+        extra_pnginfo: dict = {**inp.exec_context, "job_id": inp.job_id, "client_id": inp.user_id}
         if schema.hidden:
-            extra_pnginfo = {**inp.exec_context, "job_id": inp.job_id, "client_id": inp.user_id}
             hidden_names = {h.name for h in schema.hidden}
             if Hidden.extra_pnginfo.name in hidden_names:
                 v3_hidden[Hidden.extra_pnginfo] = extra_pnginfo
@@ -140,11 +140,23 @@ async def execute_node(input_args: Sequence[RawValue]) -> dict:
             except (IndexError, TypeError):
                 outputs[out.display_name] = None
 
+        # Propagate media context written by @with_media_context into _context_patch.
+        # with_media_context mutates extra_pnginfo in-place; that dict is local to this
+        # activity so we must forward any new keys back to the workflow exec_context.
+        from comfy_api_nodes.context_keys import MEDIA_PROMPTS, MEDIA_GEN_PARAMS
+        context_patch: dict = {}
+        for key in (MEDIA_PROMPTS, MEDIA_GEN_PARAMS):
+            if key in extra_pnginfo:
+                context_patch[key] = extra_pnginfo[key]
+        if context_patch:
+            outputs["_context_patch"] = context_patch
+
         await publish_node_status(
             inp.job_id, inp.node_id, inp.user_id, "SUCCESS",
             outputs={
                 k: v if isinstance(v, list) else [v]
                 for k, v in outputs.items()
+                if k != "_context_patch"
             },
         )
 
