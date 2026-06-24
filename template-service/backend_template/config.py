@@ -33,6 +33,11 @@ class ActivityConfig(BaseSettings):
     # Video Editor service
     video_editor_url: str = "http://video-editor"
 
+    # Langfuse
+    langfuse_secret_key: str = ""
+    langfuse_public_key: str = ""
+    langfuse_host: str = "https://cloud.langfuse.com"
+
     model_config = SettingsConfigDict(frozen=True, extra="allow", env_file=".env.example")
 
 

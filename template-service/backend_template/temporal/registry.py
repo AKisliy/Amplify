@@ -65,6 +65,11 @@ if "config" not in sys.modules:
     _shim.video_editor_config = SimpleNamespace(
         video_editor_url=_ac.video_editor_url,
     )
+    _shim.langfuse_config = SimpleNamespace(
+        langfuse_secret_key=_ac.langfuse_secret_key,
+        langfuse_public_key=_ac.langfuse_public_key,
+        langfuse_host=_ac.langfuse_host,
+    )
     sys.modules["config"] = _shim
 
 # ---------------------------------------------------------------------------

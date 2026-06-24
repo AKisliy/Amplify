@@ -60,9 +60,14 @@ _VAR_PATTERN = re.compile(r"\{\{(\w+)\}\}")
 
 def _get_langfuse_client():
     """Lazy-initialize a Langfuse client from engine config."""
-    from langfuse import get_client
+    from langfuse import Langfuse
+    from config import langfuse_config
 
-    return get_client()
+    return Langfuse(
+        public_key=langfuse_config.langfuse_public_key,
+        secret_key=langfuse_config.langfuse_secret_key,
+        host=langfuse_config.langfuse_host,
+    )
 
 
 class LangfusePromptNode(IO.ComfyNode):

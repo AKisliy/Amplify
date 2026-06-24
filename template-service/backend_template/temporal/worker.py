@@ -1,6 +1,7 @@
 """Temporal worker startup."""
 import asyncio
 import logging
+import os
 
 from temporalio.worker import Worker
 
@@ -31,6 +32,17 @@ async def run_worker() -> None:
         init_cache(async_session_maker)
 
     client = await get_temporal_client()
+
+    workflow_runner = None
+    if os.getenv("TEMPORAL_UNSANDBOXED"):
+        from temporalio.worker import UnsandboxedWorkflowRunner
+        workflow_runner = UnsandboxedWorkflowRunner()
+        logger.info("Temporal worker: using UnsandboxedWorkflowRunner (debug mode)")
+
+    worker_kwargs: dict = {}
+    if workflow_runner is not None:
+        worker_kwargs["workflow_runner"] = workflow_runner
+
     worker = Worker(
         client,
         task_queue=settings.temporal_task_queue,
@@ -39,6 +51,7 @@ async def run_worker() -> None:
         # hitl_setup / hitl_finalize are generic named activities for HITL nodes.
         # _publish_job_started/_publish_job_finished are named activities.
         activities=[execute_node, hitl_setup, hitl_finalize, _publish_job_started, _publish_job_finished],
+        **worker_kwargs,
     )
     logger.info("Temporal worker started on task queue %r", settings.temporal_task_queue)
     await worker.run()
