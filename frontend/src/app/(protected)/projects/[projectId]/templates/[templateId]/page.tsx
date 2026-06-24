@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
-import { ArrowLeft, PanelLeft, Image as ImageIcon, Sparkles, Eye, Copy, Loader2, Package, UserCircle, CalendarDays, Check } from "lucide-react";
+import { ArrowLeft, PanelLeft, Image as ImageIcon, Sparkles, Eye, Copy, Loader2, Package, UserCircle, CalendarDays, Check, Zap } from "lucide-react";
 import {
   ReactFlow,
   Background,
@@ -12,7 +12,6 @@ import {
   BackgroundVariant,
   type NodeTypes,
   type EdgeTypes,
-  type Connection,
   type IsValidConnection,
 } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
@@ -47,6 +46,7 @@ import type { NodeExecutionStatus } from "@/features/canvas/types";
 
 // Canvas feature imports
 import { AmplifyNode } from "@/features/canvas/components/AmplifyNode";
+import { CacheZoneNode } from "@/features/canvas/components/CacheZoneNode";
 import { PreviewNode } from "@/features/canvas/components/PreviewNode";
 import { ImportMediaNode } from "@/features/canvas/components/ImportMediaNode";
 import { FlowingEdge } from "@/features/canvas/components/FlowingEdge";
@@ -76,6 +76,7 @@ const nodeTypes: NodeTypes = {
   "amplify-node": AmplifyNode as unknown as NodeTypes[string],
   "preview-node":  PreviewNode as unknown as NodeTypes[string],
   "import-media-node": ImportMediaNode as unknown as NodeTypes[string],
+  "cache-zone": CacheZoneNode as unknown as NodeTypes[string],
 };
 
 const edgeTypes: EdgeTypes = {
@@ -179,6 +180,8 @@ function CanvasControlPanel({
   onProductChange,
   onRun,
   isRunning,
+  onRunV2,
+  isRunningV2,
   autoListIds,
   onAutoListIdsChange,
   postDescriptionConfig,
@@ -190,6 +193,8 @@ function CanvasControlPanel({
   onProductChange: (id: string | null) => void;
   onRun: () => void;
   isRunning: boolean;
+  onRunV2: () => void;
+  isRunningV2: boolean;
   autoListIds: string[];
   onAutoListIdsChange: (ids: string[]) => void;
   postDescriptionConfig: PostDescriptionConfig | null;
@@ -301,10 +306,10 @@ function CanvasControlPanel({
           {/* Generate button */}
           <Button
             onClick={onRun}
-            disabled={isRunning}
+            disabled={isRunning || isRunningV2}
             className={cn(
               "flex items-center gap-2 px-5 py-2.5 rounded-xl font-semibold text-sm border-0 transition-all",
-              !isRunning && "hover:scale-[1.03] active:scale-[0.97]"
+              !isRunning && !isRunningV2 && "hover:scale-[1.03] active:scale-[0.97]"
             )}
             style={{
               background: isRunning
@@ -321,6 +326,35 @@ function CanvasControlPanel({
             )}
             {isRunning ? "Running…" : "Generate"}
           </Button>
+
+          {/* Generate v2 (Temporal) button */}
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                onClick={onRunV2}
+                disabled={isRunning || isRunningV2}
+                className={cn(
+                  "flex items-center gap-2 px-4 py-2.5 rounded-xl font-semibold text-sm border-0 transition-all",
+                  !isRunning && !isRunningV2 && "hover:scale-[1.03] active:scale-[0.97]"
+                )}
+                style={{
+                  background: isRunningV2
+                    ? "rgba(255,255,255,0.08)"
+                    : "linear-gradient(135deg, #7c3aed, #2563eb)",
+                  color: "#fff",
+                  boxShadow: isRunningV2 ? "none" : "0 4px 20px rgba(124,58,237,0.4)",
+                }}
+              >
+                {isRunningV2 ? (
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                ) : (
+                  <Sparkles className="w-4 h-4" />
+                )}
+                {isRunningV2 ? "Running…" : "Generate v2"}
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent side="top">Beta: runs via Temporal workflow engine</TooltipContent>
+          </Tooltip>
         </div>
       </TooltipProvider>
 
@@ -541,6 +575,7 @@ const { registry, isLoading: registryLoading } = useNodeRegistry();
   const [sidebarTab,  setSidebarTab]  = useState<SidebarTab>("nodes");
   const [autoListIds, setAutoListIds] = useState<string[]>([]);
   const [productId, setProductId] = useState<string | null>(null);
+  const [activeRunVersion, setActiveRunVersion] = useState<"v1" | "v2" | null>(null);
   const [postDescriptionConfig, setPostDescriptionConfig] = useState<PostDescriptionConfig | null>(null);
 
   const [contextMenu, setContextMenu] = useState<{
@@ -585,7 +620,7 @@ const { registry, isLoading: registryLoading } = useNodeRegistry();
     appendNodeOutputHistory,
     propagateOutputsDownstream,
     setNodes, setEdges,
-    execution, submitWorkflow,
+    execution, submitWorkflow, submitWorkflowV2,
     setNodeStatus,
   } = useCanvasStore({});
 
@@ -629,14 +664,15 @@ const { registry, isLoading: registryLoading } = useNodeRegistry();
       onNodeExecutionStatusChanged: async (nodeId, status, outputs, error) => {
         const mapped: NodeExecutionStatus =
           status === "RUNNING" ? "processing"
-          : status === "SUCCESS" || status === "CACHED" ? "success"
+          : status === "SUCCESS" ? "success"
+          : status === "CACHED" ? "cached"
           : status === "FAILURE" ? "error"
           : status === "WAITING_FOR_REVIEW" ? "waiting_for_review"
           : "idle";
 
         setNodeStatus(nodeId, mapped, error ?? undefined);
 
-        if (outputs && mapped === "success") {
+        if (outputs && (mapped === "success" || mapped === "cached")) {
           updateNodeData(nodeId, { outputValues: outputs as Record<string, unknown> });
           // Accumulate image history — does nothing if outputs has no image_uuid
           appendNodeOutputHistory(nodeId, outputs as Record<string, unknown>);
@@ -814,6 +850,69 @@ const { registry, isLoading: registryLoading } = useNodeRegistry();
     [addNode, registry]
   );
 
+  // ── Cache zone ───────────────────────────────────────────────────────────────
+  const handleAddCacheZone = useCallback(() => {
+    const instance = rfInstanceRef.current;
+    const center = instance
+      ? instance.screenToFlowPosition({ x: window.innerWidth / 2, y: window.innerHeight / 2 })
+      : { x: 200, y: 200 };
+    const zoneNode = {
+      id: crypto.randomUUID(),
+      type: "cache-zone" as const,
+      position: { x: center.x - 200, y: center.y - 150 },
+      style: { width: 400, height: 300 },
+      data: {},
+      // Render behind all other nodes
+      zIndex: -1,
+      // Allow drag/resize
+      draggable: true,
+      selectable: true,
+    } as unknown as CanvasNode;
+    addNode(zoneNode);
+  }, [addNode]);
+
+  // Reactively tag nodes with _meta.can_use_cache based on cache zone membership.
+  useEffect(() => {
+    const hasZone = nodes.some((n) => n.type === "cache-zone");
+    const anyFlagged = nodes.some(
+      (n) => n.type !== "cache-zone" && !!(n.data._meta as Record<string, unknown> | undefined)?.can_use_cache
+    );
+    if (!hasZone && !anyFlagged) return;
+
+    setNodes((nds) => {
+      const currentZones = nds.filter((n) => n.type === "cache-zone");
+      let changed = false;
+      const updated = nds.map((n) => {
+        if (n.type === "cache-zone") return n;
+
+        const nodeW = n.measured?.width ?? 300;
+        const nodeH = n.measured?.height ?? 100;
+        const nodeX = n.position.x;
+        const nodeY = n.position.y;
+
+        const inZone = currentZones.some((z) => {
+          const zW = z.measured?.width ?? (Number(z.style?.width) || 400);
+          const zH = z.measured?.height ?? (Number(z.style?.height) || 300);
+          return (
+            nodeX < z.position.x + zW &&
+            nodeX + nodeW > z.position.x &&
+            nodeY < z.position.y + zH &&
+            nodeY + nodeH > z.position.y
+          );
+        });
+
+        const currentFlag = !!(n.data._meta as Record<string, unknown> | undefined)?.can_use_cache;
+        if (inZone === currentFlag) return n;
+
+        changed = true;
+        const meta = (n.data._meta as Record<string, unknown> | undefined) ?? {};
+        return { ...n, data: { ...n.data, _meta: { ...meta, can_use_cache: inZone } } };
+      });
+
+      return changed ? updated : nds;
+    });
+  }, [nodes, setNodes]);
+
   // ── Pane context menu ────────────────────────────────────────────────────────
   const handlePaneContextMenu = useCallback((event: React.MouseEvent | MouseEvent) => {
     event.preventDefault();
@@ -866,8 +965,16 @@ const { registry, isLoading: registryLoading } = useNodeRegistry();
 
   // ── Run ──────────────────────────────────────────────────────────────────────
   const handleRun = useCallback(async () => {
+    setActiveRunVersion("v1");
     await submitWorkflow(templateId);
+    setActiveRunVersion(null);
   }, [submitWorkflow, templateId]);
+
+  const handleRunV2 = useCallback(async () => {
+    setActiveRunVersion("v2");
+    await submitWorkflowV2(templateId);
+    setActiveRunVersion(null);
+  }, [submitWorkflowV2, templateId]);
 
   // ── AutoList settings ────────────────────────────────────────────────────────
   const handleAutoListIdsChange = useCallback(async (ids: string[]) => {
@@ -1044,6 +1151,18 @@ const { registry, isLoading: registryLoading } = useNodeRegistry();
           </div>
         )}
 
+        {!isReadonly && (
+          <Button
+            variant="ghost" size="sm"
+            onClick={handleAddCacheZone}
+            className="text-muted-foreground hover:text-cyan-400 gap-1.5 h-8 px-2"
+            title="Add a cache zone — nodes inside will read from cache on the next run"
+          >
+            <Zap className="w-3.5 h-3.5" />
+            <span className="text-xs">Cache Zone</span>
+          </Button>
+        )}
+
         <div className="h-4 w-px bg-border" />
 
         <Button
@@ -1176,7 +1295,9 @@ const { registry, isLoading: registryLoading } = useNodeRegistry();
               products={products}
               onProductChange={handleProductChange}
               onRun={handleRun}
-              isRunning={execution.isSubmitting}
+              isRunning={execution.isSubmitting && activeRunVersion === "v1"}
+              onRunV2={handleRunV2}
+              isRunningV2={execution.isSubmitting && activeRunVersion === "v2"}
               autoListIds={autoListIds}
               onAutoListIdsChange={handleAutoListIdsChange}
               postDescriptionConfig={postDescriptionConfig}
@@ -1227,12 +1348,14 @@ const { registry, isLoading: registryLoading } = useNodeRegistry();
               jobId={execution.activeJobId!}
               nodeId={reviewNodeId}
               onClose={() => setReviewNodeId(null)}
+              executionVersion={execution.executionVersion ?? "v1"}
             />
           ) : (
             <ShotReviewDialog
               jobId={execution.activeJobId!}
               nodeId={reviewNodeId}
               onClose={() => setReviewNodeId(null)}
+              executionVersion={execution.executionVersion ?? "v1"}
             />
           );
       })()}

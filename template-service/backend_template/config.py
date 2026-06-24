@@ -14,6 +14,36 @@ class AuthConfig(BaseSettings):
 auth_config = AuthConfig()
 
 
+class ActivityConfig(BaseSettings):
+    """Config for Temporal activities (API credentials, service URLs)."""
+
+    # LiteLLM proxy
+    litellm_base_url: str = "http://litellm:4000"
+    litellm_api_key: str = ""
+
+    # Gemini / Vertex AI
+    gemini_project_id: str = ""
+    gemini_location: str = "us-central1"
+    gemini_storage_uri: str = ""
+    rai_fallback_video_uuid: str = ""
+
+    # Media Ingest service
+    media_ingest_url: str = "http://media-ingest"
+
+    # Video Editor service
+    video_editor_url: str = "http://video-editor"
+
+    # Langfuse
+    langfuse_secret_key: str = ""
+    langfuse_public_key: str = ""
+    langfuse_host: str = "https://cloud.langfuse.com"
+
+    model_config = SettingsConfigDict(frozen=True, extra="allow", env_file=".env.example")
+
+
+activity_config = ActivityConfig()
+
+
 class Config(BaseSettings):
     # App Settings
     debug: bool = False
@@ -21,8 +51,15 @@ class Config(BaseSettings):
     description: str = "Generative AI Workflow Template Management"
     environment: str = "development"
 
-    # Engine Settings
+    # Engine Settings (legacy ComfyUI — kept for reference during migration)
     engine_base_url: str = "http://localhost:8188"
+
+    # Temporal
+    temporal_host: str = "localhost:7233"
+    temporal_task_queue: str = "template-execution"
+
+    # Node result cache
+    cache_enabled: bool = True
 
     # RabbitMQ
     rabbitmq_url: str = "amqp://guest:guest@localhost:5672/"

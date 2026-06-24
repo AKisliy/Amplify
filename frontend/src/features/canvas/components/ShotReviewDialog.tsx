@@ -7,7 +7,9 @@ import { cn } from "@/lib/utils";
 import { VideoTrimTimeline } from "./VideoTrimTimeline";
 import {
   completeManualReview,
+  completeManualReviewV2,
   getManualReviewByJobAndNode,
+  getManualReviewByJobAndNodeV2,
 } from "@/lib/api/template-service";
 import { mediaApi } from "@/features/media/api";
 
@@ -23,11 +25,12 @@ interface ShotReviewDialogProps {
   jobId: string;
   nodeId: string;
   onClose: () => void;
+  executionVersion?: "v1" | "v2";
 }
 
 // ---------------------------------------------------------------------------
 
-export function ShotReviewDialog({ jobId, nodeId, onClose }: ShotReviewDialogProps) {
+export function ShotReviewDialog({ jobId, nodeId, onClose, executionVersion = "v1" }: ShotReviewDialogProps) {
   const [taskId, setTaskId] = useState<string | null>(null);
   const [videoUuids, setVideoUuids] = useState<string[]>([]);
   const [selectedIndex, setSelectedIndex] = useState(0);
@@ -47,12 +50,13 @@ export function ShotReviewDialog({ jobId, nodeId, onClose }: ShotReviewDialogPro
     let cancelled = false;
     (async () => {
       try {
-        const task = await getManualReviewByJobAndNode(jobId, nodeId);
+        const task = executionVersion === "v2"
+          ? await getManualReviewByJobAndNodeV2(jobId, nodeId)
+          : await getManualReviewByJobAndNode(jobId, nodeId);
         if (cancelled) return;
         if (!task) { setError("No pending review task found."); return; }
-        const uuids = (
-          (task.payload?.video_uuids ?? task.payload?.videoUuids ?? []) as string[]
-        );
+        const raw = task.payload?.video_uuids ?? task.payload?.videoUuids ?? [];
+        const uuids: string[] = Array.isArray(raw) ? raw : [raw].filter(Boolean) as string[];
         setTaskId(task.id);
         setVideoUuids(uuids);
         setTrims(uuids.map(() => ({ start: 0, end: 8, duration: 8 })));
@@ -135,7 +139,11 @@ export function ShotReviewDialog({ jobId, nodeId, onClose }: ShotReviewDialogPro
           { trimStart: parseFloat(t.start.toFixed(2)), trimEnd: parseFloat(t.end.toFixed(2)) },
         ])
       );
-      await completeManualReview(taskId, decision);
+      if (executionVersion === "v2") {
+        await completeManualReviewV2(taskId, decision);
+      } else {
+        await completeManualReview(taskId, decision);
+      }
       onClose();
     } catch {
       setError("Failed to submit decision. Please try again.");

@@ -24,6 +24,8 @@ repositories:
     oci: true
   - name: kiali
     url: https://kiali.org/helm-charts
+  - name: temporal
+    url: https://go.temporal.io/helm-charts
 releases:
   - name: kiali-server
     condition: kiali.enabled
@@ -70,7 +72,7 @@ releases:
     values:
       - ./infra/envs/values.yaml.gotmpl
       - ./infra/envs/values.{{ .Environment.Name }}.yaml
-    
+
   - name: litellm
     namespace: "{{ .Values.namespace }}"
     chart: litellm/litellm-helm
@@ -80,6 +82,27 @@ releases:
     values:
       - ./litellm/values.yaml
       - ./litellm/values.{{ .Environment.Name }}.yaml
+
+  - name: temporal-extras
+    namespace: temporal
+    chart: ./temporal/extras
+    createNamespace: true
+    labels:
+      tier: infra
+      app: temporal
+    values:
+      - ./temporal/extras/envs/values.{{ .Environment.Name }}.yaml
+
+  - name: temporal
+    namespace: temporal
+    chart: temporal/temporal
+    labels:
+      tier: infra
+      app: temporal
+    values:
+      - ./temporal/values.yaml
+    needs:
+      - temporal/temporal-extras
 
   - name: userservice
     namespace: "{{ .Values.namespace }}"

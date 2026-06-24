@@ -212,6 +212,22 @@ export type BrandUpdate = {
 };
 
 /**
+ * CanvasResponse
+ *
+ * Single-request payload for rendering the template canvas.
+ *
+ * Combines the workflow definition (template.current_graph_json) with the
+ * latest execution state (last_job.node_executions) so the frontend never
+ * needs a second round-trip.
+ *
+ * last_job is None when the template has never been executed.
+ */
+export type CanvasResponse = {
+    template: ProjectTemplateResponse;
+    last_job?: JobDetailResponse | null;
+};
+
+/**
  * ExecutionStatus
  *
  * Status block returned by the engine for each completed prompt.
@@ -261,6 +277,68 @@ export type HistoryEntry = {
     meta: {
         [key: string]: unknown;
     };
+};
+
+/**
+ * InterruptRequest
+ *
+ * Optional request body for targeted interrupt.
+ */
+export type InterruptRequest = {
+    /**
+     * Prompt Id
+     *
+     * Interrupt a specific running prompt. If omitted, interrupts the currently running prompt globally.
+     */
+    prompt_id?: string | null;
+};
+
+/**
+ * JobDetailResponse
+ *
+ * Full job details including per-node execution state.
+ */
+export type JobDetailResponse = {
+    /**
+     * Id
+     */
+    id: string;
+    /**
+     * Status
+     */
+    status: string;
+    /**
+     * Prompt Id
+     */
+    prompt_id?: string | null;
+    /**
+     * Total Cost
+     */
+    total_cost: number;
+    /**
+     * Template Version Id
+     */
+    template_version_id: string;
+    /**
+     * Started At
+     */
+    started_at?: string | null;
+    /**
+     * Finished At
+     */
+    finished_at?: string | null;
+    /**
+     * Created At
+     */
+    created_at: string;
+    /**
+     * Updated At
+     */
+    updated_at: string;
+    /**
+     * Node Executions
+     */
+    node_executions?: Array<NodeExecutionResponse>;
 };
 
 /**
@@ -455,6 +533,54 @@ export type ManualReviewTaskResponse = {
     decision?: {
         [key: string]: unknown;
     } | null;
+};
+
+/**
+ * NodeExecutionResponse
+ *
+ * Single node's execution state within a job.
+ */
+export type NodeExecutionResponse = {
+    /**
+     * Id
+     */
+    id: string;
+    /**
+     * Node Id
+     */
+    node_id: string;
+    /**
+     * Class Name
+     */
+    class_name: string;
+    /**
+     * Status
+     */
+    status: string;
+    /**
+     * Inputs
+     */
+    inputs?: {
+        [key: string]: unknown;
+    } | null;
+    /**
+     * Outputs
+     */
+    outputs?: {
+        [key: string]: unknown;
+    } | null;
+    /**
+     * Error Message
+     */
+    error_message?: string | null;
+    /**
+     * Created At
+     */
+    created_at: string;
+    /**
+     * Updated At
+     */
+    updated_at: string;
 };
 
 /**
@@ -851,6 +977,26 @@ export type PromptResponse = {
 };
 
 /**
+ * QueueInfoResponse
+ *
+ * Snapshot of the engine's volatile prompt queue.
+ */
+export type QueueInfoResponse = {
+    /**
+     * Queue Running
+     *
+     * Currently executing prompt(s).
+     */
+    queue_running?: Array<unknown>;
+    /**
+     * Queue Pending
+     *
+     * Prompts waiting to be executed (ordered by priority).
+     */
+    queue_pending?: Array<unknown>;
+};
+
+/**
  * QueueItem
  *
  * Parsed representation of the engine's prompt queue-item tuple.
@@ -884,6 +1030,26 @@ export type QueueItem = {
      * Outputs To Execute
      */
     outputs_to_execute: Array<string>;
+};
+
+/**
+ * QueueManageRequest
+ *
+ * Request body for managing the engine's prompt queue.
+ */
+export type QueueManageRequest = {
+    /**
+     * Delete
+     *
+     * List of prompt_ids to remove from the pending queue.
+     */
+    delete?: Array<string> | null;
+    /**
+     * Clear
+     *
+     * If true, clear all pending prompts from the queue.
+     */
+    clear?: boolean | null;
 };
 
 /**
@@ -1172,6 +1338,36 @@ export type UpdateTemplateV1TemplatesTemplateIdPatchResponses = {
 
 export type UpdateTemplateV1TemplatesTemplateIdPatchResponse = UpdateTemplateV1TemplatesTemplateIdPatchResponses[keyof UpdateTemplateV1TemplatesTemplateIdPatchResponses];
 
+export type GetCanvasV1TemplatesTemplateIdCanvasGetData = {
+    body?: never;
+    path: {
+        /**
+         * Template Id
+         */
+        template_id: string;
+    };
+    query?: never;
+    url: '/v1/templates/{template_id}/canvas';
+};
+
+export type GetCanvasV1TemplatesTemplateIdCanvasGetErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type GetCanvasV1TemplatesTemplateIdCanvasGetError = GetCanvasV1TemplatesTemplateIdCanvasGetErrors[keyof GetCanvasV1TemplatesTemplateIdCanvasGetErrors];
+
+export type GetCanvasV1TemplatesTemplateIdCanvasGetResponses = {
+    /**
+     * Successful Response
+     */
+    200: CanvasResponse;
+};
+
+export type GetCanvasV1TemplatesTemplateIdCanvasGetResponse = GetCanvasV1TemplatesTemplateIdCanvasGetResponses[keyof GetCanvasV1TemplatesTemplateIdCanvasGetResponses];
+
 export type GetTemplatesByProjectV1TemplatesProjectProjectIdGetData = {
     body?: never;
     path: {
@@ -1308,6 +1504,101 @@ export type RunTemplateV1EngineRunPostResponses = {
 };
 
 export type RunTemplateV1EngineRunPostResponse = RunTemplateV1EngineRunPostResponses[keyof RunTemplateV1EngineRunPostResponses];
+
+export type GetJobDetailV1EngineJobsJobIdGetData = {
+    body?: never;
+    path: {
+        /**
+         * Job Id
+         */
+        job_id: string;
+    };
+    query?: never;
+    url: '/v1/engine/jobs/{job_id}';
+};
+
+export type GetJobDetailV1EngineJobsJobIdGetErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type GetJobDetailV1EngineJobsJobIdGetError = GetJobDetailV1EngineJobsJobIdGetErrors[keyof GetJobDetailV1EngineJobsJobIdGetErrors];
+
+export type GetJobDetailV1EngineJobsJobIdGetResponses = {
+    /**
+     * Successful Response
+     */
+    200: JobDetailResponse;
+};
+
+export type GetJobDetailV1EngineJobsJobIdGetResponse = GetJobDetailV1EngineJobsJobIdGetResponses[keyof GetJobDetailV1EngineJobsJobIdGetResponses];
+
+export type GetQueueV1EngineQueueGetData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/v1/engine/queue';
+};
+
+export type GetQueueV1EngineQueueGetResponses = {
+    /**
+     * Successful Response
+     */
+    200: QueueInfoResponse;
+};
+
+export type GetQueueV1EngineQueueGetResponse = GetQueueV1EngineQueueGetResponses[keyof GetQueueV1EngineQueueGetResponses];
+
+export type ManageQueueV1EngineQueuePostData = {
+    body: QueueManageRequest;
+    path?: never;
+    query?: never;
+    url: '/v1/engine/queue';
+};
+
+export type ManageQueueV1EngineQueuePostErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type ManageQueueV1EngineQueuePostError = ManageQueueV1EngineQueuePostErrors[keyof ManageQueueV1EngineQueuePostErrors];
+
+export type ManageQueueV1EngineQueuePostResponses = {
+    /**
+     * Successful Response
+     */
+    200: unknown;
+};
+
+export type InterruptV1EngineInterruptPostData = {
+    /**
+     * Payload
+     */
+    body?: InterruptRequest | null;
+    path?: never;
+    query?: never;
+    url: '/v1/engine/interrupt';
+};
+
+export type InterruptV1EngineInterruptPostErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type InterruptV1EngineInterruptPostError = InterruptV1EngineInterruptPostErrors[keyof InterruptV1EngineInterruptPostErrors];
+
+export type InterruptV1EngineInterruptPostResponses = {
+    /**
+     * Successful Response
+     */
+    200: unknown;
+};
 
 export type SubmitPromptV1EnginePromptPostData = {
     body: PromptRequest;
@@ -2348,6 +2639,162 @@ export type RemoveStoreLinkV1ProductsProductIdLinksLinkIdDeleteResponses = {
 };
 
 export type RemoveStoreLinkV1ProductsProductIdLinksLinkIdDeleteResponse = RemoveStoreLinkV1ProductsProductIdLinksLinkIdDeleteResponses[keyof RemoveStoreLinkV1ProductsProductIdLinksLinkIdDeleteResponses];
+
+export type RunTemplateV2TemplatesTemplateIdRunPostData = {
+    body?: never;
+    path: {
+        /**
+         * Template Id
+         */
+        template_id: string;
+    };
+    query?: never;
+    url: '/v2/templates/{template_id}/run';
+};
+
+export type RunTemplateV2TemplatesTemplateIdRunPostErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type RunTemplateV2TemplatesTemplateIdRunPostError = RunTemplateV2TemplatesTemplateIdRunPostErrors[keyof RunTemplateV2TemplatesTemplateIdRunPostErrors];
+
+export type RunTemplateV2TemplatesTemplateIdRunPostResponses = {
+    /**
+     * Successful Response
+     */
+    202: unknown;
+};
+
+export type GetTaskV2ReviewTaskIdGetData = {
+    body?: never;
+    path: {
+        /**
+         * Task Id
+         */
+        task_id: string;
+    };
+    query?: never;
+    url: '/v2/review/{task_id}';
+};
+
+export type GetTaskV2ReviewTaskIdGetErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type GetTaskV2ReviewTaskIdGetError = GetTaskV2ReviewTaskIdGetErrors[keyof GetTaskV2ReviewTaskIdGetErrors];
+
+export type GetTaskV2ReviewTaskIdGetResponses = {
+    /**
+     * Successful Response
+     */
+    200: ManualReviewTaskResponse;
+};
+
+export type GetTaskV2ReviewTaskIdGetResponse = GetTaskV2ReviewTaskIdGetResponses[keyof GetTaskV2ReviewTaskIdGetResponses];
+
+export type CompleteTaskV2ReviewTaskIdCompletePostData = {
+    body: ManualReviewCompleteRequest;
+    path: {
+        /**
+         * Task Id
+         */
+        task_id: string;
+    };
+    query?: never;
+    url: '/v2/review/{task_id}/complete';
+};
+
+export type CompleteTaskV2ReviewTaskIdCompletePostErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type CompleteTaskV2ReviewTaskIdCompletePostError = CompleteTaskV2ReviewTaskIdCompletePostErrors[keyof CompleteTaskV2ReviewTaskIdCompletePostErrors];
+
+export type CompleteTaskV2ReviewTaskIdCompletePostResponses = {
+    /**
+     * Successful Response
+     */
+    200: ManualReviewTaskResponse;
+};
+
+export type CompleteTaskV2ReviewTaskIdCompletePostResponse = CompleteTaskV2ReviewTaskIdCompletePostResponses[keyof CompleteTaskV2ReviewTaskIdCompletePostResponses];
+
+export type GetPendingByJobV2ReviewJobJobIdPendingGetData = {
+    body?: never;
+    path: {
+        /**
+         * Job Id
+         */
+        job_id: string;
+    };
+    query?: never;
+    url: '/v2/review/job/{job_id}/pending';
+};
+
+export type GetPendingByJobV2ReviewJobJobIdPendingGetErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type GetPendingByJobV2ReviewJobJobIdPendingGetError = GetPendingByJobV2ReviewJobJobIdPendingGetErrors[keyof GetPendingByJobV2ReviewJobJobIdPendingGetErrors];
+
+export type GetPendingByJobV2ReviewJobJobIdPendingGetResponses = {
+    /**
+     * Response Get Pending By Job V2 Review Job  Job Id  Pending Get
+     *
+     * Successful Response
+     */
+    200: ManualReviewTaskResponse | null;
+};
+
+export type GetPendingByJobV2ReviewJobJobIdPendingGetResponse = GetPendingByJobV2ReviewJobJobIdPendingGetResponses[keyof GetPendingByJobV2ReviewJobJobIdPendingGetResponses];
+
+export type GetByJobAndNodeV2ReviewJobJobIdNodeNodeIdGetData = {
+    body?: never;
+    path: {
+        /**
+         * Job Id
+         */
+        job_id: string;
+        /**
+         * Node Id
+         */
+        node_id: string;
+    };
+    query?: never;
+    url: '/v2/review/job/{job_id}/node/{node_id}';
+};
+
+export type GetByJobAndNodeV2ReviewJobJobIdNodeNodeIdGetErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type GetByJobAndNodeV2ReviewJobJobIdNodeNodeIdGetError = GetByJobAndNodeV2ReviewJobJobIdNodeNodeIdGetErrors[keyof GetByJobAndNodeV2ReviewJobJobIdNodeNodeIdGetErrors];
+
+export type GetByJobAndNodeV2ReviewJobJobIdNodeNodeIdGetResponses = {
+    /**
+     * Response Get By Job And Node V2 Review Job  Job Id  Node  Node Id  Get
+     *
+     * Successful Response
+     */
+    200: ManualReviewTaskResponse | null;
+};
+
+export type GetByJobAndNodeV2ReviewJobJobIdNodeNodeIdGetResponse = GetByJobAndNodeV2ReviewJobJobIdNodeNodeIdGetResponses[keyof GetByJobAndNodeV2ReviewJobJobIdNodeNodeIdGetResponses];
 
 export type CreateLibraryTemplateInternalLibraryTemplatesPostData = {
     body: LibraryTemplateCreate;

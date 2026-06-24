@@ -15,6 +15,24 @@ from backend_template.repositories.manual_review_task import ManualReviewTaskRep
 logger = logging.getLogger(__name__)
 
 
+async def _send_hitl_signal(job_id: str, node_id: str, decision: dict) -> None:
+    """Send hitl_complete signal to the Temporal workflow identified by job_id."""
+    try:
+        from backend_template.temporal.client import get_temporal_client
+        from backend_template.temporal.workflows.graph import GraphWorkflow
+
+        client = await get_temporal_client()
+        handle = client.get_workflow_handle_for(GraphWorkflow.run, workflow_id=job_id)
+        await handle.signal(GraphWorkflow.hitl_complete, args=[node_id, decision])
+        logger.info("hitl_complete signal sent: job_id=%s node_id=%s", job_id, node_id)
+    except Exception as exc:
+        # Log but don't fail the HTTP response — the DB is already updated
+        logger.error(
+            "Failed to send hitl_complete signal job_id=%s node_id=%s: %s",
+            job_id, node_id, exc,
+        )
+
+
 class ManualReviewService:
 
     def __init__(self, repo: Annotated[ManualReviewTaskRepository, Depends(ManualReviewTaskRepository)]):
@@ -52,6 +70,7 @@ class ManualReviewService:
         return ManualReviewTaskResponse.model_validate(orm)
 
     async def complete_task(self, task_id: UUID, req: ManualReviewCompleteRequest) -> ManualReviewTaskResponse:
+        """Update DB only (v1 / ComfyUI path — polling loop picks it up)."""
         orm = await self.repo.get_by_id(task_id)
         if not orm:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Review task not found.")
@@ -60,7 +79,6 @@ class ManualReviewService:
                 status_code=status.HTTP_409_CONFLICT,
                 detail=f"Task is already '{orm.status}', cannot complete.",
             )
-        # Reject approval while a slot is actively being re-generated
         shots: list[dict] = (orm.payload or {}).get("shots", [])
         if any(s.get("regen_status") == "regenerating" for s in shots):
             raise HTTPException(
@@ -68,6 +86,26 @@ class ManualReviewService:
                 detail="A shot is currently being re-generated. Wait for it to finish before approving.",
             )
         updated = await self.repo.update(task_id, status="completed", decision=req.decision)
+        return ManualReviewTaskResponse.model_validate(updated)
+
+    async def complete_task_v2(self, task_id: UUID, req: ManualReviewCompleteRequest) -> ManualReviewTaskResponse:
+        """Update DB + send Temporal signal to resume the waiting workflow (v2 path)."""
+        orm = await self.repo.get_by_id(task_id)
+        if not orm:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Review task not found.")
+        if orm.status not in ("pending",):
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail=f"Task is already '{orm.status}', cannot complete.",
+            )
+        shots: list[dict] = (orm.payload or {}).get("shots", [])
+        if any(s.get("regen_status") == "regenerating" for s in shots):
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail="A shot is currently being re-generated. Wait for it to finish before approving.",
+            )
+        updated = await self.repo.update(task_id, status="completed", decision=req.decision)
+        await _send_hitl_signal(str(orm.job_id), str(orm.node_id), req.decision or {})
         return ManualReviewTaskResponse.model_validate(updated)
 
     async def regenerate_shot(

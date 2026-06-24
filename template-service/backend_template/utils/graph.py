@@ -1,11 +1,13 @@
 # Frontend-only node schemas that must never be submitted to ComfyUI.
 # - FRONTEND_SINK_SCHEMAS: pure output sinks (no outputs) — drop entirely.
+#   CacheZoneNode is a UI decorator with no ComfyUI equivalent — drop it too.
 # - FRONTEND_SOURCE_SCHEMAS: source nodes with no ComfyUI class — drop from
 #   the prompt but inline their config values as literals into connected nodes.
 _FRONTEND_SINK_SCHEMAS: frozenset[str] = frozenset({
     "PreviewImageNode",
     "PreviewTextNode",
     "PreviewVideoNode",
+    "CacheZoneNode",
 })
 
 _FRONTEND_SOURCE_SCHEMAS: frozenset[str] = frozenset({
@@ -50,7 +52,9 @@ def convert_reactflow_to_comfy(graph: dict) -> dict:
     frontend_source_ids: set[str] = set()
     for node_id, node in nodes.items():
         schema = node.get("data", {}).get("schemaName", "")
-        if schema in _FRONTEND_SINK_SCHEMAS:
+        node_type = node.get("type", "")
+        # Drop by schema name OR by ReactFlow node type (e.g. "cache-zone")
+        if schema in _FRONTEND_SINK_SCHEMAS or node_type == "cache-zone":
             frontend_sink_ids.add(node_id)
         elif schema in _FRONTEND_SOURCE_SCHEMAS:
             frontend_source_ids.add(node_id)
@@ -113,9 +117,15 @@ def convert_reactflow_to_comfy(graph: dict) -> dict:
                 key = node_autogrow.get(target_port, target_port)
                 inputs[key] = value
 
-        prompt[node_id] = {
+        entry: dict = {
             "class_type": class_type,
             "inputs": inputs,
         }
+        # Preserve _meta (e.g. can_use_cache set by the UI cache zone)
+        meta = data.get("_meta")
+        if meta:
+            entry["_meta"] = meta
+
+        prompt[node_id] = entry
 
     return prompt

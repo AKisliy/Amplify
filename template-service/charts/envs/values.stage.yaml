@@ -1,6 +1,10 @@
 otel:
   injectPython: true
 
+worker:
+  enabled: true
+  replicaCount: 1
+
 secrets:
   postgresDsn:
     key: template-service-db-conn-test
@@ -24,3 +28,4 @@ config:
   videoEditorUrl: "http://video-editor.test-env.svc.cluster.local:8000"
   langfuseUrl: "https://cloud.langfuse.com"
   litellmBaseUrl: "http://litellm.test-env.svc.cluster.local:4000/litellm"
+  temporalHost: "temporal-frontend.temporal.svc.cluster.local:7233"

@@ -104,8 +104,14 @@ _TRANSCRIPT_SCHEMA = {
 
 
 def _get_langfuse_client():
-    from langfuse import get_client
-    return get_client()
+    from langfuse import Langfuse
+    from config import langfuse_config
+
+    return Langfuse(
+        public_key=langfuse_config.langfuse_public_key,
+        secret_key=langfuse_config.langfuse_secret_key,
+        host=langfuse_config.langfuse_host,
+    )
 
 
 async def _compile_langfuse_prompt(name: str, variables: dict[str, str]) -> tuple[str, str]:

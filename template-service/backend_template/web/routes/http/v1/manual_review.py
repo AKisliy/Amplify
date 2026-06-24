@@ -98,4 +98,3 @@ async def regenerate_shot(
     (``regen_status: null`` + changed ``current_uuid``) and swap the player.
     """
     return await service.regenerate_shot(task_id, payload, background_tasks)
-

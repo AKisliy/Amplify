@@ -45,6 +45,37 @@ class ShotReviewNode(IO.ComfyNode):
     user's trim decisions before returning.
     """
 
+    # ── Temporal HITL interface ───────────────────────────────────────────
+    temporal_hitl = True
+
+    @classmethod
+    def hitl_node_type(cls) -> str:
+        return NODE_TYPE
+
+    @classmethod
+    def _as_list(cls, value: object) -> list[str]:
+        """Normalise wire value to list — handles single string or missing value."""
+        if value is None:
+            return []
+        if isinstance(value, list):
+            return value
+        return [str(value)]
+
+    @classmethod
+    def hitl_payload(cls, resolved: dict, exec_context: dict) -> dict:
+        """Build ManualReviewTask.payload from resolved inputs."""
+        return {"video_uuids": cls._as_list(resolved.get("video_uuids"))}
+
+    @classmethod
+    def hitl_output(cls, resolved: dict, decision: dict) -> tuple:
+        """Pass video_uuids through unchanged."""
+        return (cls._as_list(resolved.get("video_uuids")),)
+
+    @classmethod
+    def hitl_context(cls, resolved: dict, decision: dict) -> dict:
+        """Merge shot_decisions into exec_context for downstream nodes."""
+        return {"shot_decisions": decision} if decision else {}
+
     @classmethod
     def define_schema(cls):
         return IO.Schema(

@@ -26,6 +26,15 @@ export async function runTemplate(templateId: string): Promise<RunTemplateRespon
   return response.data;
 }
 
+// ── POST /v2/templates/{template_id}/run ──────────────────────────────────────
+
+export async function runTemplateV2(templateId: string): Promise<{ job_id: string }> {
+  const response = await api.post<{ job_id: string }>(
+    `${apiBase}/template/v2/templates/${templateId}/run`
+  );
+  return response.data;
+}
+
 // ── Manual review ──────────────────────────────────────────────────────────────
 
 export interface ManualReviewTask {
@@ -55,6 +64,36 @@ export async function completeManualReview(
 ): Promise<ManualReviewTask> {
   const response = await api.post<ManualReviewTask>(
     `${apiBase}/template/v1/review/${taskId}/complete`,
+    { decision }
+  );
+  return response.data;
+}
+
+// ── Manual review v2 (Temporal path) ─────────────────────────────────────────
+
+export async function getManualReviewTaskV2(taskId: string): Promise<ManualReviewTask> {
+  const response = await api.get<ManualReviewTask>(
+    `${apiBase}/template/v2/review/${taskId}`
+  );
+  return response.data;
+}
+
+export async function getManualReviewByJobAndNodeV2(
+  jobId: string,
+  nodeId: string
+): Promise<ManualReviewTask | null> {
+  const response = await api.get<ManualReviewTask | null>(
+    `${apiBase}/template/v2/review/job/${jobId}/node/${nodeId}`
+  );
+  return response.data ?? null;
+}
+
+export async function completeManualReviewV2(
+  taskId: string,
+  decision: Record<string, unknown>
+): Promise<ManualReviewTask> {
+  const response = await api.post<ManualReviewTask>(
+    `${apiBase}/template/v2/review/${taskId}/complete`,
     { decision }
   );
   return response.data;

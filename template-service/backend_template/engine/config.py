@@ -50,3 +50,10 @@ class LiteLLMConfig(ConfigBase):
     litellm_api_key: str = "sk-1234"
 
 litellm_config = LiteLLMConfig()
+
+class LangfuseConfig(ConfigBase):
+    langfuse_secret_key: str = ""
+    langfuse_public_key: str = ""
+    langfuse_host: str = "https://cloud.langfuse.com"
+
+langfuse_config = LangfuseConfig()

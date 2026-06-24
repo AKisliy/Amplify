@@ -1,0 +1,68 @@
+{{- if .Values.worker.enabled }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "template-service.fullname" . }}-worker
+  labels:
+    {{- include "template-service.labels" . | nindent 4 }}
+    app.kubernetes.io/component: worker
+spec:
+  replicas: {{ .Values.worker.replicaCount }}
+  selector:
+    matchLabels:
+      {{- include "template-service.selectorLabels" . | nindent 6 }}
+      app.kubernetes.io/component: worker
+  template:
+    metadata:
+      annotations:
+        {{- if .Values.otel.injectPython }}
+        instrumentation.opentelemetry.io/inject-python: "python-instrumentation"
+        {{- end }}
+      labels:
+        {{- include "template-service.labels" . | nindent 8 }}
+        app.kubernetes.io/component: worker
+    spec:
+      serviceAccountName: {{ include "template-service.serviceAccountName" . }}
+      containers:
+        - name: {{ .Chart.Name }}-worker
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          command: ["./scripts/entrypoint-worker.sh"]
+          {{- with .Values.worker.resources }}
+          resources:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          env:
+            - name: GEMINI_PROJECT_ID
+              value: "{{ .Values.config.gcpProjectId }}"
+            - name: GEMINI_LOCATION
+              value: "{{ .Values.config.gcpLocation }}"
+            - name: GEMINI_STORAGE_URI
+              value: "{{ .Values.config.gcpStorageUri }}"
+            - name: SERVICE_ACCOUNT_KEY_FILE
+              value: "/secrets/sa-key.json"
+            - name: LITELLM_BASE_URL
+              value: "{{ .Values.config.litellmBaseUrl }}"
+            - name: MEDIA_INGEST_URL
+              value: "{{ .Values.config.mediaIngestUrl }}"
+            - name: VIDEO_EDITOR_URL
+              value: "{{ .Values.config.videoEditorUrl }}"
+            - name: TEMPORAL_HOST
+              value: "{{ .Values.config.temporalHost }}"
+            - name: TEMPORAL_TASK_QUEUE
+              value: "{{ .Values.config.temporalTaskQueue }}"
+          envFrom:
+            - secretRef:
+                name: {{ .Values.secret.name }}
+          volumeMounts:
+            - name: sa-key
+              mountPath: /secrets
+              readOnly: true
+      volumes:
+        - name: sa-key
+          secret:
+            secretName: {{ .Values.secret.name }}
+            items:
+              - key: sa-key.json
+                path: sa-key.json
+{{- end }}

@@ -18,6 +18,7 @@ import {
   Images,
   Eye,
   UserCheck,
+  Zap,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { CanvasNode, CanvasNodeData, NodeCategory, NodeExecutionStatus, PortDef, ImageBatch } from "../types";
@@ -73,6 +74,12 @@ const STATUS_CONFIG: Record<NodeExecutionStatus, StatusConfig> = {
     label: "success",
     barClass: "bg-green-500/50",
     glow: "#22c55e44",
+  },
+  cached: {
+    icon: <Zap className="w-3 h-3" />,
+    label: "cached",
+    barClass: "bg-cyan-500/50",
+    glow: "#06b6d444",
   },
   error: {
     icon: <AlertCircle className="w-3 h-3" />,
@@ -198,6 +205,16 @@ export function AmplifyNode({ id, data, selected }: NodeProps<CanvasNode>) {
           </p>
         </div>
 
+        {/* Cache zone indicator */}
+        {(data._meta as { can_use_cache?: boolean } | undefined)?.can_use_cache && (
+          <div
+            className="flex items-center gap-0.5 px-1.5 py-0.5 rounded-full shrink-0 bg-cyan-500/10 text-cyan-400/60"
+            title="Node is inside a cache zone — result will be read from cache if available"
+          >
+            <Zap className="w-2.5 h-2.5" />
+          </div>
+        )}
+
         {/* Image counter badge — shown when there are stored images */}
         {outputHistory.length > 0 && (
           <div
@@ -220,6 +237,7 @@ export function AmplifyNode({ id, data, selected }: NodeProps<CanvasNode>) {
             data.status === "queued"             && "bg-amber-500/20 text-amber-400",
             data.status === "processing"         && "bg-blue-500/20 text-blue-400",
             data.status === "success"            && "bg-green-500/20 text-green-400",
+            data.status === "cached"             && "bg-cyan-500/20 text-cyan-400",
             data.status === "error"              && "bg-red-500/20 text-red-400",
             data.status === "waiting_for_review" && "bg-orange-500/20 text-orange-400 animate-pulse",
           )}
