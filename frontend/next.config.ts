@@ -36,6 +36,11 @@ const nextConfig: NextConfig = {
     ];
   },
   images: {
+    localPatterns: [
+      {
+        pathname: "/media/**",
+      },
+    ],
     remotePatterns: [
       ...(apiRemotePattern ? [apiRemotePattern] : []),
       {

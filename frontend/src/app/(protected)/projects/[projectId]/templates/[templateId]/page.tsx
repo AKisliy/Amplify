@@ -873,14 +873,14 @@ const { registry, isLoading: registryLoading } = useNodeRegistry();
 
   // Reactively tag nodes with _meta.can_use_cache based on cache zone membership.
   useEffect(() => {
-    const zones = nodes.filter((n) => n.type === "cache-zone");
-    // Only work if there's at least one zone or some nodes have the flag set
+    const hasZone = nodes.some((n) => n.type === "cache-zone");
     const anyFlagged = nodes.some(
       (n) => n.type !== "cache-zone" && !!(n.data._meta as Record<string, unknown> | undefined)?.can_use_cache
     );
-    if (zones.length === 0 && !anyFlagged) return;
+    if (!hasZone && !anyFlagged) return;
 
     setNodes((nds) => {
+      const currentZones = nds.filter((n) => n.type === "cache-zone");
       let changed = false;
       const updated = nds.map((n) => {
         if (n.type === "cache-zone") return n;
@@ -890,9 +890,9 @@ const { registry, isLoading: registryLoading } = useNodeRegistry();
         const nodeX = n.position.x;
         const nodeY = n.position.y;
 
-        const inZone = zones.some((z) => {
-          const zW = Number(z.style?.width) || 400;
-          const zH = Number(z.style?.height) || 300;
+        const inZone = currentZones.some((z) => {
+          const zW = z.measured?.width ?? (Number(z.style?.width) || 400);
+          const zH = z.measured?.height ?? (Number(z.style?.height) || 300);
           return (
             nodeX < z.position.x + zW &&
             nodeX + nodeW > z.position.x &&
