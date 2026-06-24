@@ -29,19 +29,16 @@ from backend_template.temporal.registry import NODE_CLASS_MAPPINGS
 logger = logging.getLogger(__name__)
 
 
-def _preprocess_resolved(node_cls: type, resolved: dict) -> dict:
+def _preprocess_resolved(node_cls: type, resolved: dict) -> tuple[dict, dict]:
     """
-    Aggregate IO.Autogrow inputs before calling execute().
+    Filter and prepare inputs for N-fold execution.
 
-    ComfyUI v3 stores autogrow items in the graph JSON using dot-notation keys
-    (e.g. "media_files.media_file_0"). The config dict also carries stale plain
-    keys (e.g. "media_file_0") for the same slot — ComfyUI silently drops these
-    in get_input_data() by filtering against finalized valid_inputs.
-
-    We replicate that filter here: keep only keys present in the finalized schema,
-    then let build_nested_inputs nest the dot-notation keys into the expected dict.
+    Returns (filtered_flat, v3_data) where filtered_flat still uses dot-notation
+    keys (e.g. "variables.var_0") so that N-fold slicing works correctly on list
+    values inside autogrow inputs.  build_nested_inputs must be called per-slice
+    inside the execution loop — mirroring ComfyUI's _async_map_node_over_list.
     """
-    from comfy_api.latest._io import build_nested_inputs, get_finalized_class_inputs
+    from comfy_api.latest._io import get_finalized_class_inputs
     try:
         valid_inputs = node_cls.INPUT_TYPES()
         finalized, _, v3_data = get_finalized_class_inputs(valid_inputs, resolved)
@@ -50,9 +47,9 @@ def _preprocess_resolved(node_cls: type, resolved: dict) -> dict:
             | set(finalized.get("optional", {}).keys())
         )
         filtered = {k: v for k, v in resolved.items() if k in valid_keys}
-        return build_nested_inputs(filtered, v3_data)
+        return filtered, v3_data
     except Exception:
-        return resolved
+        return resolved, {}
 
 
 @activity.defn(dynamic=True)
@@ -97,7 +94,7 @@ async def execute_node(input_args: Sequence[RawValue]) -> dict:
         from comfy_api.latest._io import Hidden
         from execution import get_output_from_returns  # engine/ on sys.path
 
-        resolved = _preprocess_resolved(node_cls, inp.resolved)
+        resolved, v3_data = _preprocess_resolved(node_cls, inp.resolved)
 
         # Build hidden inputs and clone the class (mirrors PREPARE_CLASS_CLONE in ComfyUI).
         # Cloning prevents hidden state leaking across concurrent activities of the same type.
@@ -126,20 +123,24 @@ async def execute_node(input_args: Sequence[RawValue]) -> dict:
             input_is_list,
             {k: len(v) for k, v in input_data_all.items() if isinstance(v, list)},
         )
+        from comfy_api.latest._io import build_nested_inputs
+
+        def slice_dict(d: dict, i: int) -> dict:
+            return {k: v[i if len(v) > i else -1] if isinstance(v, list) else v for k, v in d.items()}
+
         if input_is_list:
-            result_list = [await node_clone.EXECUTE_NORMALIZED_ASYNC(**input_data_all)]
+            nested = build_nested_inputs(input_data_all, v3_data)
+            result_list = [await node_clone.EXECUTE_NORMALIZED_ASYNC(**nested)]
         else:
             max_len = max((len(v) for v in input_data_all.values() if isinstance(v, list)), default=1)
-
-            def slice_dict(d: dict, i: int) -> dict:
-                return {k: v[i if len(v) > i else -1] if isinstance(v, list) else v for k, v in d.items()}
 
             result_list = []
             for i in range(max_len):
                 sliced = slice_dict(input_data_all, i)
+                nested = build_nested_inputs(sliced, v3_data)
                 logger.info("[execute_node] %s call %d/%d inputs=%s", class_type, i+1, max_len,
-                            {k: v for k, v in sliced.items() if k == "prompt"})
-                result_list.append(await node_clone.EXECUTE_NORMALIZED_ASYNC(**sliced))
+                            {k: v for k, v in nested.items() if k == "prompt"})
+                result_list.append(await node_clone.EXECUTE_NORMALIZED_ASYNC(**nested))
 
         # get_output_from_returns handles NodeOutput → tuple conversion (r.result = r.args)
         # and calls merge_result_data internally, producing a list per output slot.
