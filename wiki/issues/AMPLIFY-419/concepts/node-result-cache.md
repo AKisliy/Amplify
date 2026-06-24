@@ -12,6 +12,54 @@
 входы ещё не раскрыты. В нашей реализации воркфлоу разрезолвит все входы до вызова
 активности, поэтому ключ строится из конкретных значений — обход графа не нужен.
 
+## Frontend: реализация Cache Zone
+
+Cache Zone — это специальный узел типа `cache-zone` на канвасе ReactFlow. Реализован в
+`frontend/src/features/canvas/components/CacheZoneNode.tsx` с компонентом `NodeResizer`.
+
+### Алгоритм простановки флага `can_use_cache`
+
+`useEffect([nodes, setNodes])` в `page.tsx` реактивно тегирует ноды:
+
+```tsx
+useEffect(() => {
+  const hasZone = nodes.some((n) => n.type === "cache-zone");
+  // ...
+  setNodes((nds) => {
+    const currentZones = nds.filter((n) => n.type === "cache-zone");
+    // AABB intersection check
+    const inZone = currentZones.some((z) => {
+      const zW = z.measured?.width ?? (Number(z.style?.width) || 400);
+      const zH = z.measured?.height ?? (Number(z.style?.height) || 300);
+      // ...
+    });
+  });
+}, [nodes, setNodes]);
+```
+
+### Важные детали реализации (два баги, которые мы поймали)
+
+**1. Stale closure в `setNodes`**
+
+`zones` нельзя вычислять снаружи коллбека `setNodes((nds) => {...})` — это был бы
+снимок `nodes` из предыдущего рендера. Внутри коллбека React гарантирует актуальный `nds`.
+Поэтому `currentZones` вычисляется из `nds` внутри функционального апдейта.
+
+**2. Размер зоны после ресайза: `measured`, не `style`**
+
+`NodeResizer` обновляет `node.style.width/height` при ресайзе, но ReactFlow v12 также
+заполняет `node.measured.width/height` через ResizeObserver — и это всегда актуальные
+DOM-размеры. Читать размер зоны нужно из `measured` в первую очередь:
+
+```tsx
+const zW = z.measured?.width ?? (Number(z.style?.width) || 400);
+const zH = z.measured?.height ?? (Number(z.style?.height) || 300);
+```
+
+Если читать только из `style` — ноды, попадающие в растянутую зону, не получают иконку Zap.
+
+---
+
 ## Управление кэшем
 
 ### Запись — всегда
