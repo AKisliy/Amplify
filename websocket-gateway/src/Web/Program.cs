@@ -16,6 +16,10 @@ builder.Services.AddOptionsWithFluentValidation<RabbitMQOptions>(RabbitMQOptions
 
 var app = builder.Build();
 
+var basePath = builder.Configuration.GetValue<string>("BasePath");
+if (!string.IsNullOrEmpty(basePath))
+    app.UsePathBase(basePath);
+
 app.UseHealthChecks("/health");
 
 if (app.Environment.IsDevelopment())

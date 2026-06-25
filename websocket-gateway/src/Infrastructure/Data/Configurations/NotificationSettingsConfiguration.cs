@@ -12,11 +12,8 @@ public class NotificationSettingsConfiguration : IEntityTypeConfiguration<Notifi
 
         builder.HasIndex(e => e.UserId).IsUnique();
 
-        builder.Property(e => e.UserId)
-            .IsRequired()
-            .HasMaxLength(128);
+        builder.Property(e => e.UserId).IsRequired().HasColumnType("text");
 
-        builder.Property(e => e.TelegramUsername)
-            .HasMaxLength(64);
+        builder.Property(e => e.TelegramUsername).HasColumnType("text");
     }
 }

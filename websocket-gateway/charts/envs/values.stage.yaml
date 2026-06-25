@@ -3,6 +3,13 @@ environment: Staging
 secrets:
   rabbitMqConnection:
     key: rabbitmq-test
+  telegram:
+    botToken:
+      key: telegram-bot-token-test
+    webhookUrl:
+      key: telegram-webhook-url-test
+    botUsername:
+      key: telegram-bot-username-test
 
 volumeMounts:
   - name: config-volume
@@ -10,6 +17,7 @@ volumeMounts:
     subPath: appsettings_override.json
   
 appConfig:
+  BasePath: /ws-gateway
   Logging:
     LogLevel: 
       Default: Information

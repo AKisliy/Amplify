@@ -16,6 +16,7 @@ public static class DependencyInjection
             JwtOptions.ConfigurationSection
         );
         builder.AddAuth();
+        builder.Services.AddSignalR();
 
         builder.Services.AddScoped<IUser, UserContext>();
 
