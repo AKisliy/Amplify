@@ -26,6 +26,11 @@ Telegram delivery is preferred over in-browser notifications ("лучше в б�
    rather than a new microservice. Gateway already has userId, event context, and connection
    state awareness. Conceptually the service is a notification hub — the "websocket" name is
    a misnomer; it handles both real-time (SignalR) and async (Telegram) delivery.
+   Telegram bot hosted inside ws-gateway as a webhook endpoint ().
+   Multiple pods are safe: webhook is a stateless HTTP call routed by the LB to one pod;
+   no polling, no per-pod bot instance, no duplicate processing. Sending notifications from
+   consumers is also safe — MassTransit competing consumers ensures each RabbitMQ message is
+   processed by exactly one pod.
 2. **Telegram as the notification channel**: not push/email. Telegram Bot API via bot token.
 3. **Two-level toggle system**:
    - **Global flags** (stored in ws-gateway DB per user): `notify_on_error`, `notify_on_hitl`,
