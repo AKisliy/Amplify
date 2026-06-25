@@ -1,6 +1,6 @@
 using FluentValidation;
 
-namespace Infrastructure.Configuration;
+namespace WebSocketGateway.Web.Configuration;
 
 public class JwtOptions
 {

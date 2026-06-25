@@ -17,4 +17,10 @@ public class NodeExecutionStatusChanged
     public JsonElement? Outputs { get; set; }
 
     public string? Error { get; set; }
+
+    /// <summary>
+    /// Per-node notification override from graph metadata.
+    /// null = use user's global flag; true/false = override global flag.
+    /// </summary>
+    public bool? Notify { get; set; }
 }

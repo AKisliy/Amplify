@@ -1,21 +1,16 @@
-using System.Reflection;
-using FluentValidation;
-using WebSocketGateway.Web.Broker;
-using WebSocketGateway.Web.Configuration;
+using WebSocketGateway.Application;
+using WebSocketGateway.Infrastructure;
+using WebSocketGateway.Infrastructure.Configuration;
+using WebSocketGateway.Infrastructure.SignalR;
 using WebSocketGateway.Web.Configuration.Extensions;
-using WebSocketGateway.Web.Hubs;
-using WebSocketGateway.Web.State;
+using WebSocketGateway.Web.Endpoints;
+using WebSocketGateway.Web.Infrastructure;
 
 var builder = WebApplication.CreateBuilder(args);
 
-builder.Services.AddSignalR();
-builder.Services.AddSingleton<JobNotificationStateManager>();
-builder.Services.AddSingleton<NodeNotificationStateManager>();
-builder.AddBroker();
-builder.Services.AddValidatorsFromAssembly(Assembly.GetExecutingAssembly());
-
+builder.Services.AddApplicationServices();
 builder.AddInfrastructureServices();
-
+builder.AddInfrastructureWebServices();
 
 builder.Services.AddOptionsWithFluentValidation<RabbitMQOptions>(RabbitMQOptions.ConfigurationSection);
 
@@ -28,7 +23,10 @@ if (app.Environment.IsDevelopment())
 
 app.UseAuthentication();
 app.UseAuthorization();
+app.UseCurrentUser();
 
 app.MapHub<MainHub>("/hubs/main");
+app.MapNotificationsEndpoints();
+app.MapTelegramWebhookEndpoint();
 
 app.Run();
