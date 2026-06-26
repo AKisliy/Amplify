@@ -91,6 +91,7 @@ jobs:
             app_label: "ws-gateway"
             image_tag_var_name: "WS_GATEWAY_IMAGE_TAG"
             env_name: "stage"
+            with_migrations: true
         secrets: inherit
 
     deploy-video-editor:
