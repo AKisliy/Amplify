@@ -1,6 +1,8 @@
 environment: Staging
 
 secrets:
+  dbConnectionString:
+    key: ws-gateway-db-conn-test
   rabbitMqConnection:
     key: rabbitmq-test
   telegram:

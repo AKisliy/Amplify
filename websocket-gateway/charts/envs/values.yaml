@@ -52,5 +52,7 @@ externalSecret:
 secret:
   name: ws-gateway-secret
 
+secrets: {}
+
 # override in specific env file
 appConfig: {}
