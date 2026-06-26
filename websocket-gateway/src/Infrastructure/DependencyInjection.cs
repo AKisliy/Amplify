@@ -1,3 +1,5 @@
+using System.Reflection;
+using FluentValidation;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Options;
@@ -17,6 +19,7 @@ public static class DependencyInjection
         this IHostApplicationBuilder builder
     )
     {
+        builder.Services.AddValidatorsFromAssembly(Assembly.GetExecutingAssembly());
         builder.AddPersistence();
         builder.AddBroker();
         builder.AddTelegram();

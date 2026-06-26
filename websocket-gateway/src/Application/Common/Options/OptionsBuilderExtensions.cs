@@ -1,6 +1,7 @@
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 
-namespace WebSocketGateway.Web.Configuration.Extensions;
+namespace WebSocketGateway.Application.Common.Options;
 
 public static class OptionsBuilderExtensions
 {

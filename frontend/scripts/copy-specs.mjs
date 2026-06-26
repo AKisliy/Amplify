@@ -37,6 +37,11 @@ const specs = [
     dst: join(dest, "media-ingest.json"),
     name: "media-ingest",
   },
+  {
+    src: join(root, "websocket-gateway", "src", "Web", "wwwroot", "api", "specification.json"),
+    dst: join(dest, "websocket-gateway.json"),
+    name: "websocket-gateway",
+  }
 ];
 
 for (const { src, dst, name } of specs) {

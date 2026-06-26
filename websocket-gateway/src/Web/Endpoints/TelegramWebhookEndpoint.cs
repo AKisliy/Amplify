@@ -9,6 +9,8 @@ public static class TelegramWebhookEndpoint
     public static IEndpointRouteBuilder MapTelegramWebhookEndpoint(this IEndpointRouteBuilder app)
     {
         // No RequireAuthorization — Telegram calls this, not our users
+        // ExcludeFromDescription: Telegram.Bot.Types.Update has complex discriminator
+        // hierarchies that NSwag cannot handle during schema generation.
         app.MapPost(
             "/api/telegram/webhook",
             async (Update update, IMediator mediator, ILogger<Update> logger) =>
@@ -36,7 +38,7 @@ public static class TelegramWebhookEndpoint
 
                 return Results.Ok();
             }
-        );
+        ).ExcludeFromDescription();
 
         return app;
     }

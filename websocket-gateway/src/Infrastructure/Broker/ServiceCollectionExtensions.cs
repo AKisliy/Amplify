@@ -2,6 +2,7 @@ using MassTransit;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Options;
+using WebSocketGateway.Application.Common.Options;
 using WebSocketGateway.Contracts.Publisher;
 using WebSocketGateway.Contracts.TemplateService;
 using WebSocketGateway.Contracts.UserService;
@@ -15,6 +16,10 @@ internal static class ServiceCollectionExtensions
 {
     internal static IHostApplicationBuilder AddBroker(this IHostApplicationBuilder builder)
     {
+        builder.Services.AddOptionsWithFluentValidation<RabbitMQOptions>(
+            RabbitMQOptions.ConfigurationSection
+        );
+
         builder.Services.AddMassTransit(config =>
         {
             config.AddConsumer<PublicationStatusChangedConsumer>();
@@ -23,22 +28,32 @@ internal static class ServiceCollectionExtensions
             config.AddConsumer<GraphCompletedConsumer>();
             config.AddConsumer<AssetRegisteredConsumer>();
 
-            config.SetEndpointNameFormatter(new KebabCaseEndpointNameFormatter(includeNamespace: false));
+            config.SetEndpointNameFormatter(
+                new KebabCaseEndpointNameFormatter(includeNamespace: false)
+            );
 
-            config.UsingRabbitMq((context, cfg) =>
-            {
-                var options = context.GetRequiredService<IOptions<RabbitMQOptions>>().Value;
-                cfg.Host(options.Url);
-                cfg.Message<PublicationStatusChanged>(x => x.SetEntityName("publication-status-changed"));
-                cfg.Message<VideoEditingStepChanged>(x => x.SetEntityName("video-editing-step-changed"));
-                cfg.Message<NodeExecutionStatusChanged>(x => x.SetEntityName("node-status-changed"));
-                cfg.Message<GraphCompleted>(x => x.SetEntityName("graph-completed"));
-                cfg.Message<AssetRegistered>(x => x.SetEntityName("asset-registered"));
+            config.UsingRabbitMq(
+                (context, cfg) =>
+                {
+                    var options = context.GetRequiredService<IOptions<RabbitMQOptions>>().Value;
+                    cfg.Host(options.Url);
+                    cfg.Message<PublicationStatusChanged>(x =>
+                        x.SetEntityName("publication-status-changed")
+                    );
+                    cfg.Message<VideoEditingStepChanged>(x =>
+                        x.SetEntityName("video-editing-step-changed")
+                    );
+                    cfg.Message<NodeExecutionStatusChanged>(x =>
+                        x.SetEntityName("node-status-changed")
+                    );
+                    cfg.Message<GraphCompleted>(x => x.SetEntityName("graph-completed"));
+                    cfg.Message<AssetRegistered>(x => x.SetEntityName("asset-registered"));
 
-                cfg.UseRawJsonSerializer(RawSerializerOptions.AnyMessageType, isDefault: true);
-                cfg.UseInMemoryOutbox(context);
-                cfg.ConfigureEndpoints(context);
-            });
+                    cfg.UseRawJsonSerializer(RawSerializerOptions.AnyMessageType, isDefault: true);
+                    cfg.UseInMemoryOutbox(context);
+                    cfg.ConfigureEndpoints(context);
+                }
+            );
         });
 
         return builder;

@@ -1,5 +1,4 @@
 using FluentValidation;
-using Flurl;
 
 namespace WebSocketGateway.Infrastructure.Configuration;
 
@@ -14,8 +13,6 @@ public sealed class RabbitMQOptionsValidator : AbstractValidator<RabbitMQOptions
 {
     public RabbitMQOptionsValidator()
     {
-        RuleFor(x => x.Url)
-            .Must(Url.IsValid)
-            .WithMessage("Url must be a well-formed URL");
+        RuleFor(x => x.Url).NotEmpty();
     }
 }

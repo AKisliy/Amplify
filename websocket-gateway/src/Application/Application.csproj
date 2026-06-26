@@ -4,7 +4,9 @@
     <AssemblyName>WebSocketGateway.Application</AssemblyName>
   </PropertyGroup>
   <ItemGroup>
+    <PackageReference Include="Ardalis.GuardClauses" />
     <PackageReference Include="FluentValidation" />
+    <PackageReference Include="FluentValidation.DependencyInjectionExtensions" />
     <PackageReference Include="MediatR" />
     <PackageReference Include="Microsoft.EntityFrameworkCore" />
     <PackageReference Include="Microsoft.Extensions.Hosting" />

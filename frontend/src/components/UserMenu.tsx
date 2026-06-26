@@ -1,6 +1,7 @@
 "use client";
 
-import { LogOut, Sun, Moon, Monitor } from "lucide-react";
+import { LogOut, Sun, Moon, Monitor, Bell } from "lucide-react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useTheme } from "next-themes";
 import { useAuth } from "@/features/auth/hooks/useAuth";
@@ -17,11 +18,13 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { NotificationSettingsSheet } from "@/features/notifications/components/NotificationSettingsSheet";
 
 export function UserMenu() {
   const { user, logout } = useAuth();
   const router = useRouter();
   const { theme, setTheme } = useTheme();
+  const [notificationsOpen, setNotificationsOpen] = useState(false);
 
   const handleLogout = async () => {
     await logout();
@@ -35,6 +38,11 @@ export function UserMenu() {
     .toUpperCase();
 
   return (
+    <>
+      <NotificationSettingsSheet
+        open={notificationsOpen}
+        onOpenChange={setNotificationsOpen}
+      />
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <Button variant="ghost" className="relative h-9 w-9 rounded-full">
@@ -54,6 +62,14 @@ export function UserMenu() {
             </p>
           </div>
         </DropdownMenuLabel>
+        <DropdownMenuSeparator />
+        <DropdownMenuItem
+          onClick={() => setNotificationsOpen(true)}
+          className="cursor-pointer"
+        >
+          <Bell className="mr-2 h-4 w-4" />
+          Notifications
+        </DropdownMenuItem>
         <DropdownMenuSeparator />
         <DropdownMenuSub>
           <DropdownMenuSubTrigger className="cursor-pointer">
@@ -88,5 +104,6 @@ export function UserMenu() {
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
+    </>
   );
 }

@@ -9,13 +9,45 @@
     <PackageReference Include="FluentValidation.DependencyInjectionExtensions" />
     <PackageReference Include="Flurl" />
     <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" />
+    <PackageReference Include="Microsoft.AspNetCore.OpenApi" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Design">
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
       <PrivateAssets>all</PrivateAssets>
+    </PackageReference>
+    <PackageReference Include="Microsoft.OpenApi" />
+    <PackageReference Include="NSwag.AspNetCore" />
+    <PackageReference Include="NSwag.MSBuild">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
     <PackageReference Include="TypedSignalR.Client.TypeScript.Attributes" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Infrastructure\Infrastructure.csproj" />
   </ItemGroup>
+
+  <!-- Auto-generated Open API specification and Angular TypeScript clients -->
+  <PropertyGroup>
+    <RunPostBuildEvent>OnBuildSuccess</RunPostBuildEvent>
+  </PropertyGroup>
+
+  <Target
+    Name="NSwag"
+    AfterTargets="PostBuildEvent"
+    Condition=" '$(Configuration)' == 'Debug' And '$(UseNSwag)' == 'True' "
+  >
+    <Exec
+      ConsoleToMSBuild="true"
+      ContinueOnError="true"
+      WorkingDirectory="$(ProjectDir)"
+      EnvironmentVariables="ASPNETCORE_ENVIRONMENT=Development"
+      Command="$(NSwagExe_Net90) run config.nswag /variables:Configuration=$(Configuration)"
+    >
+      <Output TaskParameter="ExitCode" PropertyName="NSwagExitCode" />
+      <Output TaskParameter="ConsoleOutput" PropertyName="NSwagOutput" />
+    </Exec>
+
+    <Message Text="$(NSwagOutput)" Condition="'$(NSwagExitCode)' == '0'" Importance="low" />
+    <Error Text="$(NSwagOutput)" Condition="'$(NSwagExitCode)' != '0'" />
+  </Target>
 </Project>

@@ -1,4 +1,6 @@
-namespace WebSocketGateway.Web.Configuration.Extensions;
+using Microsoft.Extensions.DependencyInjection;
+
+namespace WebSocketGateway.Application.Common.Options;
 
 public static class ServiceCollectionExtensions
 {
