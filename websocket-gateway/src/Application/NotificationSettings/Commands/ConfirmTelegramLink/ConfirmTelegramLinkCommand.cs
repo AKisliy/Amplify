@@ -9,7 +9,8 @@ public record ConfirmTelegramLinkCommand(string Token, long ChatId, string? User
 
 public class ConfirmTelegramLinkCommandHandler(
     IApplicationDbContext db,
-    ITelegramLinkTokenCache tokenCache
+    ITelegramLinkTokenCache tokenCache,
+    ITelegramNotifier telegramNotifier
 ) : IRequestHandler<ConfirmTelegramLinkCommand, bool>
 {
     public async Task<bool> Handle(
@@ -33,6 +34,12 @@ public class ConfirmTelegramLinkCommandHandler(
 
         settings.TelegramChatId = request.ChatId;
         settings.TelegramUsername = request.Username;
+
+        await telegramNotifier.SendMessageAsync(
+            request.ChatId,
+            "Your Telegram account has been successfully linked to your Amplify account.",
+            cancellationToken
+        );
 
         await db.SaveChangesAsync(cancellationToken);
         return true;

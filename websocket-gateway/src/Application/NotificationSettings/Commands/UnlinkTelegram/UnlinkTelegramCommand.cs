@@ -5,7 +5,10 @@ namespace WebSocketGateway.Application.NotificationSettings.Commands.UnlinkTeleg
 
 public record UnlinkTelegramCommand : IRequest;
 
-public class UnlinkTelegramCommandHandler(IApplicationDbContext db, IUser currentUser)
+public class UnlinkTelegramCommandHandler(
+    IApplicationDbContext db, 
+    IUser currentUser,
+    ITelegramNotifier telegramNotifier)
     : IRequestHandler<UnlinkTelegramCommand>
 {
     public async Task Handle(UnlinkTelegramCommand request, CancellationToken cancellationToken)
@@ -20,6 +23,12 @@ public class UnlinkTelegramCommandHandler(IApplicationDbContext db, IUser curren
 
         settings.TelegramChatId = null;
         settings.TelegramUsername = null;
+
+        await telegramNotifier.SendMessageAsync(
+            settings.TelegramChatId!.Value,
+            "Your Telegram account has been successfully unlinked from your Amplify account.",
+            cancellationToken
+        );
 
         await db.SaveChangesAsync(cancellationToken);
     }
