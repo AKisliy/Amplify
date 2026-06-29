@@ -21,7 +21,11 @@ public class GenerateLinkTokenCommandHandler(
             throw new InvalidOperationException("Current user is not authenticated.");
 
         var token = tokenCache.GenerateToken(currentUser.Id!.Value);
-        return Task.FromResult(new GenerateLinkTokenResult(token, botConfig.BotUsername));
+
+        var botName = botConfig.BotUsername;
+        botName = botName.Replace("@", string.Empty, StringComparison.OrdinalIgnoreCase);
+
+        return Task.FromResult(new GenerateLinkTokenResult(token, botName));
     }
 }
 

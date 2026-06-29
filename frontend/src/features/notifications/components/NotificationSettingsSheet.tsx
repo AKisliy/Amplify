@@ -1,14 +1,14 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { ExternalLink, Send, Unlink } from "lucide-react";
 import {
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-  SheetDescription,
-} from "@/components/ui/sheet";
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog";
 import { Switch } from "@/components/ui/switch";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -25,12 +25,11 @@ interface Props {
 export function NotificationSettingsSheet({ open, onOpenChange }: Props) {
   const { settings, loading, error, load, update, generateTelegramLink, unlinkTelegram } =
     useNotificationSettings();
-
-  const handleOpenChange = (next: boolean) => {
-    if (next) load();
-    onOpenChange(next);
-  };
   const { toast } = useToast();
+
+  useEffect(() => {
+    if (open) load();
+  }, [open]); 
   const [linking, setLinking] = useState(false);
   const [unlinking, setUnlinking] = useState(false);
 
@@ -46,7 +45,10 @@ export function NotificationSettingsSheet({ open, onOpenChange }: Props) {
     setLinking(true);
     try {
       const { token, botUsername } = await generateTelegramLink();
-      const url = `https://t.me/${botUsername}?start=${token}`;
+
+      var fixedBotUsername = botUsername?.startsWith("@") ? botUsername.slice(1) : botUsername;
+
+      const url = `https://t.me/${fixedBotUsername}?start=${token}`;
       window.open(url, "_blank", "noopener,noreferrer");
     } catch {
       toast({ variant: "destructive", title: "Error", description: "Failed to generate Telegram link" });
@@ -70,16 +72,16 @@ export function NotificationSettingsSheet({ open, onOpenChange }: Props) {
   const isTelegramLinked = !!settings?.telegramChatId;
 
   return (
-    <Sheet open={open} onOpenChange={handleOpenChange}>
-      <SheetContent className="w-full sm:max-w-md">
-        <SheetHeader>
-          <SheetTitle>Notification Settings</SheetTitle>
-          <SheetDescription>
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="sm:max-w-md">
+        <DialogHeader>
+          <DialogTitle>Notification Settings</DialogTitle>
+          <DialogDescription>
             Configure how and when you receive pipeline notifications.
-          </SheetDescription>
-        </SheetHeader>
+          </DialogDescription>
+        </DialogHeader>
 
-        <div className="mt-6 space-y-6">
+        <div className="space-y-6">
           {/* Telegram section */}
           <div className="space-y-3">
             <p className="text-sm font-medium">Telegram</p>
@@ -166,8 +168,8 @@ export function NotificationSettingsSheet({ open, onOpenChange }: Props) {
             )}
           </div>
         </div>
-      </SheetContent>
-    </Sheet>
+      </DialogContent>
+    </Dialog>
   );
 }
 

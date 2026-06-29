@@ -32,7 +32,7 @@ public class ConfirmTelegramLinkCommandHandler(
         }
 
         settings.TelegramChatId = request.ChatId;
-        settings.TelegramUsername = request.Username is not null ? $"@{request.Username}" : null;
+        settings.TelegramUsername = request.Username;
 
         await db.SaveChangesAsync(cancellationToken);
         return true;
