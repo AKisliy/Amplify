@@ -72,9 +72,13 @@ jobs:
 
             - name: Setup Helm
               uses: azure/setup-helm@v3
+              with:
+                  version: "v4.0.4"
 
             - name: Setup Helmfile
               uses: mamezou-tech/setup-helmfile@v2.2.0
+              with:
+                  helmfile-version: "v1.2.2"
 
             - name: Set up Docker Buildx
               uses: docker/setup-buildx-action@v3
