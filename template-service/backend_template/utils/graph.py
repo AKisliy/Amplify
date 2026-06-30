@@ -1,3 +1,6 @@
+import copy
+import uuid
+
 # Frontend-only node schemas that must never be submitted to ComfyUI.
 # - FRONTEND_SINK_SCHEMAS: pure output sinks (no outputs) — drop entirely.
 #   CacheZoneNode is a UI decorator with no ComfyUI equivalent — drop it too.
@@ -13,6 +16,44 @@ _FRONTEND_SINK_SCHEMAS: frozenset[str] = frozenset({
 _FRONTEND_SOURCE_SCHEMAS: frozenset[str] = frozenset({
     "ImportMediaNode",
 })
+
+
+def remap_node_ids(graph: dict) -> dict:
+    """
+    Returns a deep copy of a ReactFlow graph with all node IDs replaced by new UUIDs.
+
+    Remaps:
+      - nodes[i].id
+      - edges[i].source
+      - edges[i].target
+
+    Port IDs (sourceHandle, targetHandle, ports[i].id) are NOT remapped —
+    they are scoped to their node and do not need to be globally unique.
+
+    If the graph is empty or missing "nodes"/"edges" keys, it is returned as-is
+    (deep copied) without raising an exception.
+    """
+    graph = copy.deepcopy(graph)
+    nodes: list[dict] = graph.get("nodes") or []
+    edges: list[dict] = graph.get("edges") or []
+
+    id_map: dict[str, str] = {
+        node["id"]: str(uuid.uuid4())
+        for node in nodes
+        if "id" in node
+    }
+
+    for node in nodes:
+        if "id" in node:
+            node["id"] = id_map[node["id"]]
+
+    for edge in edges:
+        if edge.get("source") in id_map:
+            edge["source"] = id_map[edge["source"]]
+        if edge.get("target") in id_map:
+            edge["target"] = id_map[edge["target"]]
+
+    return graph
 
 
 def convert_reactflow_to_comfy(graph: dict) -> dict:

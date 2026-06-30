@@ -12,3 +12,4 @@
 | [AMPLIFY-416](AMPLIFY-416/plan.md) | Dashboard bug fixes — Capital Burn & CPA charts      | In progress | Hash-based model colors; zero-pad missing dates on frontend; dynamic period labels                    |
 | [AMPLIFY-418](AMPLIFY-418/plan.md) | Telegram notifications for pipeline status updates   | In progress | Delivery via ws-gateway; per-node toggle; ws-gateway owns notification_settings DB                    |
 | [AMPLIFY-419](AMPLIFY-419/plan.md) | Temporal-based job execution engine                  | In progress | Full ComfyUI replacement; nodes as Temporal activities; DAG via topological batches; HITL via signals |
+| [AMPLIFY-434](AMPLIFY-434/plan.md) | Fix ID Collision on Template Duplication             | In progress | remap_node_ids() при duplicate_from_library; новые UUID для нод, обновление edges                    |

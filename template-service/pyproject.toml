@@ -38,6 +38,9 @@ packages = [
 [tool.poetry.scripts]
 export-spec = "scripts.export_spec:main"
 
+[tool.poetry.group.dev.dependencies]
+pytest = "^9.1.1"
+
 [build-system]
 requires = ["poetry-core>=2.0.0,<3.0.0"]
 build-backend = "poetry.core.masonry.api"
