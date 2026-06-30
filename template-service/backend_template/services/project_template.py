@@ -187,7 +187,7 @@ class ProjectTemplateService:
         )
 
     async def duplicate_from_library(
-        self, library_template_id: UUID, project_id: UUID
+        self, library_template_id: UUID, project_id: UUID, *, name: str | None = None
     ) -> ProjectTemplateResponse:
         """
         Duplicates a read-only LibraryTemplate into a new editable ProjectTemplate.
@@ -206,7 +206,7 @@ class ProjectTemplateService:
         #    do not produce colliding NodeStatusChangedEvents (AMPLIFY-434).
         orm_template = await self.repo.create(
             project_id=project_id,
-            name=source.name,
+            name=name if name is not None else source.name,
             description=source.description,
             current_graph_json=remap_node_ids(source.graph_json),
         )

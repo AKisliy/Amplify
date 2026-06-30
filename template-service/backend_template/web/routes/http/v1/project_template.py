@@ -159,10 +159,11 @@ async def duplicate_from_library(
     service: Service,
     library_template_id: UUID = Query(..., description="UUID of the source LibraryTemplate to clone"),
     project_id: UUID = Query(..., description="UUID of the target Project to create the template in"),
+    name: str | None = Query(None, description="Override the template name (defaults to the source name)"),
 ):
     """
     Duplicates a read-only Library Template into a new editable Project Template.
     No JSON body required — the backend fetches the source template and copies its graph.
     """
-    return await service.duplicate_from_library(library_template_id, project_id)
+    return await service.duplicate_from_library(library_template_id, project_id, name=name)
 

@@ -405,6 +405,24 @@
               "title": "Project Id"
             },
             "description": "UUID of the target Project to create the template in"
+          },
+          {
+            "name": "name",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Override the template name (defaults to the source name)",
+              "title": "Name"
+            },
+            "description": "Override the template name (defaults to the source name)"
           }
         ],
         "responses": {

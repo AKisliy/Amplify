@@ -28,7 +28,7 @@ import "@xyflow/react/dist/style.css";
 import { Button }      from "@/components/ui/button";
 import { useToast }    from "@/hooks/use-toast";
 import { useTheme } from "next-themes";
-import { createTemplateV1TemplatesPost, getTemplatesByProjectV1TemplatesProjectProjectIdGet } from "@/lib/api/template-service";
+import { duplicateFromLibraryV1TemplatesFromLibraryPost, getTemplatesByProjectV1TemplatesProjectProjectIdGet } from "@/lib/api/template-service";
 import { getLibraryTemplate, type LibraryTemplate } from "@/features/templates/hooks/useLibraryTemplates";
 
 import { AmplifyNode }      from "@/features/canvas/components/AmplifyNode";
@@ -199,12 +199,11 @@ export default function LibraryTemplatePreviewPage() {
         counter++;
       }
 
-      const { data: newTpl } = await createTemplateV1TemplatesPost({
-        body: {
+      const { data: newTpl } = await duplicateFromLibraryV1TemplatesFromLibraryPost({
+        query: {
+          library_template_id: templateId,
           project_id: projectId,
           name: candidateName,
-          description: template.description ?? undefined,
-          current_graph_json: template.graph_json ?? {},
         },
         throwOnError: true,
       });
