@@ -76,11 +76,13 @@ async def execute_node(input_args: Sequence[RawValue]) -> dict:
         cached = await get_cached(cache_key)
         if cached is not None:
             logger.info("Cache hit: %s node_id=%s", class_type, inp.node_id)
-            await publish_node_status(inp.job_id, inp.node_id, inp.user_id, "CACHED")
+            await publish_node_status(inp.job_id, inp.node_id, inp.user_id, "CACHED",
+                                       template_id=inp.template_id, project_id=inp.project_id)
             return cached
 
     set_litellm_context(inp.template_id, inp.project_id, inp.job_id)
-    await publish_node_status(inp.job_id, inp.node_id, inp.user_id, "RUNNING")
+    await publish_node_status(inp.job_id, inp.node_id, inp.user_id, "RUNNING",
+                              template_id=inp.template_id, project_id=inp.project_id)
 
     async def _heartbeat_loop() -> None:
         while True:
@@ -170,6 +172,8 @@ async def execute_node(input_args: Sequence[RawValue]) -> dict:
                 for k, v in outputs.items()
                 if k != "_context_patch"
             },
+            template_id=inp.template_id,
+            project_id=inp.project_id,
         )
 
         # --- Cache write (every run, if globally enabled) ---
@@ -179,7 +183,8 @@ async def execute_node(input_args: Sequence[RawValue]) -> dict:
         return outputs
 
     except Exception as exc:
-        await publish_node_status(inp.job_id, inp.node_id, inp.user_id, "FAILURE", error=str(exc))
+        await publish_node_status(inp.job_id, inp.node_id, inp.user_id, "FAILURE", error=str(exc),
+                                   template_id=inp.template_id, project_id=inp.project_id)
         raise
     finally:
         heartbeat_task.cancel()

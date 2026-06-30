@@ -14,8 +14,8 @@ public class NodeExecutionStatusChangedConsumer(
     IApplicationDbContext db,
     ITelegramNotifier telegram,
     IUserPresenceChecker presence,
-    ILogger<NodeExecutionStatusChangedConsumer> logger)
-    : IConsumer<NodeExecutionStatusChanged>
+    ILogger<NodeExecutionStatusChangedConsumer> logger
+) : IConsumer<NodeExecutionStatusChanged>
 {
     public async Task Consume(ConsumeContext<NodeExecutionStatusChanged> context)
     {
@@ -23,7 +23,10 @@ public class NodeExecutionStatusChangedConsumer(
 
         logger.LogInformation(
             "Node execution status changed: NodeId={NodeId} JobId={JobId} Status={Status}",
-            message.NodeId, message.JobId, message.Status);
+            message.NodeId,
+            message.JobId,
+            message.Status
+        );
 
         if (!Guid.TryParse(message.UserId, out var userId))
         {
@@ -41,42 +44,62 @@ public class NodeExecutionStatusChangedConsumer(
         {
             logger.LogInformation(
                 "Suppressed stale status {Status} for NodeId={NodeId} JobId={JobId}",
-                message.Status, message.NodeId, message.JobId);
+                message.Status,
+                message.NodeId,
+                message.JobId
+            );
             return;
         }
 
-        await hubContext.Clients.User(message.UserId).OnNodeExecutionStatusChanged(
-            message.NodeId,
-            message.Status,
-            message.Outputs.HasValue ? message.Outputs.Value : null,
-            message.Error);
+        await hubContext
+            .Clients.User(message.UserId)
+            .OnNodeExecutionStatusChanged(
+                message.NodeId,
+                message.Status,
+                message.Outputs.HasValue ? message.Outputs.Value : null,
+                message.Error
+            );
 
         await SendTelegramIfEnabledAsync(message, userId, context.CancellationToken);
     }
 
-    private async Task SendTelegramIfEnabledAsync(NodeExecutionStatusChanged msg, Guid userId, CancellationToken ct)
+    private async Task SendTelegramIfEnabledAsync(
+        NodeExecutionStatusChanged msg,
+        Guid userId,
+        CancellationToken ct
+    )
     {
         var isError = msg.Status.Equals("FAILURE", StringComparison.OrdinalIgnoreCase);
         var isHitl = msg.Status.Equals("WAITING_FOR_REVIEW", StringComparison.OrdinalIgnoreCase);
 
-        if (!isError && !isHitl) return;
+        if (!isError && !isHitl)
+            return;
 
-        var settings = await db.NotificationSettings
-            .FirstOrDefaultAsync(s => s.UserId == userId, ct);
+        var settings = await db.NotificationSettings.FirstOrDefaultAsync(
+            s => s.UserId == userId,
+            ct
+        );
 
-        if (settings?.TelegramChatId is null) return;
-        if (settings.NotifyOnlyWhenOffline && presence.IsOnline(userId)) return;
+        if (settings?.TelegramChatId is null)
+            return;
+        if (settings.NotifyOnlyWhenOffline && presence.IsOnline(userId))
+            return;
 
         // Per-node override takes precedence over global flag
         var shouldNotify = isError
             ? (msg.Notify ?? settings.NotifyOnError)
             : (msg.Notify ?? settings.NotifyOnHitl);
 
-        if (!shouldNotify) return;
+        if (!shouldNotify)
+            return;
+
+        var linkSuffix = !string.IsNullOrEmpty(msg.FrontendUrl)
+            ? $"\n🔗 [Открыть шаблон]({msg.FrontendUrl})"
+            : string.Empty;
 
         var text = isError
-            ? $"❌ Ошибка в ноде {msg.NodeId}: {msg.Error}"
-            : $"👀 Нода {msg.NodeId} ожидает проверки";
+            ? $"❌ Ошибка в ноде: {msg.Error}{linkSuffix}"
+            : $"👀 Нода ожидает проверки{linkSuffix}";
 
         await telegram.SendMessageAsync(settings.TelegramChatId.Value, text, ct);
     }

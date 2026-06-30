@@ -70,7 +70,8 @@ async def hitl_setup(inp: NodeActivityInput) -> HitlSetupResult:
         cached = await get_cached(cache_key)
         if cached is not None:
             logger.info("HITL cache hit: %s node_id=%s", class_type, inp.node_id)
-            await publish_node_status(inp.job_id, inp.node_id, inp.user_id, "CACHED")
+            await publish_node_status(inp.job_id, inp.node_id, inp.user_id, "CACHED",
+                                       template_id=inp.template_id, project_id=inp.project_id)
             return HitlSetupResult(is_cached=True, cached_value=cached, cache_key=cache_key)
 
     # --- Auto-confirm fast path ---
@@ -112,7 +113,8 @@ async def hitl_setup(inp: NodeActivityInput) -> HitlSetupResult:
     )
 
     # --- Notify frontend ---
-    await publish_node_status(inp.job_id, inp.node_id, inp.user_id, "WAITING_FOR_REVIEW")
+    await publish_node_status(inp.job_id, inp.node_id, inp.user_id, "WAITING_FOR_REVIEW",
+                              template_id=inp.template_id, project_id=inp.project_id)
 
     return HitlSetupResult(task_id=task_id, cache_key=cache_key)
 
@@ -159,6 +161,8 @@ async def hitl_finalize(finalize_inp: HitlFinalizeInput) -> dict:
         inp.user_id,
         "SUCCESS",
         outputs={k: v if isinstance(v, list) else [v] for k, v in outputs.items()},
+        template_id=inp.template_id,
+        project_id=inp.project_id,
     )
 
     logger.info("HITL finalized: %s node_id=%s", class_type, inp.node_id)

@@ -7,6 +7,7 @@ the ComfyUI engine, so job_consumer.py works without modification.
 from pydantic import BaseModel, ConfigDict
 from pydantic.alias_generators import to_camel
 
+from backend_template.config import settings
 from backend_template.utils.broker import publish_event
 
 EXCHANGE = "node-status-changed"
@@ -23,6 +24,7 @@ class NodeStatusEvent(BaseModel):
     outputs: dict | None = None
     error: str | None = None
     job_status: str | None = None
+    frontend_url: str | None = None
 
 
 async def publish_node_status(
@@ -34,7 +36,16 @@ async def publish_node_status(
     outputs: dict | None = None,
     error: str | None = None,
     job_status: str | None = None,
+    template_id: str = "",
+    project_id: str = "",
 ) -> None:
+    frontend_url: str | None = None
+    if template_id and project_id:
+        frontend_url = (
+            f"{settings.frontend_base_url}"
+            f"/projects/{project_id}/templates/{template_id}"
+        )
+
     event = NodeStatusEvent(
         job_id=job_id,
         prompt_id=job_id,
@@ -44,5 +55,6 @@ async def publish_node_status(
         outputs=outputs,
         error=error,
         job_status=job_status,
+        frontend_url=frontend_url,
     )
     await publish_event(EXCHANGE, event)

@@ -16,6 +16,8 @@ public class NodeExecutionStatusChanged
 
     public JsonElement? Outputs { get; set; }
 
+    public string? FrontendUrl { get; set; }
+
     public string? Error { get; set; }
 
     /// <summary>
