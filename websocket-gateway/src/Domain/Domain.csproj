@@ -1,0 +1,6 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <RootNamespace>WebSocketGateway.Domain</RootNamespace>
+    <AssemblyName>WebSocketGateway.Domain</AssemblyName>
+  </PropertyGroup>
+</Project>

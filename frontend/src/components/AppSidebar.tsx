@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { useParams, usePathname, useRouter } from "next/navigation";
 import {
   LayoutTemplate,
@@ -16,7 +17,7 @@ import {
   Moon,
   Monitor,
   LayoutDashboard,
-  BarChart3,
+  Bell,
 } from "lucide-react";
 import { useTheme } from "next-themes";
 
@@ -47,6 +48,7 @@ import {
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { useProjects } from "@/features/ambassadors/hooks/useProjects";
 import { useAuth } from "@/features/auth/hooks/useAuth";
+import { NotificationSettingsSheet } from "@/features/notifications/components/NotificationSettingsSheet";
 
 const NAV_ITEMS = [
   {
@@ -96,6 +98,7 @@ export function AppSidebar() {
   const { projects, isLoading } = useProjects();
   const { user, logout } = useAuth();
   const { theme, setTheme } = useTheme();
+  const [notificationsOpen, setNotificationsOpen] = useState(false);
 
   const currentProject = projects.find((p) => p.id === projectId);
   const displayName = user?.email?.split("@")[0] || "User";
@@ -107,6 +110,8 @@ export function AppSidebar() {
   };
 
   return (
+    <>
+      <NotificationSettingsSheet open={notificationsOpen} onOpenChange={setNotificationsOpen} />
     <Sidebar collapsible="icon">
       <SidebarHeader>
         <SidebarMenu>
@@ -258,6 +263,14 @@ export function AppSidebar() {
                 </DropdownMenuSub>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem
+                  onClick={() => setNotificationsOpen(true)}
+                  className="cursor-pointer"
+                >
+                  <Bell className="mr-2 h-4 w-4" />
+                  Notifications
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem
                   onClick={handleLogout}
                   className="text-destructive focus:text-destructive cursor-pointer"
                 >
@@ -270,5 +283,6 @@ export function AppSidebar() {
         </SidebarMenu>
       </SidebarFooter>
     </Sidebar>
+    </>
   );
 }

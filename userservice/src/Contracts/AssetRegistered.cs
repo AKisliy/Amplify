@@ -17,4 +17,6 @@ public class AssetRegistered : IAuditableMessage
     public List<Guid> AutoListIds { get; set; } = [];
 
     public string? Description { get; set; }
+
+    public string? FrontendUrl { get; set; }
 }

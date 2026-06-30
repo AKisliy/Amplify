@@ -1,6 +1,6 @@
 using System.Security.Claims;
 using System.Text;
-using Infrastructure.Configuration;
+using WebSocketGateway.Web.Configuration;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;

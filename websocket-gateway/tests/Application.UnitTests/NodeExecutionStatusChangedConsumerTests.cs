@@ -1,13 +1,14 @@
 using MassTransit;
 using Microsoft.AspNetCore.SignalR;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging.Abstractions;
 using Moq;
 using Shouldly;
+using WebSocketGateway.Application.Common.Interfaces;
+using WebSocketGateway.Application.State;
 using WebSocketGateway.Contracts.TemplateService;
-using WebSocketGateway.Web.Consumers;
-using WebSocketGateway.Web.Hubs;
-using WebSocketGateway.Web.Receivers;
-using WebSocketGateway.Web.State;
+using WebSocketGateway.Infrastructure.Broker.Consumers;
+using WebSocketGateway.Infrastructure.SignalR;
 
 namespace WebSocketGateway.Application.UnitTests;
 
@@ -41,9 +42,16 @@ public class NodeExecutionStatusChangedConsumerTests
 
         _stateManager = new NodeNotificationStateManager(NullLogger<NodeNotificationStateManager>.Instance);
 
+        var dbMock = new Mock<IApplicationDbContext>();
+        dbMock.Setup(d => d.NotificationSettings)
+            .Returns(AsyncDbSetMock.Create<Domain.Entities.NotificationSettings>([]).Object);
+
         _sut = new NodeExecutionStatusChangedConsumer(
             _hubContextMock.Object,
             _stateManager,
+            dbMock.Object,
+            Mock.Of<ITelegramNotifier>(),
+            Mock.Of<IUserPresenceChecker>(),
             NullLogger<NodeExecutionStatusChangedConsumer>.Instance);
     }
 
@@ -63,6 +71,7 @@ public class NodeExecutionStatusChangedConsumerTests
     {
         var mock = new Mock<ConsumeContext<NodeExecutionStatusChanged>>();
         mock.Setup(c => c.Message).Returns(message);
+        mock.Setup(c => c.CancellationToken).Returns(CancellationToken.None);
         return mock.Object;
     }
 
@@ -99,7 +108,6 @@ public class NodeExecutionStatusChangedConsumerTests
     public async Task Running_IsForwarded()
     {
         await Consume(ValidNodeId, JobId, ValidUserId, "RUNNING");
-
         VerifyForwarded(ValidNodeId, "RUNNING", Times.Once());
     }
 
@@ -108,7 +116,6 @@ public class NodeExecutionStatusChangedConsumerTests
     {
         await Consume(ValidNodeId, JobId, ValidUserId, "RUNNING");
         await Consume(ValidNodeId, JobId, ValidUserId, "SUCCESS");
-
         VerifyForwarded(ValidNodeId, "SUCCESS", Times.Once());
     }
 
@@ -117,7 +124,6 @@ public class NodeExecutionStatusChangedConsumerTests
     {
         await Consume(ValidNodeId, JobId, ValidUserId, "RUNNING");
         await Consume(ValidNodeId, JobId, ValidUserId, "WAITING_FOR_REVIEW");
-
         VerifyForwarded(ValidNodeId, "WAITING_FOR_REVIEW", Times.Once());
     }
 
@@ -128,9 +134,8 @@ public class NodeExecutionStatusChangedConsumerTests
     {
         await Consume(ValidNodeId, JobId, ValidUserId, "RUNNING");
         await Consume(ValidNodeId, JobId, ValidUserId, "SUCCESS");
-        await Consume(ValidNodeId, JobId, ValidUserId, "RUNNING"); // stale
-
-        VerifyForwarded(ValidNodeId, "RUNNING", Times.Once()); // only the first one
+        await Consume(ValidNodeId, JobId, ValidUserId, "RUNNING");
+        VerifyForwarded(ValidNodeId, "RUNNING", Times.Once());
     }
 
     [Test]
@@ -138,8 +143,7 @@ public class NodeExecutionStatusChangedConsumerTests
     {
         await Consume(ValidNodeId, JobId, ValidUserId, "RUNNING");
         await Consume(ValidNodeId, JobId, ValidUserId, "FAILURE");
-        await Consume(ValidNodeId, JobId, ValidUserId, "RUNNING"); // stale
-
+        await Consume(ValidNodeId, JobId, ValidUserId, "RUNNING");
         VerifyForwarded(ValidNodeId, "RUNNING", Times.Once());
     }
 
@@ -148,8 +152,7 @@ public class NodeExecutionStatusChangedConsumerTests
     {
         await Consume(ValidNodeId, JobId, ValidUserId, "RUNNING");
         await Consume(ValidNodeId, JobId, ValidUserId, "WAITING_FOR_REVIEW");
-        await Consume(ValidNodeId, JobId, ValidUserId, "RUNNING"); // stale
-
+        await Consume(ValidNodeId, JobId, ValidUserId, "RUNNING");
         VerifyForwarded(ValidNodeId, "RUNNING", Times.Once());
     }
 
@@ -158,8 +161,7 @@ public class NodeExecutionStatusChangedConsumerTests
     {
         await Consume(ValidNodeId, JobId, ValidUserId, "RUNNING");
         await Consume(ValidNodeId, JobId, ValidUserId, "SUCCESS");
-        await Consume(ValidNodeId, JobId, ValidUserId, "WAITING_FOR_REVIEW"); // stale
-
+        await Consume(ValidNodeId, JobId, ValidUserId, "WAITING_FOR_REVIEW");
         VerifyForwarded(ValidNodeId, "WAITING_FOR_REVIEW", Times.Never());
     }
 
@@ -170,11 +172,8 @@ public class NodeExecutionStatusChangedConsumerTests
     {
         var nodeId2 = Guid.NewGuid().ToString();
 
-        // node1/job-A reaches SUCCESS
         await Consume(ValidNodeId, "job-A", ValidUserId, "RUNNING");
         await Consume(ValidNodeId, "job-A", ValidUserId, "SUCCESS");
-
-        // node2/job-B independent — RUNNING must be forwarded
         await Consume(nodeId2, "job-B", ValidUserId, "RUNNING");
 
         VerifyForwarded(nodeId2, "RUNNING", Times.Once());
@@ -183,12 +182,8 @@ public class NodeExecutionStatusChangedConsumerTests
     [Test]
     public async Task SameNode_DifferentJobs_AreIsolated()
     {
-        // ValidNodeId/job-1 reaches terminal
         await Consume(ValidNodeId, "job-1", ValidUserId, "SUCCESS");
-
-        // Same node, different job — must still forward RUNNING
         await Consume(ValidNodeId, "job-2", ValidUserId, "RUNNING");
-
         VerifyForwarded(ValidNodeId, "RUNNING", Times.Once());
     }
 }

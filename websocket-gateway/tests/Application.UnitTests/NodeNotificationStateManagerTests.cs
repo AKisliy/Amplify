@@ -1,6 +1,6 @@
 using Microsoft.Extensions.Logging.Abstractions;
 using Shouldly;
-using WebSocketGateway.Web.State;
+using WebSocketGateway.Application.State;
 
 namespace WebSocketGateway.Application.UnitTests;
 
@@ -111,7 +111,6 @@ public class NodeNotificationStateManagerTests
         _sut.TryTransition(NodeId, "job-A", "RUNNING");
         _sut.TryTransition(NodeId, "job-A", "SUCCESS");
 
-        // Same node, different job — must not be affected
         _sut.TryTransition(NodeId, "job-B", "RUNNING").ShouldBeTrue();
     }
 
@@ -121,7 +120,6 @@ public class NodeNotificationStateManagerTests
         _sut.TryTransition("node-A", JobId, "RUNNING");
         _sut.TryTransition("node-A", JobId, "SUCCESS");
 
-        // Same job, different node — must not be affected
         _sut.TryTransition("node-B", JobId, "RUNNING").ShouldBeTrue();
     }
 

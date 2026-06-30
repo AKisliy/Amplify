@@ -39,7 +39,7 @@ serviceEntries:
   postgres:
     host: "ep-twilight-star-ab1y78pz-pooler.eu-west-2.aws.neon.tech"
   rabbitmq:
-    host: "kebnekaise.lmq.cloudamqp.com"
+    host: "dog.lmq.cloudamqp.com"
 
 
 # Istio JWT authentication settings for the staging environment.

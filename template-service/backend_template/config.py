@@ -61,6 +61,9 @@ class Config(BaseSettings):
     # Node result cache
     cache_enabled: bool = True
 
+    # Frontend
+    frontend_base_url: str = "https://app.alexeykiselev.tech"
+
     # RabbitMQ
     rabbitmq_url: str = "amqp://guest:guest@localhost:5672/"
 

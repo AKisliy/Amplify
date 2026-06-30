@@ -39,4 +39,12 @@ export default defineConfig([
     },
     plugins,
   },
+  {
+    input: "../api-specs/websocket-gateway.json",
+    output: {
+      path: "src/lib/api/generated/websocket-gateway",
+      postProcess: ["prettier"],
+    },
+    plugins,
+  }
 ]);
