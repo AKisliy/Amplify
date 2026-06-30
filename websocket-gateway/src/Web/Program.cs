@@ -1,8 +1,6 @@
 using Microsoft.AspNetCore.HttpOverrides;
 using WebSocketGateway.Application;
-using WebSocketGateway.Application.Common.Options;
 using WebSocketGateway.Infrastructure;
-using WebSocketGateway.Infrastructure.Configuration;
 using WebSocketGateway.Infrastructure.SignalR;
 using WebSocketGateway.Web.Endpoints;
 using WebSocketGateway.Web.Infrastructure;

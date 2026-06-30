@@ -44,7 +44,7 @@ public class NodeExecutionStatusChangedConsumerTests
 
         var dbMock = new Mock<IApplicationDbContext>();
         dbMock.Setup(d => d.NotificationSettings)
-            .Returns(new Mock<DbSet<Domain.Entities.NotificationSettings>>().Object);
+            .Returns(AsyncDbSetMock.Create<Domain.Entities.NotificationSettings>([]).Object);
 
         _sut = new NodeExecutionStatusChangedConsumer(
             _hubContextMock.Object,
