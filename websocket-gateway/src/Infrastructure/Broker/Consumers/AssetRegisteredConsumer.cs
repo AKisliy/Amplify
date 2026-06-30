@@ -14,8 +14,8 @@ public class AssetRegisteredConsumer(
     IApplicationDbContext db,
     ITelegramNotifier telegram,
     IUserPresenceChecker presence,
-    ILogger<AssetRegisteredConsumer> logger)
-    : IConsumer<AssetRegistered>
+    ILogger<AssetRegisteredConsumer> logger
+) : IConsumer<AssetRegistered>
 {
     public async Task Consume(ConsumeContext<AssetRegistered> context)
     {
@@ -42,24 +42,48 @@ public class AssetRegisteredConsumer(
 
         logger.LogInformation(
             "AssetRegistered for {JobId}: sending done toast to user {UserId}, assetId={AssetId}",
-            msg.JobId, msg.UserId, msg.Id);
+            msg.JobId,
+            msg.UserId,
+            msg.Id
+        );
 
-        await hubContext.Clients.User(msg.UserId).OnAssetReady(
-            msg.Id, msg.JobId, msg.ProjectId, msg.MediaId, msg.MediaType);
+        await hubContext
+            .Clients.User(msg.UserId)
+            .OnAssetReady(msg.Id, msg.JobId, msg.ProjectId, msg.MediaId, msg.MediaType);
 
-        await SendTelegramIfEnabledAsync(userId, msg.JobId, context.CancellationToken);
+        await SendTelegramIfEnabledAsync(
+            userId,
+            msg.JobId,
+            msg.FrontendUrl,
+            context.CancellationToken
+        );
     }
 
-    private async Task SendTelegramIfEnabledAsync(Guid userId, string jobId, CancellationToken ct)
+    private async Task SendTelegramIfEnabledAsync(
+        Guid userId,
+        string jobId,
+        string? frontendUrl,
+        CancellationToken ct
+    )
     {
-        var settings = await db.NotificationSettings
-            .FirstOrDefaultAsync(s => s.UserId == userId, ct);
+        var settings = await db.NotificationSettings.FirstOrDefaultAsync(
+            s => s.UserId == userId,
+            ct
+        );
 
-        if (settings?.TelegramChatId is null) return;
-        if (!settings.NotifyOnCompletion) return;
-        if (settings.NotifyOnlyWhenOffline && presence.IsOnline(userId)) return;
+        if (settings?.TelegramChatId is null)
+            return;
+        if (!settings.NotifyOnCompletion)
+            return;
+        if (settings.NotifyOnlyWhenOffline && presence.IsOnline(userId))
+            return;
 
-        await telegram.SendMessageAsync(settings.TelegramChatId.Value,
-            $"✅ Ваш контент готов! Job: {jobId}", ct);
+        var text = "✅ Ваш контент готов!";
+        if (!string.IsNullOrEmpty(frontendUrl))
+            text += $"\n🔗 [Посмотреть]({frontendUrl})";
+        else
+            text += $"\nJobId: {jobId}";
+
+        await telegram.SendMessageAsync(settings.TelegramChatId.Value, text, ct);
     }
 }

@@ -9,8 +9,8 @@ namespace WebSocketGateway.Infrastructure.Broker.Consumers;
 public class GraphCompletedConsumer(
     IHubContext<MainHub, IClientReceiver> hubContext,
     JobNotificationStateManager stateManager,
-    ILogger<GraphCompletedConsumer> logger)
-    : IConsumer<GraphCompleted>
+    ILogger<GraphCompletedConsumer> logger
+) : IConsumer<GraphCompleted>
 {
     public Task Consume(ConsumeContext<GraphCompleted> context)
     {
@@ -27,13 +27,20 @@ public class GraphCompletedConsumer(
         {
             if (state.Status == JobNotificationStatus.Done)
             {
-                logger.LogInformation("GraphCompleted for {JobId}: AssetRegistered already processed, skipping loading toast", msg.JobId);
+                logger.LogInformation(
+                    "GraphCompleted for {JobId}: AssetRegistered already processed, skipping loading toast",
+                    msg.JobId
+                );
                 return Task.CompletedTask;
             }
             state.Status = JobNotificationStatus.Loading;
         }
 
-        logger.LogInformation("GraphCompleted for {JobId}: sending loading toast to user {UserId}", msg.JobId, msg.UserId);
+        logger.LogInformation(
+            "GraphCompleted for {JobId}: sending loading toast to user {UserId}",
+            msg.JobId,
+            msg.UserId
+        );
         return hubContext.Clients.User(msg.UserId).OnJobCompleted(msg.JobId);
     }
 }

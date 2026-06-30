@@ -13,4 +13,6 @@ public class AssetRegistered
     public required string MediaId { get; set; }
 
     public required string MediaType { get; set; }
+
+    public string? FrontendUrl { get; set; }
 }

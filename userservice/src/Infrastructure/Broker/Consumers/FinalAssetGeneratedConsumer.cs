@@ -2,6 +2,8 @@ using Contracts;
 using MassTransit;
 using MediatR;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
+using UserService.Application.Common.Options;
 using UserService.Application.ProjectAssets.Commands.AddProjectAsset;
 using UserService.Domain.Enums;
 
@@ -10,6 +12,7 @@ namespace UserService.Infrastructure.Broker.Consumers;
 internal class FinalAssetGeneratedConsumer(
     IMediator mediator,
     IBus bus,
+    IOptions<FrontendOptions> frontendOptions,
     ILogger<FinalAssetGeneratedConsumer> logger) : IConsumer<FinalAssetGenerated>
 {
     public async Task Consume(ConsumeContext<FinalAssetGenerated> context)
@@ -32,6 +35,8 @@ internal class FinalAssetGeneratedConsumer(
             Lifetime: AssetLifetime.Permanent,
             MediaType: mediaType));
 
+        var frontendUrl = $"{frontendOptions.Value.Url}/projects/{msg.ProjectId}/assets/{msg.Id}";
+
         await bus.Publish(new AssetRegistered
         {
             Id = msg.Id,
@@ -41,7 +46,8 @@ internal class FinalAssetGeneratedConsumer(
             MediaId = msg.MediaId,
             MediaType = msg.MediaType,
             AutoListIds = msg.AutoListIds,
-            Description= msg.Description
+            Description = msg.Description,
+            FrontendUrl = frontendUrl
         }, context.CancellationToken);
 
         logger.LogInformation("Published AssetRegistered for asset {Id}", msg.Id);
