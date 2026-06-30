@@ -1416,6 +1416,12 @@ export type DuplicateFromLibraryV1TemplatesFromLibraryPostData = {
          * UUID of the target Project to create the template in
          */
         project_id: string;
+        /**
+         * Name
+         *
+         * Override the template name (defaults to the source name)
+         */
+        name?: string | null;
     };
     url: '/v1/templates/from-library';
 };

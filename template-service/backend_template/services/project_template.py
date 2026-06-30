@@ -24,6 +24,7 @@ from backend_template.models.template_version import TemplateVersion
 from backend_template.repositories.project_template import ProjectTemplateRepository
 from backend_template.repositories.library_template import LibraryTemplateRepository
 from backend_template.utils.broker import PROJECT_TEMPLATE_EVENTS_EXCHANGE, publish_event
+from backend_template.utils.graph import remap_node_ids
 
 
 class ProjectTemplateService:
@@ -186,7 +187,7 @@ class ProjectTemplateService:
         )
 
     async def duplicate_from_library(
-        self, library_template_id: UUID, project_id: UUID
+        self, library_template_id: UUID, project_id: UUID, *, name: str | None = None
     ) -> ProjectTemplateResponse:
         """
         Duplicates a read-only LibraryTemplate into a new editable ProjectTemplate.
@@ -200,12 +201,14 @@ class ProjectTemplateService:
                 detail=f"LibraryTemplate with ID {library_template_id} not found.",
             )
 
-        # 2. Create a new ProjectTemplate with the copied data
+        # 2. Create a new ProjectTemplate with the copied data.
+        #    Remap all node IDs so parallel runs of two duplicated templates
+        #    do not produce colliding NodeStatusChangedEvents (AMPLIFY-434).
         orm_template = await self.repo.create(
             project_id=project_id,
-            name=source.name,
+            name=name if name is not None else source.name,
             description=source.description,
-            current_graph_json=source.graph_json,
+            current_graph_json=remap_node_ids(source.graph_json),
         )
 
         # 3. Return as Pydantic response
