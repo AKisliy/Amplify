@@ -9,13 +9,11 @@ from comfy_api.latest import IO, ComfyExtension
 from comfy_api.latest._io import Hidden
 from typing_extensions import override
 
-import aiohttp
 
 from comfy_api_nodes.apis.bytedance import (
     LegacyImage2VideoTaskCreationRequest,
     Seedance2TaskCreationRequest,
     SEEDANCE2_MODELS,
-    SEEDANCE_TOKEN_UNIT_PRICES,
     TaskCreationResponse,
     TaskImageContent,
     TaskImageContentUrl,
@@ -35,7 +33,7 @@ from comfy_api_nodes.util import (
 )
 from comfy_api_nodes.context_keys import GenParamKey, MediaNodeOutput, with_media_context
 
-from config import bytedance_config, litellm_config
+from config import litellm_config
 
 logger = logging.getLogger(__name__)
 
@@ -44,7 +42,7 @@ logger = logging.getLogger(__name__)
 # Volcengine China accounts:        ark.cn-beijing.volces.com
 # Note: PowerShell/WinHTTP may hang on BytePlus due to TLS quirks on Windows;
 #       Python aiohttp connects successfully.
-_ARK_BASE_URL = "https://ark.ap-southeast.bytepluses.com/api/v3"
+_ARK_BASE_URL = f"{litellm_config.litellm_base_url}/bytepluses"
 _TASK_ENDPOINT = f"{_ARK_BASE_URL}/contents/generations/tasks"
 
 # Legacy Seedance 1.5 Pro model — kept for backward compatibility.
@@ -63,57 +61,53 @@ _ASPECT_RATIOS = ["16:9", "4:3", "1:1", "3:4", "9:16", "21:9"]
 _ASPECT_RATIOS_FLF = ["adaptive"] + _ASPECT_RATIOS
 
 
-def _ark_auth_headers() -> dict:
-    return {"Authorization": f"Bearer {bytedance_config.ark_api_key}"}
+# async def _log_spend_to_litellm(model_id: str, completion_tokens: int) -> None:
+#     """Post a spend entry to LiteLLM after a successful Seedance generation.
 
+#     Cost = completion_tokens × token unit price from SEEDANCE_TOKEN_UNIT_PRICES.
+#     Failures are logged as warnings and never interrupt node execution.
+#     """
+#     cost_per_token = SEEDANCE_TOKEN_UNIT_PRICES.get(model_id)
+#     if cost_per_token is None:
+#         logger.warning(
+#             "Seedance: no token unit price for '%s'. "
+#             "Set SEEDANCE_TOKEN_UNIT_PRICES[model_id] in apis/bytedance.py.",
+#             model_id,
+#         )
+#         return
 
-async def _log_spend_to_litellm(model_id: str, completion_tokens: int) -> None:
-    """Post a spend entry to LiteLLM after a successful Seedance generation.
-
-    Cost = completion_tokens × token unit price from SEEDANCE_TOKEN_UNIT_PRICES.
-    Failures are logged as warnings and never interrupt node execution.
-    """
-    cost_per_token = SEEDANCE_TOKEN_UNIT_PRICES.get(model_id)
-    if cost_per_token is None:
-        logger.warning(
-            "Seedance: no token unit price for '%s'. "
-            "Set SEEDANCE_TOKEN_UNIT_PRICES[model_id] in apis/bytedance.py.",
-            model_id,
-        )
-        return
-
-    now = datetime.now(tz=timezone.utc).isoformat()
-    payload: dict = {
-        "call_type": "pass_through_endpoint",
-        "model": model_id,
-        "spend": completion_tokens * cost_per_token,
-        "completion_tokens": completion_tokens,
-        "total_tokens": completion_tokens,
-        "prompt_tokens": 0,
-        "startTime": now,
-        "endTime": now,
-        "api_base": _TASK_ENDPOINT,
-        "metadata": {"spend_logs_metadata": _litellm_context.get()},
-    }
-    headers = {
-        "x-litellm-api-key": f"Bearer {litellm_config.litellm_api_key}",
-        "Content-Type": "application/json",
-    }
-    try:
-        async with aiohttp.ClientSession() as session:
-            async with session.post(
-                f"{litellm_config.litellm_base_url}/spend/logs",
-                json=payload,
-                headers=headers,
-                timeout=aiohttp.ClientTimeout(total=10.0),
-            ) as resp:
-                if resp.status >= 400:
-                    logger.warning(
-                        "Seedance: LiteLLM spend log failed (HTTP %d): %s",
-                        resp.status, await resp.text(),
-                    )
-    except Exception as exc:
-        logger.warning("Seedance: failed to log spend to LiteLLM: %s", exc)
+#     now = datetime.now(tz=timezone.utc).isoformat()
+#     payload: dict = {
+#         "call_type": "pass_through_endpoint",
+#         "model": model_id,
+#         "spend": completion_tokens * cost_per_token,
+#         "completion_tokens": completion_tokens,
+#         "total_tokens": completion_tokens,
+#         "prompt_tokens": 0,
+#         "startTime": now,
+#         "endTime": now,
+#         "api_base": _TASK_ENDPOINT,
+#         "metadata": {"spend_logs_metadata": _litellm_context.get()},
+#     }
+#     headers = {
+#         "x-litellm-api-key": f"Bearer {litellm_config.litellm_api_key}",
+#         "Content-Type": "application/json",
+#     }
+#     try:
+#         async with aiohttp.ClientSession() as session:
+#             async with session.post(
+#                 f"{litellm_config.litellm_base_url}/spend/logs",
+#                 json=payload,
+#                 headers=headers,
+#                 timeout=aiohttp.ClientTimeout(total=10.0),
+#             ) as resp:
+#                 if resp.status >= 400:
+#                     logger.warning(
+#                         "Seedance: LiteLLM spend log failed (HTTP %d): %s",
+#                         resp.status, await resp.text(),
+#                     )
+#     except Exception as exc:
+#         logger.warning("Seedance: failed to log spend to LiteLLM: %s", exc)
 
 
 def _raise_if_text_params(prompt: str, text_params: list[str]) -> None:
@@ -135,6 +129,9 @@ def _seedance2_resolutions_for(model_display_name: str) -> list[str]:
     if "Fast" in model_display_name or "Mini" in model_display_name:
         return _SEEDANCE2_FAST_MINI_RESOLUTIONS
     return _SEEDANCE2_RESOLUTIONS
+
+def _litellm_auth_headers() -> dict:
+    return {"x-litellm-api-key": f"Bearer {litellm_config.litellm_api_key}"}
 
 
 class SeedanceTextToVideoNode(IO.ComfyNode):
@@ -329,7 +326,7 @@ class SeedanceTextToVideoNode(IO.ComfyNode):
             ApiEndpoint(
                 path=_TASK_ENDPOINT,
                 method="POST",
-                headers=_ark_auth_headers(),
+                headers=_litellm_auth_headers(),
             ),
             response_model=TaskCreationResponse,
             data=task_data,
@@ -342,7 +339,7 @@ class SeedanceTextToVideoNode(IO.ComfyNode):
             ApiEndpoint(
                 path=f"{_TASK_ENDPOINT}/{initial_response.id}",
                 method="GET",
-                headers=_ark_auth_headers(),
+                headers=_litellm_auth_headers(),
             ),
             response_model=TaskStatusResponse,
             status_extractor=lambda r: r.status,
@@ -359,8 +356,9 @@ class SeedanceTextToVideoNode(IO.ComfyNode):
                 f"Message: {poll_response.error.message}"
             )
 
-        if poll_response.usage and poll_response.usage.completion_tokens:
-            await _log_spend_to_litellm(model_id, poll_response.usage.completion_tokens)
+        ## TODO: enable, when litellm is setup for cost tracking
+        # if poll_response.usage and poll_response.usage.completion_tokens:
+        #     await _log_spend_to_litellm(model_id, poll_response.usage.completion_tokens)
 
         if not poll_response.content or not poll_response.content.video_url:
             raise Exception("Seedance task succeeded but returned no video URL.")
@@ -567,11 +565,11 @@ class SeedanceFirstLastFrameNode(IO.ComfyNode):
 
         # Resolve frame UUIDs to public URLs in parallel (same for both paths).
         first_frame_task = (
-            asyncio.create_task(fetch_media_uri_from_ingest(cls, first_frame_uuid, link_type="Public"))
+            asyncio.create_task(fetch_media_uri_from_ingest(cls, first_frame_uuid, link_type=1))
             if first_frame_uuid else None
         )
         last_frame_task = (
-            asyncio.create_task(fetch_media_uri_from_ingest(cls, last_frame_uuid, link_type="Public"))
+            asyncio.create_task(fetch_media_uri_from_ingest(cls, last_frame_uuid, link_type=1))
             if last_frame_uuid else None
         )
         first_frame_url = await first_frame_task if first_frame_task else None
@@ -643,7 +641,7 @@ class SeedanceFirstLastFrameNode(IO.ComfyNode):
             ApiEndpoint(
                 path=_TASK_ENDPOINT,
                 method="POST",
-                headers=_ark_auth_headers(),
+                headers=_litellm_auth_headers(),
             ),
             response_model=TaskCreationResponse,
             data=task_data,
@@ -658,7 +656,7 @@ class SeedanceFirstLastFrameNode(IO.ComfyNode):
             ApiEndpoint(
                 path=f"{_TASK_ENDPOINT}/{initial_response.id}",
                 method="GET",
-                headers=_ark_auth_headers(),
+                headers=_litellm_auth_headers(),
             ),
             response_model=TaskStatusResponse,
             status_extractor=lambda r: r.status,
@@ -675,8 +673,9 @@ class SeedanceFirstLastFrameNode(IO.ComfyNode):
                 f"Message: {poll_response.error.message}"
             )
 
-        if poll_response.usage and poll_response.usage.completion_tokens:
-            await _log_spend_to_litellm(model_id, poll_response.usage.completion_tokens)
+        # TODO: use when litellm is setup for cost trackig
+        # if poll_response.usage and poll_response.usage.completion_tokens:
+        #     await _log_spend_to_litellm(model_id, poll_response.usage.completion_tokens)
 
         if not poll_response.content or not poll_response.content.video_url:
             raise Exception("Seedance task succeeded but returned no video URL.")
