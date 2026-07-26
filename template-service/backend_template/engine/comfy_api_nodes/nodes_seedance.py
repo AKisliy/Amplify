@@ -394,9 +394,7 @@ class SeedanceFirstLastFrameNode(IO.ComfyNode):
     - Seedance 2.0 Mini       — fastest, lowest-cost (480p / 720p)
     - Seedance 1.5 Pro (legacy) — previous generation; inline-flag API (480p / 720p / 1080p)
 
-    Inputs accept Media Ingest UUIDs (strings) for the frame images — no raw
-    tensors are used; the engine resolves each UUID to a GCS URI before calling
-    the Ark API.
+    Inputs accept unique resource identifiers (e.g. asset://asset-...) for the frame images.
 
     At least one of first_frame_uuid or last_frame_uuid must be provided.
     """
@@ -417,7 +415,7 @@ class SeedanceFirstLastFrameNode(IO.ComfyNode):
             description=(
                 "Generate video using Seedance models from a first frame image and optional "
                 "last frame image. Supports Seedance 2.0 / Fast / Mini and legacy Seedance 1.5 Pro. "
-                "Accepts Media Ingest UUIDs for both frames."
+                "Accepts unique resource identifiers (e.g. asset://asset-...) for both frames."
             ),
             is_output_node=True,
             hidden=[Hidden.extra_pnginfo],
@@ -443,7 +441,7 @@ class SeedanceFirstLastFrameNode(IO.ComfyNode):
                     force_input=True,
                     optional=True,
                     tooltip=(
-                        "Media Ingest UUID of the first-frame image. "
+                        "Unique resource identifier (e.g. asset://asset-...) of the first-frame image. "
                         "At least one of first_frame_uuid or last_frame_uuid is required."
                     ),
                 ),
@@ -452,7 +450,7 @@ class SeedanceFirstLastFrameNode(IO.ComfyNode):
                     force_input=True,
                     optional=True,
                     tooltip=(
-                        "Media Ingest UUID of the last-frame image. "
+                        "Unique resource identifier (e.g. asset://asset-...) of the last-frame image. "
                         "Optional — omit to generate freely toward the end of the video."
                     ),
                 ),
@@ -564,16 +562,18 @@ class SeedanceFirstLastFrameNode(IO.ComfyNode):
                 )
 
         # Resolve frame UUIDs to public URLs in parallel (same for both paths).
-        first_frame_task = (
-            asyncio.create_task(fetch_media_uri_from_ingest(cls, first_frame_uuid, link_type=1))
-            if first_frame_uuid else None
-        )
-        last_frame_task = (
-            asyncio.create_task(fetch_media_uri_from_ingest(cls, last_frame_uuid, link_type=1))
-            if last_frame_uuid else None
-        )
-        first_frame_url = await first_frame_task if first_frame_task else None
-        last_frame_url = await last_frame_task if last_frame_task else None
+        # first_frame_task = (
+        #     asyncio.create_task(fetch_media_uri_from_ingest(cls, first_frame_uuid, link_type=1))
+        #     if first_frame_uuid else None
+        # )
+        # last_frame_task = (
+        #     asyncio.create_task(fetch_media_uri_from_ingest(cls, last_frame_uuid, link_type=1))
+        #     if last_frame_uuid else None
+        # )
+        # first_frame_url = await first_frame_task if first_frame_task else None
+        # last_frame_url = await last_frame_task if last_frame_task else None
+        first_frame_url = first_frame_uuid
+        last_frame_url = last_frame_uuid
 
         # Build the content list.
         # Legacy: inline flags embedded in text; images appended as TaskImageContent.
