@@ -14,6 +14,7 @@ from .request_utils import (
     get_vertex_ai_access_token,
     fetch_media_uri_from_ingest,
     register_media_uri_with_ingest,
+    upload_url_via_presigned,
 )
 
 from .broker import publish_event
@@ -35,6 +36,7 @@ __all__ = [
     "get_vertex_ai_access_token",
     "fetch_media_uri_from_ingest",
     "register_media_uri_with_ingest",
+    "upload_url_via_presigned",
 
     # Broker
     "publish_event",

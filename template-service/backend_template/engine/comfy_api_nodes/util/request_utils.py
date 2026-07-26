@@ -30,6 +30,7 @@ class GetLinkByIdResponse(BaseModel):
 async def fetch_media_uri_from_ingest(
     cls: type[IO.ComfyNode],
     media_id: str,
+    link_type: int = 0
 ) -> str:
     """Fetches the cloud storage URI for a media file from the Media Ingest API."""
     
@@ -38,7 +39,7 @@ async def fetch_media_uri_from_ingest(
     # Pass the endpoint with the full URL and query_params 
     response = await sync_op(
         cls,
-        endpoint=ApiEndpoint(path=full_url, method="GET", query_params={"linkType": 0}),
+        endpoint=ApiEndpoint(path=full_url, method="GET", query_params={"linkType": link_type}),
         response_model=GetLinkByIdResponse,
         wait_label="Fetching Media Link...",
     )
@@ -47,6 +48,27 @@ async def fetch_media_uri_from_ingest(
         raise ValueError(f"Media Ingest API response for UUID {media_id} did not contain a 'link'.")
         
     return response.link
+
+class _ImportFromUrlResponse(BaseModel):
+    mediaId: str
+
+async def upload_url_via_presigned(
+    cls: type[IO.ComfyNode],
+    video_url: str,
+) -> str:
+    """Registers an external video URL with Media Ingest.
+    Media Ingest downloads the file directly and returns a UUID.
+    """
+    full_url = f"{media_ingest_config.media_ingest_url}/internal/media/import-url"
+    response = await sync_op(
+        cls,
+        endpoint=ApiEndpoint(path=full_url, method="POST", query_params={"url": video_url}),
+        response_model=_ImportFromUrlResponse,
+        wait_label="Importing video to storage...",
+        timeout=600.0,
+    )
+    return response.mediaId
+
 
 class MediaRegisterParameters(BaseModel):
     gsUri: str
