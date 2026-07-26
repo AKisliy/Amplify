@@ -52,25 +52,27 @@ PACING_ZONES: dict[int, dict[str, tuple[int, int]]] = {
     4: {"green": (70, 80),   "yellow": (65, 85)},
     6: {"green": (105, 120), "yellow": (98, 128)},
     8: {"green": (140, 160), "yellow": (130, 170)},
+    11: {"green": (192, 220), "yellow": (180, 235)},
+    15: {"green": (262, 300), "yellow": (245, 320)},
 }
 
 
 def best_duration_for_chars(char_count: int) -> int:
     """
-    Given a segment's character count, return the video duration (4, 6, or 8 s)
+    Given a segment's character count, return the video duration (4, 6, 8, 11, or 15 s)
     whose pacing zone best fits it.
 
-    Priority: green zone first, then yellow, then longest available (8 s).
+    Priority: green zone first, then yellow, then longest available (15 s).
     """
-    for dur in [4, 6, 8]:
+    for dur in PACING_ZONES:
         lo, hi = PACING_ZONES[dur]["green"]
         if lo <= char_count <= hi:
             return dur
-    for dur in [4, 6, 8]:
+    for dur in PACING_ZONES:
         lo, hi = PACING_ZONES[dur]["yellow"]
         if lo <= char_count <= hi:
             return dur
-    return 8  # fallback: give the avatar as much time as possible
+    return 15  # fallback: give the avatar as much time as possible
 
 
 class GeminiModel(str, Enum):
@@ -468,7 +470,7 @@ class GeminiNode(IO.ComfyNode):
                             # a duration field, not an override of an explicit model decision.
                             try:
                                 dur = int(item["duration_seconds"])
-                                if dur not in (4, 6, 8):
+                                if dur not in PACING_ZONES:
                                     dur = best_duration_for_chars(len(seg))
                             except (ValueError, TypeError):
                                 dur = best_duration_for_chars(len(seg))
